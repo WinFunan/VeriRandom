@@ -689,6 +689,7 @@ jobs:
         run: dotnet workload install android
 
       - name: Build Android APK
+        id: android_build
         shell: pwsh
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
@@ -707,34 +708,41 @@ jobs:
           }
           $missingSigningValues = @($signingValues.GetEnumerator() | Where-Object { [string]::IsNullOrWhiteSpace($_.Value) } | Select-Object -ExpandProperty Key)
           if ($missingSigningValues.Count -gt 0) {
-            throw "Android release signing is required for every build; missing secrets: $($missingSigningValues -join ', ')."
+            # The fork has no release keystore yet. Still compile the Android head and produce a
+            # debug-signed, installable APK for testing; it is uploaded as "-unsigned" and is kept
+            # out of the release output and update manifest. Provide the four secrets to get a
+            # release-signed APK with the strict keystore/certificate verification below.
+            Write-Host "::warning::Android release signing secrets are missing ($($missingSigningValues -join ', ')); building a debug-signed APK instead. Add the secrets to produce a release-signed APK."
+            "ANDROID_SIGNED=false" >> $env:GITHUB_OUTPUT
+          } else {
+            "ANDROID_SIGNED=true" >> $env:GITHUB_OUTPUT
+            $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
+            $keystoreBase64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64
+            if ($keystoreBase64.Length -gt 0 -and [int][char]$keystoreBase64[0] -eq 0xFEFF) {
+              $keystoreBase64 = $keystoreBase64.Substring(1)
+            }
+            $keystoreBase64 = $keystoreBase64.Trim()
+            $keystoreBase64 = $keystoreBase64 -replace '-', '+'
+            $keystoreBase64 = $keystoreBase64 -replace '_', '/'
+            $keystoreBytes = $null
+            try {
+              $keystoreBytes = [Convert]::FromBase64String($keystoreBase64)
+            } catch {
+              $firstInvalid = $keystoreBase64.ToCharArray() | Where-Object { [char]::IsWhiteSpace($_) -eq $false -and $_ -notmatch '[A-Za-z0-9+/=]' } | Select-Object -First 1
+              $invalidCodePoint = if ($null -ne $firstInvalid) { [int][char]$firstInvalid } else { -1 }
+              throw "ANDROID_SIGNING_KEYSTORE_BASE64 is not valid base64 even after trimming whitespace and translating URL-safe characters; first invalid character has code point $invalidCodePoint. Re-provision the secret with a clean base64 encoding of the keystore."
+            }
+            if ($keystoreBytes.Length -lt 16) {
+              throw 'The Android release keystore secret decoded to an implausibly small file; re-check ANDROID_SIGNING_KEYSTORE_BASE64.'
+            }
+            [IO.File]::WriteAllBytes($keystorePath, $keystoreBytes)
+            $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
+            $keystoreVerification = & keytool @keytoolArguments 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              throw "Android signing keystore validation failed. $($keystoreVerification -join ' ')"
+            }
+            $arguments += @('-p:AndroidKeyStore=true', "-p:AndroidSigningKeyStore=$keystorePath", "-p:AndroidSigningStorePass=$env:ANDROID_SIGNING_KEYSTORE_PASSWORD", "-p:AndroidSigningKeyAlias=$env:ANDROID_SIGNING_KEY_ALIAS", "-p:AndroidSigningKeyPass=$env:ANDROID_SIGNING_KEY_PASSWORD")
           }
-          $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
-          $keystoreBase64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64
-          if ($keystoreBase64.Length -gt 0 -and [int][char]$keystoreBase64[0] -eq 0xFEFF) {
-            $keystoreBase64 = $keystoreBase64.Substring(1)
-          }
-          $keystoreBase64 = $keystoreBase64.Trim()
-          $keystoreBase64 = $keystoreBase64 -replace '-', '+'
-          $keystoreBase64 = $keystoreBase64 -replace '_', '/'
-          $keystoreBytes = $null
-          try {
-            $keystoreBytes = [Convert]::FromBase64String($keystoreBase64)
-          } catch {
-            $firstInvalid = $keystoreBase64.ToCharArray() | Where-Object { [char]::IsWhiteSpace($_) -eq $false -and $_ -notmatch '[A-Za-z0-9+/=]' } | Select-Object -First 1
-            $invalidCodePoint = if ($null -ne $firstInvalid) { [int][char]$firstInvalid } else { -1 }
-            throw "ANDROID_SIGNING_KEYSTORE_BASE64 is not valid base64 even after trimming whitespace and translating URL-safe characters; first invalid character has code point $invalidCodePoint. Re-provision the secret with a clean base64 encoding of the keystore."
-          }
-          if ($keystoreBytes.Length -lt 16) {
-            throw 'The Android release keystore secret decoded to an implausibly small file; re-check ANDROID_SIGNING_KEYSTORE_BASE64.'
-          }
-          [IO.File]::WriteAllBytes($keystorePath, $keystoreBytes)
-          $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
-          $keystoreVerification = & keytool @keytoolArguments 2>&1
-          if ($LASTEXITCODE -ne 0) {
-            throw "Android signing keystore validation failed. $($keystoreVerification -join ' ')"
-          }
-          $arguments += @('-p:AndroidKeyStore=true', "-p:AndroidSigningKeyStore=$keystorePath", "-p:AndroidSigningStorePass=$env:ANDROID_SIGNING_KEYSTORE_PASSWORD", "-p:AndroidSigningKeyAlias=$env:ANDROID_SIGNING_KEY_ALIAS", "-p:AndroidSigningKeyPass=$env:ANDROID_SIGNING_KEY_PASSWORD")
           & dotnet @arguments
           if ($LASTEXITCODE -ne 0) {
             throw "Android build failed with exit code $LASTEXITCODE."
@@ -744,42 +752,54 @@ jobs:
         shell: pwsh
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
+          ANDROID_SIGNED: ${{ steps.android_build.outputs.ANDROID_SIGNED }}
           ANDROID_SIGNING_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEYSTORE_PASSWORD }}
           ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
         run: |
-          $apk = Get-ChildItem 'SecRandom.Android/bin/Release/net10.0-android36.0/android-${{ matrix.arch }}' -Filter '*-Signed.apk' |
-            Select-Object -First 1 -ExpandProperty FullName
+          $apkDirectory = 'SecRandom.Android/bin/Release/net10.0-android36.0/android-${{ matrix.arch }}'
+          $apk = Get-ChildItem $apkDirectory -Filter '*-Signed.apk' | Select-Object -First 1 -ExpandProperty FullName
           if ([string]::IsNullOrWhiteSpace($apk)) {
-            throw 'The Android build did not produce a signed APK.'
+            $apk = Get-ChildItem $apkDirectory -Filter '*.apk' | Select-Object -First 1 -ExpandProperty FullName
           }
-          $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
-          if (!(Test-Path -LiteralPath $keystorePath)) {
-            throw 'The Android signing keystore is missing after the build.'
+          if ([string]::IsNullOrWhiteSpace($apk)) {
+            throw 'The Android build did not produce an APK.'
           }
-          $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
-          $keystoreCertificate = & keytool @keytoolArguments 2>&1
-          if ($LASTEXITCODE -ne 0) {
-            throw 'Unable to read the Android release certificate from the signing keystore.'
+          $assetName = "SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}.apk"
+          if ($env:ANDROID_SIGNED -ne 'true') {
+            # Debug-signed build: rename so it can never be mistaken for, or matched as, a release
+            # APK. The publish job excludes the "-unsigned" suffix from the release output.
+            Write-Host "::warning::Emitting a debug-signed Android APK; it is not release-signed."
+            $assetName = "SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}-unsigned.apk"
+          } else {
+            $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
+            if (!(Test-Path -LiteralPath $keystorePath)) {
+              throw 'The Android signing keystore is missing after the build.'
+            }
+            $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
+            $keystoreCertificate = & keytool @keytoolArguments 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              throw 'Unable to read the Android release certificate from the signing keystore.'
+            }
+            $expectedFingerprint = [regex]::Match(($keystoreCertificate -join "`n"), '(?im)^\s*SHA256:\s*([0-9A-F:]+)\s*$').Groups[1].Value.Replace(':', '').ToUpperInvariant()
+            if ([string]::IsNullOrWhiteSpace($expectedFingerprint)) {
+              throw 'The Android signing keystore did not expose a SHA-256 certificate fingerprint.'
+            }
+            $apksigner = Get-ChildItem "$env:ANDROID_HOME/build-tools/*/apksigner" -File | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+            if ([string]::IsNullOrWhiteSpace($apksigner)) {
+              throw 'apksigner was not found on the Android runner.'
+            }
+            $verification = & $apksigner verify --verbose --print-certs $apk 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              throw 'The Android APK signature verification failed.'
+            }
+            $actualFingerprint = [regex]::Match(($verification -join "`n"), '(?im)certificate SHA-256 digest:\s*([0-9A-F:]+)').Groups[1].Value.Replace(':', '').ToUpperInvariant()
+            if ([string]::IsNullOrWhiteSpace($actualFingerprint) -or $actualFingerprint -cne $expectedFingerprint) {
+              throw "The Android APK certificate fingerprint does not match the release keystore. Expected $expectedFingerprint, got $actualFingerprint."
+            }
+            Write-Host "Verified Android release certificate SHA-256: $actualFingerprint"
           }
-          $expectedFingerprint = [regex]::Match(($keystoreCertificate -join "`n"), '(?im)^\s*SHA256:\s*([0-9A-F:]+)\s*$').Groups[1].Value.Replace(':', '').ToUpperInvariant()
-          if ([string]::IsNullOrWhiteSpace($expectedFingerprint)) {
-            throw 'The Android signing keystore did not expose a SHA-256 certificate fingerprint.'
-          }
-          $apksigner = Get-ChildItem "$env:ANDROID_HOME/build-tools/*/apksigner" -File | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
-          if ([string]::IsNullOrWhiteSpace($apksigner)) {
-            throw 'apksigner was not found on the Android runner.'
-          }
-          $verification = & $apksigner verify --verbose --print-certs $apk 2>&1
-          if ($LASTEXITCODE -ne 0) {
-            throw 'The Android APK signature verification failed.'
-          }
-          $actualFingerprint = [regex]::Match(($verification -join "`n"), '(?im)certificate SHA-256 digest:\s*([0-9A-F:]+)').Groups[1].Value.Replace(':', '').ToUpperInvariant()
-          if ([string]::IsNullOrWhiteSpace($actualFingerprint) -or $actualFingerprint -cne $expectedFingerprint) {
-            throw "The Android APK certificate fingerprint does not match the release keystore. Expected $expectedFingerprint, got $actualFingerprint."
-          }
-          Write-Host "Verified Android release certificate SHA-256: $actualFingerprint"
           New-Item -ItemType Directory -Path 'artifacts/mobile' -Force | Out-Null
-          Copy-Item $apk "artifacts/mobile/SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}.apk"
+          Copy-Item $apk "artifacts/mobile/$assetName"
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v7
@@ -926,9 +946,12 @@ jobs:
         run: |
           $releaseOutput = './artifacts/release/output'
           New-Item -ItemType Directory -Path $releaseOutput -Force | Out-Null
-          Get-ChildItem ./artifacts/release/downloaded -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg,*.apk,*.ipa | ForEach-Object {
-            Copy-Item $_.FullName $releaseOutput -Force
-          }
+          # Debug-signed Android APKs are CI test artifacts only; keep them out of the release.
+          Get-ChildItem ./artifacts/release/downloaded -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg,*.apk,*.ipa |
+            Where-Object { $_.Name -notmatch '-android-(arm64|x64)-unsigned\.apk$' } |
+            ForEach-Object {
+              Copy-Item $_.FullName $releaseOutput -Force
+            }
           Write-Host "Combined files:"
           Get-ChildItem $releaseOutput -File | Select-Object Name, Length
 
