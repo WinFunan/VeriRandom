@@ -1,19 +1,22 @@
-# SecRandom への貢献
+# VeriRandom への貢献
 
-SecRandom への問題報告、改善提案、ドキュメント改善、コード提供に感謝します。
+VeriRandom への問題報告、改善提案、ドキュメント改善、コード提供に感謝します。
+
+> [!IMPORTANT]
+> 本製品は SecRandom のオープンソースフォークであり、SecRandom 本体とは見なされません。本ガイドに記載するリポジトリ、Issue、リリースフローはすべて本フォーク（VeriRandom）を指します。上流プロジェクトへ問題を報告する場合は [SECTL/SecRandom](https://github.com/SECTL/SecRandom) を使用してください。
 
 **言語** [ [简体中文](../CONTRIBUTING.md) | [English](CONTRIBUTING_EN.md) | **日本語** ]
 
 ## Issue の作成
 
-- 不具合報告や機能要望には [GitHub Issues](https://github.com/SECTL/SecRandom/issues) を使用してください。
-- 不具合には、再現手順、期待する動作、実際の動作、SecRandom のバージョン、システム環境、必要なログまたはスクリーンショットを含めてください。
+- 本フォークの不具合報告や機能要望には [GitHub Issues](https://github.com/WinFunan/VeriRandom/issues) を使用してください。
+- 不具合には、再現手順、期待する動作、実際の動作、VeriRandom のバージョン、システム環境、必要なログまたはスクリーンショットを含めてください。
 - 機能要望には、利用場面、期待する動作、既存機能では満たせない理由を記載してください。
 - パスワード、TOTP シークレット、USB バインディングトークン、その他の機密情報を公開 Issue、ログ、スクリーンショットに含めないでください。
 
 ## 開発環境
 
-SecRandom v3 は .NET デスクトップアプリケーションです。
+VeriRandom v3 は .NET デスクトップアプリケーションです。
 
 | 分類 | 技術 | 用途 |
 | --- | --- | --- |
@@ -32,8 +35,8 @@ SecRandom v3 は .NET デスクトップアプリケーションです。
 ### プロジェクトの取得と実行
 
 ```bash
-git clone https://github.com/<your-account>/SecRandom.git
-cd SecRandom
+git clone https://github.com/WinFunan/VeriRandom.git
+cd VeriRandom
 git remote add upstream https://github.com/SECTL/SecRandom.git
 
 dotnet restore SecRandom.sln

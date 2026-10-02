@@ -49,7 +49,7 @@ public sealed class UpdateCenterService(
         .Build();
     private CancellationTokenSource? _operationCancellation;
     private UpdateOperationPhase _phase;
-    private string _statusMessage = Text("M_StatusNotChecked");
+    private string _statusMessage = Text(GlobalConstants.UpdatesEnabled ? "M_StatusNotChecked" : "M_UpdatesDisabled");
     private UpdateManifest? _manifest;
     private UpdateArtifact? _selectedArtifact;
     private UpdateSource _activeSource;
@@ -94,15 +94,31 @@ public sealed class UpdateCenterService(
     }
 
     public bool IsBusy => Phase is UpdateOperationPhase.Checking or UpdateOperationPhase.Downloading or UpdateOperationPhase.Verifying or UpdateOperationPhase.Installing;
-    public bool CanCheck => !IsBusy;
-    public bool CanDownloadAndInstall => Phase == UpdateOperationPhase.UpdateAvailable && SelectedArtifact is not null;
-    public bool CanApplyUpdate => Phase == UpdateOperationPhase.ReadyToInstall && SelectedArtifact is not null;
+    public bool IsSupported => GlobalConstants.UpdatesEnabled;
+    public bool CanCheck => GlobalConstants.UpdatesEnabled && !IsBusy;
+    public bool CanDownloadAndInstall => GlobalConstants.UpdatesEnabled && Phase == UpdateOperationPhase.UpdateAvailable && SelectedArtifact is not null;
+    public bool CanApplyUpdate => GlobalConstants.UpdatesEnabled && Phase == UpdateOperationPhase.ReadyToInstall && SelectedArtifact is not null;
     public bool HasAvailableArtifacts => AvailableArtifacts.Count > 0;
     public string PrimaryActionText => CanDownloadAndInstall ? Text("C_DownloadAndInstall") : Text("C_CheckUpdates");
 
+    /// <summary>
+    ///     Returns true while this fork has updates disabled, in which case every update entry point must
+    ///     no-op instead of reaching the upstream release channel. The capability is preserved: flipping
+    ///     <see cref="GlobalConstants.UpdatesEnabled" /> restores the full flow.
+    /// </summary>
+    private bool UpdatesDisabled()
+    {
+        if (GlobalConstants.UpdatesEnabled)
+            return false;
+
+        Phase = UpdateOperationPhase.Idle;
+        StatusMessage = Text("M_UpdatesDisabled");
+        return true;
+    }
+
     public async Task CheckAsync(bool force = false)
     {
-        if (IsBusy)
+        if (UpdatesDisabled() || IsBusy)
             return;
 
         CancelCurrentOperation();
@@ -164,7 +180,7 @@ public sealed class UpdateCenterService(
 
     public async Task DownloadAsync(bool installAfterDownload)
     {
-        if (_manifest is null || SelectedArtifact is null || IsBusy)
+        if (UpdatesDisabled() || _manifest is null || SelectedArtifact is null || IsBusy)
             return;
 
         CancelCurrentOperation();
@@ -219,7 +235,7 @@ public sealed class UpdateCenterService(
 
     public async Task ApplyDownloadedUpdateAsync()
     {
-        if (_downloadedPackagePath is null || SelectedArtifact is null || IsBusy)
+        if (UpdatesDisabled() || _downloadedPackagePath is null || SelectedArtifact is null || IsBusy)
             return;
 
         try

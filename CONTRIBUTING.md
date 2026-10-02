@@ -1,19 +1,22 @@
 # 贡献指南
 
-感谢你为 SecRandom 提交问题、提出建议、完善文档或贡献代码。
+感谢你为 VeriRandom 提交问题、提出建议、完善文档或贡献代码。
+
+> [!IMPORTANT]
+> 此产品是 SecRandom 的一个开源分支，不应视作 SecRandom 本身。本指南中的仓库地址、Issue 与发布流程均指本仓库（VeriRandom）。如需向原项目反馈上游问题，请前往 [SECTL/SecRandom](https://github.com/SECTL/SecRandom)。
 
 **语言** [ **简体中文** | [English](resources/CONTRIBUTING_EN.md) | [日本語](resources/CONTRIBUTING_JA.md) ]
 
 ## 提交 Issue
 
-- 使用 [GitHub Issues](https://github.com/SECTL/SecRandom/issues) 报告缺陷或提出功能请求。
-- 提交缺陷时，请提供复现步骤、预期行为、实际行为、SecRandom 版本、系统环境和必要日志或截图。
+- 使用 [GitHub Issues](https://github.com/WinFunan/VeriRandom/issues) 报告本仓库的缺陷或提出功能请求。
+- 提交缺陷时，请提供复现步骤、预期行为、实际行为、VeriRandom 版本、系统环境和必要日志或截图。
 - 提交功能请求时，请说明使用场景、预期行为和现有功能无法满足需求的原因。
 - 不要在公开 Issue、日志或截图中提交密码、TOTP 密钥、USB 绑定令牌或其他敏感数据。
 
 ## 开发环境
 
-SecRandom v3 是基于 .NET 的桌面应用：
+VeriRandom v3 是基于 .NET 的桌面应用：
 
 | 类别 | 技术 | 用途 |
 | --- | --- | --- |
@@ -32,8 +35,8 @@ SecRandom v3 是基于 .NET 的桌面应用：
 ### 获取与运行
 
 ```bash
-git clone https://github.com/<your-account>/SecRandom.git
-cd SecRandom
+git clone https://github.com/WinFunan/VeriRandom.git
+cd VeriRandom
 git remote add upstream https://github.com/SECTL/SecRandom.git
 
 dotnet restore SecRandom.sln

@@ -6,14 +6,13 @@
 
 **A random-selection tool for classrooms and teams, with configurable workflows, managed history, and verifiable draw records.**
 
-[![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=Issues)](https://github.com/SECTL/SecRandom/issues)
-[![Latest Release](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Latest%20Release)](https://github.com/SECTL/SecRandom/releases/latest)
-[![Pre-release](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=for-the-badge&label=Pre-release)](https://github.com/SECTL/SecRandom/releases)
-[![Last Update](https://img.shields.io/github/last-commit/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Last%20Update)](https://github.com/SECTL/SecRandom/commits/master)
-[![Downloads](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=Downloads)](https://github.com/SECTL/SecRandom/releases)
+[![GitHub Issues](https://img.shields.io/github/issues-search/WinFunan/VeriRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=Issues)](https://github.com/WinFunan/VeriRandom/issues)
+[![Latest Release](https://img.shields.io/github/v/release/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=Latest%20Release)](https://github.com/WinFunan/VeriRandom/releases/latest)
+[![Pre-release](https://img.shields.io/github/v/release/WinFunan/VeriRandom?include_prereleases&style=for-the-badge&label=Pre-release)](https://github.com/WinFunan/VeriRandom/releases)
+[![Last Update](https://img.shields.io/github/last-commit/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=Last%20Update)](https://github.com/WinFunan/VeriRandom/commits/master)
+[![Downloads](https://img.shields.io/github/downloads/WinFunan/VeriRandom/total?style=for-the-badge&color=00b4ab&label=Downloads)](https://github.com/WinFunan/VeriRandom/releases)
 
-[![QQ Group](https://img.shields.io/badge/-QQ%20Group%20%7C%20833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/iWcfaPHn7W)
-[![Bilibili](https://img.shields.io/badge/-Bilibili%20%7C%20%E9%BB%8E%E6%B3%BD%E6%87%BF-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
+[![QQ Group](https://img.shields.io/badge/-QQ%20Group%20%7C%20768421833-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/EvhyCJWqCA)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](../LICENSE)
 
 **Language** [ [简体中文](../README.md) | **English** | [日本語](README_JA.md) ]
@@ -82,8 +81,12 @@ Notes:
 
 ## Download and updates
 
-- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) provides release packages and change notes.
-- The [official download page](https://stk.sectl.cn/SecRandom) provides the latest download entry point.
+- [GitHub Releases](https://github.com/WinFunan/VeriRandom/releases) provides release packages and change notes for this fork.
+
+## Upstream download and updates
+
+- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) provides upstream release packages and change notes.
+- The [upstream official download page](https://stk.sectl.cn/SecRandom) provides the latest upstream download entry point.
 - Automatic updates validate a signed release manifest and artifact length/hash before deployment. Refer to the package and notes supplied with each release for installation details.
 
 ## License and third-party notices
@@ -94,15 +97,27 @@ Notes:
 
 ## Contributors and special thanks
 
+<a href="https://github.com/WinFunan/VeriRandom/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=WinFunan/VeriRandom" alt="VeriRandom contributors" />
+</a>
+
 <a href="https://github.com/SECTL/SecRandom/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=SECTL/SecRandom" alt="SecRandom contributors" />
 </a>
 
-Thank you to everyone who contributes code, reports issues, improves documentation, or provides feedback. The avatars are generated from GitHub contributor data; select them to open the [GitHub contributors page](https://github.com/SECTL/SecRandom/graphs/contributors) for complete statistics.
+Thank you to everyone who contributes code, reports issues, improves documentation, or provides feedback to VeriRandom and SecRandom. The avatars are generated from GitHub contributor data; select them to open the [this repository's GitHub contributors page](https://github.com/WinFunan/VeriRandom/graphs/contributors) or the [upstream GitHub contributors page](https://github.com/SECTL/SecRandom/graphs/contributors) for complete statistics.
 
-## Support and community
+## Support and community for this repository
 
-- [Support us on Afdian](https://afdian.com/a/lzy0983)
+- [QQ Group 768421833](https://qm.qq.com/q/EvhyCJWqCA)
+- [Email](mailto:love-code-yeyixiao@outlook.com)
+- [Bilibili](https://space.bilibili.com/510993086)
+- [Report an issue](https://github.com/WinFunan/VeriRandom/issues)
+- [English contributing guide](CONTRIBUTING_EN.md)
+
+## Support and community for upstream
+
+- [Support upstream on Afdian](https://afdian.com/a/lzy0983)
 - [Email](mailto:lzy.12@foxmail.com)
 - [QQ Group 833875216](https://qm.qq.com/q/iWcfaPHn7W)
 - [QQ Channel](https://pd.qq.com/s/4x5dafd34?b=9)
@@ -110,16 +125,9 @@ Thank you to everyone who contributes code, reports issues, improves documentati
 - [Report an issue](https://github.com/SECTL/SecRandom/issues)
 - [SecRandom documentation](https://secrandom.sectl.cn/doc/overview.html)
 - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
-- [English contributing guide](CONTRIBUTING_EN.md)
+- [Simplified Chinese contributing guide](https://github.com/SECTL/SecRandom/CONTRIBUTING.md)
 
-## Star History
 
-<a href="https://www.star-history.com/?repos=SECTL%2FSecRandom&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&theme=dark&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
- </picture>
-</a>
+**Copyright © 2025-2026 WinFunan**
 
 **Copyright © 2025-2026 SECTL**

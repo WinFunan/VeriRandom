@@ -29,6 +29,11 @@ public static class GlobalConstants
     public const string DrawImageAttachedSettings = "4C88E037-4F69-42D0-A32F-16D2827B7B6D";
     public const string DrawMusicAttachedSettings = "A16F1E84-77E8-4E09-B9EC-8BAF5C148057";
 
+    // Fork policy: update discovery in this repository still targets the upstream SecRandom release
+    // channel, which this fork must not consume. The whole update implementation stays intact so the
+    // capability is preserved; set this back to true once this fork has its own metadata/release server.
+    public const bool UpdatesEnabled = false;
+
     public const string DefaultThemeColor = "#0078D4"; // 系统自带主题色蓝  66CCFF 天依蓝
     public const string DefaultFontFamily = "avares://SecRandom/Assets/Fonts/MiSans/#MiSans";
 

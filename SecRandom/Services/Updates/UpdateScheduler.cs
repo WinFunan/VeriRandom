@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core;
 using SecRandom.Core.Services.Config;
 
 namespace SecRandom.Services.Updates;
@@ -16,6 +17,13 @@ public sealed class UpdateScheduler(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (!GlobalConstants.UpdatesEnabled)
+        {
+            // Keep the hosted service registered so re-enabling updates is a one-line policy change.
+            logger.LogInformation("此分支已禁用自动更新，跳过更新调度。");
+            return;
+        }
+
         await Task.Delay(TimeSpan.FromSeconds(8), stoppingToken).ConfigureAwait(false);
 
         while (!stoppingToken.IsCancellationRequested)

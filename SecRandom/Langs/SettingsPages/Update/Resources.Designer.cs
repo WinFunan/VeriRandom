@@ -74,6 +74,8 @@ namespace SecRandom.Langs.SettingsPages.Update {
 
         public static string M_StatusNotChecked => ResourceManager.GetString("M_StatusNotChecked", resourceCulture);
 
+        public static string M_UpdatesDisabled => ResourceManager.GetString("M_UpdatesDisabled", resourceCulture);
+
         public static string O_UpdateChannel_Alpha => ResourceManager.GetString("O_UpdateChannel_Alpha", resourceCulture);
 
         public static string O_UpdateChannel_Beta => ResourceManager.GetString("O_UpdateChannel_Beta", resourceCulture);

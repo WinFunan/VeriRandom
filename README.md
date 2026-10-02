@@ -128,4 +128,5 @@ VeriRandom 是面向课堂、团队、活动、决策等场景的公平抽取应
 
 
 **Copyright © 2025-2026 WinFunan**
+
 **Copyright © 2025-2026 SECTL**

@@ -6,14 +6,13 @@
 
 **授業やチームで使える、設定可能な抽選フロー、履歴管理、検証可能な抽選記録を備えたランダム抽選ツール。**
 
-[![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=Issues)](https://github.com/SECTL/SecRandom/issues)
-[![Latest Release](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Latest%20Release)](https://github.com/SECTL/SecRandom/releases/latest)
-[![Pre-release](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=for-the-badge&label=Pre-release)](https://github.com/SECTL/SecRandom/releases)
-[![Last Update](https://img.shields.io/github/last-commit/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Last%20Update)](https://github.com/SECTL/SecRandom/commits/master)
-[![Downloads](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=Downloads)](https://github.com/SECTL/SecRandom/releases)
+[![GitHub Issues](https://img.shields.io/github/issues-search/WinFunan/VeriRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=Issues)](https://github.com/WinFunan/VeriRandom/issues)
+[![Latest Release](https://img.shields.io/github/v/release/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=Latest%20Release)](https://github.com/WinFunan/VeriRandom/releases/latest)
+[![Pre-release](https://img.shields.io/github/v/release/WinFunan/VeriRandom?include_prereleases&style=for-the-badge&label=Pre-release)](https://github.com/WinFunan/VeriRandom/releases)
+[![Last Update](https://img.shields.io/github/last-commit/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=Last%20Update)](https://github.com/WinFunan/VeriRandom/commits/master)
+[![Downloads](https://img.shields.io/github/downloads/WinFunan/VeriRandom/total?style=for-the-badge&color=00b4ab&label=Downloads)](https://github.com/WinFunan/VeriRandom/releases)
 
-[![QQ Group](https://img.shields.io/badge/-QQ%20Group%20%7C%20833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/iWcfaPHn7W)
-[![Bilibili](https://img.shields.io/badge/-Bilibili%20%7C%20%E9%BB%8E%E6%B3%BD%E6%87%BF-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
+[![QQ Group](https://img.shields.io/badge/-QQ%20Group%20%7C%20768421833-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/EvhyCJWqCA)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](../LICENSE)
 
 **言語** [ [简体中文](../README.md) | [English](README_EN.md) | **日本語** ]
@@ -80,10 +79,14 @@ VeriRandom は、授業、チーム、イベント、意思決定などの場面
 | v2 | Python + PySide6 + qfluentwidgets | Qt スタックの進化 |
 | **v3** | **C# + Avalonia + FluentAvalonia** | 抽選、検証、デスクトップ連携を継続的に発展させる .NET デスクトップ再構築 |
 
-## ダウンロードと更新
+## 本リポジトリのダウンロードと更新
 
-- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) でリリースパッケージと変更履歴を提供しています。
-- [公式ダウンロードページ](https://stk.sectl.cn/SecRandom) から最新版のダウンロード入口を利用できます。
+- [GitHub Releases](https://github.com/WinFunan/VeriRandom/releases) で本フォークのリリースパッケージと変更履歴を提供しています。
+
+## 上流のダウンロードと更新
+
+- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) で上流のリリースパッケージと変更履歴を提供しています。
+- [上流の公式ダウンロードページ](https://stk.sectl.cn/SecRandom) から上流の最新版ダウンロード入口を利用できます。
 - 自動更新では、配置前に署名付きリリースマニフェストと成果物の長さ・ハッシュを検証します。インストールの詳細は各リリースに含まれるパッケージと説明を参照してください。
 
 ## ライセンスと第三者通知
@@ -94,15 +97,27 @@ VeriRandom は、授業、チーム、イベント、意思決定などの場面
 
 ## 貢献者と特別な謝辞
 
+<a href="https://github.com/WinFunan/VeriRandom/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=WinFunan/VeriRandom" alt="VeriRandom contributors" />
+</a>
+
 <a href="https://github.com/SECTL/SecRandom/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=SECTL/SecRandom" alt="SecRandom contributors" />
 </a>
 
-コードの提供、問題報告、ドキュメント改善、フィードバックを寄せてくださるすべての貢献者に感謝します。アバターは GitHub の貢献者データから動的に生成され、クリックすると完全な統計を [GitHub の貢献者ページ](https://github.com/SECTL/SecRandom/graphs/contributors) で確認できます。
+VeriRandom と SecRandom にコードの提供、問題報告、ドキュメント改善、フィードバックを寄せてくださるすべての貢献者に感謝します。アバターは GitHub の貢献者データから動的に生成され、クリックすると完全な統計を[本リポジトリの GitHub 貢献者ページ](https://github.com/WinFunan/VeriRandom/graphs/contributors)または[上流の GitHub 貢献者ページ](https://github.com/SECTL/SecRandom/graphs/contributors)で確認できます。
 
-## サポートとコミュニティ
+## 本リポジトリのサポートとコミュニティ
 
-- [Afdian で支援する](https://afdian.com/a/lzy0983)
+- [QQ グループ 768421833](https://qm.qq.com/q/EvhyCJWqCA)
+- [メール](mailto:love-code-yeyixiao@outlook.com)
+- [Bilibili](https://space.bilibili.com/510993086)
+- [問題を報告する](https://github.com/WinFunan/VeriRandom/issues)
+- [日本語の貢献ガイド](CONTRIBUTING_JA.md)
+
+## 上流リポジトリのサポートとコミュニティ
+
+- [Afdian で上流を支援する](https://afdian.com/a/lzy0983)
 - [メール](mailto:lzy.12@foxmail.com)
 - [QQ グループ 833875216](https://qm.qq.com/q/iWcfaPHn7W)
 - [QQ チャンネル](https://pd.qq.com/s/4x5dafd34?b=9)
@@ -110,16 +125,9 @@ VeriRandom は、授業、チーム、イベント、意思決定などの場面
 - [問題を報告する](https://github.com/SECTL/SecRandom/issues)
 - [SecRandom 公式ドキュメント](https://secrandom.sectl.cn/doc/overview.html)
 - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
-- [日本語の貢献ガイド](CONTRIBUTING_JA.md)
+- [簡体字中国語の貢献ガイド](https://github.com/SECTL/SecRandom/CONTRIBUTING.md)
 
-## Star History
 
-<a href="https://www.star-history.com/?repos=SECTL%2FSecRandom&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&theme=dark&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
- </picture>
-</a>
+**Copyright © 2025-2026 WinFunan**
 
 **Copyright © 2025-2026 SECTL**

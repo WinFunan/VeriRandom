@@ -1,19 +1,22 @@
-# Contributing to SecRandom
+# Contributing to VeriRandom
 
-Thank you for reporting issues, suggesting improvements, improving documentation, or contributing code to SecRandom.
+Thank you for reporting issues, suggesting improvements, improving documentation, or contributing code to VeriRandom.
+
+> [!IMPORTANT]
+> This product is an open-source fork of SecRandom and must not be regarded as SecRandom itself. The repository, issue tracker, and release flow described here all belong to this fork (VeriRandom). To report an upstream problem to the original project, use [SECTL/SecRandom](https://github.com/SECTL/SecRandom).
 
 **Language** [ [简体中文](../CONTRIBUTING.md) | **English** | [日本語](CONTRIBUTING_JA.md) ]
 
 ## Opening an issue
 
-- Use [GitHub Issues](https://github.com/SECTL/SecRandom/issues) to report bugs or request features.
-- For a bug, include reproduction steps, expected and actual behavior, your SecRandom version, system environment, and relevant logs or screenshots.
+- Use [GitHub Issues](https://github.com/WinFunan/VeriRandom/issues) to report bugs or request features for this fork.
+- For a bug, include reproduction steps, expected and actual behavior, your VeriRandom version, system environment, and relevant logs or screenshots.
 - For a feature request, explain the use case, expected behavior, and why the current product does not meet the need.
 - Do not place passwords, TOTP secrets, USB-binding tokens, or other sensitive data in public issues, logs, or screenshots.
 
 ## Development environment
 
-SecRandom v3 is a .NET desktop application:
+VeriRandom v3 is a .NET desktop application:
 
 | Category | Technology | Purpose |
 | --- | --- | --- |
@@ -32,8 +35,8 @@ SecRandom v3 is a .NET desktop application:
 ### Get and run the project
 
 ```bash
-git clone https://github.com/<your-account>/SecRandom.git
-cd SecRandom
+git clone https://github.com/WinFunan/VeriRandom.git
+cd VeriRandom
 git remote add upstream https://github.com/SECTL/SecRandom.git
 
 dotnet restore SecRandom.sln
