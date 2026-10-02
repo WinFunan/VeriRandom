@@ -72,6 +72,16 @@ Read the root [AGENTS.md](../AGENTS.md) and [project rules](../docs/project_rule
 - Do not commit generated `bin/`, `obj/`, `artifacts/`, `publish/`, or packaging output.
 - When documentation changes, keep factual content, links, and structure aligned across the Simplified Chinese, English, and Japanese README/contribution-guide set.
 
+## Contributor License Agreement (CLA)
+
+Before your first pull request, read and sign the [CLA](CLA_EN.md); the Simplified Chinese [CLA.md](../CLA.md) is the authoritative version. You sign by replying in the pull request with:
+
+> I have read the CLA Document and I hereby sign the CLA
+>
+> 我已阅读 CLA 文件并在此签署本协议
+
+The CLA grants the maintainer the right to license and relicense your contribution, and requires at least 30 days' public notice before the outbound license changes. This repository is an open-source fork of SecRandom; the CLA **cannot** change the license of upstream GPLv3 code.
+
 ## Commits and pull requests
 
 - Create a topic branch from the relevant current branch and sync with upstream before starting work.

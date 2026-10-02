@@ -72,6 +72,16 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 - 不要提交 `bin/`、`obj/`、`artifacts/`、`publish/` 或打包过程生成的文件。
 - 修改文档时，保持简体中文、英文和日文 README/贡献指南中的事实、链接和结构同步。
 
+## 贡献者许可协议（CLA）
+
+首次提交 Pull Request 前，请阅读并签署 [CLA.md](CLA.md)。在 PR 中回复以下声明即视为签署：
+
+> I have read the CLA Document and I hereby sign the CLA
+>
+> 我已阅读 CLA 文件并在此签署本协议
+
+CLA 授予维护者就你的贡献进行许可与再许可的权利，并约定维护者在调整本项目出站许可证前须提前不少于 30 天公示。本仓库是 SecRandom 的开源分支，CLA **不能**改变上游 GPLv3 代码的许可证。
+
 ## 提交与 Pull Request
 
 - 从当前目标分支创建主题分支，并在开始前同步上游。

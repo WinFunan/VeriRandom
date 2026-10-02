@@ -72,6 +72,16 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 - 生成物の `bin/`、`obj/`、`artifacts/`、`publish/`、パッケージ出力をコミットしないでください。
 - ドキュメントを変更する場合、簡体中国語、英語、日本語の README と貢献ガイドで事実、リンク、構造を一致させてください。
 
+## 貢献者ライセンス契約（CLA）
+
+最初の Pull Request の前に [CLA](CLA_JA.md)（簡体字中国語の [CLA.md](../CLA.md) が正式版）を読み、署名してください。PR で次を返信すると署名とみなされます。
+
+> I have read the CLA Document and I hereby sign the CLA
+>
+> 我已阅读 CLA 文件并在此签署本协议
+
+CLA は、あなたの貢献をライセンスおよび再ライセンスする権利をメンテナーに付与し、出站ライセンスを変更する前に 30 日以上の公示を義務付けます。本リポジトリは SecRandom のオープンソースフォークであり、CLA は上流の GPLv3 コードのライセンスを**変更できません**。
+
 ## コミットと Pull Request
 
 - 対象となる現在のブランチからトピックブランチを作成し、作業開始前に upstream と同期してください。
