@@ -26,6 +26,15 @@ public class Resources
     public static string C_ModeReadConfirm => Get(nameof(C_ModeReadConfirm));
     public static string M_ModeConfirmLocal => Get(nameof(M_ModeConfirmLocal));
     public static string M_ModeConfirmFormal => Get(nameof(M_ModeConfirmFormal));
+    public static string M_ModeConfirmFormalNoticeTitle => Get(nameof(M_ModeConfirmFormalNoticeTitle));
+    public static string M_ModeConfirmFormalNotice => Get(nameof(M_ModeConfirmFormalNotice));
+    public static string M_ModeConfirmFormalWarning => Get(nameof(M_ModeConfirmFormalWarning));
+    public static string C_ModeConfirmSecRandomServices => Get(nameof(C_ModeConfirmSecRandomServices));
+    public static string S_TimestampAuthority => Get(nameof(S_TimestampAuthority));
+    public static string S_TimestampAuthority_D => Get(nameof(S_TimestampAuthority_D));
+    public static string C_TimestampDisableTitle => Get(nameof(C_TimestampDisableTitle));
+    public static string C_TimestampDisableBody => Get(nameof(C_TimestampDisableBody));
+    public static string C_TimestampDisableConfirm => Get(nameof(C_TimestampDisableConfirm));
     public static string S_ProofFolder => Get(nameof(S_ProofFolder));
     public static string S_ProofFolder_D => Get(nameof(S_ProofFolder_D));
     public static string C_OpenProofFolder => Get(nameof(C_OpenProofFolder));

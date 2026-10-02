@@ -24,6 +24,7 @@ namespace SecRandom.Services.Verification;
 public sealed class DrawProofAttestationService(
     MainConfigHandler configHandler,
     DrawProofExportService proofExporter,
+    OwnProofExportService ownProofExporter,
     IWitnessClient witnessClient,
     ITimestampAuthorityClient timestampClient,
     ILogger<DrawProofAttestationService> logger) : BackgroundService
@@ -217,6 +218,11 @@ public sealed class DrawProofAttestationService(
 
         try
         {
+            // The reference chain's token is requested before the Up chain's: that ordering is what shows
+            // the reference node predates the stamp on the proof it points at. A failure here is surfaced
+            // but never blocks the Up submission, because the Up anchors matter more.
+            await TimestampOwnProofAsync(item, receipt, stoppingToken).ConfigureAwait(false);
+
             if (requestedReceipt)
             {
                 using var receiptTimeout = CreateRequestTimeout(stoppingToken);
@@ -253,6 +259,51 @@ public sealed class DrawProofAttestationService(
                 PersistQueueLocked();
             }
 
+            RaiseStatusChanged();
+        }
+    }
+
+    /// <summary>
+    ///     Stamps the fork's reference proof before the Up chain gets any anchor. The reference node is
+    ///     supplementary: when its token cannot be obtained the Up submission still proceeds, and the missing
+    ///     token stays visible both in the reference file and in the reported last error.
+    /// </summary>
+    private async Task TimestampOwnProofAsync(
+        ProofAttestationQueueItem item,
+        string? receipt,
+        CancellationToken stoppingToken)
+    {
+        if (!timestampClient.IsEnabled)
+            return;
+
+        var ownPath = OwnProofPaths.FromUpPath(item.Path);
+        if (!ownProofExporter.TryRead(ownPath, out var own) || own is null
+            || !string.IsNullOrWhiteSpace(own.TimestampToken))
+            return;
+
+        try
+        {
+            using var timeout = CreateRequestTimeout(stoppingToken);
+            var token = await timestampClient
+                .TimestampAsync(WitnessClient.FromBase64Url(own.Chain.SelfHash), timeout.Token)
+                .ConfigureAwait(false);
+            ownProofExporter.SaveAtPath(ownPath, own with { TimestampToken = token });
+            logger.LogInformation(
+                "自有参考证明已完成时间戳盖章，早于上游证明锚定。ProofId={ProofId}，参考链序={OwnIndex}，上游回执={HasReceipt}。",
+                own.ProofId, own.Chain.Index, !string.IsNullOrWhiteSpace(receipt));
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            lock (_gate)
+            {
+                _lastError = $"自有参考证明时间戳失败：{exception.Message}";
+            }
+
+            logger.LogWarning(exception, "自有参考证明时间戳盖章失败，上游证明提交继续。ProofId={ProofId}", own.ProofId);
             RaiseStatusChanged();
         }
     }

@@ -7,6 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Services.Config;
 
 namespace SecRandom.Services.Verification;
 
@@ -14,8 +15,10 @@ namespace SecRandom.Services.Verification;
 ///     Requests an RFC 3161 time-stamp token over a proof digest. It is the only trust anchor that does not
 ///     depend on the SecRandom-operated verification service: the token proves that this exact digest existed
 ///     no later than the stamped time, so any later edit to the proof is detectable.
-///     It cannot prove the draw itself happened at that time. Time stamping is always on — there is no
-///     user-facing switch — and only the digest ever leaves the device.
+///     It cannot prove the draw itself happened at that time.
+///     Only the digest ever leaves the device. It is on by default and can be switched off explicitly in the
+///     verification settings; switching it off also removes the period anchor the beacon match is checked
+///     against, which is why that page warns about the coupling before persisting the change.
 /// </summary>
 public interface ITimestampAuthorityClient
 {
@@ -26,6 +29,7 @@ public interface ITimestampAuthorityClient
 
 public sealed class TimestampAuthorityClient(
     HttpClient httpClient,
+    MainConfigHandler configHandler,
     ILogger<TimestampAuthorityClient> logger) : ITimestampAuthorityClient
 {
     private const int NonceLength = 16;
@@ -45,10 +49,13 @@ public sealed class TimestampAuthorityClient(
 
     private static readonly Lazy<X509Certificate2Collection> PinnedRoots = new(CreatePinnedRoots);
 
-    public bool IsEnabled => true;
+    public bool IsEnabled => configHandler.Data.General.Verification.TimestampAuthorityEnabled;
 
     public async Task<string> TimestampAsync(ReadOnlyMemory<byte> hash, CancellationToken cancellationToken)
     {
+        if (!IsEnabled)
+            throw new InvalidOperationException("Time stamping is switched off in the verification settings.");
+
         var nonce = RandomNumberGenerator.GetBytes(NonceLength);
         var request = Rfc3161TimestampRequest.CreateFromHash(
             hash,

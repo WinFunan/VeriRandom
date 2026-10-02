@@ -13,7 +13,9 @@ namespace SecRandom.Services.Verification;
 /// </summary>
 public sealed class ProofIntegrityVerifier(
     DrawProofExportService proofExporter,
-    ProofChainStore chainStore)
+    ProofChainStore chainStore,
+    OwnProofExportService ownProofExporter,
+    OwnProofChainStore ownChainStore)
 {
     private const int MaximumReportedIssues = 50;
 
@@ -139,7 +141,64 @@ public sealed class ProofIntegrityVerifier(
             head.HeadIndex,
             head.RetainedFromIndex,
             truncated,
-            issues);
+            issues,
+            VerifyOwnReference(cancellationToken));
+    }
+
+    /// <summary>
+    ///     Checks the fork's reference chain as a declaration, not as evidence: the node hash must still cover
+    ///     the Up node it points at, and each pulse's seed increment factor must start at zero and rise by one.
+    ///     These counters never make the report unhealthy — a reference node proves nothing on its own, so a
+    ///     problem here is information for the reader rather than a failed verification.
+    /// </summary>
+    private OwnReferenceReport VerifyOwnReference(CancellationToken cancellationToken)
+    {
+        var head = ownChainStore.Read();
+        var byPulse = new Dictionary<long, long>();
+        var nodes = 0;
+        var modified = 0;
+        var sequenceViolations = 0;
+        var timestamped = 0;
+        var untimestamped = 0;
+
+        foreach (var path in ownProofExporter.EnumeratePaths())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!ownProofExporter.TryRead(path, out var own) || own is null)
+            {
+                modified++;
+                continue;
+            }
+
+            nodes++;
+            var expected = OwnProofChainStore.ComputeSelfHash(
+                own.Chain.Index,
+                own.Chain.PrevHash,
+                own.Up.ChainIndex,
+                own.Up.ChainHash,
+                own.Beacon.PulseIndex,
+                own.Beacon.Sequence);
+            if (!string.Equals(expected, own.Chain.SelfHash, StringComparison.Ordinal))
+            {
+                modified++;
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(own.TimestampToken))
+                untimestamped++;
+            else
+                timestamped++;
+
+            // The preset: the first node of a pulse carries sequence 0 and every later node adds exactly one.
+            if (!byPulse.TryGetValue(own.Beacon.PulseIndex, out var expectedSequence))
+                expectedSequence = 0;
+            if (own.Beacon.Sequence != expectedSequence)
+                sequenceViolations++;
+            byPulse[own.Beacon.PulseIndex] = own.Beacon.Sequence + 1;
+        }
+
+        return new OwnReferenceReport(nodes, modified, sequenceViolations, timestamped, untimestamped,
+            head.HeadIndex, head.RetainedFromIndex);
     }
 
     private static void AddIssue(
@@ -188,11 +247,29 @@ public sealed record ProofIntegrityReport(
     long HeadIndex,
     long RetainedFromIndex,
     bool IssuesTruncated,
-    IReadOnlyList<ProofIntegrityIssue> Issues)
+    IReadOnlyList<ProofIntegrityIssue> Issues,
+    OwnReferenceReport OwnReference)
 {
     /// <summary>
     ///     Missing-tail entries are expected after a crash between the chain-head write and the proof write,
     ///     so they are reported but do not mark the chain unhealthy. Everything else is unexplained.
     /// </summary>
     public bool IsHealthy => Gaps == 0 && BrokenLinks == 0 && Modified == 0 && BeyondHead == 0;
+}
+
+/// <summary>
+///     Status of the fork's reference chain. It is reported separately from the Up chain on purpose: this
+///     chain is a supplementary declaration that a seed can be checked against an external beacon, so its
+///     counts never turn the Up chain unhealthy.
+/// </summary>
+public sealed record OwnReferenceReport(
+    int Nodes,
+    int Modified,
+    int SequenceViolations,
+    int Timestamped,
+    int Untimestamped,
+    long HeadIndex,
+    long RetainedFromIndex)
+{
+    public bool IsIntact => Modified == 0 && SequenceViolations == 0;
 }

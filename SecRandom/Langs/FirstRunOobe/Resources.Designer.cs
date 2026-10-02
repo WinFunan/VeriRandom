@@ -147,6 +147,24 @@ namespace SecRandom.Langs.FirstRunOobe {
             }
         }
         
+        public static string C_SecRandomServicesOptionalNote {
+            get {
+                return ResourceManager.GetString("C_SecRandomServicesOptionalNote", resourceCulture);
+            }
+        }
+        
+        public static string C_SecRandomServicesAcceptOptional {
+            get {
+                return ResourceManager.GetString("C_SecRandomServicesAcceptOptional", resourceCulture);
+            }
+        }
+        
+        public static string C_TimestampPrivacyNotice {
+            get {
+                return ResourceManager.GetString("C_TimestampPrivacyNotice", resourceCulture);
+            }
+        }
+        
         public static string C_GplTitle {
             get {
                 return ResourceManager.GetString("C_GplTitle", resourceCulture);

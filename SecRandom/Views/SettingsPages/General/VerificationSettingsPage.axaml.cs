@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Controls;
@@ -14,6 +15,8 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Verification;
+using SecRandom.Helpers;
+using SecRandom.Services.Consent;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Verification;
 using SecRandom.Shared;
@@ -33,13 +36,66 @@ public partial class VerificationSettingsPage : UserControl
     private INistBeaconClient BeaconClient { get; } = IAppHost.GetService<INistBeaconClient>();
     private bool _verificationModeSelectionReady;
     private bool _restoringVerificationModeSelection;
+    private bool _restoringTimestampAuthority;
 
     public VerificationSettingsPage()
     {
         DataContext = this;
         InitializeComponent();
+        _restoringTimestampAuthority = true;
+        TimestampAuthorityToggle.IsChecked = ConfigHandler.Data.General.Verification.TimestampAuthorityEnabled;
+        _restoringTimestampAuthority = false;
+        TimestampAuthorityToggle.IsCheckedChanged += TimestampAuthority_OnIsCheckedChanged;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+    }
+
+    /// <summary>
+    ///     Time stamping is on by default, but the user may switch it off. Turning it off also removes the
+    ///     period anchor the beacon match is normally checked against, so the coupling is spelled out and
+    ///     must be confirmed before the change is persisted.
+    /// </summary>
+    private async void TimestampAuthority_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
+    {
+        if (_restoringTimestampAuthority || sender is not ToggleSwitch toggle)
+            return;
+
+        var requested = toggle.IsChecked == true;
+        if (requested == ConfigHandler.Data.General.Verification.TimestampAuthorityEnabled)
+            return;
+
+        if (!requested)
+        {
+            var acknowledgement = new CheckBox
+            {
+                Content = LR.C_TimestampDisableConfirm,
+                Margin = new Avalonia.Thickness(0, 12, 0, 0)
+            };
+            var content = new StackPanel { Spacing = 4 };
+            content.Children.Add(CreateDialogText(LR.C_TimestampDisableBody));
+            content.Children.Add(acknowledgement);
+            var dialog = new FAContentDialog
+            {
+                Title = LR.C_TimestampDisableTitle,
+                Content = content,
+                PrimaryButtonText = LR.C_ModeConfirmSwitch,
+                CloseButtonText = LR.C_Cancel,
+                DefaultButton = FAContentDialogButton.Close
+            };
+            ConfirmDialogGate.Arm(dialog, acknowledgement);
+
+            var result = await dialog.ShowAsync(TopLevel.GetTopLevel(this));
+            if (result != FAContentDialogResult.Primary || acknowledgement.IsChecked != true)
+            {
+                _restoringTimestampAuthority = true;
+                toggle.IsChecked = true;
+                _restoringTimestampAuthority = false;
+                return;
+            }
+        }
+
+        ConfigHandler.Data.General.Verification.TimestampAuthorityEnabled = requested;
+        ConfigHandler.Save();
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -99,6 +155,14 @@ public partial class VerificationSettingsPage : UserControl
     }
 
     public int SelectedVerificationModeIndex => (int)ConfigHandler.Data.General.Verification.Mode;
+
+    private static TextBlock CreateDialogText(string text, bool bold = false, double topMargin = 0) => new()
+    {
+        Text = text,
+        TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+        FontWeight = bold ? Avalonia.Media.FontWeight.SemiBold : Avalonia.Media.FontWeight.Normal,
+        Margin = new Avalonia.Thickness(0, topMargin, 0, 0)
+    };
 
     public bool BeaconEntropyEnabled
     {
@@ -253,31 +317,56 @@ public partial class VerificationSettingsPage : UserControl
         if (requestedMode == currentMode)
             return;
 
-        var content = requestedMode == VerificationMode.Ordinary
-            ? LR.M_ModeConfirmLocal
-            : LR.M_ModeConfirmFormal;
+        var dialogContent = new StackPanel { Spacing = 4 };
+        if (requestedMode == VerificationMode.Ordinary)
+        {
+            dialogContent.Children.Add(CreateDialogText(LR.M_ModeConfirmLocal));
+        }
+        else
+        {
+            dialogContent.Children.Add(CreateDialogText(LR.M_ModeConfirmFormal));
+            dialogContent.Children.Add(CreateDialogText(LR.M_ModeConfirmFormalNoticeTitle, bold: true, topMargin: 8));
+            dialogContent.Children.Add(CreateDialogText(LR.M_ModeConfirmFormalNotice));
+            dialogContent.Children.Add(CreateDialogText(LR.M_ModeConfirmFormalWarning, bold: true));
+        }
+
         var acknowledgement = new CheckBox
         {
             Content = LR.C_ModeReadConfirm,
             Margin = new Avalonia.Thickness(0, 12, 0, 0)
         };
-        var dialogContent = new StackPanel { Spacing = 4 };
-        dialogContent.Children.Add(new TextBlock { Text = content, TextWrapping = Avalonia.Media.TextWrapping.Wrap });
         dialogContent.Children.Add(acknowledgement);
+
+        // Switching to formal notarization ships data to SECTL, so the fork-specific online-services
+        // acknowledgement becomes mandatory here and must be signed inside this same dialog.
+        CheckBox? servicesAcknowledgement = null;
+        if (requestedMode == VerificationMode.FormalNotarized && SecRandomServicesConsent.IsRequired(ConfigHandler))
+            servicesAcknowledgement = SecRandomServicesConsent.AppendDisclosure(dialogContent);
+
         var dialog = new FAContentDialog
         {
             Title = LR.C_ModeConfirmTitle,
             Content = dialogContent,
             PrimaryButtonText = LR.C_ModeConfirmSwitch,
             CloseButtonText = LR.C_Cancel,
-            DefaultButton = FAContentDialogButton.Close,
-            IsPrimaryButtonEnabled = false
+            DefaultButton = FAContentDialogButton.Close
         };
-        acknowledgement.IsCheckedChanged += (_, _) => dialog.IsPrimaryButtonEnabled = acknowledgement.IsChecked == true;
+
+        // The confirm button additionally stays disabled for a forced minimum reading period, so a mode that
+        // sends data to SECTL cannot be entered by a reflex click.
+        CheckBox[] acknowledgements = servicesAcknowledgement is null
+            ? [acknowledgement]
+            : [acknowledgement, servicesAcknowledgement];
+        ConfirmDialogGate.Arm(dialog, acknowledgements);
+
         var result = await dialog.ShowAsync(TopLevel.GetTopLevel(this));
 
-        if (result == FAContentDialogResult.Primary && acknowledgement.IsChecked == true)
+        if (result == FAContentDialogResult.Primary && acknowledgement.IsChecked == true
+            && (servicesAcknowledgement is null || servicesAcknowledgement.IsChecked == true))
         {
+            if (servicesAcknowledgement is not null)
+                SecRandomServicesConsent.MarkAccepted(ConfigHandler);
+
             ConfigHandler.Data.General.Verification.Mode = requestedMode;
             ConfigHandler.Save();
         }

@@ -120,9 +120,12 @@
                         <CheckBox IsChecked="{Binding ViewModel.AcceptedPrivacyPolicy}"
                                   Content="{x:Static langs:Resources.C_PrivacyPolicyAccept}" />
 
+                        <TextBlock Text="{x:Static langs:Resources.C_TimestampPrivacyNotice}"
+                                   TextWrapping="Wrap"
+                                   FontWeight="Bold" />
+
                         <Expander Header="{x:Static langs:Resources.C_SecRandomServicesTitle}"
-                                  IsExpanded="False"
-                                  IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}">
+                                  IsExpanded="False">
                             <ScrollViewer MinHeight="150" MaxHeight="240">
                                 <StackPanel Spacing="8">
                                     <SelectableTextBlock Text="{x:Static langs:Resources.C_SecRandomServicesClause}"
@@ -134,8 +137,12 @@
                                 </StackPanel>
                             </ScrollViewer>
                         </Expander>
+                        <TextBlock Text="{x:Static langs:Resources.C_SecRandomServicesOptionalNote}"
+                                   TextWrapping="Wrap"
+                                   FontWeight="Bold"
+                                   IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}" />
                         <CheckBox IsChecked="{Binding ViewModel.AcceptedSecRandomServices}"
-                                  Content="{x:Static langs:Resources.C_SecRandomServicesAccept}"
+                                  Content="{x:Static langs:Resources.C_SecRandomServicesAcceptOptional}"
                                   IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}" />
                         
                         <Expander Header="{x:Static langs:Resources.C_GplTitle}" IsExpanded="False">

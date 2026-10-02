@@ -37,6 +37,15 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_TimestampAuthority"
+                                    Header="{x:Static lv:Resources.S_TimestampAuthority}"
+                                    Description="{x:Static lv:Resources.S_TimestampAuthority_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ClockFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch x:Name="TimestampAuthorityToggle" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_BeaconEndpoint"
                                     Header="{x:Static lv:Resources.S_BeaconEndpoint}"
                                     Description="{x:Static lv:Resources.S_BeaconEndpoint_D}"

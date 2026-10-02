@@ -66,7 +66,7 @@ VeriRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改�
   <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>我已阅读并同意 VeriRandom 隐私政策</value></data>
   <data name="C_SecRandomServicesTitle" xml:space="preserve"><value>SecRandom 在线服务与隐私</value></data>
   <data name="C_SecRandomServicesClause" xml:space="preserve"><value>若要使用目前软件中集成的在线有关功能，您需要额外与SECTL达成协议许可关系；SECTL组织是一个与我们并没有必然法律关联的独立主体，他们将对您上传的数据获得访问权</value></data><data name="C_SecRandomServicesDisclaimer" xml:space="preserve"><value>使用在线功能，即表示您同意 SecRandom 的服务条款和隐私政策；您与 SECTL 之间形成直接的服务关系，VeriRandom 不是该关系的当事方</value></data>
-  <data name="C_SecRandomServicesAccept" xml:space="preserve"><value>我已阅读并同意上述说明与 SecRandom 隐私政策</value></data>
+  <data name="C_SecRandomServicesAccept" xml:space="preserve"><value>我已阅读并同意上述说明与 SecRandom 隐私政策</value></data><data name="C_SecRandomServicesOptionalNote" xml:space="preserve"><value>（可选）此项在首次设置中不是必选项，因此可以跳过；但当你之后启用数据遥测或在线状态，或切换到“正式公证”模式时，必须补签本确认，且补签必须经过确认弹窗，不能跳过</value></data><data name="C_SecRandomServicesAcceptOptional" xml:space="preserve"><value>（可选）我已阅读并同意上述说明与 SecRandom 隐私政策</value></data><data name="C_TimestampPrivacyNotice" xml:space="preserve"><value>隐私提示：为获取 RFC 3161 时间戳，本软件会将证明摘要等去标识化信息发送给沃通（WoTrus）及其时间戳服务；该信息不包含名单、姓名、学号或抽取结果，仅用于证明该摘要在对应时间点已经存在</value></data>
   <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
   <data name="C_GplAccept" xml:space="preserve"><value>我已阅读 GNU GPLv3 许可说明</value></data>
   <data name="C_VerificationNoticeTitle" xml:space="preserve"><value>关于可验证抽取的须知</value></data>

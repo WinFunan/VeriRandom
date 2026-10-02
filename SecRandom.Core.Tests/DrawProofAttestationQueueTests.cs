@@ -219,6 +219,8 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.None));
         services.AddCoreRuntimeServices();
         services.AddSingleton<ProofChainStore>();
+        services.AddSingleton<OwnProofChainStore>();
+        services.AddSingleton<OwnProofExportService>();
         services.AddSingleton<DrawProofExportService>();
         return services.BuildServiceProvider();
     }
@@ -231,6 +233,7 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
         return new DrawProofAttestationService(
             provider.GetRequiredService<MainConfigHandler>(),
             provider.GetRequiredService<DrawProofExportService>(),
+            provider.GetRequiredService<OwnProofExportService>(),
             witness,
             timestampClient ?? new DisabledTimestampAuthorityClient(),
             NullLogger<DrawProofAttestationService>.Instance);

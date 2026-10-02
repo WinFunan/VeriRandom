@@ -86,10 +86,11 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     public string StepProgress => IsPrivacyPolicyOnly
         ? LR.C_LegalTitle
         : string.Format(LR.M_StepProgress, SelectedStep, StepCount - 1);
+    // The SECTL online-services acknowledgement is optional during setup, so it never blocks continuing;
+    // it is demanded later by SecRandomServicesConsent when an online feature is actually used.
     public bool CanContinue => !IsPrivacyPolicyStep ||
                                (AcceptedPrivacyPolicy && AcceptedGpl &&
-                                (!IsVerificationNoticeRequired || AcceptedVerificationNotice) &&
-                                (!IsSecRandomServicesRequired || AcceptedSecRandomServices));
+                                (!IsVerificationNoticeRequired || AcceptedVerificationNotice));
     public bool IsPrivacyPolicyStep => IsPrivacyPolicyOnly || SelectedStep == 1;
     public int StepCount => 8;
     public string PageTitle => IsPrivacyPolicyOnly ? LR.C_LegalTitle : LR.C_Title;
@@ -190,8 +191,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     public async Task<bool> FinishAsync()
     {
         if (!AcceptedPrivacyPolicy || !AcceptedGpl ||
-            (IsVerificationNoticeRequired && !AcceptedVerificationNotice) ||
-            (IsSecRandomServicesRequired && !AcceptedSecRandomServices))
+            (IsVerificationNoticeRequired && !AcceptedVerificationNotice))
         {
             if (!IsPrivacyPolicyOnly)
                 SelectedStep = 1;
@@ -202,7 +202,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         if (!IsPrivacyPolicyOnly && !ApplyDesktopIntegration())
             StatusMessage = LR.M_DesktopIntegrationFailed;
 
-        _oobeService.Complete();
+        _oobeService.Complete(AcceptedSecRandomServices);
         await Task.CompletedTask;
         return true;
     }

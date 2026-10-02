@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,9 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Models.SubConfigs.General;
+using SecRandom.Core.Services.Config;
+using SecRandom.Services.Consent;
 using SecRandom.Services.FirstRun;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Services.ImportExport;
@@ -30,6 +34,7 @@ public partial class FirstRunOobeWindow : FAAppWindow
     private bool _isDevelopmentAdornerAdded;
     private bool _isLanguageSelectionReady;
     private bool _refreshLanguageWhenDrawerCloses;
+    private bool _revertingPrivacyChannel;
 
     public FirstRunOobeWindow()
     {
@@ -48,6 +53,45 @@ public partial class FirstRunOobeWindow : FAAppWindow
         Closed += WindowOnClosed;
         Opened += WindowOnOpened;
         ImportDrawerHost.PropertyChanged += ImportDrawerHost_OnPropertyChanged;
+        ViewModel.PrivacySettings.PropertyChanged += PrivacySettingsOnPropertyChanged;
+    }
+
+    private MainConfigHandler OobeConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
+
+    /// <summary>
+    ///     The SECTL online-services acknowledgement is optional in first-run setup, so it only becomes
+    ///     mandatory here at the moment the user enables a channel that ships data to SecRandom/SECTL.
+    ///     It is signed through the shared second-level dialog; declining reverts the toggle.
+    /// </summary>
+    private async void PrivacySettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_revertingPrivacyChannel)
+            return;
+
+        var enabledSentryTelemetry =
+            e.PropertyName == nameof(PrivacySettingsConfig.SentryTelemetryEnabled)
+            && ViewModel.PrivacySettings.SentryTelemetryEnabled;
+        var enabledOnlineStatus =
+            e.PropertyName == nameof(PrivacySettingsConfig.OnlineStatusMode)
+            && ViewModel.PrivacySettings.OnlineStatusMode != OnlineStatusMode.Off;
+        if (!enabledSentryTelemetry && !enabledOnlineStatus)
+            return;
+
+        if (await SecRandomServicesConsent.EnsureAsync(OobeConfigHandler, this))
+            return;
+
+        _revertingPrivacyChannel = true;
+        try
+        {
+            if (enabledSentryTelemetry)
+                ViewModel.PrivacySettings.SentryTelemetryEnabled = false;
+            else
+                ViewModel.PrivacySettings.OnlineStatusMode = OnlineStatusMode.Off;
+        }
+        finally
+        {
+            _revertingPrivacyChannel = false;
+        }
     }
 
     public FirstRunOobeViewModel ViewModel { get; } = IAppHost.GetService<FirstRunOobeViewModel>();
@@ -447,6 +491,7 @@ public partial class FirstRunOobeWindow : FAAppWindow
     {
         Closed -= WindowOnClosed;
         ImportDrawerHost.PropertyChanged -= ImportDrawerHost_OnPropertyChanged;
+        ViewModel.PrivacySettings.PropertyChanged -= PrivacySettingsOnPropertyChanged;
         _ = NotifyImportDrawerClosedAsync(ImportDrawerHost.DrawerContent);
     }
 

@@ -149,6 +149,8 @@ public sealed class ProofChainTests : IDisposable
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.None));
         services.AddCoreRuntimeServices();
         services.AddSingleton<ProofChainStore>();
+        services.AddSingleton<OwnProofChainStore>();
+        services.AddSingleton<OwnProofExportService>();
         services.AddSingleton<DrawProofExportService>();
         services.AddSingleton<ProofIntegrityVerifier>();
         return services.BuildServiceProvider();

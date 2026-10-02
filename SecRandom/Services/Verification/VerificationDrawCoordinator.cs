@@ -138,16 +138,16 @@ public sealed class VerificationDrawCoordinator(
             }
 
             result = kernel.Draw(input, seed);
-            proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null, beacon);
+            proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null);
         }
-        return Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input));
+        return Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input), beacon);
     }
 
     public void Publish<TCandidate>(VerificationDrawOutcome<TCandidate> outcome)
         where TCandidate : class
     {
         ArgumentNullException.ThrowIfNull(outcome);
-        var exported = proofExporter.Save(outcome.Proof, outcome.ExportContext);
+        var exported = proofExporter.Save(outcome.Proof, outcome.ExportContext, outcome.Beacon);
         if (outcome.Proof.Mode == VerificationProofMode.OfflineReproducible)
             attestationService.Request(exported.Proof, exported.Path);
     }
@@ -166,14 +166,15 @@ public sealed class VerificationDrawCoordinator(
         VerificationKernelResult result,
         DrawProof proof,
         DrawProofExportContext exportContext,
-        IReadOnlyDictionary<Guid, double> frozenWeights)
+        IReadOnlyDictionary<Guid, double> frozenWeights,
+        DrawProofBeacon? beacon)
         where TCandidate : class
     {
         var winners = result.Winners.Select(winner => recordLookup.TryGetValue(winner.RecordId, out var record)
             ? record
             : throw new InvalidDataException("Verification kernel returned a record outside the frozen pool."))
             .ToList();
-        return new VerificationDrawOutcome<TCandidate>(winners, proof, frozenWeights, exportContext);
+        return new VerificationDrawOutcome<TCandidate>(winners, proof, frozenWeights, exportContext, beacon);
     }
 
     private static DrawProof CreateProof(
@@ -183,8 +184,7 @@ public sealed class VerificationDrawCoordinator(
         VerificationKernelResult result,
         VerificationProofMode mode,
         Guid? parentProofId,
-        DrawProofWitness? witness,
-        DrawProofBeacon? beacon = null)
+        DrawProofWitness? witness)
     {
         var payload = VerificationWireCodec.EncodeProofPayload(input, seed, result.Winners);
         return new DrawProof
@@ -197,7 +197,6 @@ public sealed class VerificationDrawCoordinator(
             Payload = WitnessClient.ToBase64Url(payload),
             AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),
             Result = new DrawProofResult { WinnerRecordIds = result.Winners.Select(winner => winner.RecordId).ToList() },
-            Beacon = beacon,
             Witness = witness
         };
     }
@@ -246,4 +245,5 @@ public sealed record VerificationDrawOutcome<TCandidate>(
     IReadOnlyList<TCandidate> Winners,
     DrawProof Proof,
     IReadOnlyDictionary<Guid, double> FrozenWeights,
-    DrawProofExportContext ExportContext);
+    DrawProofExportContext ExportContext,
+    DrawProofBeacon? Beacon = null);

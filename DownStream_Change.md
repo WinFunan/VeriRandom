@@ -21,10 +21,12 @@
 |---|------|----------|----------------|
 | 1 | 品牌与显示名称改为 VeriRandom | 程序集元数据、窗口标题、移动端清单、CI bundle 名、本地化资源、README | 低（多为文案） |
 | 2 | 分支声明、CLA 与治理文档 | README / About / CONTRIBUTING / CLA / PR 模板 | 低 |
-| 3 | NIST Beacon 第四条熵源路径 | 新增验证路径与配置项 | **中高**（动了验证链路） |
+| 3 | NIST Beacon 熵源与 Up/Own 双链证明 | 新增验证路径、配置项、自有证明文件格式 | **高**（动了证明链路与落盘格式） |
 | 4 | 遥测与在线状态默认关闭 + SECTL 披露 | 隐私配置默认值、OOBE 法务页、隐私设置页 | 中 |
 | 5 | 自动更新禁用（保留能力） | Core 常量、更新调度/入口、更新设置页 | 中 |
 | 6 | CI 与构建修复 | `build_publish.yml`、Android 版本号、密钥脚本 | **高**（同一文件多处改） |
+| 7 | TSA 时间戳改为可显式关闭 + 沃通隐私提示 | 验证设置页、时间戳客户端、OOBE 隐私政策提示 | 中高（改了验证链路的网络行为开关） |
+| 8 | 新增「自有参考链（Own）」补充声明 | 新增 `*.ownproof.json`、自有链头、完整性报告字段 | **高**（新增落盘格式） |
 
 ---
 
@@ -94,9 +96,21 @@
 
 ---
 
-## 3. NIST Beacon 第四条熵源路径
+## 3. NIST Beacon 熵源与 Up/Own 双链证明
 
 **意图**：在普通模式引入「外部信标熵源」开关，用已发布的 NIST Beacon 脉冲派生抽取种子，使主持人无法注入自定义熵；同一脉冲内用从 0 开始、公差为 1 的序号保证不重复取样。
+证明改为**双链双文件**：Up（上游兼容，不含信标）与 Own（自有参考声明）。
+
+**Up 链（`*.srproof.json`，上游兼容）**：
+- **不再包含信标字段**。`DrawProof.Beacon` 仅保留读取旧文件的能力，写盘时由 `DrawProofExportService.Save` 置空（`proof with { Beacon = null }`），`WitnessClient.AttestAsync` 也继续在提交体内置空，保证提交/回执/签名摘要的字节形态与上游一致。
+- 信标校验改走**预设**：`BeaconPulsePeriodPolicy.Match(stampedAt, pulseTimeStamp, periodSeconds)` 用 TSA 令牌的时间确定周期，接受「当周期脉冲」或「容差内的上一周期脉冲」（`TolerancePeriods = 1`，另有 60 秒时钟偏移容差）；脉冲由权威端点重新抓取，再按同一 KDF 重新派生种子。
+
+**Own 链（`*.ownproof.json`，与 Up 同目录同基名）**：
+- **仅在启用信标熵时**写入；它是补充来源，**不提供**额外密码学可信度，也**不参与**公平性判定。
+- 每个节点含：所依赖的 Up 节点（`Up.ChainIndex` / `Up.ChainHash`，另存 `Up.ProofHash` 供声明）、信标 `PulseIndex`、同脉冲内的种子递增因子 `Beacon.Sequence`、完整已签名脉冲副本、自身链位置，以及**自身 RFC 3161 令牌**。
+- 节点哈希 `OwnProofChainStore.ComputeSelfHash` 覆盖 `(index, prevHash, Up.ChainIndex, Up.ChainHash, PulseIndex, Sequence)`，因此不能被事后改指向另一次抽取。
+- **令牌顺序**：Own 的 TSA 令牌**先于** Up 链的令牌申请（`DrawProofAttestationService.TimestampOwnProofAsync` 是队列条目的第一阶段），用于说明参考节点不是「抽取完成、Up 已被盖章之后」补加的。
+- 复核要求：同一脉冲的 `Sequence` **从 0 开始、公差为 1、单调递增**；结果只作为 `ProofIntegrityReport.OwnReference` 参考声明，`IsHealthy` **不**受其影响。
 
 **新增文件**：
 
@@ -106,6 +120,10 @@
 | `SecRandom.Core/Services/Verification/BeaconSeedDerivation.cs` | 纯函数种子派生 `SHA256("SecRandomBeacon/v1" ‖ pulseIndex ‖ chainIndex ‖ outputValue ‖ sequence)` |
 | `SecRandom.Core/Services/Verification/BeaconSequencePolicy.cs` | 每脉冲序号策略（新脉冲从 0，同脉冲 +1，拒绝回退/同索引异值） |
 | `SecRandom.Core/Services/Verification/BeaconEndpointPolicy.cs` | 端点校验（默认官方 NIST v2，远程必须 HTTPS） |
+| `SecRandom.Core/Services/Verification/BeaconPulsePeriodPolicy.cs` | 周期预设：按 TSA 时间判定脉冲属当周期/容差内上一周期/超出容差 |
+| `SecRandom.Shared/Models/Verification/OwnProof.cs` | Own 合约：`OwnProof` / `OwnProofUpReference` / `OwnProofChain` |
+| `SecRandom/Services/Verification/OwnProofChainStore.cs` | 自有参考链头（`data/proofs/own-chain-head.json`）与节点哈希 |
+| `SecRandom/Services/Verification/OwnProofExportService.cs` | `OwnProofPaths`（同名基名换扩展名）+ Own 文件读写、孤儿清理、移除登记 |
 | `SecRandom/Services/Verification/BeaconContracts.cs` | `INistBeaconClient`、`BeaconSeedReservation`、`BeaconEntropyException` |
 | `SecRandom/Services/Verification/NistBeaconClient.cs` | 脉冲抓取与形状校验 |
 | `SecRandom/Services/Verification/BeaconEntropyProvider.cs` | 序号锚点持久化（`data/proofs/beacon-state.json`，原子替换 + 信号量） |
@@ -138,11 +156,28 @@
 |------|------|
 | `SecRandom.Core/Models/SubConfigs/General/PrivacySettingsConfig.cs` | `SentryTelemetryEnabled` 默认 `false`、`OnlineStatusMode` 默认 `Off`（遗留配置仍按原值迁移） |
 | `SecRandom.Core/Models/SubConfigs/General/BasicSettingsConfig.cs` | 新增 `AcceptedSecRandomServicesVersion` |
-| `SecRandom/Services/FirstRun/FirstRunOobeService.cs` | 新增 `CurrentSecRandomServicesVersion = 1`；纳入 `IsPrivacyPolicyOnlyRequired()` 与 `Complete()` |
-| `SecRandom/ViewModels/FirstRunOobeViewModel.cs` | 新增 `AcceptedSecRandomServices` / `IsSecRandomServicesRequired`；纳入 `CanContinue` / `FinishAsync` / 属性通知 |
-| `SecRandom/Views/FirstRunOobeWindow.axaml` | 隐私页新增数据流向提示；法务页新增 SECTL 披露折叠区 + 条款 + 免责声明 + SecRandom 隐私政策 + 必选勾选 |
-| `SecRandom/Langs/FirstRunOobe/Resources{,.en-US,.ja-JP}.resx` + Designer | 政策改为默认关闭并注明数据流向；新增 `SecRandomPrivacyPolicy`（含 v3.0.0 前置说明）、`C_SecRandomServicesTitle/Clause/Disclaimer/Accept`；`C_PrivacyEncouragement` → `C_PrivacyDataDestination`；`C_LegalDescription` 改默认关闭 |
+| `SecRandom/Services/FirstRun/FirstRunOobeService.cs` | 新增 `CurrentSecRandomServicesVersion = 1`；`Complete(bool secRandomServicesAccepted)` 仅在勾选时记录该版本；**不**再把该版本纳入 `IsPrivacyPolicyOnlyRequired()`（该确认改为可选、按需补签） |
+| `SecRandom/ViewModels/FirstRunOobeViewModel.cs` | 新增 `AcceptedSecRandomServices` / `IsSecRandomServicesRequired`；**不**纳入 `CanContinue` / `FinishAsync`（可选项不阻塞流程）；完成后按勾选状态传递给 `Complete(...)` |
+| `SecRandom/Views/FirstRunOobeWindow.axaml` | 隐私页新增数据流向提示；法务页新增 SECTL 披露折叠区（条款 + 免责声明 + SecRandom 隐私政策）；新增加粗「（可选）」说明与非必选勾选 |
+| `SecRandom/Views/FirstRunOobeWindow.axaml.cs` | 监听隐私开关：启用遥测/在线状态时强制走 SECTL 补签弹窗，拒绝则回退开关 |
+| `SecRandom/Langs/FirstRunOobe/Resources{,.en-US,.ja-JP}.resx` + Designer | 政策改为默认关闭并注明数据流向；新增 `SecRandomPrivacyPolicy`（含 v3.0.0 前置说明）、`C_SecRandomServicesTitle/Clause/Disclaimer/Accept`、`C_SecRandomServicesOptionalNote`、`C_SecRandomServicesAcceptOptional`；`C_PrivacyEncouragement` → `C_PrivacyDataDestination`；`C_LegalDescription` 改默认关闭 |
 | `SecRandom/Langs/SettingsPages/General/Privacy/Resources{,.en-US,.ja-JP}.resx` | 两条说明追加「数据将被发送给 SecRandom 与 SECTL」 |
+| `SecRandom/Views/SettingsPages/General/PrivacySettingsPage.axaml.cs` | 监听隐私开关：启用遥测/在线状态时强制走 SECTL 补签弹窗，拒绝则回退开关 |
+| `SecRandom/Langs/SettingsPages/General/Verification/Resources{,.en-US,.ja-JP}.resx` + Designer | 重写 `M_ModeConfirmFormal`（上游说明 + 标点调整 + 注释）；新增 `M_ModeConfirmFormalNoticeTitle` / `Notice` / `Warning`（加粗）与 `C_ModeConfirmSecRandomServices` |
+| `SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml.cs` | 正式公证确认弹窗改为分段渲染（正文 + 加粗「注意」+ 正文 + 加粗结论）；当尚未补签时在同一弹窗内追加 SECTL 条款/免责声明与**必选**勾选，两项都勾选才可切换；确认按钮由 `ConfirmDialogGate` 强制 5 秒后才可点击 |
+
+**新增文件**：
+
+| 文件 | 说明 |
+|------|------|
+| `SecRandom/Services/Consent/SecRandomServicesConsent.cs` | SECTL 在线服务确认的共享实现：`IsRequired` / `MarkAccepted` / `AppendDisclosure` / `EnsureAsync`（二级弹窗，不能静默通过，确认按钮 5 秒后才可点击） |
+| `SecRandom/Helpers/ConfirmDialogGate.cs` | 强制阅读门：`MinimumDisplay = 5s`，确认按钮在最短显示时间结束且所有必选勾选完成前保持禁用；正式公证切换弹窗与该 SECTL 补签弹窗都用它，调用方不得缩短该时长 |
+
+**行为**：
+- OOBE 中该确认**可选**，勾选才记录版本；未勾选则保持未接受。
+- 触发**强制补签**的两个时机：切换到「正式公证」模式；启用 Sentry 遥测或在线状态（≠ Off）。两处都通过同一个二级确认弹窗完成，拒绝则回退对应操作。
+- 涉密弹窗的确认按钮受 `ConfirmDialogGate` 约束：弹窗显示满 5 秒且必选勾选全部完成后才可点击，避免瞬时反射式确认；切换回普通模式的同一弹窗也适用。
+- 中文文案按项目规范去掉了中文句号 `。`（改为 `；` 或分句）；如需保留原文标点属上游同步时需注意的差异。
 
 **连带影响**：`OnlineStatusMode == Off` 同时关闭 `PlatformUsageReportService`（使用统计）。
 
@@ -219,6 +254,61 @@
 ## 9. 记录维护
 
 - 新增改动：追加到对应主题，并在「§0 变更索引」表格更新范围/风险。
-- 新增主题：在 §1–§6 之后追加一节，并更新索引。
+- 新增主题：在 §1–§11 之后追加一节，并更新索引。
 - 删除或回退某改动：保留条目并标注「已回退（日期/原因）」，不要直接删除历史。
-- 本台账最初由 AI 助手在无法访问 git 的环境中依据改动内容整理（本机无 `git`，且仓库当时未提供可用的 upstream diff）。此后每次改动请**就地更新**，不要依赖事后重建。
+- 此后每次改动请**就地更新**，不要依赖事后重建。
+
+---
+
+## 10. TSA 时间戳改为可显式关闭 + 沃通去标识化提示
+
+**意图**：时间戳默认开启，但用户可以显式关闭（不再强制静默进行）；关闭时必须说明与信标周期锚定的耦合；并在自有隐私政策中加粗披露「为获取 RFC 3161 时间戳会把去标识化信息发送给沃通及其时间戳服务」。
+
+**修改文件**：
+
+| 文件 | 改动 |
+|------|------|
+| `SecRandom.Core/Models/SubConfigs/General/VerificationSettingsConfig.cs` | 新增 `TimestampAuthorityEnabled`，默认 `true` |
+| `SecRandom/Services/Verification/TimestampAuthorityClient.cs` | `IsEnabled` 改为读取该设置；被禁用时 `TimestampAsync` 直接抛出不执行网络请求；类注释同步 |
+| `SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml` | 新增 `S_TimestampAuthority` 开关行（`TimestampAuthorityToggle`） |
+| `SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml.cs` | 关闭时弹出耦合提示弹窗（`C_TimestampDisableTitle` / `C_TimestampDisableBody` / `C_TimestampDisableConfirm`），必须勾选并 `ConfirmDialogGate` 满 5 秒才可确认；拒绝则回退开关 |
+| `SecRandom/Langs/SettingsPages/General/Verification/Resources{,.en-US,.ja-JP}.resx` + Designer | 新增上述 5 个键 |
+| `SecRandom/Views/FirstRunOobeWindow.axaml` | 隐私政策后新增**加粗** `C_TimestampPrivacyNotice` |
+| `SecRandom/Langs/FirstRunOobe/Resources{,.en-US,.ja-JP}.resx` + Designer | 新增 `C_TimestampPrivacyNotice` |
+
+**行为**：
+- 关闭 TSA 后两条链都不再申请时间戳；信标匹配失去周期锚定，只能按 Own 记录的 `PulseIndex` 回溯脉冲。
+- 关闭动作必须经过弹窗确认，不能静默生效。
+
+---
+
+## 11. 抽取证明双链落盘（Up / Own）
+
+**意图**：把「上传排除信标」改为双证明文件，Up 面向上游服务器兼容，Own 作为自有补充声明并用于说明「可以使用信标验证」。
+
+**新增文件**：
+
+| 文件 | 说明 |
+|------|------|
+| `SecRandom.Shared/Models/Verification/OwnProof.cs` | Own 合约（`OwnProof` / `OwnProofUpReference` / `OwnProofChain`，`FormatId = "verirandom-own-proof/v1"`） |
+| `SecRandom.Core/Services/Verification/BeaconPulsePeriodPolicy.cs` | 周期预设（当周期 / 容差内上一周期 / 超出容差 / 无法判定） |
+| `SecRandom/Services/Verification/OwnProofChainStore.cs` | `OwnProofChainStore`（`data/proofs/own-chain-head.json`，域分隔 `SecRandomProof/v3/own-chain`）+ `OwnChainHead` |
+| `SecRandom/Services/Verification/OwnProofExportService.cs` | `OwnProofPaths` + Own 文件读写、`RemoveOrphans`、`RecordRemoved` |
+
+**修改文件**：
+
+| 文件 | 改动 |
+|------|------|
+| `SecRandom/Services/Verification/DrawProofExportService.cs` | `Save(..., DrawProofBeacon?)` 写盘时置空 `Beacon`；启用信标时写同基名 `*.ownproof.json`；`DrawProofExportResult` 新增 `OwnPath`；保留/超限清理同时删除并登记 Own 兄弟文件 |
+| `SecRandom/Services/Verification/VerificationDrawCoordinator.cs` | `CreateProof` 不再写入 `Beacon`；信标经 `VerificationDrawOutcome.Beacon` 单独传递，由 `Publish` 交给导出服务 |
+| `SecRandom/Services/Verification/DrawProofAttestationService.cs` | 新增 `TimestampOwnProofAsync` 作为队列条目**第一阶段**（早于回执与 Up 时间戳）；失败只记录 `_lastError` 并继续上游提交；构造注入 `OwnProofExportService` |
+| `SecRandom/Services/Verification/ProofIntegrityVerifier.cs` | 新增 `VerifyOwnReference`，报告节点哈希与「从 0、公差 1」序号，输出 `ProofIntegrityReport.OwnReference`；**不参与** `IsHealthy` |
+| `SecRandom/App.axaml.cs` | 注册 `OwnProofChainStore`、`OwnProofExportService`（同步注册到 `ProofChainTests` / `DrawProofAttestationQueueTests` 的测试容器） |
+
+**行为与边界**：
+- Up 链字节形态与上游一致（已置空信标），提交 `fair.sectl.cn` 与 TSA 的字段集不变。
+- Own **仅**在启用信标熵时写入；它是参考声明，不提供额外密码学可信度，也不参与公平性判定。
+- Own 的 TSA 令牌先于 Up 申请，用于说明参考节点不是事后补加。
+- Own 导出失败**不得**影响已完成的抽取（`DrawProofExportService.Save` 内捕获并告警）。
+
+**待办**：设置页目前只展示 Up 链完整性文本，尚未把 `OwnReference` 计数渲染到界面。
