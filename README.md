@@ -6,14 +6,14 @@
 
 **基于动态权重的公平随机工具，让抽取与决策告别争议**
 
-[![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/SECTL/SecRandom/issues)
-[![最新版本](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=最新正式版)](https://github.com/SECTL/SecRandom/releases/latest)
-[![测试版本](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=for-the-badge&label=测试版)](https://github.com/SECTL/SecRandom/releases)
-[![最后更新](https://img.shields.io/github/last-commit/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=最后更新时间)](https://github.com/SECTL/SecRandom/commits/master)
-[![累计下载](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=累计下载)](https://github.com/SECTL/SecRandom/releases)
+[![GitHub Issues](https://img.shields.io/github/issues-search/WinFunan/VeriRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/SECTL/SecRandom/issues)
+[![最新版本](https://img.shields.io/github/v/release/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=最新正式版)](https://github.com/WinFunan/VeriRandom/releases/latest)
+[![测试版本](https://img.shields.io/github/v/release/WinFunan/VeriRandom?include_prereleases&style=for-the-badge&label=测试版)](https://github.com/WinFunan/VeriRandom/releases)
+[![最后更新](https://img.shields.io/github/last-commit/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=最后更新时间)](https://github.com/WinFunan/VeriRandom/commits/master)
+[![累计下载](https://img.shields.io/github/downloads/WinFunan/VeriRandom/total?style=for-the-badge&color=00b4ab&label=累计下载)](https://github.com/WinFunan/VeriRandom/releases)
 
-[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%20%7C%20833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/iWcfaPHn7W)
-[![Bilibili](https://img.shields.io/badge/-Bilibili%20%7C%20%E9%BB%8E%E6%B3%BD%E6%87%BF-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
+[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%20%7C%20833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/EvhyCJWqCA)
+[![Bilibili](https://img.shields.io/badge/-Bilibili%20%7C%20%E9%BB%8E%E6%B3%BD%E6%87%BF-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/510993086?spm_id_from=333.1007.0.0)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](LICENSE)
 
 **语言** [ **简体中文** | [English](resources/README_EN.md) | [日本語](resources/README_JA.md) ]
@@ -80,10 +80,14 @@ VeriRandom 是面向课堂、团队、活动、决策等场景的公平抽取应
 | v2 | Python + PySide6 + qfluentwidgets | Qt 技术栈演进 |
 | **v3** | **C# + Avalonia + FluentAvalonia** | .NET 桌面重构，持续发展抽取、验证与桌面集成能力 |
 
-## 下载与更新
+## 版本下载与更新
+
+- [GitHub Releases](https://github.com/WinFunan/VeriRandom/releases) 提供各版本的发行包与更新说明
+
+## 上游版本下载与更新
 
 - [GitHub Releases](https://github.com/SECTL/SecRandom/releases) 提供各版本的发行包与更新说明
-- [官方下载页面](https://stk.sectl.cn/SecRandom) 提供下载最新版入口
+- [上游仓库官方下载页面](https://stk.sectl.cn/SecRandom) 提供上游版本下载最新版入口
 - 自动更新在部署前验证已签名的发布清单以及制品的长度和哈希；请以每个发行版本提供的安装包和说明为准
 
 ## 许可证与第三方声明
@@ -94,13 +98,24 @@ VeriRandom 是面向课堂、团队、活动、决策等场景的公平抽取应
 
 ## 贡献者和特别感谢
 
+<a href="https://github.com/WinFunan/VeriRandom/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=WinFunan/VeriRandom" alt="VeriRandom contributors" />
+</a>
+
 <a href="https://github.com/SECTL/SecRandom/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=SECTL/SecRandom" alt="SecRandom contributors" />
 </a>
 
-感谢每一位为 SecRandom 提交代码、报告问题、完善文档和提供反馈的贡献者。头像由 GitHub 贡献者数据动态生成，点击可前往 [GitHub 贡献者页面](https://github.com/SECTL/SecRandom/graphs/contributors) 查看完整统计
+感谢每一位为 VeriRandom 与 SecRandom 提交代码、报告问题、完善文档和提供反馈的贡献者。头像由 GitHub 贡献者数据动态生成，点击可前往[本仓库Github 贡献者页面](https://github.com/WinFunan/VeriRandom/graphs/contributors) 或 [上游仓库GitHub 贡献者页面](https://github.com/SECTL/SecRandom/graphs/contributors) 查看完整统计
 
-## 支持与社区
+## 对本仓库支持与社区
+- [QQ群 768421833](https://qm.qq.com/q/EvhyCJWqCA)
+- [邮箱](mailto:love-code-yeyixiao@outlook.com)
+- [Bilibili 主页](https://space.bilibili.com/510993086)
+- [问题反馈](https://github.com/WinFunan/VeriRandom/issues)
+- [简体中文贡献指南](CONTRIBUTING.md)
+
+## 对上游仓库支持与社区
 
 - [爱发电支持](https://afdian.com/a/lzy0983)
 - [邮箱](mailto:lzy.12@foxmail.com)
@@ -110,16 +125,8 @@ VeriRandom 是面向课堂、团队、活动、决策等场景的公平抽取应
 - [问题反馈](https://github.com/SECTL/SecRandom/issues)
 - [SecRandom 官方文档](https://secrandom.sectl.cn/doc/overview.html)
 - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
-- [简体中文贡献指南](CONTRIBUTING.md)
+- [简体中文贡献指南](https://github.com/SECTL/SecRandom/CONTRIBUTING.md)
 
-## Star History
 
-<a href="https://www.star-history.com/?repos=SECTL%2FSecRandom&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&theme=dark&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
- </picture>
-</a>
-
+**Copyright © 2025-2026 WinFunan**
 **Copyright © 2025-2026 SECTL**
