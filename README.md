@@ -6,13 +6,13 @@
 
 **基于动态权重的公平随机工具，让抽取与决策告别争议**
 
-[![GitHub Issues](https://img.shields.io/github/issues-search/WinFunan/VeriRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/SECTL/SecRandom/issues)
+[![GitHub Issues](https://img.shields.io/github/issues-search/WinFunan/VeriRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/WinFunan/VeriRandom/issues)
 [![最新版本](https://img.shields.io/github/v/release/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=最新正式版)](https://github.com/WinFunan/VeriRandom/releases/latest)
 [![测试版本](https://img.shields.io/github/v/release/WinFunan/VeriRandom?include_prereleases&style=for-the-badge&label=测试版)](https://github.com/WinFunan/VeriRandom/releases)
 [![最后更新](https://img.shields.io/github/last-commit/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=最后更新时间)](https://github.com/WinFunan/VeriRandom/commits/master)
 [![累计下载](https://img.shields.io/github/downloads/WinFunan/VeriRandom/total?style=for-the-badge&color=00b4ab&label=累计下载)](https://github.com/WinFunan/VeriRandom/releases)
 
-[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%20%7C%20833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/EvhyCJWqCA)
+[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%20%7C%20768421833-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/EvhyCJWqCA)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](LICENSE)
 
 **语言** [ **简体中文** | [English](resources/README_EN.md) | [日本語](resources/README_JA.md) ]
