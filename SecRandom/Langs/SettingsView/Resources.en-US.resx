@@ -138,7 +138,7 @@
   <data name="C_Close"><value>Close</value></data>
   <data name="C_CopySessionCode"><value>Copy session code</value></data>
     <data name="M_ImportUnsupportedTitle"><value>Unsupported Import File</value></data>
-    <data name="M_ImportUnsupportedContent"><value>This is not a supported SecRandom v3 export file.</value></data>
+    <data name="M_ImportUnsupportedContent"><value>This is not a supported VeriRandom v3 export file.</value></data>
     <data name="M_ImportUnsupportedUnknownVersion"><value>Unknown</value></data>
     <data name="M_ImportUnsupportedVersion"><value>Detected export version: {0}&#xA;&#xA;{1}&#xA;&#xA;No recovery snapshot was created and no data was changed.</value></data>
     <data name="M_NavigateFailed" xml:space="preserve">

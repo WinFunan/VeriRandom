@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <data name="PrivacyPolicy" xml:space="preserve"><value>SecRandom Privacy Policy (Version 1)
+  <data name="PrivacyPolicy" xml:space="preserve"><value>VeriRandom Privacy Policy (Version 1)
 
-1. Scope and acceptance. SecRandom is a random selection tool for activities and organizations. By continuing to use the software, you acknowledge and accept this privacy policy; it does not remove rights granted by applicable law.
+1. Scope and acceptance. VeriRandom is a random selection tool for activities and organizations. By continuing to use the software, you acknowledge and accept this privacy policy; it does not remove rights granted by applicable law.
 
 2. Local data. Rosters, prizes, history, and settings are stored locally by default. Only import data that is lawful, accurate, authorized, and necessary.
 
@@ -19,7 +19,7 @@
 8. GPLv3. This policy does not replace or restrict GNU GPLv3 rights for source code, modifications, and distribution.</value></data>
   <data name="GplNotice" xml:space="preserve"><value>GNU General Public License v3.0 (GPLv3) notice
 
-SecRandom is released under GNU GPLv3. GPLv3 permits you to run, study, modify, and redistribute the software. Distribution of modified versions must comply with its copyleft terms, including providing corresponding source code under GPLv3.
+VeriRandom is released under GNU GPLv3. GPLv3 permits you to run, study, modify, and redistribute the software. Distribution of modified versions must comply with its copyleft terms, including providing corresponding source code under GPLv3.
 
 The official GNU GPLv3 text controls. This acknowledgement does not require you to waive any GPLv3 rights.</value></data>
   <data name="VerificationNotice" xml:space="preserve"><value>About verifiable draws
@@ -29,21 +29,21 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
 2. Formal notarization mode first locks the anonymous candidate pool, weights, and rules at fair.sectl.cn. The server then generates random material, calculates the result, and stores an immutable official proof. Network disruption, outage, service unavailability, device failure, or other force majeure before final server evidence is returned never substitutes a local result or automatically changes mode. Once the server confirms the lock, the pool, rules, random material, and result cannot be replaced, supplemented, or recalculated during that draw.
 
 3. Formal notarization protects the locked flow from replacement of local draw code, random material, or result files. It cannot prove that the real-world roster is complete or authentic, nor that the pool was not manipulated before submission.</value></data>
-  <data name="C_Title" xml:space="preserve"><value>Set up SecRandom</value></data>
+  <data name="C_Title" xml:space="preserve"><value>Set up VeriRandom</value></data>
   <data name="C_Intro" xml:space="preserve"><value>Read the verifiable-draw notice and complete the required privacy-policy and GPLv3 acknowledgement first. Everything else can be changed later.</value></data>
-  <data name="C_WelcomeTitle" xml:space="preserve"><value>Welcome to SecRandom</value></data>
+  <data name="C_WelcomeTitle" xml:space="preserve"><value>Welcome to VeriRandom</value></data>
   <data name="C_WelcomeDescription" xml:space="preserve"><value>Complete the first-run setup in a few steps. The verifiable-draw notice, privacy-policy, and GPLv3 acknowledgements are required; you can adjust everything else later in Settings.</value></data>
   <data name="C_Language" xml:space="preserve"><value>Language</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>Privacy policy and open-source licence</value></data>
   <data name="C_LegalDescription" xml:space="preserve"><value>Read the verifiable-draw notice, then acknowledge the privacy policy and GNU GPLv3 before continuing. Privacy options are enabled by default and can be adjusted below.</value></data>
-  <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>SecRandom privacy policy</value></data>
-  <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>I have read and agree to the SecRandom privacy policy.</value></data>
+  <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>VeriRandom privacy policy</value></data>
+  <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>I have read and agree to the VeriRandom privacy policy.</value></data>
   <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
   <data name="C_GplAccept" xml:space="preserve"><value>I have read the GNU GPLv3 licence notice.</value></data>
   <data name="C_VerificationNoticeTitle" xml:space="preserve"><value>About verifiable draws</value></data>
   <data name="C_VerificationNoticeAccept" xml:space="preserve"><value>I have read the notice about verifiable draws.</value></data>
   <data name="C_DataTitle" xml:space="preserve"><value>Restore or select a list</value></data>
-  <data name="C_DataDescription" xml:space="preserve"><value>Restore existing SecRandom v3 data, then select or import the roll-call list to use first. Skipping this does not affect later use.</value></data>
+  <data name="C_DataDescription" xml:space="preserve"><value>Restore existing VeriRandom v3 data, then select or import the roll-call list to use first. Skipping this does not affect later use.</value></data>
   <data name="C_RestoreTitle" xml:space="preserve"><value>Restore existing data</value></data>
   <data name="C_RestoreDescription" xml:space="preserve"><value>Only v3 export files are accepted.</value></data>
   <data name="C_ImportSettings" xml:space="preserve"><value>Import v3 settings</value></data>
@@ -84,13 +84,13 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_DesktopTitle" xml:space="preserve"><value>Desktop integration</value></data>
   <data name="C_DesktopDescription" xml:space="preserve"><value>These options are applied when setup is completed. You can retry later in Settings if the platform rejects an operation.</value></data>
   <data name="C_Autostart" xml:space="preserve"><value>Start at sign-in</value></data>
-  <data name="C_AutostartDescription" xml:space="preserve"><value>Start SecRandom automatically when you sign in.</value></data>
+  <data name="C_AutostartDescription" xml:space="preserve"><value>Start VeriRandom automatically when you sign in.</value></data>
   <data name="C_ShowStartupWindow" xml:space="preserve"><value>Show main window at startup</value></data>
-  <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>Choose whether the main window opens automatically when SecRandom starts.</value></data>
+  <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>Choose whether the main window opens automatically when VeriRandom starts.</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>External links and integration</value></data>
-  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>Register secrandom:// so external applications can open SecRandom.</value></data>
+  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>Register secrandom:// so external applications can open VeriRandom.</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>Privacy</value></data>
-  <data name="C_PrivacyDescription" xml:space="preserve"><value>Choose the diagnostic and online-status information that SecRandom may send after startup. You can change these options later in Settings.</value></data>
+  <data name="C_PrivacyDescription" xml:space="preserve"><value>Choose the diagnostic and online-status information that VeriRandom may send after startup. You can change these options later in Settings.</value></data>
   <data name="C_PrivacyEncouragement" xml:space="preserve"><value>Please enable them~ It would be a great help for our future updates!</value></data>
   <data name="C_SentryTelemetry" xml:space="preserve"><value>Enable Sentry telemetry</value></data>
   <data name="C_SentryTelemetryDescription" xml:space="preserve"><value>When enabled, crash, log, trace, and performance data can be uploaded. This does not control online-status reporting.</value></data>
@@ -100,7 +100,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>Anonymous reporting</value></data>
   <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>Do not report</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>Setup complete</value></data>
-  <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter SecRandom after reading the verifiable-draw notice and acknowledging the privacy policy and GPLv3. You can change lists, lottery, appearance, desktop integration, and privacy later.</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter VeriRandom after reading the verifiable-draw notice and acknowledging the privacy policy and GPLv3. You can change lists, lottery, appearance, desktop integration, and privacy later.</value></data>
   <data name="C_CompletedItems" xml:space="preserve"><value>Configured items</value></data>
   <data name="C_CompletedClass" xml:space="preserve"><value>Manage member lists and prize pools from List Management.</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>Change draw entry points, theme, and floating-window appearance in Settings.</value></data>
@@ -110,7 +110,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_Overwrite" xml:space="preserve"><value>Overwrite</value></data>
   <data name="C_ResourcesTitle" xml:space="preserve"><value>Project resources</value></data>
   <data name="C_SectlWebsite" xml:space="preserve"><value>SECTL website</value></data>
-  <data name="C_Documentation" xml:space="preserve"><value>SecRandom documentation</value></data>
+  <data name="C_Documentation" xml:space="preserve"><value>VeriRandom documentation</value></data>
   <data name="C_AuthorBilibili" xml:space="preserve"><value>Lizeyi_Aionflux on Bilibili</value></data>
   <data name="C_Sponsor" xml:space="preserve"><value>Support on Afdian</value></data>
   <data name="C_Community" xml:space="preserve"><value>SECTL community group</value></data>
@@ -128,17 +128,17 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_JsonFileType" xml:space="preserve"><value>JSON files</value></data>
   <data name="C_ZipFileType" xml:space="preserve"><value>ZIP files</value></data>
   <data name="C_ExitTitle" xml:space="preserve"><value>Exit setup</value></data>
-  <data name="C_ExitDescription" xml:space="preserve"><value>The verifiable-draw notice, privacy-policy, and licence acknowledgement are not complete. Exiting closes SecRandom without saving OOBE completion.</value></data>
+  <data name="C_ExitDescription" xml:space="preserve"><value>The verifiable-draw notice, privacy-policy, and licence acknowledgement are not complete. Exiting closes VeriRandom without saving OOBE completion.</value></data>
   <data name="C_Exit" xml:space="preserve"><value>Exit application</value></data>
   <data name="C_ContinueSetup" xml:space="preserve"><value>Continue setup</value></data>
   <data name="M_ImportConfirmation" xml:space="preserve"><value>Source version: {0}
 {1} files will be processed. A recovery snapshot is created before import; security credentials are not imported.</value></data>
   <data name="M_UnsupportedImportTitle" xml:space="preserve"><value>Unsupported import file</value></data>
-  <data name="M_UnsupportedImport" xml:space="preserve"><value>Only SecRandom v3 exports are supported. Detected version: {0}.
+  <data name="M_UnsupportedImport" xml:space="preserve"><value>Only VeriRandom v3 exports are supported. Detected version: {0}.
 {1}
 No data was changed.</value></data>
   <data name="M_UnknownVersion" xml:space="preserve"><value>Unknown</value></data>
-  <data name="M_UnsupportedImportDetail" xml:space="preserve"><value>This is not a supported SecRandom v3 export file.</value></data>
+  <data name="M_UnsupportedImportDetail" xml:space="preserve"><value>This is not a supported VeriRandom v3 export file.</value></data>
   <data name="M_ImportCompleted" xml:space="preserve"><value>Import completed. Continue by acknowledging the current privacy-policy and GNU GPLv3 versions.</value></data>
   <data name="M_ImportFailed" xml:space="preserve"><value>Import failed</value></data>
   <data name="M_AgreementRequired" xml:space="preserve"><value>Read and acknowledge the verifiable-draw notice, privacy policy, and GNU GPLv3 first.</value></data>

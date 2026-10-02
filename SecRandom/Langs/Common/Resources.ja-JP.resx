@@ -38,7 +38,7 @@
     <data name="C_QuickDrawManualCloseHint" xml:space="preserve"><value>3 回連続クリックで閉じます</value></data>
     <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
     <data name="M_PortableDataDirectoryUnavailableTitle" xml:space="preserve"><value>ポータブル版のデータフォルダーに書き込めません</value></data>
-    <data name="M_PortableDataDirectoryUnavailableContent" xml:space="preserve"><value>SecRandom ポータブル版は、同梱の data フォルダーに書き込める必要があります
+    <data name="M_PortableDataDirectoryUnavailableContent" xml:space="preserve"><value>VeriRandom ポータブル版は、同梱の data フォルダーに書き込める必要があります
 
 データフォルダー: {0}
 エラー: {1}
@@ -46,7 +46,7 @@
 ポータブル版フォルダー全体を書き込み可能な場所へ移動するか、フォルダーのアクセス許可を変更してから再試行してください</value></data>
     <data name="M_UnknownError" xml:space="preserve"><value>不明なエラー</value></data>
     <data name="Feat_Lottery" xml:space="preserve"><value>抽選</value></data>
-    <data name="Settings_About" xml:space="preserve"><value>SecRandom について</value></data>
+    <data name="Settings_About" xml:space="preserve"><value>VeriRandom について</value></data>
     <data name="Settings_Basic" xml:space="preserve"><value>基本</value></data>
     <data name="Settings_RosterManagement" xml:space="preserve"><value>名簿管理</value></data>
     <data name="Settings_Draw" xml:space="preserve"><value>抽選設定</value></data>
@@ -108,7 +108,7 @@
         <value>アプリケーションは既に実行中です</value>
     </data>
     <data name="MultiInstance_Message" xml:space="preserve">
-        <value>SecRandom の別のインスタンスが既に実行されています。</value>
+        <value>VeriRandom の別のインスタンスが既に実行されています。</value>
     </data>
     <data name="MultiInstance_OpenExisting" xml:space="preserve">
         <value>実行中のインスタンスを表示</value>

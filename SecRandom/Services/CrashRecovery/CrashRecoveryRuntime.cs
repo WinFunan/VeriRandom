@@ -345,7 +345,7 @@ public static class CrashRecoveryRuntime
     private static string CreateCrashReport(Exception exception)
     {
         StringBuilder builder = new();
-        builder.AppendLine("SecRandom Crash Report");
+        builder.AppendLine("VeriRandom Crash Report");
         builder.AppendLine($"Time: {DateTimeOffset.Now:O}");
         builder.AppendLine($"Version: {GlobalConstants.VersionLong}");
         builder.AppendLine($"Process: {Environment.ProcessId}");

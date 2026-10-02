@@ -24,7 +24,7 @@
         <FontWeight x:Key="AppFontWeight">Normal</FontWeight>
 
         <NativeMenu x:Key="AppMenu">
-            <NativeMenuItem Header="SecRandom" Click="MenuItemAbout_OnClick">
+            <NativeMenuItem Header="VeriRandom" Click="MenuItemAbout_OnClick">
                 <NativeMenuItem.Icon>
                     <OnPlatform Default="Assets/AppLogo.png">
                         <On Content="{x:Null}" Options="macOS" />

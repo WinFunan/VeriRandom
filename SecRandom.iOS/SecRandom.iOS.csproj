@@ -2,7 +2,7 @@
     <PropertyGroup>
         <TargetFramework>net10.0-ios</TargetFramework>
         <OutputType>Exe</OutputType>
-        <ApplicationTitle>SecRandom</ApplicationTitle>
+        <ApplicationTitle>VeriRandom</ApplicationTitle>
         <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
         <AppIcon>AppIcon</AppIcon>
         <IncludeAllAppIcons>true</IncludeAllAppIcons>

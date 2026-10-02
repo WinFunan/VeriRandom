@@ -267,7 +267,7 @@
         <value>移动端备份与恢复将在提供受系统文件访问授权的完整事务后开放</value>
     </data>
     <data name="M_AboutLicense" xml:space="preserve">
-        <value>SecRandom 是面向活动与组织场景的公平抽取工具，采用 GPLv3 许可证发布</value>
+        <value>VeriRandom 是面向活动与组织场景的公平抽取工具，采用 GPLv3 许可证发布</value>
     </data>
     <data name="C_Back" xml:space="preserve">
         <value>返回设置</value>
@@ -468,7 +468,7 @@
         <value>导入设置</value>
     </data>
     <data name="M_BackupPickerHint" xml:space="preserve">
-        <value>通过系统文件选择器导出与导入；导入前会校验 SecRandom v3 格式，不受支持的文件不会改动任何数据</value>
+        <value>通过系统文件选择器导出与导入；导入前会校验 VeriRandom v3 格式，不受支持的文件不会改动任何数据</value>
     </data>
     <data name="S_AllData" xml:space="preserve">
         <value>全量数据</value>
@@ -489,7 +489,7 @@
         <value>保存全量数据备份</value>
     </data>
     <data name="M_DataArchiveFileType" xml:space="preserve">
-        <value>SecRandom 数据归档</value>
+        <value>VeriRandom 数据归档</value>
     </data>
     <data name="M_ExportCancelled" xml:space="preserve">
         <value>已取消导出</value>
@@ -510,7 +510,7 @@
         <value>保存设置备份</value>
     </data>
     <data name="M_SettingsFileType" xml:space="preserve">
-        <value>SecRandom 设置文件</value>
+        <value>VeriRandom 设置文件</value>
     </data>
     <data name="M_SettingsExported" xml:space="preserve">
         <value>设置已导出到所选位置</value>
@@ -537,7 +537,7 @@
         <value>校验通过，确认后开始导入</value>
     </data>
     <data name="M_ValidationUnsupported" xml:space="preserve">
-        <value>该文件不是受支持的 SecRandom v3 导出，无法导入</value>
+        <value>该文件不是受支持的 VeriRandom v3 导出，无法导入</value>
     </data>
     <data name="M_ReadOrValidateFailed" xml:space="preserve">
         <value>读取或校验失败：{0}</value>

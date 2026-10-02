@@ -425,8 +425,8 @@ jobs:
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
-            <key>CFBundleName</key><string>SecRandom</string>
-            <key>CFBundleDisplayName</key><string>SecRandom</string>
+            <key>CFBundleName</key><string>VeriRandom</string>
+            <key>CFBundleDisplayName</key><string>VeriRandom</string>
             <key>CFBundleIdentifier</key><string>top.sectl.secrandom</string>
             <key>CFBundleVersion</key><string>${version_no_v}</string>
             <key>CFBundleShortVersionString</key><string>${version_no_v}</string>
@@ -832,7 +832,7 @@ jobs:
           test -s "$output"
           unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
           unzip -p "$output" 'Payload/*.app/Info.plist' > "$RUNNER_TEMP/SecRandom-iOS-Info.plist"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'SecRandom'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'VeriRandom'
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'AppIcon'
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "$version"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "${{ github.run_number }}"

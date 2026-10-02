@@ -78,4 +78,13 @@
   <data name="M_ProofIssue_MissingTail" xml:space="preserve"><value>未落盘</value></data>
   <data name="M_ProofQueueTimestampFailed" xml:space="preserve"><value>时间戳未完成 {0} 项</value></data>
   <data name="M_ProofQueueChainAlert" xml:space="preserve"><value>服务端发现 {0} 项证明链异常</value></data>
+  <data name="S_BeaconEntropy" xml:space="preserve"><value>外部信标熵源</value></data>
+  <data name="S_BeaconEntropy_D" xml:space="preserve"><value>开启后普通模式的随机种子改由 NIST 信标脉冲派生，主持人无法注入自定义熵；每个脉冲从 0 开始按 1 递增分配序号，同一脉冲内序号不重复；信标不可用时本次抽取直接失败，不会回退本地种子；仅对普通模式生效</value></data>
+  <data name="S_BeaconEndpoint" xml:space="preserve"><value>信标服务地址</value></data>
+  <data name="S_BeaconEndpoint_D" xml:space="preserve"><value>默认使用 NIST 官方 Beacon v2 地址；改用镜像时证明仍会完整记录脉冲值与签名，便于事后向官方复核；远程地址必须使用 HTTPS</value></data>
+  <data name="C_FetchBeacon" xml:space="preserve"><value>拉取最新信标</value></data>
+  <data name="M_BeaconIdle" xml:space="preserve"><value>尚未拉取</value></data>
+  <data name="M_BeaconFetching" xml:space="preserve"><value>正在拉取…</value></data>
+  <data name="M_BeaconFetched" xml:space="preserve"><value>脉冲 {0}，链 {1}，时间 {2}</value></data>
+  <data name="M_BeaconFailed" xml:space="preserve"><value>拉取失败，请检查网络或地址</value></data>
 </root>

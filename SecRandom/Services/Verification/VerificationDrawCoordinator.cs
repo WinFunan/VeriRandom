@@ -26,7 +26,8 @@ public sealed class VerificationDrawCoordinator(
     ProofChainStore chainStore,
     IProfileService profileService,
     MainConfigHandler configHandler,
-    IWitnessClient witnessClient)
+    IWitnessClient witnessClient,
+    BeaconEntropyProvider beaconEntropy)
 {
     public bool IsEnabled => true;
 
@@ -120,9 +121,24 @@ public sealed class VerificationDrawCoordinator(
         }
         else
         {
-            var seed = VerificationSeedDerivation.CreateCsprngSeed();
+            // The beacon toggle is an ordinary-mode entropy source: it replaces the local CSPRNG seed
+            // with a published pulse so the operator cannot inject custom entropy. The proof stays
+            // OfflineReproducible because the seed is still reproducible from the recorded pulse.
+            byte[] seed;
+            DrawProofBeacon? beacon = null;
+            if (verificationMode == VerificationMode.Ordinary && beaconEntropy.IsEnabled)
+            {
+                var reservation = await beaconEntropy.ReserveAsync(cancellationToken).ConfigureAwait(false);
+                seed = reservation.Seed;
+                beacon = reservation.Beacon;
+            }
+            else
+            {
+                seed = VerificationSeedDerivation.CreateCsprngSeed();
+            }
+
             result = kernel.Draw(input, seed);
-            proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null);
+            proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null, beacon);
         }
         return Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input));
     }
@@ -167,7 +183,8 @@ public sealed class VerificationDrawCoordinator(
         VerificationKernelResult result,
         VerificationProofMode mode,
         Guid? parentProofId,
-        DrawProofWitness? witness)
+        DrawProofWitness? witness,
+        DrawProofBeacon? beacon = null)
     {
         var payload = VerificationWireCodec.EncodeProofPayload(input, seed, result.Winners);
         return new DrawProof
@@ -180,6 +197,7 @@ public sealed class VerificationDrawCoordinator(
             Payload = WitnessClient.ToBase64Url(payload),
             AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),
             Result = new DrawProofResult { WinnerRecordIds = result.Winners.Select(winner => winner.RecordId).ToList() },
+            Beacon = beacon,
             Witness = witness
         };
     }

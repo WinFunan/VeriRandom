@@ -267,7 +267,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Mobile backup and restore will become available once a full transaction with system file access authorization is provided.</value>
     </data>
     <data name="M_AboutLicense" xml:space="preserve">
-        <value>SecRandom is a fair drawing tool for events and organizations, released under the GPLv3 license.</value>
+        <value>VeriRandom is a fair drawing tool for events and organizations, released under the GPLv3 license.</value>
     </data>
     <data name="C_Back" xml:space="preserve">
         <value>Back to Settings</value>
@@ -468,7 +468,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Import Settings</value>
     </data>
     <data name="M_BackupPickerHint" xml:space="preserve">
-        <value>Export and import through the system file picker. Files are validated against the SecRandom v3 format before import; unsupported files will not change any data.</value>
+        <value>Export and import through the system file picker. Files are validated against the VeriRandom v3 format before import; unsupported files will not change any data.</value>
     </data>
     <data name="S_AllData" xml:space="preserve">
         <value>All Data</value>
@@ -489,7 +489,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Save All-Data Backup</value>
     </data>
     <data name="M_DataArchiveFileType" xml:space="preserve">
-        <value>SecRandom Data Archive</value>
+        <value>VeriRandom Data Archive</value>
     </data>
     <data name="M_ExportCancelled" xml:space="preserve">
         <value>Export cancelled.</value>
@@ -510,7 +510,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Save Settings Backup</value>
     </data>
     <data name="M_SettingsFileType" xml:space="preserve">
-        <value>SecRandom Settings File</value>
+        <value>VeriRandom Settings File</value>
     </data>
     <data name="M_SettingsExported" xml:space="preserve">
         <value>Settings exported to the selected location.</value>
@@ -537,7 +537,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Validation passed. Confirm to start importing.</value>
     </data>
     <data name="M_ValidationUnsupported" xml:space="preserve">
-        <value>This file is not a supported SecRandom v3 export and cannot be imported.</value>
+        <value>This file is not a supported VeriRandom v3 export and cannot be imported.</value>
     </data>
     <data name="M_ReadOrValidateFailed" xml:space="preserve">
         <value>Failed to read or validate: {0}</value>

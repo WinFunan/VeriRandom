@@ -65,7 +65,7 @@
         <value>Portable Data Directory Is Not Writable</value>
     </data>
     <data name="M_PortableDataDirectoryUnavailableContent" xml:space="preserve">
-        <value>The SecRandom portable package must be able to write its data directory
+        <value>The VeriRandom portable package must be able to write its data directory
 
 Data directory: {0}
 Error: {1}
@@ -76,7 +76,7 @@ Move the entire portable package to a writable location, or adjust the directory
         <value>Unknown error</value>
     </data>
     <data name="Settings_About" xml:space="preserve">
-        <value>About SecRandom</value>
+        <value>About VeriRandom</value>
     </data>
     <data name="Settings_Basic" xml:space="preserve">
         <value>Basic</value>
@@ -254,7 +254,7 @@ Move the entire portable package to a writable location, or adjust the directory
         <value>Application Already Running</value>
     </data>
     <data name="MultiInstance_Message" xml:space="preserve">
-        <value>Another instance of SecRandom is already running.</value>
+        <value>Another instance of VeriRandom is already running.</value>
     </data>
     <data name="MultiInstance_OpenExisting" xml:space="preserve">
         <value>Show Running Instance</value>

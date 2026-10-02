@@ -57,7 +57,7 @@
                            Margin="8 0 0 0"
                            IsVisible="{Binding !IsMobile}" />
 
-                    <TextBlock Text="SecRandom"
+                    <TextBlock Text="VeriRandom"
                                FontSize="12"
                                VerticalAlignment="Center"
                                IsVisible="{Binding !IsMobile}" />

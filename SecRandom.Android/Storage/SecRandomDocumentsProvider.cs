@@ -94,7 +94,7 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
                                                       DocumentRootFlags.SupportsIsChild,
                 DocumentsContract.Root.ColumnIcon => Context?.ApplicationInfo?.Icon ?? 0,
                 DocumentsContract.Root.ColumnTitle => GetApplicationLabel(),
-                DocumentsContract.Root.ColumnSummary => "SecRandom data",
+                DocumentsContract.Root.ColumnSummary => "VeriRandom data",
                 DocumentsContract.Root.ColumnDocumentId => RootDocumentId,
                 DocumentsContract.Root.ColumnAvailableBytes => rootFile.UsableSpace,
                 _ => null
@@ -485,7 +485,7 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
                              ?? throw new InvalidOperationException("The Android package manager is unavailable.");
         return context.ApplicationInfo?.LoadLabel(packageManager)?.ToString()
                ?? context.PackageName
-               ?? "SecRandom";
+               ?? "VeriRandom";
     }
 
     private static string GetMimeType(string path)

@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="secrandom-icon-paper.png" width="128" height="128" alt="SecRandom" />
+<img src="secrandom-icon-paper.png" width="128" height="128" alt="VeriRandom" />
 
-# SecRandom
+# VeriRandom
 
 **A random-selection tool for classrooms and teams, with configurable workflows, managed history, and verifiable draw records.**
 
@@ -20,12 +20,15 @@
 
 </div>
 
+> [!IMPORTANT]
+> This product is an open-source fork of SecRandom and must not be regarded as SecRandom itself
+
 > [!NOTE]
-> SecRandom is released under GNU GPLv3. You may modify and redistribute the source, but derivative redistributions must also use GNU GPLv3.
+> VeriRandom is released under GNU GPLv3. You may modify and redistribute the source, but derivative redistributions must also use GNU GPLv3.
 
-## SecRandom
+## VeriRandom
 
-SecRandom is a fair random-selection application for classrooms, teams, events, decision-making, and other scenarios.
+VeriRandom is a fair random-selection application for classrooms, teams, events, decision-making, and other scenarios.
 
 ## Features
 
@@ -85,9 +88,9 @@ Notes:
 
 ## License and third-party notices
 
-- SecRandom is released under [GNU GPLv3](../LICENSE).
+- VeriRandom is released under [GNU GPLv3](../LICENSE).
 - See [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md) for third-party components, copyright information, and distribution-review notes.
-- History-balanced weights and candidate filters help reduce repeat selections and improve long-term distribution. They do not replace management of real-world rosters, rules, or processes, and SecRandom does not claim to verify those conditions.
+- History-balanced weights and candidate filters help reduce repeat selections and improve long-term distribution. They do not replace management of real-world rosters, rules, or processes, and VeriRandom does not claim to verify those conditions.
 
 ## Contributors and special thanks
 

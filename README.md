@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="resources/secrandom-icon-paper.png" width="128" height="128" alt="SecRandom" />
+<img src="resources/secrandom-icon-paper.png" width="128" height="128" alt="VeriRandom" />
 
-# SecRandom
+# VeriRandom
 
 **基于动态权重的公平随机工具，让抽取与决策告别争议**
 
@@ -20,12 +20,15 @@
 
 </div>
 
+> [!IMPORTANT]
+> 此产品是 SecRandom 的一个开源分支，不应视作 SecRandom 本身
+
 > [!NOTE]
-> SecRandom 以 GNU GPLv3 协议发布！您可以修改和再发布源代码，但再发布的衍生作品也必须遵循 GNU GPLv3
+> VeriRandom 以 GNU GPLv3 协议发布！您可以修改和再发布源代码，但再发布的衍生作品也必须遵循 GNU GPLv3
 
-## SecRandom
+## VeriRandom
 
-SecRandom 是面向课堂、团队、活动、决策等场景的公平抽取应用
+VeriRandom 是面向课堂、团队、活动、决策等场景的公平抽取应用
 
 ## 软件功能
 
@@ -85,9 +88,9 @@ SecRandom 是面向课堂、团队、活动、决策等场景的公平抽取应�
 
 ## 许可证与第三方声明
 
-- SecRandom 使用 [GNU GPLv3](LICENSE) 协议发布
+- VeriRandom 使用 [GNU GPLv3](LICENSE) 协议发布
 - 第三方组件、版权和分发审查信息见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)
-- SecRandom 通过历史平衡的权重与候选过滤策略帮助降低重复抽取、改善长期分布；它不替代对现实名单、规则或组织流程的管理，也不对这些现实条件作出软件无法验证的保证
+- VeriRandom 通过历史平衡的权重与候选过滤策略帮助降低重复抽取、改善长期分布；它不替代对现实名单、规则或组织流程的管理，也不对这些现实条件作出软件无法验证的保证
 
 ## 贡献者和特别感谢
 

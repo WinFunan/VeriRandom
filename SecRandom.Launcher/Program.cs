@@ -35,7 +35,7 @@ try
 }
 catch (Exception exception)
 {
-    Console.Error.WriteLine($"无法启动 SecRandom：{exception.Message}");
+    Console.Error.WriteLine($"无法启动 VeriRandom：{exception.Message}");
     return 1;
 }
 

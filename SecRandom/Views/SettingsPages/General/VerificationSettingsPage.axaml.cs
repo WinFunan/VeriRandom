@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -12,6 +13,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Verification;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Verification;
 using SecRandom.Shared;
@@ -28,6 +30,7 @@ public partial class VerificationSettingsPage : UserControl
     private DrawProofAttestationService AttestationService { get; } = IAppHost.GetService<DrawProofAttestationService>();
     private ProofIntegrityVerifier IntegrityVerifier { get; } = IAppHost.GetService<ProofIntegrityVerifier>();
     private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
+    private INistBeaconClient BeaconClient { get; } = IAppHost.GetService<INistBeaconClient>();
     private bool _verificationModeSelectionReady;
     private bool _restoringVerificationModeSelection;
 
@@ -96,6 +99,58 @@ public partial class VerificationSettingsPage : UserControl
     }
 
     public int SelectedVerificationModeIndex => (int)ConfigHandler.Data.General.Verification.Mode;
+
+    public bool BeaconEntropyEnabled
+    {
+        get => ConfigHandler.Data.General.Verification.BeaconEntropyEnabled;
+        set
+        {
+            if (ConfigHandler.Data.General.Verification.BeaconEntropyEnabled == value)
+                return;
+
+            ConfigHandler.Data.General.Verification.BeaconEntropyEnabled = value;
+            ConfigHandler.Save();
+        }
+    }
+
+    public string BeaconEndpoint
+    {
+        get => ConfigHandler.Data.General.Verification.BeaconEndpoint;
+        set
+        {
+            var normalized = value ?? string.Empty;
+            if (string.Equals(ConfigHandler.Data.General.Verification.BeaconEndpoint, normalized, StringComparison.Ordinal))
+                return;
+
+            ConfigHandler.Data.General.Verification.BeaconEndpoint = normalized;
+            ConfigHandler.Save();
+        }
+    }
+
+    private async void FetchBeacon_OnClick(object? sender, RoutedEventArgs e)
+    {
+        FetchBeaconButton.IsEnabled = false;
+        BeaconStatusText.Text = LR.M_BeaconFetching;
+        try
+        {
+            var endpoint = BeaconEndpointPolicy.Normalize(ConfigHandler.Data.General.Verification.BeaconEndpoint);
+            var pulse = await BeaconClient.GetLatestPulseAsync(endpoint, CancellationToken.None);
+            BeaconStatusText.Text = string.Format(
+                CultureInfo.CurrentCulture,
+                LR.M_BeaconFetched,
+                pulse.PulseIndex,
+                pulse.ChainIndex,
+                pulse.TimeStamp.ToLocalTime());
+        }
+        catch (Exception)
+        {
+            BeaconStatusText.Text = LR.M_BeaconFailed;
+        }
+        finally
+        {
+            FetchBeaconButton.IsEnabled = true;
+        }
+    }
 
     public int SelectedRetentionIndex
     {

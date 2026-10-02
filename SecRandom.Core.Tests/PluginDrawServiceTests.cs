@@ -197,6 +197,10 @@ public sealed class PluginDrawServiceTests : IDisposable
         services.AddTransient<RollCallDrawService>();
         services.AddTransient<LotteryDrawService>();
         services.AddSingleton<IPluginDrawService, PluginDrawService>();
+        // The beacon toggle is off by default, so the stub is never called; it only satisfies the
+        // coordinator's constructor dependency.
+        services.AddSingleton<INistBeaconClient>(_ => new StubBeaconClient());
+        services.AddSingleton<BeaconEntropyProvider>();
         services.AddSingleton<VerificationDrawCoordinator>();
         return services.BuildServiceProvider();
     }
@@ -228,6 +232,14 @@ public sealed class PluginDrawServiceTests : IDisposable
         {
             return Task.FromResult(new DrawProof());
         }
+    }
+
+    private sealed class StubBeaconClient : INistBeaconClient
+    {
+        public Task<SecRandom.Core.Models.Verification.BeaconPulse> GetLatestPulseAsync(Uri endpoint,
+            CancellationToken cancellationToken)
+            => Task.FromException<SecRandom.Core.Models.Verification.BeaconPulse>(
+                new InvalidOperationException("Beacon entropy is not enabled in this test."));
     }
 
     private sealed class StubTimestampAuthorityClient : ITimestampAuthorityClient

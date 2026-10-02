@@ -22,19 +22,19 @@ public sealed class UpdateNotificationService(ILogger<UpdateNotificationService>
                 startInfo.FileName = "powershell";
                 startInfo.ArgumentList.Add("-NoProfile");
                 startInfo.ArgumentList.Add("-Command");
-                startInfo.ArgumentList.Add($"[Windows.UI.Notifications.ToastNotificationManager,Windows.UI.Notifications,ContentType=WindowsRuntime] | Out-Null; $xml = New-Object Windows.Data.Xml.Dom.XmlDocument; $xml.LoadXml('<toast><visual><binding template=\"ToastGeneric\"><text>SecRandom</text><text>发现新版本 {version}</text></binding></visual></toast>'); [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('SecRandom').Show((New-Object Windows.UI.Notifications.ToastNotification $xml))");
+                startInfo.ArgumentList.Add($"[Windows.UI.Notifications.ToastNotificationManager,Windows.UI.Notifications,ContentType=WindowsRuntime] | Out-Null; $xml = New-Object Windows.Data.Xml.Dom.XmlDocument; $xml.LoadXml('<toast><visual><binding template=\"ToastGeneric\"><text>VeriRandom</text><text>发现新版本 {version}</text></binding></visual></toast>'); [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('SecRandom').Show((New-Object Windows.UI.Notifications.ToastNotification $xml))");
             }
             else if (OperatingSystem.IsMacOS())
             {
                 startInfo.FileName = "osascript";
                 startInfo.ArgumentList.Add("-e");
-                startInfo.ArgumentList.Add($"display notification \"发现新版本 {version.Replace("\\", "\\\\").Replace("\"", "\\\"")}\" with title \"SecRandom\"");
+                startInfo.ArgumentList.Add($"display notification \"发现新版本 {version.Replace("\\", "\\\\").Replace("\"", "\\\"")}\" with title \"VeriRandom\"");
             }
             else if (OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
             {
                 startInfo.FileName = "notify-send";
-                startInfo.ArgumentList.Add("--app-name=SecRandom");
-                startInfo.ArgumentList.Add("SecRandom");
+                startInfo.ArgumentList.Add("--app-name=VeriRandom");
+                startInfo.ArgumentList.Add("VeriRandom");
                 startInfo.ArgumentList.Add($"发现新版本 {version}");
             }
             else

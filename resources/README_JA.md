@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="secrandom-icon-paper.png" width="128" height="128" alt="SecRandom" />
+<img src="secrandom-icon-paper.png" width="128" height="128" alt="VeriRandom" />
 
-# SecRandom
+# VeriRandom
 
 **授業やチームで使える、設定可能な抽選フロー、履歴管理、検証可能な抽選記録を備えたランダム抽選ツール。**
 
@@ -20,12 +20,15 @@
 
 </div>
 
+> [!IMPORTANT]
+> 本製品は SecRandom のオープンソースフォークであり、SecRandom 本体とは見なされません
+
 > [!NOTE]
-> SecRandom は GNU GPLv3 で公開されています。ソースコードの変更と再配布は可能ですが、派生物も GNU GPLv3 で公開する必要があります。
+> VeriRandom は GNU GPLv3 で公開されています。ソースコードの変更と再配布は可能ですが、派生物も GNU GPLv3 で公開する必要があります。
 
-## SecRandom
+## VeriRandom
 
-SecRandom は、授業、チーム、イベント、意思決定などの場面で公平な抽選を行うためのアプリケーションです。
+VeriRandom は、授業、チーム、イベント、意思決定などの場面で公平な抽選を行うためのアプリケーションです。
 
 ## 機能
 
@@ -85,7 +88,7 @@ SecRandom は、授業、チーム、イベント、意思決定などの場面�
 
 ## ライセンスと第三者通知
 
-- SecRandom は [GNU GPLv3](../LICENSE) で公開されています。
+- VeriRandom は [GNU GPLv3](../LICENSE) で公開されています。
 - 第三者コンポーネント、著作権情報、配布審査に関する注記は [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md) を参照してください。
 - 履歴に基づく重み付けと候補者フィルターは、同じ人の連続選出を減らし、長期的な分布を改善するためのものです。現実の名簿、ルール、運用手順を管理する代わりにはならず、それらをソフトウェアで検証できるとは主張しません。
 

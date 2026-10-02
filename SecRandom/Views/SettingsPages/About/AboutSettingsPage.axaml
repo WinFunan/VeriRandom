@@ -175,7 +175,7 @@
         </sr:StickyScrollViewer.HeaderContent>
 
         <StackPanel Classes="page-container animated-intro">
-            <fa:FASettingsExpander x:Name="S_App" Header="SecRandom" IsExpanded="True"
+            <fa:FASettingsExpander x:Name="S_App" Header="VeriRandom" IsExpanded="True"
                                    Description="{x:Static lc:Resources.App_Description}">
                 <fa:FASettingsExpander.Footer>
                     <TextBlock Text="{x:Static sr:GlobalConstants.DisplayVersion}"
@@ -194,6 +194,10 @@
                         SECTL
                     </TextBlock>
                 </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_App_ForkNotice"
+                                           Content="{x:Static lsa:Resources.S_App_ForkNotice}"
+                                           Description="{x:Static lsa:Resources.M_App_ForkNotice}" />
 
                 <fa:FASettingsExpanderItem x:Name="S_App_UsefulLinks"
                                            Content="{x:Static lsa:Resources.S_App_UsefulLinks}">

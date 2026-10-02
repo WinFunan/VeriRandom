@@ -292,5 +292,23 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_UserInformation", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 开源分支说明.
+        /// </summary>
+        public static string S_App_ForkNotice {
+            get {
+                return ResourceManager.GetString("S_App_ForkNotice", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 此产品是 SecRandom 的一个开源分支，不应视作 SecRandom 本身.
+        /// </summary>
+        public static string M_App_ForkNotice {
+            get {
+                return ResourceManager.GetString("M_App_ForkNotice", resourceCulture);
+            }
+        }
     }
 }

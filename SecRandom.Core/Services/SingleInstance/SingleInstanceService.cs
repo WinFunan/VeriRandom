@@ -304,7 +304,7 @@ public sealed class SingleInstanceService : IDisposable
         if (handlers is null)
         {
             await WriteResponseAsync(writer,
-                IpcResponseEnvelope.TransportFailure(request.Type, "pipe_unavailable", "SecRandom 尚未准备好处理 IPC 请求。")).ConfigureAwait(false);
+                IpcResponseEnvelope.TransportFailure(request.Type, "pipe_unavailable", "VeriRandom 尚未准备好处理 IPC 请求。")).ConfigureAwait(false);
             return;
         }
 

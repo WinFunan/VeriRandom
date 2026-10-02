@@ -74,4 +74,13 @@ public class Resources
     public static string M_ProofIssue_Gap => Get(nameof(M_ProofIssue_Gap));
     public static string M_ProofIssue_BeyondHead => Get(nameof(M_ProofIssue_BeyondHead));
     public static string M_ProofIssue_MissingTail => Get(nameof(M_ProofIssue_MissingTail));
+    public static string S_BeaconEntropy => Get(nameof(S_BeaconEntropy));
+    public static string S_BeaconEntropy_D => Get(nameof(S_BeaconEntropy_D));
+    public static string S_BeaconEndpoint => Get(nameof(S_BeaconEndpoint));
+    public static string S_BeaconEndpoint_D => Get(nameof(S_BeaconEndpoint_D));
+    public static string C_FetchBeacon => Get(nameof(C_FetchBeacon));
+    public static string M_BeaconIdle => Get(nameof(M_BeaconIdle));
+    public static string M_BeaconFetching => Get(nameof(M_BeaconFetching));
+    public static string M_BeaconFetched => Get(nameof(M_BeaconFetched));
+    public static string M_BeaconFailed => Get(nameof(M_BeaconFailed));
 }

@@ -161,7 +161,7 @@ public sealed class DesktopIntegrationService(
         [
             "[Desktop Entry]",
             "Type=Application",
-            "Name=SecRandom",
+            "Name=VeriRandom",
             $"Exec={CreateDesktopCommand([])}",
             "X-GNOME-Autostart-enabled=true"
         ]) + '\n');
@@ -308,7 +308,7 @@ public sealed class DesktopIntegrationService(
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
-               + $"<plist version=\"1.0\"><dict><key>CFBundleIdentifier</key><string>cn.sectl.secrandom.urlhandler</string><key>CFBundleName</key><string>SecRandom URL Handler</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleExecutable</key><string>SecRandomUrlHandler</string><key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>SecRandom URL</string><key>CFBundleURLSchemes</key><array><string>{ProtocolScheme}</string></array></dict></array></dict></plist>\n";
+               + $"<plist version=\"1.0\"><dict><key>CFBundleIdentifier</key><string>cn.sectl.secrandom.urlhandler</string><key>CFBundleName</key><string>VeriRandom URL Handler</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleExecutable</key><string>SecRandomUrlHandler</string><key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>VeriRandom URL</string><key>CFBundleURLSchemes</key><array><string>{ProtocolScheme}</string></array></dict></array></dict></plist>\n";
     }
 
     private static string CreateMacProtocolLauncher()

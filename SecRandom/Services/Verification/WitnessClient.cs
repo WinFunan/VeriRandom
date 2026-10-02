@@ -30,9 +30,12 @@ public sealed class WitnessClient(
         DrawProof proof,
         CancellationToken cancellationToken)
     {
+        // The beacon anchor stays a local-only field: the service recomputes the canonical proof hash from
+        // its own fixed field list, so the attestation body keeps the exact shape it had before this path
+        // existed. The derived seed is still committed through the payload, so replay stays bound to it.
         using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(WitnessServiceUrl), "v1/proofs/attest"))
         {
-            Content = JsonContent.Create(proof, options: JsonOptions)
+            Content = JsonContent.Create(proof with { Beacon = null }, options: JsonOptions)
         };
         AddClientId(request);
         using var response = await httpClient.SendAsync(request, cancellationToken)

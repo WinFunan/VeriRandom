@@ -52,8 +52,59 @@ public sealed record class DrawProof
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DrawProofChain? Chain { get; init; }
 
+    // Optional external-entropy anchor (for example a NIST Beacon pulse). It deliberately stays outside
+    // WitnessClient.ComputeAttestedProofHash: the server recomputes that hash from a fixed field list, so
+    // adding a field there would invalidate every receipt. The seed this anchor produced is committed
+    // through the payload, so a substituted pulse is still detectable by replaying the payload seed.
+    [JsonPropertyName("beacon")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DrawProofBeacon? Beacon { get; init; }
+
     [JsonPropertyName("witness")]
     public DrawProofWitness? Witness { get; init; }
+}
+
+/// <summary>
+///     The external randomness pulse a proof's seed was derived from. It records the raw published pulse,
+///     including its signature, so a verifier can independently re-check the pulse against the authority
+///     even when the pulse was fetched through a mirror endpoint.
+/// </summary>
+public sealed class DrawProofBeacon
+{
+    [JsonPropertyName("provider")]
+    public string Provider { get; init; } = "nist-beacon-v2";
+
+    [JsonPropertyName("endpoint")]
+    public string Endpoint { get; init; } = string.Empty;
+
+    [JsonPropertyName("pulseIndex")]
+    public long PulseIndex { get; init; }
+
+    [JsonPropertyName("chainIndex")]
+    public long ChainIndex { get; init; }
+
+    [JsonPropertyName("periodSeconds")]
+    public int PeriodSeconds { get; init; }
+
+    [JsonPropertyName("pulseTimeStamp")]
+    public DateTimeOffset PulseTimeStamp { get; init; }
+
+    [JsonPropertyName("outputValue")]
+    public string OutputValue { get; init; } = string.Empty;
+
+    [JsonPropertyName("signatureValue")]
+    public string SignatureValue { get; init; } = string.Empty;
+
+    [JsonPropertyName("certificateId")]
+    public string CertificateId { get; init; } = string.Empty;
+
+    // Zero-based, gapless, monotonic counter scoped to one pulse. It must never restart below its stored
+    // value for the same pulse, otherwise a draw could reuse a previously used seed.
+    [JsonPropertyName("sequence")]
+    public long Sequence { get; init; }
+
+    [JsonPropertyName("derivation")]
+    public string Derivation { get; init; } = string.Empty;
 }
 
 /// <summary>
