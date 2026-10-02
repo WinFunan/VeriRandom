@@ -91,7 +91,11 @@ jobs:
             try { $latestTag = (git tag --sort=-v:refname 2>$null | Select-Object -First 1) } catch { $latestTag = '' }
           }
           if ([string]::IsNullOrWhiteSpace($latestTag)) {
-            $latestTag = 'v0.0.0-dev'
+            # A tagless fork still needs a version whose major matches the Plugin SDK API major:
+            # build_pluginsdk enforces that equality and the app/API majors must stay in step.
+            $apiMajor = [regex]::Match((Get-Content 'SecRandom.PluginSdk/PluginApiVersions.cs' -Raw), 'new\((?<major>\d+),\s*\d+').Groups['major'].Value
+            if ([string]::IsNullOrWhiteSpace($apiMajor)) { throw 'Unable to parse PluginApiVersions.Current for the fallback version major.' }
+            $latestTag = "v$apiMajor.0.0-dev"
             Write-Host "::warning::No git tag found in this repository; using fallback version $latestTag."
           }
           "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
@@ -583,7 +587,10 @@ jobs:
                 Write-Host "WARNING: latest tag '$tag' is not semantic versioning; using it as-is for the routine build artifact."
               }
             } else {
-              $version = '0.0.0-dev'
+              # Keep the fallback major equal to PluginApiVersions.Current; the next step enforces it.
+              $apiMajor = [regex]::Match((Get-Content 'SecRandom.PluginSdk/PluginApiVersions.cs' -Raw), 'new\((?<major>\d+),\s*\d+').Groups['major'].Value
+              if ([string]::IsNullOrWhiteSpace($apiMajor)) { throw 'Unable to parse PluginApiVersions.Current for the fallback version major.' }
+              $version = "$apiMajor.0.0-dev"
               Write-Host "::warning::No git tag found in this repository; using fallback version $version."
             }
           }
@@ -667,7 +674,11 @@ jobs:
             try { $latestTag = (git tag --sort=-v:refname 2>$null | Select-Object -First 1) } catch { $latestTag = '' }
           }
           if ([string]::IsNullOrWhiteSpace($latestTag)) {
-            $latestTag = 'v0.0.0-dev'
+            # A tagless fork still needs a version whose major matches the Plugin SDK API major:
+            # build_pluginsdk enforces that equality and the app/API majors must stay in step.
+            $apiMajor = [regex]::Match((Get-Content 'SecRandom.PluginSdk/PluginApiVersions.cs' -Raw), 'new\((?<major>\d+),\s*\d+').Groups['major'].Value
+            if ([string]::IsNullOrWhiteSpace($apiMajor)) { throw 'Unable to parse PluginApiVersions.Current for the fallback version major.' }
+            $latestTag = "v$apiMajor.0.0-dev"
             Write-Host "::warning::No git tag found in this repository; using fallback version $latestTag."
           }
           "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
@@ -846,7 +857,13 @@ jobs:
             LATEST_TAG="$(git tag --sort=-v:refname 2>/dev/null | head -n1 || true)"
           fi
           if [ -z "$LATEST_TAG" ]; then
-            LATEST_TAG="v0.0.0-dev"
+            # Keep the fallback major equal to PluginApiVersions.Current; CI enforces the match.
+            API_MAJOR="$(sed -n 's/.*new(\([0-9][0-9]*\),[[:space:]]*[0-9].*/\1/p' SecRandom.PluginSdk/PluginApiVersions.cs | head -n1)"
+            if [ -z "$API_MAJOR" ]; then
+              echo "::error::Unable to parse PluginApiVersions.Current for the fallback version major."
+              exit 1
+            fi
+            LATEST_TAG="v${API_MAJOR}.0.0-dev"
             echo "::warning::No git tag found in this repository; using fallback version $LATEST_TAG."
           fi
           echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_OUTPUT"
