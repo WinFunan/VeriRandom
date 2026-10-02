@@ -79,9 +79,23 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' }}
         shell: pwsh
         run: |
-          $latestTag = git describe --tags --abbrev=0
-          echo "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
-          echo "Latest tag: $latestTag"
+          # A fresh fork may have no tags at all. git describe then exits non-zero and, under the
+          # runner's native-command error preference, would abort the whole step. Resolve a tag with a
+          # safe fallback so routine push builds still produce a version for packaging.
+          if (Test-Path variable:PSNativeCommandUseErrorActionPreference) {
+            $PSNativeCommandUseErrorActionPreference = $false
+          }
+          $latestTag = ''
+          try { $latestTag = (git describe --tags --abbrev=0 2>$null) } catch { $latestTag = '' }
+          if ([string]::IsNullOrWhiteSpace($latestTag)) {
+            try { $latestTag = (git tag --sort=-v:refname 2>$null | Select-Object -First 1) } catch { $latestTag = '' }
+          }
+          if ([string]::IsNullOrWhiteSpace($latestTag)) {
+            $latestTag = 'v0.0.0-dev'
+            Write-Host "::warning::No git tag found in this repository; using fallback version $latestTag."
+          }
+          "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
+          Write-Host "Latest tag: $latestTag"
 
       - name: Publish Desktop
         shell: pwsh
@@ -549,20 +563,28 @@ jobs:
           RELEASE_TAG: ${{ github.event.inputs.release_tag }}
         run: |
           $semverPattern = '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?$'
+          if (Test-Path variable:PSNativeCommandUseErrorActionPreference) {
+            $PSNativeCommandUseErrorActionPreference = $false
+          }
           if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
             $version = $env:RELEASE_TAG.TrimStart('v', 'V')
             if ($version -notmatch $semverPattern) {
               throw "Release tag must be a v-prefixed semantic version (vMAJOR.MINOR.PATCH), got '$env:RELEASE_TAG'."
             }
           } else {
-            $tag = git describe --tags --abbrev=0 2>$null
-            if ($LASTEXITCODE -eq 0 -and $tag) {
+            $tag = ''
+            try { $tag = (git describe --tags --abbrev=0 2>$null) } catch { $tag = '' }
+            if ([string]::IsNullOrWhiteSpace($tag)) {
+              try { $tag = (git tag --sort=-v:refname 2>$null | Select-Object -First 1) } catch { $tag = '' }
+            }
+            if (-not [string]::IsNullOrWhiteSpace($tag)) {
               $version = $tag.TrimStart('v', 'V')
               if ($version -notmatch $semverPattern) {
                 Write-Host "WARNING: latest tag '$tag' is not semantic versioning; using it as-is for the routine build artifact."
               }
             } else {
               $version = '0.0.0-dev'
+              Write-Host "::warning::No git tag found in this repository; using fallback version $version."
             }
           }
           echo "PKG_VERSION=$version" >> $env:GITHUB_OUTPUT
@@ -635,8 +657,21 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' }}
         shell: pwsh
         run: |
-          $latestTag = git describe --tags --abbrev=0
+          # See the desktop job: a tagless fork must fall back instead of aborting on git describe.
+          if (Test-Path variable:PSNativeCommandUseErrorActionPreference) {
+            $PSNativeCommandUseErrorActionPreference = $false
+          }
+          $latestTag = ''
+          try { $latestTag = (git describe --tags --abbrev=0 2>$null) } catch { $latestTag = '' }
+          if ([string]::IsNullOrWhiteSpace($latestTag)) {
+            try { $latestTag = (git tag --sort=-v:refname 2>$null | Select-Object -First 1) } catch { $latestTag = '' }
+          }
+          if ([string]::IsNullOrWhiteSpace($latestTag)) {
+            $latestTag = 'v0.0.0-dev'
+            Write-Host "::warning::No git tag found in this repository; using fallback version $latestTag."
+          }
           "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
+          Write-Host "Latest tag: $latestTag"
 
       - name: Setup JDK 21
         uses: actions/setup-java@v5
@@ -784,7 +819,18 @@ jobs:
         id: get_tag
         if: ${{ github.event_name != 'workflow_dispatch' }}
         shell: bash
-        run: echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+        run: |
+          # A tagless fork must fall back instead of producing an empty version.
+          LATEST_TAG="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="$(git tag --sort=-v:refname 2>/dev/null | head -n1 || true)"
+          fi
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v0.0.0-dev"
+            echo "::warning::No git tag found in this repository; using fallback version $LATEST_TAG."
+          fi
+          echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          echo "Latest tag: $LATEST_TAG"
 
       - name: Verify iOS toolchain
         shell: bash
