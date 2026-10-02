@@ -6,8 +6,10 @@ namespace SecRandom.Core.Models.SubConfigs.General;
 
 public partial class PrivacySettingsConfig : ObservableObject
 {
-    [ObservableProperty] private bool _sentryTelemetryEnabled = true;
-    [ObservableProperty] private OnlineStatusMode _onlineStatusMode = OnlineStatusMode.Full;
+    // This fork defaults both channels off: they upload to the upstream SecRandom/SECTL services, so
+    // they must be an explicit opt-in. Legacy settings still migrate to whatever the old config stored.
+    [ObservableProperty] private bool _sentryTelemetryEnabled;
+    [ObservableProperty] private OnlineStatusMode _onlineStatusMode = OnlineStatusMode.Off;
 
     private bool? _legacyTelemetryEnabled;
     private TelemetryMode? _legacyTelemetryMode;

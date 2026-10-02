@@ -1,5 +1,8 @@
 # SecRandom.Platforms.Abstractions/ AGENTS.md
 
+> This is the VeriRandom fork. Any divergence from upstream SecRandom must also be logged in
+> `../DownStream_Change.md` in the same change. An unlogged fork change is an incomplete change.
+
 ## Scope
 
 This project defines app-internal, platform-neutral contracts. It is intentionally outside `SecRandom.Core` and `SecRandom.Shared`, and it is not a plugin API.

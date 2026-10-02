@@ -119,6 +119,24 @@
                         </Expander>
                         <CheckBox IsChecked="{Binding ViewModel.AcceptedPrivacyPolicy}"
                                   Content="{x:Static langs:Resources.C_PrivacyPolicyAccept}" />
+
+                        <Expander Header="{x:Static langs:Resources.C_SecRandomServicesTitle}"
+                                  IsExpanded="False"
+                                  IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}">
+                            <ScrollViewer MinHeight="150" MaxHeight="240">
+                                <StackPanel Spacing="8">
+                                    <SelectableTextBlock Text="{x:Static langs:Resources.C_SecRandomServicesClause}"
+                                                         TextWrapping="Wrap" />
+                                    <SelectableTextBlock Text="{x:Static langs:Resources.C_SecRandomServicesDisclaimer}"
+                                                         TextWrapping="Wrap" />
+                                    <SelectableTextBlock Text="{x:Static langs:Resources.SecRandomPrivacyPolicy}"
+                                                         TextWrapping="Wrap" />
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Expander>
+                        <CheckBox IsChecked="{Binding ViewModel.AcceptedSecRandomServices}"
+                                  Content="{x:Static langs:Resources.C_SecRandomServicesAccept}"
+                                  IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}" />
                         
                         <Expander Header="{x:Static langs:Resources.C_GplTitle}" IsExpanded="False">
                             <ScrollViewer MinHeight="150" MaxHeight="240">
@@ -301,7 +319,7 @@
                                    Margin="0 0 0 8"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Text="{x:Static langs:Resources.C_PrivacyEncouragement}"
+                        <TextBlock Text="{x:Static langs:Resources.C_PrivacyDataDestination}"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <fa:FASettingsExpander Header="{x:Static langs:Resources.C_SentryTelemetry}"

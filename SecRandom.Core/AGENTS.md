@@ -4,6 +4,10 @@
 Core supplement to ../AGENTS.md. Update this file when
 draw/config/logging services, shared controls/styles, or registry helpers move.
 AI agents touching those areas must update this file in the same task.
+
+This is the VeriRandom fork. Any Core divergence from upstream SecRandom (behavior, defaults,
+services, resources) must also be logged in ../DownStream_Change.md in the same change.
+An unlogged fork change is an incomplete change.
 -->
 
 ## OVERVIEW

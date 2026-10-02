@@ -37,6 +37,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _acceptedVerificationNotice;
     [ObservableProperty] private bool _acceptedPrivacyPolicy;
     [ObservableProperty] private bool _acceptedGpl;
+    [ObservableProperty] private bool _acceptedSecRandomServices;
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _selectedPrizeListName = string.Empty;
     [ObservableProperty] private bool _autostart;
@@ -74,6 +75,8 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     public bool IsFullSetup => !IsPrivacyPolicyOnly;
     public bool IsVerificationNoticeRequired => !IsPrivacyPolicyOnly ||
                                                 Basic.AcceptedVerificationNoticeVersion < FirstRunOobeService.CurrentVerificationNoticeVersion;
+    public bool IsSecRandomServicesRequired =>
+        Basic.AcceptedSecRandomServicesVersion < FirstRunOobeService.CurrentSecRandomServicesVersion;
     public bool IsWelcomeStep => !IsPrivacyPolicyOnly && SelectedStep == 0;
     public bool HasPrevious => !IsPrivacyPolicyOnly && SelectedStep > 0;
     public bool IsStatusVisible => HasPrevious || IsPrivacyPolicyOnly;
@@ -85,7 +88,8 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         : string.Format(LR.M_StepProgress, SelectedStep, StepCount - 1);
     public bool CanContinue => !IsPrivacyPolicyStep ||
                                (AcceptedPrivacyPolicy && AcceptedGpl &&
-                                (!IsVerificationNoticeRequired || AcceptedVerificationNotice));
+                                (!IsVerificationNoticeRequired || AcceptedVerificationNotice) &&
+                                (!IsSecRandomServicesRequired || AcceptedSecRandomServices));
     public bool IsPrivacyPolicyStep => IsPrivacyPolicyOnly || SelectedStep == 1;
     public int StepCount => 8;
     public string PageTitle => IsPrivacyPolicyOnly ? LR.C_LegalTitle : LR.C_Title;
@@ -104,6 +108,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsPrivacyPolicyOnly));
         OnPropertyChanged(nameof(IsFullSetup));
         OnPropertyChanged(nameof(IsVerificationNoticeRequired));
+        OnPropertyChanged(nameof(IsSecRandomServicesRequired));
         OnPropertyChanged(nameof(IsPrivacyPolicyStep));
         OnPropertyChanged(nameof(IsStatusVisible));
         OnPropertyChanged(nameof(IsCompletionActionVisible));
@@ -138,6 +143,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     partial void OnAcceptedPrivacyPolicyChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
     partial void OnAcceptedGplChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
     partial void OnAcceptedVerificationNoticeChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
+    partial void OnAcceptedSecRandomServicesChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
 
     partial void OnSelectedStudentListNameChanged(string value)
     {
@@ -183,7 +189,9 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
 
     public async Task<bool> FinishAsync()
     {
-        if (!AcceptedPrivacyPolicy || !AcceptedGpl || (IsVerificationNoticeRequired && !AcceptedVerificationNotice))
+        if (!AcceptedPrivacyPolicy || !AcceptedGpl ||
+            (IsVerificationNoticeRequired && !AcceptedVerificationNotice) ||
+            (IsSecRandomServicesRequired && !AcceptedSecRandomServices))
         {
             if (!IsPrivacyPolicyOnly)
                 SelectedStep = 1;
@@ -242,6 +250,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsPrivacyPolicyOnly));
         OnPropertyChanged(nameof(IsFullSetup));
         OnPropertyChanged(nameof(IsVerificationNoticeRequired));
+        OnPropertyChanged(nameof(IsSecRandomServicesRequired));
         OnPropertyChanged(nameof(IsPrivacyPolicyStep));
         OnPropertyChanged(nameof(IsStatusVisible));
         OnPropertyChanged(nameof(IsCompletionActionVisible));

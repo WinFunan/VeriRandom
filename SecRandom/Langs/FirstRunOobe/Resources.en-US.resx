@@ -6,11 +6,29 @@
 
 2. Local data. Rosters, prizes, history, and settings are stored locally by default. Only import data that is lawful, accurate, authorized, and necessary.
 
-3. Sentry telemetry. When enabled, the app may upload crash, log, trace, and performance data to diagnose issues and improve stability. This does not control online-status reporting.
+3. Sentry telemetry. Off by default. When enabled, the app may upload crash, log, trace, and performance data to diagnose issues and improve stability. This data is sent to SecRandom (the upstream project and its organization SECTL), not to this fork. This does not control online-status reporting.
 
-4. Online-status reporting. Standard reporting counts online users and includes approximate location derived from public IP. Anonymous reporting only counts online users and sends no IP or location. Off sends no online-status report.
+4. Online-status reporting. Off by default. Standard reporting counts online users and includes approximate location derived from public IP. Anonymous reporting only counts online users and sends no IP or location. Off sends no online-status report. These reports are also sent to SecRandom and SECTL.
 
-5. Choices and changes. These privacy options are enabled by default and can be changed here or later in Settings > General > Privacy.
+5. Choices and changes. These privacy options are off by default and can be changed here or later in Settings > General > Privacy.
+
+6. Network requests. The app makes the corresponding telemetry or online-status requests only when the related option is enabled. Future requests stop after the option is disabled.
+
+7. Updates and termination. Material changes to this privacy policy increase its version and require renewed acknowledgement. You may stop using the software at any time.
+
+8. GPLv3. This policy does not replace or restrict GNU GPLv3 rights for source code, modifications, and distribution.</value></data><data name="SecRandomPrivacyPolicy" xml:space="preserve"><value>This privacy policy text is quoted from SecRandom v3.0.0; that version is the current SecRandom core and the official text built into the official binaries, so watch for any policy update notice published by its provider
+
+SecRandom Privacy Policy (Version 1)
+
+1. Scope and acceptance. SecRandom is a random selection tool for activities and organizations. By continuing to use the software, you acknowledge and accept this privacy policy; it does not remove rights granted by applicable law.
+
+2. Local data. Rosters, prizes, history, and settings are stored locally by default. Only import data that is lawful, accurate, authorized, and necessary.
+
+3. Sentry telemetry. Off by default. When enabled, the app may upload crash, log, trace, and performance data to diagnose issues and improve stability. This data is sent to SecRandom (the upstream project and its organization SECTL), not to this fork. This does not control online-status reporting.
+
+4. Online-status reporting. Off by default. Standard reporting counts online users and includes approximate location derived from public IP. Anonymous reporting only counts online users and sends no IP or location. Off sends no online-status report. These reports are also sent to SecRandom and SECTL.
+
+5. Choices and changes. These privacy options are off by default and can be changed here or later in Settings > General > Privacy.
 
 6. Network requests. The app makes the corresponding telemetry or online-status requests only when the related option is enabled. Future requests stop after the option is disabled.
 
@@ -35,9 +53,9 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_WelcomeDescription" xml:space="preserve"><value>Complete the first-run setup in a few steps. The verifiable-draw notice, privacy-policy, and GPLv3 acknowledgements are required; you can adjust everything else later in Settings.</value></data>
   <data name="C_Language" xml:space="preserve"><value>Language</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>Privacy policy and open-source licence</value></data>
-  <data name="C_LegalDescription" xml:space="preserve"><value>Read the verifiable-draw notice, then acknowledge the privacy policy and GNU GPLv3 before continuing. Privacy options are enabled by default and can be adjusted below.</value></data>
+  <data name="C_LegalDescription" xml:space="preserve"><value>Read the verifiable-draw notice, then acknowledge the privacy policy and GNU GPLv3 before continuing. Privacy options are off by default and can be adjusted below.</value></data>
   <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>VeriRandom privacy policy</value></data>
-  <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>I have read and agree to the VeriRandom privacy policy.</value></data>
+  <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>I have read and agree to the VeriRandom privacy policy.</value></data><data name="C_SecRandomServicesTitle" xml:space="preserve"><value>SecRandom online services and privacy</value></data><data name="C_SecRandomServicesClause" xml:space="preserve"><value>To use the online features integrated into this software, you must separately enter into an agreement and licence relationship with SECTL; SECTL is an independent entity with no necessary legal relationship to us, and it will gain access to the data you upload</value></data><data name="C_SecRandomServicesDisclaimer" xml:space="preserve"><value>By using the online features you agree to SecRandom's terms of service and privacy policy; you enter into a direct service relationship with SECTL, and VeriRandom is not a party to that relationship</value></data><data name="C_SecRandomServicesAccept" xml:space="preserve"><value>I have read and agree to the notice above and the SecRandom privacy policy.</value></data>
   <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
   <data name="C_GplAccept" xml:space="preserve"><value>I have read the GNU GPLv3 licence notice.</value></data>
   <data name="C_VerificationNoticeTitle" xml:space="preserve"><value>About verifiable draws</value></data>
@@ -91,7 +109,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>Register secrandom:// so external applications can open VeriRandom.</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>Privacy</value></data>
   <data name="C_PrivacyDescription" xml:space="preserve"><value>Choose the diagnostic and online-status information that VeriRandom may send after startup. You can change these options later in Settings.</value></data>
-  <data name="C_PrivacyEncouragement" xml:space="preserve"><value>Please enable them~ It would be a great help for our future updates!</value></data>
+  <data name="C_PrivacyDataDestination" xml:space="preserve"><value>Note: when enabled, the related data will be sent to SecRandom (the upstream project and its organization SECTL); this fork does not receive it</value></data>
   <data name="C_SentryTelemetry" xml:space="preserve"><value>Enable Sentry telemetry</value></data>
   <data name="C_SentryTelemetryDescription" xml:space="preserve"><value>When enabled, crash, log, trace, and performance data can be uploaded. This does not control online-status reporting.</value></data>
   <data name="C_OnlineStatus" xml:space="preserve"><value>Online status</value></data>

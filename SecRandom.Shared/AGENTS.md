@@ -4,6 +4,10 @@
 Shared-contract supplement to ../AGENTS.md. Update this file when persisted model shapes,
 contract interfaces, or path helper semantics change. AI agents touching those areas must
 update this file in the same task.
+
+This is the VeriRandom fork. Any shared-contract divergence from upstream SecRandom (model
+shapes, defaults, serialization behavior) must also be logged in ../DownStream_Change.md in the
+same change. An unlogged fork change is an incomplete change.
 -->
 
 ## OVERVIEW

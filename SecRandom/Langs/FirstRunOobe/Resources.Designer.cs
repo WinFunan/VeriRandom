@@ -117,6 +117,36 @@ namespace SecRandom.Langs.FirstRunOobe {
             }
         }
         
+        public static string SecRandomPrivacyPolicy {
+            get {
+                return ResourceManager.GetString("SecRandomPrivacyPolicy", resourceCulture);
+            }
+        }
+        
+        public static string C_SecRandomServicesTitle {
+            get {
+                return ResourceManager.GetString("C_SecRandomServicesTitle", resourceCulture);
+            }
+        }
+        
+        public static string C_SecRandomServicesClause {
+            get {
+                return ResourceManager.GetString("C_SecRandomServicesClause", resourceCulture);
+            }
+        }
+        
+        public static string C_SecRandomServicesDisclaimer {
+            get {
+                return ResourceManager.GetString("C_SecRandomServicesDisclaimer", resourceCulture);
+            }
+        }
+        
+        public static string C_SecRandomServicesAccept {
+            get {
+                return ResourceManager.GetString("C_SecRandomServicesAccept", resourceCulture);
+            }
+        }
+        
         public static string C_GplTitle {
             get {
                 return ResourceManager.GetString("C_GplTitle", resourceCulture);
@@ -435,9 +465,9 @@ namespace SecRandom.Langs.FirstRunOobe {
             }
         }
         
-        public static string C_PrivacyEncouragement {
+        public static string C_PrivacyDataDestination {
             get {
-                return ResourceManager.GetString("C_PrivacyEncouragement", resourceCulture);
+                return ResourceManager.GetString("C_PrivacyDataDestination", resourceCulture);
             }
         }
         

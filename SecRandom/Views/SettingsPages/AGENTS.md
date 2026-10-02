@@ -3,6 +3,10 @@
 <!--
 Settings-page supplement to ../../AGENTS.md. Update this file when settings page folders,
 page IDs, restart behavior, or settings-page localization layout changes.
+
+This is the VeriRandom fork. Any settings-page divergence from upstream SecRandom (pages, rows,
+localized wording, defaults) must also be logged in ../../DownStream_Change.md in the same change.
+An unlogged fork change is an incomplete change.
 -->
 
 ## OVERVIEW

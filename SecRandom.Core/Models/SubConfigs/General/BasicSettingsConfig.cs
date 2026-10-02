@@ -52,4 +52,8 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private int _acceptedPrivacyPolicyVersion;
     [ObservableProperty] private int _acceptedGplVersion;
     [ObservableProperty] private int _acceptedVerificationNoticeVersion;
+
+    // Separate from the privacy policy: the fork discloses that the online features upload to SECTL,
+    // an independent entity, and that its SecRandom privacy policy applies to those uploads.
+    [ObservableProperty] private int _acceptedSecRandomServicesVersion;
 }

@@ -2,21 +2,39 @@
 <root>
   <data name="PrivacyPolicy" xml:space="preserve"><value>VeriRandom プライバシーポリシー（バージョン 1）
 
-1. 適用範囲と同意。VeriRandom は活動や組織向けのランダム抽選ツールです。本ソフトウェアを使い続けることで、本ポリシーを確認し同意したものとみなされます。本ポリシーは適用法令により与えられる権利を制限しません。
+1. 適用範囲と同意。VeriRandom はイベントや組織向けのランダム抽選ツールです。本ソフトウェアを使い続けることで、本ポリシーを確認し同意したものとみなされます。本ポリシーは適用法令により与えられる権利を制限しません。
 
-2. ローカルデータ。名簿、賞品、履歴、設定は既定でローカルに保存されます。適法、正確、許可済みで必要なデータのみをインポートしてください。
+2. ローカルデータ。取り込んだ名簿、賞品、履歴、設定は既定でローカルに保存されます。取り込むデータが適法・正確・権限を有し、必要最小限であることを確認してください。
 
-3. Sentry テレメトリ。有効にすると、問題の診断と安定性向上のため、クラッシュ、ログ、トレース、パフォーマンス情報を送信できます。オンライン状態の報告は制御しません。
+3. Sentry テレメトリ。既定ではオフです。オンにすると、問題の診断と安定性向上のため、クラッシュ、ログ、トレース、プロファイリングのデータをアップロードする場合があります。これらのデータは SecRandom（上流プロジェクトとその団体 SECTL）に送信され、本フォークは受け取りません。この項目はオンライン状態の統計を制御しません。
 
-4. オンライン状態。通常報告はオンライン人数を集計し、公開 IP から推定したおおよその位置情報を含みます。匿名報告はオンライン人数のみを集計し、IP や位置情報を送信しません。停止すると報告しません。
+4. オンライン状態の統計。既定ではオフです。通常の送信はオンライン人数の集計に参加し、公衆 IP から推定されたおおよその位置を含みます。匿名送信はオンライン人数のみを集計し、IP や位置情報は送信しません。停止するとオンライン状態の統計に参加しません。これらの送信データも SecRandom と SECTL に送信されます。
 
-5. 選択と変更。プライバシー設定は既定で有効です。このページまたは「設定 > 全般 > プライバシー」でいつでも変更できます。
+5. 選択と変更。上記のプライバシー項目は既定でオフです。本ページまたは「設定 > 全般 > プライバシー」でいつでも変更できます。
 
-6. ネットワーク要求。対応する設定が有効な場合のみ、テレメトリまたはオンライン状態のネットワーク要求を行います。無効にした後の要求は停止します。
+6. ネットワーク要求。対応する項目をオンにした場合にのみ、そのテレメトリまたはオンライン状態のネットワーク要求を行います。オフにすると以降の要求は停止します。
 
-7. 更新と終了。本ポリシーに重要な変更がある場合はバージョンを上げ、あらためて確認を求めます。いつでも本ソフトウェアの利用を停止できます。
+7. 更新と終了。本ポリシーに実質的な変更がある場合はバージョンを上げ、再確認を求めます。いつでも本ソフトウェアの利用を停止できます。
 
-8. GPLv3。本ポリシーは、ソースコード、変更、および配布に関する GNU GPLv3 の権利を置き換えたり制限したりしません。</value></data>
+8. GPLv3 との関係。本ポリシーは、ソースコード、改変、配布に関する GNU GPLv3 の権利を代替したり制限したりしません。</value></data><data name="SecRandomPrivacyPolicy" xml:space="preserve"><value>本プライバシーポリシーの文面は SecRandom v3.0.0 から引用したものです。このバージョンは現在の SecRandom コア、および公式バイナリに組み込まれた正式な文面であるため、提供元がポリシーの更新を告知していないか確認することをおすすめします。
+
+SecRandom プライバシーポリシー（バージョン 1）
+
+1. 適用範囲と同意。SecRandom はイベントや組織向けのランダム抽選ツールです。本ソフトウェアを使い続けることで、本ポリシーを確認し同意したものとみなされます。本ポリシーは適用法令により与えられる権利を制限しません。
+
+2. ローカルデータ。取り込んだ名簿、賞品、履歴、設定は既定でローカルに保存されます。取り込むデータが適法・正確・権限を有し、必要最小限であることを確認してください。
+
+3. Sentry テレメトリ。既定ではオフです。オンにすると、問題の診断と安定性向上のため、クラッシュ、ログ、トレース、プロファイリングのデータをアップロードする場合があります。これらのデータは SecRandom（上流プロジェクトとその団体 SECTL）に送信され、本フォークは受け取りません。この項目はオンライン状態の統計を制御しません。
+
+4. オンライン状態の統計。既定ではオフです。通常の送信はオンライン人数の集計に参加し、公衆 IP から推定されたおおよその位置を含みます。匿名送信はオンライン人数のみを集計し、IP や位置情報は送信しません。停止するとオンライン状態の統計に参加しません。これらの送信データも SecRandom と SECTL に送信されます。
+
+5. 選択と変更。上記のプライバシー項目は既定でオフです。本ページまたは「設定 > 全般 > プライバシー」でいつでも変更できます。
+
+6. ネットワーク要求。対応する項目をオンにした場合にのみ、そのテレメトリまたはオンライン状態のネットワーク要求を行います。オフにすると以降の要求は停止します。
+
+7. 更新と終了。本ポリシーに実質的な変更がある場合はバージョンを上げ、再確認を求めます。いつでも本ソフトウェアの利用を停止できます。
+
+8. GPLv3 との関係。本ポリシーは、ソースコード、改変、配布に関する GNU GPLv3 の権利を代替したり制限したりしません。</value></data>
   <data name="GplNotice" xml:space="preserve"><value>GNU General Public License v3.0（GPLv3）について
 
 VeriRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフトウェアの実行、研究、変更、再配布を認めます。変更版を配布する場合は、対応するソースコードを GPLv3 で提供するなど、コピーレフト条項を守る必要があります。
@@ -35,9 +53,9 @@ VeriRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_WelcomeDescription" xml:space="preserve"><value>数ステップで初回設定を完了します。検証可能な抽選について、プライバシーポリシー、GPLv3 の確認が必要で、それ以外は後から設定で変更できます。</value></data>
   <data name="C_Language" xml:space="preserve"><value>言語</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>プライバシーポリシーとオープンソースライセンス</value></data>
-  <data name="C_LegalDescription" xml:space="preserve"><value>続行する前に、まず検証可能な抽選について読み、プライバシーポリシーと GNU GPLv3 を確認してください。プライバシー設定は既定で有効で、下で変更できます。</value></data>
+  <data name="C_LegalDescription" xml:space="preserve"><value>続行する前に、まず検証可能な抽選の注意事項を読み、プライバシーポリシーと GNU GPLv3 を確認してください。プライバシー項目は既定でオフで、下で調整できます。</value></data>
   <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>VeriRandom プライバシーポリシー</value></data>
-  <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>VeriRandom のプライバシーポリシーを読み、同意しました。</value></data>
+  <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>VeriRandom のプライバシーポリシーを読み、同意しました。</value></data><data name="C_SecRandomServicesTitle" xml:space="preserve"><value>SecRandom のオンラインサービスとプライバシー</value></data><data name="C_SecRandomServicesClause" xml:space="preserve"><value>本ソフトウェアに組み込まれたオンライン関連機能を利用するには、別途 SECTL との間で契約・ライセンス関係を締結する必要があります。SECTL は私たちと必然的な法的関係を持たない独立した主体であり、あなたがアップロードしたデータへのアクセス権を得ます。</value></data><data name="C_SecRandomServicesDisclaimer" xml:space="preserve"><value>オンライン機能を利用することで、SecRandom の利用規約とプライバシーポリシーに同意したものとみなされます。あなたと SECTL との間に直接のサービス関係が成立し、VeriRandom はその関係の当事者ではありません。</value></data><data name="C_SecRandomServicesAccept" xml:space="preserve"><value>上記の説明と SecRandom プライバシーポリシーを読み、同意します。</value></data>
   <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
   <data name="C_GplAccept" xml:space="preserve"><value>GNU GPLv3 の説明を読みました。</value></data>
   <data name="C_VerificationNoticeTitle" xml:space="preserve"><value>検証可能な抽選について</value></data>
@@ -91,7 +109,7 @@ VeriRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>外部アプリケーションから VeriRandom を開けるよう secrandom:// を登録します。</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>プライバシー</value></data>
   <data name="C_PrivacyDescription" xml:space="preserve"><value>起動後に送信できる診断情報とオンライン状態情報を選択します。後から設定で変更できます。</value></data>
-  <data name="C_PrivacyEncouragement" xml:space="preserve"><value>お願いです〜有効にしていただけると、これからのアップデートにとても役立ちます！</value></data>
+  <data name="C_PrivacyDataDestination" xml:space="preserve"><value>注意：有効にすると、関連データは SecRandom（上流プロジェクトとその団体 SECTL）に送信されます。本フォークはこれを受け取りません</value></data>
   <data name="C_SentryTelemetry" xml:space="preserve"><value>Sentry テレメトリを有効にする</value></data>
   <data name="C_SentryTelemetryDescription" xml:space="preserve"><value>有効にすると、クラッシュ、ログ、トレース、パフォーマンス情報を送信できます。オンライン状態の報告は制御しません。</value></data>
   <data name="C_OnlineStatus" xml:space="preserve"><value>オンライン状態</value></data>
