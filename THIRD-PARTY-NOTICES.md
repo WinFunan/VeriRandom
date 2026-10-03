@@ -40,3 +40,12 @@ the upstream notice set.
 Source: https://github.com/ClassIsland/EdgeTtsSharp
 
 The repository is included as the `vendors/EdgeTtsSharp` Git submodule for Edge voice metadata and synthesis protocol code. Its upstream repository currently does not declare a license; distribution review is required before shipping this dependency in a release.
+
+## SecRandom
+
+Source:
+https://github.com/SECTL/SecRandom/
+
+The repository is the direct upstream of this fork.
+
+Licensed under GNU Public License v3, which is the same with the one this fork is using.
