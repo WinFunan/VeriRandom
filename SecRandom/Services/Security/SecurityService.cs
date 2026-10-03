@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
@@ -288,12 +289,15 @@ internal sealed class SecurityService(
             var usbPassed = factors.Contains(SecurityFactor.Usb) &&
                             response.UsbPresent &&
                             metadata.UsbBindings.Any(IsBindingPresent);
-            // 「任意已选验证方式」模式下 TOTP 也能单独通过：该模式会用凭据文件旁的
-            // 免密副本校验验证码，因此不需要先解开信封
-            var totpPassed = GlobalConstants.AllowStandaloneTotpVerification &&
-                             factors.Contains(SecurityFactor.Totp) &&
-                             credentialStore.LoadStandaloneTotp() is { } standaloneTotp &&
-                             TotpService.Verify(standaloneTotp, response.TotpCode, _timeProvider.GetUtcNow());
+            // 「任意已选验证方式」模式下 TOTP 能单独通过，靠的是凭据文件旁的免密副本；本分支默认
+            // 不保留那份可读种子，因此该路径在未显式允许时整体不可用
+            var totpPassed = false;
+            if (GlobalConstants.AllowStandaloneTotpVerification
+                && factors.Contains(SecurityFactor.Totp)
+                && credentialStore.LoadStandaloneTotp() is { } standaloneTotp)
+            {
+                totpPassed = TotpService.Verify(standaloneTotp, response.TotpCode, _timeProvider.GetUtcNow());
+            }
             if (!Settings.RequireAllSelectedFactors && (usbPassed || totpPassed))
             {
                 metadata.FailedAttempts = 0;
@@ -880,15 +884,17 @@ internal sealed class SecurityService(
             return false;
         }
 
-        // 信封先落盘，再同步免密 TOTP 副本，避免出现「新种子 / 旧信封」的错配
+        // 信封先落盘，再同步免密 TOTP 副本，避免出现「新种子 / 旧信封」的错配。
+        // 未允许「仅 TOTP」验证时一律删除副本：升级后遗留的明文种子会在下一次保存时被清掉
+        var totpSecret = context.Credentials.TotpSecret;
         try
         {
             if (!GlobalConstants.AllowStandaloneTotpVerification
                 || Settings.RequireAllSelectedFactors
-                || string.IsNullOrWhiteSpace(context.Credentials.TotpSecret))
+                || string.IsNullOrWhiteSpace(totpSecret))
                 credentialStore.DeleteStandaloneTotp();
             else
-                credentialStore.SaveStandaloneTotp(context.Credentials.TotpSecret);
+                credentialStore.SaveStandaloneTotp(totpSecret);
             return true;
         }
         catch (CryptographicException exception)

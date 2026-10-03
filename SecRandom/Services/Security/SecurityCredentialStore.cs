@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
+using SecRandom.Core;
 using SecRandom.Shared;
 
 namespace SecRandom.Services.Security;
