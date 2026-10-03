@@ -27,7 +27,7 @@
 | 6 | CI 与构建修复 | `build_publish.yml`、Android 版本号、密钥脚本 | **高**（同一文件多处改） |
 | 7 | TSA 时间戳改为可显式关闭 + 沃通隐私提示 | 验证设置页、时间戳客户端、OOBE 隐私政策提示 | 中高（改了验证链路的网络行为开关） |
 | 8 | 新增「自有参考链（Own）」补充声明 | 新增 `*.ownproof.json`、自有链头、完整性报告字段 | **高**（新增落盘格式） |
-| 9 | 跨境数据传输闸门 + 抽取上传改为无默认二选一 | 新增枚举/配置、OOBE 与设置页、6 类 SECTL 出网路径 | **高**（改动了所有出境路径的开关语义） |
+| 9 | 跨境数据传输闸门 + 抽取上传改为无默认二选一 | 新增枚举/配置、OOBE 与设置页、6 类 SECTL 出网路径、`SectlAuthService`/`SectlHeartbeatService`/`PlatformVersionReportService` 构造函数 | **高**（改动了所有出境路径的开关语义，并与上游的令牌轮换重写叠加） |
 
 ---
 
@@ -246,6 +246,9 @@
 
 1. **先读本文件**，再 merge/rebase 上游。
 2. 高冲突文件：`build_publish.yml`、`SecRandom/App.axaml.cs`、`PrivacySettingsConfig.cs`、`UpdateCenterService.cs`、`VerificationDrawCoordinator.cs`、`WitnessClient.cs`、`FirstRunOobeViewModel.cs`、`FirstRunOobeWindow.axaml`、各 `Resources*.resx`。
+   上游 2026-10 同步后新增的高冲突面（已实际发生过冲突）：`SecRandom/Services/Verification/DrawProofExportService.cs`（上游给 `RemoveProofsOverStorageLimit` 加了 `protectedPath`，与自有参考证明的成对删除同处一个方法）、`SecRandom/Services/Verification/ProofChainStore.cs`（`RecordRemovedIndices` 的「只能跨连续前缀推进」收紧）、`SecRandom/Services/Auth/SectlAuthService.cs`（上游重写为「单次使用的轮换刷新令牌 + 单飞刷新 + 跨进程锁 `sectl-auth.lock`」，构造函数新增 `SectlTokenStore` 与 `ILogger`，与我们的 `MainConfigHandler` 出境闸门参数叠加）、`SecRandom/Services/Auth/SectlTokenStore.cs`（上游新增），以及三个构造 `SectlAuthService` 的测试文件（`SectlAuthServiceTests`、`SectlCloudStorageClientTests`、`CloudBackupServiceTests`）。
+   合并口径：**两侧都要保留**——上游的令牌轮换/链规则与本分支的 `MainConfigHandler` + `SectlTrafficPolicy` 出境闸门必须同时存在于构造函数与调用点。
+   AGENTS 类文件同样属于高冲突面：`SecRandom.Core/AGENTS.md`、`SecRandom/AGENTS.md`、`SecRandom/Views/SettingsPages/AGENTS.md` 由上游同步更新；本分支的补充段落需逐条确认仍然存在，尤其 §3（双链）、§4（隐私默认）、§10（TSA 开关）、§12（跨境闸门）。
 3. 上游若新增/改动隐私政策或 OOBE 版本，需同步更新 `SecRandomPrivacyPolicy` 的「引用自 SecRandom vX.Y.Z」前置说明与 `CurrentPrivacyPolicyVersion`。
 4. 上游若改动 `PluginApiVersions.Current` 主号，CI 回退版本会自动跟随；无需修改工作流。
 5. 上游若重新启用/调整更新通道，需重新评估 `GlobalConstants.UpdatesEnabled` 的取值与端点替换。
@@ -257,7 +260,7 @@
 
 - 新增改动：追加到对应主题，并在「§0 变更索引」表格更新范围/风险。
 - 与 `ChangeLog.md` 的分工：本文件是**面向工程的分歧台账**（改了什么文件、为什么必须活下来），`ChangeLog.md` 是**面向用户的发版日志**（按版本发布时间、只追加）。发版时两边都要有：`ChangeLog.md` 写用户可见效果，本文件登记分歧与实现边界。上游同步带来的核心日志进 `CHANGELOG/`，不要写进本文件，也不要写进 `ChangeLog.md`。
-- 新增主题：在 §1–§11 之后追加一节，并更新索引。
+- 新增主题：在 §1–§12 之后追加一节，并更新索引。
 - 删除或回退某改动：保留条目并标注「已回退（日期/原因）」，不要直接删除历史。
 - 此后每次改动请**就地更新**，不要依赖事后重建。
 

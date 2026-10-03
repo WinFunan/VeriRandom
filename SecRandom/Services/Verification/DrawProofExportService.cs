@@ -46,7 +46,6 @@ public sealed class DrawProofExportService(
             timestamp.ToString("yyyy-MM-dd"),
             CreateFileName(chained, context));
         SaveAtPath(path, chained);
-
         string? ownPath = null;
         if (beacon is not null)
         {
@@ -61,7 +60,8 @@ public sealed class DrawProofExportService(
             }
         }
 
-        RemoveProofsOverStorageLimit(configHandler.Data.General.ProofRetention.MaximumStorageBytes);
+        // Upstream now protects the file this save just wrote from the storage-limit cleanup.
+        RemoveProofsOverStorageLimit(configHandler.Data.General.ProofRetention.MaximumStorageBytes, path);
         logger.LogInformation(
             "已导出抽取证明：ProofId={ProofId}，模式={Mode}，链序={ChainIndex}，路径={Path}。",
             chained.ProofId, chained.Mode, chained.Chain?.Index, path);
@@ -164,7 +164,7 @@ public sealed class DrawProofExportService(
         chainStore.RecordRemovedIndices(removed, ProofChainEvent.RetentionCleanup);
     }
 
-    private void RemoveProofsOverStorageLimit(long maximumStorageBytes)
+    private void RemoveProofsOverStorageLimit(long maximumStorageBytes, string protectedPath)
     {
         if (maximumStorageBytes <= 0)
             return;
@@ -176,6 +176,7 @@ public sealed class DrawProofExportService(
         var files = Directory.EnumerateFiles(root, "*.srproof.json", SearchOption.AllDirectories)
             .Select(path => new FileInfo(path))
             .OrderBy(file => file.LastWriteTimeUtc)
+            .ThenBy(file => file.FullName, StringComparer.Ordinal)
             .ToList();
         var totalBytes = files.Sum(file => file.Length);
         List<long> removed = [];
@@ -183,6 +184,12 @@ public sealed class DrawProofExportService(
         {
             if (totalBytes <= maximumStorageBytes)
                 break;
+
+            // The proof saved by this very call must survive its own cleanup: deleting it would leave the
+            // chain head pointing at a file that never landed (a self-inflicted missing tail) and hand the
+            // attestation queue a path that no longer exists.
+            if (string.Equals(file.FullName, protectedPath, StringComparison.Ordinal))
+                continue;
 
             try
             {
