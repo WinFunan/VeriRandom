@@ -178,11 +178,10 @@
                                 <TextBlock Text="{x:Static langs:Resources.C_AttestationBody}" TextWrapping="Wrap"
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                 <RadioButton GroupName="OobeAttestationUpload"
-                                             IsEnabled="{Binding ViewModel.AcceptedCrossBorderTransfer}"
+                                             IsEnabled="{Binding ViewModel.IsSectlEgressConsented}"
                                              IsChecked="{Binding ViewModel.AttestationUploadEnabledChoice, Mode=TwoWay}"
                                              Content="{x:Static langs:Resources.O_AttestationOn}" />
                                 <RadioButton GroupName="OobeAttestationUpload"
-                                             IsEnabled="{Binding ViewModel.AcceptedCrossBorderTransfer}"
                                              IsChecked="{Binding ViewModel.AttestationUploadDisabledChoice, Mode=TwoWay}"
                                              Content="{x:Static langs:Resources.O_AttestationOff}" />
                             </StackPanel>

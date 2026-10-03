@@ -27,10 +27,20 @@ public static class SectlTrafficPolicy
         >= FirstRunOobeService.CurrentCrossBorderTransferVersion;
 
     /// <summary>
-    ///     The single answer to "may anything leave this device for SECTL?".
+    ///     Upstream's SECTL online-services privacy policy acknowledgement.
+    /// </summary>
+    public static bool IsServicesPolicyAccepted(MainConfigHandler configHandler) =>
+        configHandler.Data.General.Basic.AcceptedSecRandomServicesVersion
+        >= FirstRunOobeService.CurrentSecRandomServicesVersion;
+
+    /// <summary>
+    ///     The single answer to "may anything leave this device for SECTL?". It requires **both**
+    ///     acknowledgements — upstream's online-services policy and the fork's cross-border notice — so a
+    ///     user who declined either one keeps every SECTL path closed: sign-in, heartbeat, cloud backup,
+    ///     online status, usage counters, the version report, and proof attestation.
     /// </summary>
     public static bool IsEgressAllowed(MainConfigHandler configHandler) =>
-        IsTransferNoticeAccepted(configHandler);
+        IsTransferNoticeAccepted(configHandler) && IsServicesPolicyAccepted(configHandler);
 
     /// <summary>
     ///     Ordinary-draw replay attestation is an additional, explicit choice on top of the egress consent.
@@ -54,6 +64,12 @@ public static class SectlTrafficPolicy
     /// </summary>
     public static async Task<bool> EnsureTransferAcceptedAsync(MainConfigHandler configHandler, TopLevel owner)
     {
+        // Both acknowledgements gate SECTL traffic, so the late sign-off collects them in order:
+        // upstream's online-services policy first, then the fork's cross-border notice. Each shows its own
+        // dialog, and declining either one leaves the gate closed.
+        if (!await SecRandomServicesConsent.EnsureAsync(configHandler, owner))
+            return false;
+
         if (IsTransferNoticeAccepted(configHandler))
             return true;
 

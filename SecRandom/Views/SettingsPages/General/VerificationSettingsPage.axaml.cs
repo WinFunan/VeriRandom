@@ -51,7 +51,7 @@ public partial class VerificationSettingsPage : UserControl
             var mode = ConfigHandler.Data.General.Verification.AttestationUpload;
             AttestationUploadOnRadio.IsChecked = mode == AttestationUploadMode.Enabled;
             AttestationUploadOffRadio.IsChecked = mode == AttestationUploadMode.Disabled;
-            AttestationUploadGroup.IsEnabled = SectlTrafficPolicy.IsTransferNoticeAccepted(ConfigHandler);
+            AttestationUploadGroup.IsEnabled = SectlTrafficPolicy.IsEgressAllowed(ConfigHandler);
         }
         finally
         {

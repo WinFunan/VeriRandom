@@ -326,9 +326,11 @@
 **意图**：SECTL 的服务器位于中华人民共和国境外（当前节点：德国巴伐利亚邦阿多特多夫，IP 159.195.70.108），因此把所有可能向 SECTL 发送数据的路径收敛到**一个**「跨境数据传输须知」闸门下；同时把原本不可关闭、默认开启的「普通模式抽取后自动向 SECTL 申请签名」改为**没有任何默认值**的主动二选一。
 
 **判定口径（必须保持）**：
+- `IsEgressAllowed` 要求**同时**满足两项确认：上游的 SECTL 线上服务政策（`AcceptedSecRandomServicesVersion`）与本分支的跨境数据传输须知（`AcceptedCrossBorderTransferVersion`）。任一项未接受 → 登录、心跳、云备份、在线状态、使用统计、版本使用量、抽取上传全部停用。
 - `AttestationUploadMode.Unset` 表示「还没问过用户」，**必须当作不上传**处理。
 - 绝不能用 `OnlineStatusMode` 代表「是否允许访问 SECTL」：上游的 `PlatformVersionReportService` **刻意不受** `OnlineStatusMode` 约束，必须显式走本闸门。
 - 本闸门不得拦截 NIST Beacon（`NistBeaconClient` 访问的是 NIST，不是 SECTL）。
+- 补签入口 `SectlTrafficPolicy.EnsureTransferAcceptedAsync` **先**收上游线上服务政策确认，**再**收跨境须知；任一被拒绝则闸门保持关闭。
 
 **新增文件**：
 

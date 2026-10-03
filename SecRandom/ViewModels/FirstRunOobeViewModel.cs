@@ -154,8 +154,21 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     partial void OnAcceptedPrivacyPolicyChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
     partial void OnAcceptedGplChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
     partial void OnAcceptedVerificationNoticeChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
-    partial void OnAcceptedSecRandomServicesChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
-    partial void OnAcceptedCrossBorderTransferChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
+    partial void OnAcceptedSecRandomServicesChanged(bool value) => NotifyEgressConsentChanged();
+    partial void OnAcceptedCrossBorderTransferChanged(bool value) => NotifyEgressConsentChanged();
+
+    /// <summary>
+    ///     Both acknowledgements gate SECTL traffic, so the "submit" option is selectable only once the user
+    ///     has accepted upstream's online-services policy and the fork's cross-border notice. The "do not
+    ///     submit" option stays selectable regardless, so the step can always be completed.
+    /// </summary>
+    public bool IsSectlEgressConsented => AcceptedSecRandomServices && AcceptedCrossBorderTransfer;
+
+    private void NotifyEgressConsentChanged()
+    {
+        OnPropertyChanged(nameof(IsSectlEgressConsented));
+        OnPropertyChanged(nameof(CanContinue));
+    }
 
     partial void OnAttestationUploadChanged(AttestationUploadMode value)
     {
