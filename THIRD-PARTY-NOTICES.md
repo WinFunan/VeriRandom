@@ -31,7 +31,7 @@ SOFTWARE.
 ## miniaudio
 
 SoundFlow's bundled playback runtime uses miniaudio by David Reid. miniaudio
-is dual licensed under MIT or the Unlicense; SecRandom redistributes it under
+is dual licensed under MIT or the Unlicense; VeriRandom and SecRandom redistributes it under
 the MIT terms above. See SoundFlow's `SOUNDFLOW-THIRD-PARTY-NOTICES.txt` for
 the upstream notice set.
 
@@ -47,7 +47,7 @@ Source:
 https://github.com/SECTL/SecRandom/
 
 The repository is the direct upstream of this fork.
-This fork (VeriRandom) is a modified version of SecRandom, since 2, October, 2026.
+This fork (VeriRandom) is a modified version of SecRandom, since October 2, 2026.
 See DownStream_Change.md for the list of modifications.
 
-Licensed under GNU General Public License v3, which is the same with the one this fork is using.
+Licensed under GNU General Public License v3, which is the same as the one this fork is using.
