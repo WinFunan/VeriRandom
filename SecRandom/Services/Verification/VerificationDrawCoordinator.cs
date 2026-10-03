@@ -98,6 +98,8 @@ public sealed class VerificationDrawCoordinator(
         var inputHash = VerificationWireCodec.ComputeInputHash(input);
         DrawProof proof;
         VerificationKernelResult result;
+        // Declared at method scope: the ordinary branch fills it, and Complete(...) needs it either way.
+        DrawProofBeacon? beacon = null;
         if (verificationMode == VerificationMode.FormalNotarized)
         {
             var head = chainStore.Read();
@@ -125,7 +127,6 @@ public sealed class VerificationDrawCoordinator(
             // with a published pulse so the operator cannot inject custom entropy. The proof stays
             // OfflineReproducible because the seed is still reproducible from the recorded pulse.
             byte[] seed;
-            DrawProofBeacon? beacon = null;
             if (verificationMode == VerificationMode.Ordinary && beaconEntropy.IsEnabled)
             {
                 var reservation = await beaconEntropy.ReserveAsync(cancellationToken).ConfigureAwait(false);

@@ -45,7 +45,9 @@ SecRandom-C/
 ├── SecRandom.Core.Tests/  # xUnit v3 test project; currently covers legacy privacy/telemetry migration
 ├── scripts/               # Standalone tooling and verification scripts, including fairness audits
 ├── docs/                  # Project rules, localization, namespace boundaries
-├── CHANGELOG/             # Versioned release notes, mostly v3 tree
+├── ChangeLog.md           # Fork-owned user-facing release notes, append-only, organized by release time
+├── DownStream_Change.md   # Fork-vs-upstream divergence registry (engineering ledger for upstream sync)
+├── CHANGELOG/             # Versioned upstream release notes, mostly v3 tree
 ├── resources/             # README mirrors, screenshots, banners, root static assets
 ├── vendors/EdgeTtsSharp/  # Edge TTS synthesis submodule; app supplies a cross-platform transport seam
 ├── Global.props           # Main shared MSBuild policy; imported by projects
@@ -137,6 +139,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 | `VersionUsageReportPayload` | domain helper | `SecRandom.Core/Services/Stats/VersionUsageReportPayload.cs` | Pure version-report payload: `platform_id`/`version`/`device_uuid` with the API's pinned field names, a required parseable device UUID (never a `user_id`), and version-format validation. |
 
 ## CONVENTIONS
+- **Three changelog documents with distinct jobs — never mix them.** `ChangeLog.md` (root) is the fork's own **user-facing release log**, append-only, organized by release time, describing effects a user can see; `CHANGELOG/` is **upstream's** core release history, which arrives with upstream syncs and must not be edited to record our work or overwritten on sync; `DownStream_Change.md` is the **divergence registry** — file-level and technical, answering "what must survive an upstream merge". A fork release writes user-facing entries to `ChangeLog.md`, and any divergence it introduces must already be registered in `DownStream_Change.md`. A fork change recorded in `ChangeLog.md` but missing from `DownStream_Change.md` is an incomplete change.
 - **Downstream change log is mandatory.** This repository is the VeriRandom fork of `SECTL/SecRandom`. `DownStream_Change.md` records every divergence from upstream (behavior, wording, files, CI, governance documents) together with the "internal identifiers must stay SecRandom" boundary. Any change that adds/renames/deletes a file or alters an upstream-inherited file must update `DownStream_Change.md` in the same change. Treat an unlogged fork change as an incomplete change: without it the next upstream sync either drops the fork change or reintroduces the upstream behavior, and the resulting diff is effectively unattributable.
 - `docs/project_rules.md` overrides inference when adding features.
 - General settings now live under `MainConfigModel.General`; `MainConfigModel.Basic` / `Backup` remain compatibility bridges for existing callers while new config splits belong under `SecRandom.Core/Models/SubConfigs/General/`.
@@ -243,6 +246,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 
 ## MAINTENANCE CHECKLIST
 AI agents must update AGENTS files when they:
+- **Ship a fork release or any user-visible fork change: add it to `ChangeLog.md` (append-only, by release time) in the same change, and register the divergence in `DownStream_Change.md`. `DownStream_Change.md` remains the first and mandatory check before finishing any task in this fork.**
 - **Make any change that diverges from upstream SecRandom — including wording, defaults, resources, CI, and governance documents. `DownStream_Change.md` must be updated in the same change; this is the first item to check before finishing any task in this fork.**
 - Add, remove, or rename top-level folders or projects.
 - Change `TargetFramework`, package family, `AvaloniaVersion`, CI SDK versions, or publish RIDs.
