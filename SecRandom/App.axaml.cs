@@ -1016,6 +1016,10 @@ public partial class App : Application
                 services.AddSingleton<PlatformUsageReportService>();
                 services.AddHostedService(serviceProvider =>
                     serviceProvider.GetRequiredService<PlatformUsageReportService>());
+                // 版本使用人数上报：只上报版本号与设备标识，每次启动上报一次
+                services.AddSingleton<PlatformVersionReportService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<PlatformVersionReportService>());
 
                 // 服务
                 services.AddTransient<RollCallDrawService>();
