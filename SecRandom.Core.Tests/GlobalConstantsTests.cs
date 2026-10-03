@@ -33,16 +33,41 @@ public sealed class GlobalConstantsTests
     }
 
     [Fact]
-    public void AssemblyWithoutInformationalVersionKeepsThePlaceholder()
+    public void AssemblyWithoutInformationalVersionUsesTheForkFallbackVersion()
     {
         var originalSource = GlobalConstants.VersionSource;
         try
         {
+            // A head that never ran the GitInfo generator must not read as v0.0.0.0: that is a valid version
+            // shape whose major (0) disagrees with every archive this build writes, so the producer-version
+            // gate would reject this build's own exports.
             GlobalConstants.SetVersionAssembly(CreateProbeAssembly(null));
 
-            Assert.Equal("v0.0.0.0", GlobalConstants.Version);
-            Assert.Equal("0.0.0.0", GlobalConstants.Tag);
+            Assert.Equal("v3.0.0-dev", GlobalConstants.Version);
+            Assert.Equal("v3.0.0-dev", GlobalConstants.Tag);
             Assert.Equal("Unknown", GlobalConstants.Branch);
+        }
+        finally
+        {
+            GlobalConstants.SetVersionAssembly(originalSource);
+        }
+    }
+
+    [Fact]
+    public void TaglessGitDescribeOutputIsNotAdoptedAsTheVersion()
+    {
+        var originalSource = GlobalConstants.VersionSource;
+        try
+        {
+            // The GitInfo generator embeds whatever `git describe` printed, and a tagless repository makes it
+            // print this to stderr. Adopting it would surface tool output as the crash-report version and as
+            // `producer_version`, so the tag is rejected while the commit hash is still kept.
+            GlobalConstants.SetVersionAssembly(CreateProbeAssembly(
+                "fatal: No names found, cannot describe anything.+2d3f4e7abcdef0123456789abcdef0123456789"));
+
+            Assert.Equal("v3.0.0-dev", GlobalConstants.Version);
+            Assert.Equal("2d3f4e7", GlobalConstants.CommitHash);
+            Assert.Equal("v3.0.0-dev-Nonomi-2d3f4e7(Unknown)", GlobalConstants.VersionLong);
         }
         finally
         {

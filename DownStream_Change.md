@@ -494,3 +494,12 @@
 
 **说明**：本节的修复与 §14 的标识改名无关（改名刻意保留了 `avares://SecRandom/...`）。
 
+**同批修复：无 tag 时版本号被工具输出污染**
+
+`AssemblyInfo.cs` 把 `GitInfo.Tag` 直接拼进 `AssemblyInformationalVersion`，而无 tag 仓库里 GitInfo 生成器会把 `git describe` 的 **stderr** 当成 Tag，于是版本号变成 `vfatal: No names found, cannot describe anything.`。危害不止崩溃报告：`producer_version` 变成非版本串后，导入闸门可能**拒绝本构建自己导出的归档**。
+
+| 文件 | 改动 |
+|------|------|
+| `SecRandom.Core/GlobalConstants.cs` | `ReadMetadata` 新增 `LooksLikeVersionTag`：Tag 必须是「数字 `MAJOR.MINOR`」形态，否则回退到 `v3.0.0-dev`（主号需与 `PluginApiVersions.Current` 保持一致）；同时把「无 informational version」时的旧占位 `v0.0.0.0` 也改为该回退值，因为主号 `0` 与本构建写出的归档主号不符。提交哈希仍照常保留 |
+| `SecRandom.Core.Tests/GlobalConstantsTests.cs` | 原 `AssemblyWithoutInformationalVersionKeepsThePlaceholder` 改为断言新回退值；新增 `TaglessGitDescribeOutputIsNotAdoptedAsTheVersion` 覆盖「工具输出不得被采纳为版本」这一回归 |
+

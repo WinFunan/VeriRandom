@@ -129,16 +129,64 @@ public static class GlobalConstants
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion;
         if (string.IsNullOrWhiteSpace(informationalVersion))
-            return new VersionMetadata("0.0.0.0", "Unknown", "Unknown");
+            return new VersionMetadata(TaglessFallbackTag, "Unknown", "Unknown");
 
         var separator = informationalVersion.IndexOf('+');
         var generatedGitInfo = assembly.GetType("SecRandom.GitInfo");
         var branch = generatedGitInfo?.GetField("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
                      ?? generatedGitInfo?.GetProperty("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
                      ?? "Unknown";
-        return separator < 0
-            ? new VersionMetadata(informationalVersion, branch, "Unknown")
-            : new VersionMetadata(informationalVersion[..separator], branch, informationalVersion[(separator + 1)..]);
+        var tag = separator < 0 ? informationalVersion : informationalVersion[..separator];
+        var commitHash = separator < 0 ? "Unknown" : informationalVersion[(separator + 1)..];
+
+        // The GitInfo generator embeds whatever `git describe` printed. In a tagless repository that is the
+        // tool's stderr ("fatal: No names found, cannot describe anything."), which would otherwise become
+        // this build's version everywhere it matters — the crash report, `producer_version`, the Sentry
+        // release, and the update gate. An implausible tag therefore falls back to the fork's dev version
+        // instead of propagating tool output as an identity.
+        if (!LooksLikeVersionTag(tag))
+            tag = TaglessFallbackTag;
+
+        return new VersionMetadata(tag, branch, commitHash);
+    }
+
+    /// <summary>
+    ///     Stand-in version for a build whose generated tag is not a version at all (tagless checkout).
+    ///     Keep its major in step with <c>SecRandom.PluginSdk/PluginApiVersions.Current</c>, the same rule
+    ///     the release workflow follows for its own fallback.
+    /// </summary>
+    private const string TaglessFallbackTag = "v3.0.0-dev";
+
+    private static bool LooksLikeVersionTag(string value)
+    {
+        var span = value.AsSpan().Trim();
+        if (span.Length > 0 && (span[0] == 'v' || span[0] == 'V'))
+            span = span[1..];
+
+        // Require at least `MAJOR.MINOR`, both numeric, so `fatal: ...` and any other tool output is rejected.
+        var majorEnd = span.IndexOf('.');
+        if (majorEnd <= 0)
+            return false;
+
+        for (var index = 0; index < majorEnd; index++)
+        {
+            if (!char.IsAsciiDigit(span[index]))
+                return false;
+        }
+
+        var remaining = span[(majorEnd + 1)..];
+        var minorEnd = remaining.IndexOf('.');
+        var minor = minorEnd < 0 ? remaining : remaining[..minorEnd];
+        if (minor.IsEmpty)
+            return false;
+
+        foreach (var character in minor)
+        {
+            if (!char.IsAsciiDigit(character))
+                return false;
+        }
+
+        return true;
     }
 }
 
