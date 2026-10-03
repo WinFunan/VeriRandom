@@ -47,5 +47,7 @@ Source:
 https://github.com/SECTL/SecRandom/
 
 The repository is the direct upstream of this fork.
+This fork (VeriRandom) is a modified version of SecRandom, since 2, October, 2026.
+See DownStream_Change.md for the list of modifications.
 
-Licensed under GNU Public License v3, which is the same with the one this fork is using.
+Licensed under GNU General Public License v3, which is the same with the one this fork is using.
