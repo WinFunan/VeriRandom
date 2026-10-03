@@ -3,8 +3,10 @@ using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
+using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Stats;
 using SecRandom.Services.Config;
+using SecRandom.Services.Consent;
 
 namespace SecRandom.Services;
 
@@ -31,12 +33,15 @@ public sealed class PlatformVersionReportService : BackgroundService
     private readonly DeviceUuidStore _deviceUuidStore;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<PlatformVersionReportService> _logger;
+    private readonly MainConfigHandler _configHandler;
 
     public PlatformVersionReportService(
         DeviceUuidStore deviceUuidStore,
         IHttpClientFactory httpClientFactory,
-        ILogger<PlatformVersionReportService> logger)
+        ILogger<PlatformVersionReportService> logger,
+        MainConfigHandler configHandler)
     {
+        _configHandler = configHandler;
         _deviceUuidStore = deviceUuidStore;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
@@ -53,6 +58,11 @@ public sealed class PlatformVersionReportService : BackgroundService
 
     private async Task ReportOnceAsync(CancellationToken cancellationToken)
     {
+        // The version figure is deliberately not privacy-gated upstream, so it must consult the fork's
+        // cross-border egress consent explicitly rather than relying on OnlineStatusMode.
+        if (!SectlTrafficPolicy.IsEgressAllowed(_configHandler))
+            return;
+
         VersionUsageReportPayload payload;
         try
         {

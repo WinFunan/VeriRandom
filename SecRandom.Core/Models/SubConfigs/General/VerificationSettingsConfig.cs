@@ -20,4 +20,9 @@ public partial class VerificationSettingsConfig : ObservableObject
     // reference proof's recorded pulse index is then the only way back to the pulse. The settings page
     // warns about that coupling before it persists the change.
     [ObservableProperty] private bool _timestampAuthorityEnabled = true;
+
+    // No default on purpose: first-run setup asks the user to choose between submitting an ordinary draw
+    // for replay attestation and not submitting it, and an installation that has not been asked yet stays
+    // Unset. Every reader must treat Unset as "do not upload".
+    [ObservableProperty] private AttestationUploadMode _attestationUpload = AttestationUploadMode.Unset;
 }

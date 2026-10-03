@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Services.Consent;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Verification;
 
@@ -160,7 +161,9 @@ public sealed class DrawProofAttestationService(
         }
     }
 
-    private bool IsEnabled => configHandler.Data.General.Verification.Mode == VerificationMode.Ordinary;
+    private bool IsEnabled =>
+        configHandler.Data.General.Verification.Mode == VerificationMode.Ordinary
+        && SectlTrafficPolicy.IsAttestationUploadAllowed(configHandler);
 
     private TimeSpan GetNextDelay()
     {

@@ -27,6 +27,7 @@
 | 6 | CI 与构建修复 | `build_publish.yml`、Android 版本号、密钥脚本 | **高**（同一文件多处改） |
 | 7 | TSA 时间戳改为可显式关闭 + 沃通隐私提示 | 验证设置页、时间戳客户端、OOBE 隐私政策提示 | 中高（改了验证链路的网络行为开关） |
 | 8 | 新增「自有参考链（Own）」补充声明 | 新增 `*.ownproof.json`、自有链头、完整性报告字段 | **高**（新增落盘格式） |
+| 9 | 跨境数据传输闸门 + 抽取上传改为无默认二选一 | 新增枚举/配置、OOBE 与设置页、6 类 SECTL 出网路径 | **高**（改动了所有出境路径的开关语义） |
 
 ---
 
@@ -314,3 +315,54 @@
 - Own 导出失败**不得**影响已完成的抽取（`DrawProofExportService.Save` 内捕获并告警）。
 
 **待办**：设置页目前只展示 Up 链完整性文本，尚未把 `OwnReference` 计数渲染到界面。
+
+---
+
+## 12. 跨境数据传输闸门 + 抽取上传改为无默认二选一
+
+**意图**：SECTL 的服务器位于中华人民共和国境外（当前节点：德国巴伐利亚邦阿多特多夫，IP 159.195.70.108），因此把所有可能向 SECTL 发送数据的路径收敛到**一个**「跨境数据传输须知」闸门下；同时把原本不可关闭、默认开启的「普通模式抽取后自动向 SECTL 申请签名」改为**没有任何默认值**的主动二选一。
+
+**判定口径（必须保持）**：
+- `AttestationUploadMode.Unset` 表示「还没问过用户」，**必须当作不上传**处理。
+- 绝不能用 `OnlineStatusMode` 代表「是否允许访问 SECTL」：上游的 `PlatformVersionReportService` **刻意不受** `OnlineStatusMode` 约束，必须显式走本闸门。
+- 本闸门不得拦截 NIST Beacon（`NistBeaconClient` 访问的是 NIST，不是 SECTL）。
+
+**新增文件**：
+
+| 文件 | 说明 |
+|------|------|
+| `SecRandom.Core/Enums/Configs/AttestationUploadMode.cs` | `Unset = 0` / `Enabled = 1` / `Disabled = 2`，无默认值 |
+| `SecRandom/Services/Consent/SectlTrafficPolicy.cs` | 唯一出境闸门：`IsTransferNoticeAccepted` / `IsEgressAllowed` / `IsAttestationUploadAllowed` / `MarkTransferNoticeAccepted` / `EnsureTransferAcceptedAsync`（二级弹窗 + `ConfirmDialogGate` 5 秒） |
+
+**修改文件**：
+
+| 文件 | 改动 |
+|------|------|
+| `SecRandom.Core/Models/SubConfigs/General/BasicSettingsConfig.cs` | 新增 `AcceptedCrossBorderTransferVersion`（版本化；**不**纳入 `IsPrivacyPolicyOnlyRequired()`，属可选、按需补签） |
+| `SecRandom.Core/Models/SubConfigs/General/VerificationSettingsConfig.cs` | 新增 `AttestationUpload`（默认 `Unset`） |
+| `SecRandom/Services/FirstRun/FirstRunOobeService.cs` | 新增 `CurrentCrossBorderTransferVersion = 1`；`Complete(...)` 改为接收跨境接受标记与抽取上传选择 |
+| `SecRandom/ViewModels/FirstRunOobeViewModel.cs` | 新增 `AcceptedCrossBorderTransfer` / `AttestationUpload`；完成后传入 `Complete(...)` |
+| `SecRandom/Services/Verification/DrawProofAttestationService.cs` | `IsEnabled` 追加 `SectlTrafficPolicy.IsAttestationUploadAllowed` |
+| `SecRandom/Services/PlatformVersionReportService.cs` | 构造注入 `MainConfigHandler`；上报前显式检查出境闸门 |
+| `SecRandom/Services/PlatformUsageReportService.cs` | `IsReportingDisabled()` 追加出境闸门 |
+| `SecRandom/Services/OnlineStatusService.cs` | `ResolvePolicy()` 在未同意跨境时强制降级为 `Off` |
+| `SecRandom/Services/Auth/SectlAuthService.cs` | 构造注入 `MainConfigHandler`；`SignInAsync` 与 `SendAuthorizedAsync`（受权请求边界，覆盖登录/云备份/用户信息）未同意跨境时直接拒绝 |
+| `SecRandom/Services/Auth/SectlHeartbeatService.cs` | 构造注入 `MainConfigHandler`；未同意跨境时跳过一次心跳 |
+| `SecRandom/Langs/FirstRunOobe/Resources{,.en-US,.ja-JP}.resx` + Designer | 新增 10 个键：`C_CrossBorderTitle/Body/OptionalNote/Accept/AcceptRequired/Confirm`、`C_AttestationTitle/Body`、`O_AttestationOn/Off` |
+| `SecRandom.Core.Tests/DrawProofAttestationQueueTests.cs`、`SectlAuthServiceTests.cs`、`CloudBackupServiceTests.cs`、`SectlCloudStorageClientTests.cs`、`PlatformVersionReportServiceTests.cs` | 测试构造处补齐新构造参数，并在测试配置中显式同意跨境（这些测试验证的是「已启用」路径） |
+
+**行为**：
+- 未同意跨境须知时：抽取上传、在线状态、使用统计、版本使用量、SECTL 账号登录与其心跳、账号云备份全部停用；拒绝是**可选**路径，不是 OOBE 阻塞项。
+- 补签统一走 `SectlTrafficPolicy.EnsureTransferAcceptedAsync`（必选勾选 + 5 秒最短显示）。
+- 抽取上传除跨境外还需要 `AttestationUpload == Enabled`，`Unset` 一律不上传。
+
+**残留待办**：
+1. `SectlAuthService.InitializeAsync` 中已登录会话的后台令牌刷新可能绕过 `SendAuthorizedAsync`，尚未收口到出境闸门。
+2. 未同意跨境时，`S_AttestationUpload` 单选组会置灰（`RefreshAttestationUpload` 读 `SectlTrafficPolicy`），但**不会**主动引导用户去隐私设置页补签；补签后需要重新进入该页才会解锁。
+
+**界面（已落地）**：
+- OOBE 轮播新增隐私页之后的独立第 3 页「跨境数据传输须知」：`StepCount` 由 8 改为 9，`IsCrossBorderStep => SelectedStep == 2`，页序为 欢迎(0) → 法务/隐私(1) → **跨境须知(2)** → 数据导入(3) → … → 完成(8)。
+- 该页含：须知正文（含 SECTL 节点属地/IP）、**加粗**的可选说明、非必选勾选（`AcceptedCrossBorderTransfer`），以及**无默认**的抽取上传单选对（`AttestationUploadEnabledChoice` / `AttestationUploadDisabledChoice`，两个 `RadioButton` 同组，未选择时两个都未选中；未勾选跨境时单选对置灰）。
+- `CanContinue` 与 `FinishAsync` 都要求 `AttestationUpload != Unset`（仅在全量设置流程中；`IsPrivacyPolicyOnly` 路径不受影响）。
+- 隐私设置页新增跨境须知行（标题/说明复用 OOBE 资源 `C_CrossBorderTitle` / `C_CrossBorderOptionalNote`，**不复制法律文本**）与 `CrossBorderTransferAccept_OnClick` 补签入口，供首次设置时跳过的安装事后补签。
+- 「抽取验证」设置页新增 `S_AttestationUpload` 行，供**已过首次设置的用户事后改选**提交/不提交；控件用 `x:Name` 直接读写（`RefreshAttestationUpload` / `AttestationUpload_OnClick`），不依赖 `INotifyPropertyChanged`，选项文案复用 OOBE 的 `O_AttestationOn` / `O_AttestationOff`。

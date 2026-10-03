@@ -30,13 +30,49 @@ public partial class VerificationSettingsPage : UserControl
     private static readonly int[] RetentionOptions = [7, 15, 30, 60, 90, 0];
     private static readonly long[] StorageOptions = [16L * 1024 * 1024, 32L * 1024 * 1024, 64L * 1024 * 1024, 128L * 1024 * 1024, 256L * 1024 * 1024, 512L * 1024 * 1024, 1024L * 1024 * 1024];
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
-    private DrawProofAttestationService AttestationService { get; } = IAppHost.GetService<DrawProofAttestationService>();
-    private ProofIntegrityVerifier IntegrityVerifier { get; } = IAppHost.GetService<ProofIntegrityVerifier>();
+    private DrawProofAttestationService AttestationService { get; } = IAppHost.GetService<DrawProofAttestationService>();    private ProofIntegrityVerifier IntegrityVerifier { get; } = IAppHost.GetService<ProofIntegrityVerifier>();
     private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     private INistBeaconClient BeaconClient { get; } = IAppHost.GetService<INistBeaconClient>();
     private bool _verificationModeSelectionReady;
     private bool _restoringVerificationModeSelection;
     private bool _restoringTimestampAuthority;
+    private bool _restoringAttestationUpload;
+
+    /// <summary>
+    ///     Projects the stored ordinary-draw upload choice onto the settings radio pair. The group is
+    ///     disabled while the cross-border notice has not been accepted, because every SECTL path —
+    ///     this upload included — stays blocked until then.
+    /// </summary>
+    private void RefreshAttestationUpload()
+    {
+        _restoringAttestationUpload = true;
+        try
+        {
+            var mode = ConfigHandler.Data.General.Verification.AttestationUpload;
+            AttestationUploadOnRadio.IsChecked = mode == AttestationUploadMode.Enabled;
+            AttestationUploadOffRadio.IsChecked = mode == AttestationUploadMode.Disabled;
+            AttestationUploadGroup.IsEnabled = SectlTrafficPolicy.IsTransferNoticeAccepted(ConfigHandler);
+        }
+        finally
+        {
+            _restoringAttestationUpload = false;
+        }
+    }
+
+    private void AttestationUpload_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_restoringAttestationUpload)
+            return;
+
+        var mode = AttestationUploadOnRadio.IsChecked == true
+            ? AttestationUploadMode.Enabled
+            : AttestationUploadMode.Disabled;
+        if (ConfigHandler.Data.General.Verification.AttestationUpload == mode)
+            return;
+
+        ConfigHandler.Data.General.Verification.AttestationUpload = mode;
+        ConfigHandler.Save();
+    }
 
     public VerificationSettingsPage()
     {
@@ -103,6 +139,7 @@ public partial class VerificationSettingsPage : UserControl
         _verificationModeSelectionReady = true;
         AttestationService.StatusChanged += AttestationStatus_OnChanged;
         RefreshProofQueueStatus();
+        RefreshAttestationUpload();
         if (string.IsNullOrEmpty(ProofIntegrityStatusText.Text))
             ProofIntegrityStatusText.Text = LR.M_ProofIntegrityIdle;
     }

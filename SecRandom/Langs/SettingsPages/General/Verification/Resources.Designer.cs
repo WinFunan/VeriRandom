@@ -35,6 +35,8 @@ public class Resources
     public static string C_TimestampDisableTitle => Get(nameof(C_TimestampDisableTitle));
     public static string C_TimestampDisableBody => Get(nameof(C_TimestampDisableBody));
     public static string C_TimestampDisableConfirm => Get(nameof(C_TimestampDisableConfirm));
+    public static string S_AttestationUpload => Get(nameof(S_AttestationUpload));
+    public static string S_AttestationUpload_D => Get(nameof(S_AttestationUpload_D));
     public static string S_ProofFolder => Get(nameof(S_ProofFolder));
     public static string S_ProofFolder_D => Get(nameof(S_ProofFolder_D));
     public static string C_OpenProofFolder => Get(nameof(C_OpenProofFolder));

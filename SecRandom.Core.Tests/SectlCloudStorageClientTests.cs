@@ -237,8 +237,10 @@ public sealed class SectlCloudStorageClientTests
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new TestConfigService(new MainConfigModel()));
+        // The fork's cross-border consent gates every SECTL call; the test exercises the enabled behaviour.
+        configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
-        var authService = new SectlAuthService(factory, deviceUuidStore);
+        var authService = new SectlAuthService(factory, deviceUuidStore, configHandler);
         if (signedIn)
             SetToken(authService, new SectlToken("access-token", "refresh-token", "user-1", 3600));
         return new SectlCloudStorageClient(authService, factory, NullLogger<SectlCloudStorageClient>.Instance);

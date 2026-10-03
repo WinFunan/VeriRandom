@@ -124,8 +124,10 @@ public sealed class SectlAuthServiceTests
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new TestConfigService(new MainConfigModel()));
+        // The fork's cross-border consent gates every SECTL call; the test exercises the enabled behaviour.
+        configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
-        return new SectlAuthService(new StubHttpClientFactory(client), deviceUuidStore);
+        return new SectlAuthService(new StubHttpClientFactory(client), deviceUuidStore, configHandler);
     }
 
     private static void SetToken(SectlAuthService service, SectlToken token)

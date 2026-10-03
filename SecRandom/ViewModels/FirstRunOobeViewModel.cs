@@ -38,6 +38,11 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _acceptedPrivacyPolicy;
     [ObservableProperty] private bool _acceptedGpl;
     [ObservableProperty] private bool _acceptedSecRandomServices;
+    // The cross-border notice is optional during setup: refusing it disables every SECTL-sending feature
+    // (including account sign-in) until the user signs it later at the point of use.
+    [ObservableProperty] private bool _acceptedCrossBorderTransfer;
+    // No default on purpose: the ordinary-draw upload must be actively chosen.
+    [ObservableProperty] private AttestationUploadMode _attestationUpload = AttestationUploadMode.Unset;
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _selectedPrizeListName = string.Empty;
     [ObservableProperty] private bool _autostart;
@@ -88,11 +93,14 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         : string.Format(LR.M_StepProgress, SelectedStep, StepCount - 1);
     // The SECTL online-services acknowledgement is optional during setup, so it never blocks continuing;
     // it is demanded later by SecRandomServicesConsent when an online feature is actually used.
-    public bool CanContinue => !IsPrivacyPolicyStep ||
-                               (AcceptedPrivacyPolicy && AcceptedGpl &&
-                                (!IsVerificationNoticeRequired || AcceptedVerificationNotice));
+    // The cross-border step differs: its own checkbox is optional too, but the ordinary-draw upload choice
+    // on it has no default and must be made actively, so that step cannot be left unchosen.
+    public bool CanContinue => IsPrivacyPolicyStep
+        ? AcceptedPrivacyPolicy && AcceptedGpl && (!IsVerificationNoticeRequired || AcceptedVerificationNotice)
+        : !IsCrossBorderStep || AttestationUpload != AttestationUploadMode.Unset;
     public bool IsPrivacyPolicyStep => IsPrivacyPolicyOnly || SelectedStep == 1;
-    public int StepCount => 8;
+    public bool IsCrossBorderStep => !IsPrivacyPolicyOnly && SelectedStep == 2;
+    public int StepCount => 9;
     public string PageTitle => IsPrivacyPolicyOnly ? LR.C_LegalTitle : LR.C_Title;
     public string IntroText => IsPrivacyPolicyOnly ? LR.C_LegalDescription : LR.C_Intro;
 
@@ -111,6 +119,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsVerificationNoticeRequired));
         OnPropertyChanged(nameof(IsSecRandomServicesRequired));
         OnPropertyChanged(nameof(IsPrivacyPolicyStep));
+        OnPropertyChanged(nameof(IsCrossBorderStep));
         OnPropertyChanged(nameof(IsStatusVisible));
         OnPropertyChanged(nameof(IsCompletionActionVisible));
         OnPropertyChanged(nameof(PageTitle));
@@ -132,6 +141,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     partial void OnSelectedStepChanged(int value)
     {
         OnPropertyChanged(nameof(IsWelcomeStep));
+        OnPropertyChanged(nameof(IsCrossBorderStep));
         OnPropertyChanged(nameof(HasPrevious));
         OnPropertyChanged(nameof(IsFinalStep));
         OnPropertyChanged(nameof(IsStatusVisible));
@@ -145,6 +155,40 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     partial void OnAcceptedGplChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
     partial void OnAcceptedVerificationNoticeChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
     partial void OnAcceptedSecRandomServicesChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
+    partial void OnAcceptedCrossBorderTransferChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
+
+    partial void OnAttestationUploadChanged(AttestationUploadMode value)
+    {
+        OnPropertyChanged(nameof(AttestationUploadEnabledChoice));
+        OnPropertyChanged(nameof(AttestationUploadDisabledChoice));
+        OnPropertyChanged(nameof(CanContinue));
+    }
+
+    /// <summary>
+    ///     Radio-button projections of <see cref="AttestationUpload" />. The mode itself starts at
+    ///     <see cref="AttestationUploadMode.Unset" />, so neither option is preselected and the user has to
+    ///     choose one actively. The setter deliberately ignores an unchecking write, because a radio group
+    ///     clears its previous selection while moving to the new one.
+    /// </summary>
+    public bool AttestationUploadEnabledChoice
+    {
+        get => AttestationUpload == AttestationUploadMode.Enabled;
+        set
+        {
+            if (value)
+                AttestationUpload = AttestationUploadMode.Enabled;
+        }
+    }
+
+    public bool AttestationUploadDisabledChoice
+    {
+        get => AttestationUpload == AttestationUploadMode.Disabled;
+        set
+        {
+            if (value)
+                AttestationUpload = AttestationUploadMode.Disabled;
+        }
+    }
 
     partial void OnSelectedStudentListNameChanged(string value)
     {
@@ -199,10 +243,18 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
             return false;
         }
 
+        if (!IsPrivacyPolicyOnly && AttestationUpload == AttestationUploadMode.Unset)
+        {
+            // The ordinary-draw upload has no default, so completion cannot be reached without choosing.
+            SelectedStep = 2;
+            StatusMessage = LR.M_CompletionAgreementRequired;
+            return false;
+        }
+
         if (!IsPrivacyPolicyOnly && !ApplyDesktopIntegration())
             StatusMessage = LR.M_DesktopIntegrationFailed;
 
-        _oobeService.Complete(AcceptedSecRandomServices);
+        _oobeService.Complete(AcceptedSecRandomServices, AcceptedCrossBorderTransfer, AttestationUpload);
         await Task.CompletedTask;
         return true;
     }
@@ -252,6 +304,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsVerificationNoticeRequired));
         OnPropertyChanged(nameof(IsSecRandomServicesRequired));
         OnPropertyChanged(nameof(IsPrivacyPolicyStep));
+        OnPropertyChanged(nameof(IsCrossBorderStep));
         OnPropertyChanged(nameof(IsStatusVisible));
         OnPropertyChanged(nameof(IsCompletionActionVisible));
         OnPropertyChanged(nameof(PageTitle));

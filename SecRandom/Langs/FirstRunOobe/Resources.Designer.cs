@@ -165,6 +165,66 @@ namespace SecRandom.Langs.FirstRunOobe {
             }
         }
         
+        public static string C_CrossBorderTitle {
+            get {
+                return ResourceManager.GetString("C_CrossBorderTitle", resourceCulture);
+            }
+        }
+        
+        public static string C_CrossBorderBody {
+            get {
+                return ResourceManager.GetString("C_CrossBorderBody", resourceCulture);
+            }
+        }
+        
+        public static string C_CrossBorderOptionalNote {
+            get {
+                return ResourceManager.GetString("C_CrossBorderOptionalNote", resourceCulture);
+            }
+        }
+        
+        public static string C_CrossBorderAccept {
+            get {
+                return ResourceManager.GetString("C_CrossBorderAccept", resourceCulture);
+            }
+        }
+        
+        public static string C_CrossBorderAcceptRequired {
+            get {
+                return ResourceManager.GetString("C_CrossBorderAcceptRequired", resourceCulture);
+            }
+        }
+        
+        public static string C_CrossBorderConfirm {
+            get {
+                return ResourceManager.GetString("C_CrossBorderConfirm", resourceCulture);
+            }
+        }
+        
+        public static string C_AttestationTitle {
+            get {
+                return ResourceManager.GetString("C_AttestationTitle", resourceCulture);
+            }
+        }
+        
+        public static string C_AttestationBody {
+            get {
+                return ResourceManager.GetString("C_AttestationBody", resourceCulture);
+            }
+        }
+        
+        public static string O_AttestationOn {
+            get {
+                return ResourceManager.GetString("O_AttestationOn", resourceCulture);
+            }
+        }
+        
+        public static string O_AttestationOff {
+            get {
+                return ResourceManager.GetString("O_AttestationOff", resourceCulture);
+            }
+        }
+        
         public static string C_GplTitle {
             get {
                 return ResourceManager.GetString("C_GplTitle", resourceCulture);

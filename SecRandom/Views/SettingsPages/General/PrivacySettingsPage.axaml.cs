@@ -36,6 +36,17 @@ public partial class PrivacySettingsPage : UserControl
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
 
     /// <summary>
+    ///     Lets an installation that skipped the cross-border notice during first-run setup sign it later.
+    ///     Everything that could send data to SECTL stays disabled until this succeeds.
+    /// </summary>
+    private async void CrossBorderTransferAccept_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var owner = TopLevel.GetTopLevel(this);
+        if (owner is not null)
+            await SectlTrafficPolicy.EnsureTransferAcceptedAsync(ConfigHandler, owner);
+    }
+
+    /// <summary>
     ///     Enabling either online channel ships data to SecRandom/SECTL, so the fork-specific online-services
     ///     acknowledgement becomes mandatory at that moment. It is signed through the shared second-level
     ///     dialog and can never be applied silently; declining reverts the toggle that triggered it.

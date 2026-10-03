@@ -133,10 +133,13 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
             reported?.TrySetResult();
             return new HttpResponseMessage(HttpStatusCode.OK);
         }));
+        // The fork's cross-border consent gates this SECTL path; the test exercises the enabled behaviour.
+        configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
         return new PlatformVersionReportService(
             deviceUuidStore,
             new StubHttpClientFactory(client),
-            NullLogger<PlatformVersionReportService>.Instance);
+            NullLogger<PlatformVersionReportService>.Instance,
+            configHandler);
     }
 
     private static void ConfigureDataRootForTests(string dataRoot) =>

@@ -56,4 +56,10 @@ public partial class BasicSettingsConfig : ObservableObject
     // Separate from the privacy policy: the fork discloses that the online features upload to SECTL,
     // an independent entity, and that its SecRandom privacy policy applies to those uploads.
     [ObservableProperty] private int _acceptedSecRandomServicesVersion;
+
+    // The fork's cross-border data-transfer notice. SECTL's servers are outside mainland China, so this
+    // acknowledgement is what gates every SECTL egress path (see SectlTrafficPolicy). It is versioned and
+    // deliberately excluded from IsPrivacyPolicyOnlyRequired(): it is optional during setup and is demanded
+    // later, at the point of use, whenever a feature would actually send data to SECTL.
+    [ObservableProperty] private int _acceptedCrossBorderTransferVersion;
 }

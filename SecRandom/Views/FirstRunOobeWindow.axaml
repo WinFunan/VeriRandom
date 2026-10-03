@@ -158,6 +158,40 @@
 
                 <ScrollViewer IsVisible="{Binding ViewModel.IsFullSetup}">
                     <StackPanel Margin="32" Spacing="16">
+                        <TextBlock Text="{x:Static langs:Resources.C_CrossBorderTitle}"
+                                   Theme="{StaticResource TitleTextBlockStyle}" />
+                        <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1"
+                                CornerRadius="6" Padding="16">
+                            <SelectableTextBlock Text="{x:Static langs:Resources.C_CrossBorderBody}"
+                                                 TextWrapping="Wrap" />
+                        </Border>
+                        <TextBlock Text="{x:Static langs:Resources.C_CrossBorderOptionalNote}"
+                                   TextWrapping="Wrap"
+                                   FontWeight="Bold" />
+                        <CheckBox IsChecked="{Binding ViewModel.AcceptedCrossBorderTransfer}"
+                                  Content="{x:Static langs:Resources.C_CrossBorderAccept}" />
+
+                        <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1"
+                                CornerRadius="6" Padding="16">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="{x:Static langs:Resources.C_AttestationTitle}" FontWeight="SemiBold" />
+                                <TextBlock Text="{x:Static langs:Resources.C_AttestationBody}" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <RadioButton GroupName="OobeAttestationUpload"
+                                             IsEnabled="{Binding ViewModel.AcceptedCrossBorderTransfer}"
+                                             IsChecked="{Binding ViewModel.AttestationUploadEnabledChoice, Mode=TwoWay}"
+                                             Content="{x:Static langs:Resources.O_AttestationOn}" />
+                                <RadioButton GroupName="OobeAttestationUpload"
+                                             IsEnabled="{Binding ViewModel.AcceptedCrossBorderTransfer}"
+                                             IsChecked="{Binding ViewModel.AttestationUploadDisabledChoice, Mode=TwoWay}"
+                                             Content="{x:Static langs:Resources.O_AttestationOff}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <ScrollViewer IsVisible="{Binding ViewModel.IsFullSetup}">
+                    <StackPanel Margin="32" Spacing="16">
                         <TextBlock Text="{x:Static langs:Resources.C_DataTitle}"
                                    Theme="{StaticResource TitleTextBlockStyle}" />
                         <TextBlock Text="{x:Static langs:Resources.C_DataDescription}"

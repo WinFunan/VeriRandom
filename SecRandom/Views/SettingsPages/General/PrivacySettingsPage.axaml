@@ -5,6 +5,7 @@
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.General.Privacy"
+             xmlns:oobe="clr-namespace:SecRandom.Langs.FirstRunOobe"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.General.PrivacySettingsPage"
@@ -41,6 +42,20 @@
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_OnlineStatusMode_Anonymous}" />
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_OnlineStatusMode_Off}" />
                     </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <sr:IconText Text="{x:Static oobe:Resources.C_CrossBorderTitle}"
+                         Glyph="{sr:Fi GlobeFilled}"
+                         Margin="0 16 0 4" />
+
+            <fa:FASettingsExpander Header="{x:Static oobe:Resources.C_CrossBorderTitle}"
+                                   Description="{x:Static oobe:Resources.C_CrossBorderOptionalNote}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Button x:Name="CrossBorderTransferAcceptButton"
+                            Content="{x:Static oobe:Resources.C_CrossBorderConfirm}"
+                            Click="CrossBorderTransferAccept_OnClick" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
         </StackPanel>

@@ -8,12 +8,17 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Services.Config;
 using SecRandom.Services.Config;
+using SecRandom.Services.Consent;
 using SecRandom.Shared;
 
 namespace SecRandom.Services.Auth;
 
-public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, DeviceUuidStore deviceUuidStore)
+public sealed class SectlAuthService(
+    IHttpClientFactory httpClientFactory,
+    DeviceUuidStore deviceUuidStore,
+    MainConfigHandler configHandler)
 {
     public const string ClientId = "69c8cd6a0012dd3ea10a";
     public const string ApiBaseUrl = "https://appwrite.sectl.cn";
@@ -120,6 +125,9 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
 
     public async Task SignInAsync(CancellationToken cancellationToken = default)
     {
+        if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
+            throw new InvalidOperationException("尚未同意跨境数据传输须知，已阻止登录 SECTL 账号。");
+
         var port = GetFreePort();
         var redirectUri = $"http://localhost:{port}/callback";
         var verifier = Base64Url(RandomNumberGenerator.GetBytes(32));
@@ -208,6 +216,11 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         CancellationToken cancellationToken = default)
     {
+        // Account-bound calls reach SECTL's servers, which are outside mainland China, so they are gated by
+        // the cross-border egress consent like every other SECTL path.
+        if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
+            throw new InvalidOperationException("尚未同意跨境数据传输须知，已阻止向 SECTL 发送数据。");
+
         ArgumentNullException.ThrowIfNull(createRequest);
         var accessToken = _token?.AccessToken;
         if (string.IsNullOrWhiteSpace(accessToken))

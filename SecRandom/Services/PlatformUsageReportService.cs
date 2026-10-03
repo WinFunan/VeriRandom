@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Stats;
+using SecRandom.Services.Consent;
 using SecRandom.Shared;
 
 namespace SecRandom.Services;
@@ -167,7 +168,8 @@ public sealed class PlatformUsageReportService : IHostedService, IDisposable
     }
 
     private bool IsReportingDisabled() =>
-        _configHandler.Data.General.PrivacySettings.OnlineStatusMode == OnlineStatusMode.Off;
+        _configHandler.Data.General.PrivacySettings.OnlineStatusMode == OnlineStatusMode.Off
+        || !SectlTrafficPolicy.IsEgressAllowed(_configHandler);
 
     private void Load()
     {
