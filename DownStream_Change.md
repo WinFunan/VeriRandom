@@ -30,6 +30,7 @@
 | 9 | 跨境数据传输闸门 + 抽取上传改为无默认二选一 | 新增枚举/配置、OOBE 与设置页、6 类 SECTL 出网路径、`SectlAuthService`/`SectlHeartbeatService`/`PlatformVersionReportService` 构造函数 | **高**（改动了所有出境路径的开关语义，并与上游的令牌轮换重写叠加） |
 | 10 | 禁用「仅 TOTP」单一验证 | `GlobalConstants` 调试开关、`SecurityService`/`SecurityCredentialStore`、桌面启动参数 | 中（改了安全验证的判定条件） |
 | 11 | 自有标识改名 | 包名、URI、可执行名、安装包标记、安装器、单实例名、macOS/Linux 路径；收尾需改写 §7 禁止改名表 | **高**（改动产品身份与全部兼容契约） |
+| 12 | 桌面资源覆盖加载器健壮性修复 | `OverlayAssetLoader`、桌面 `Program` 启动资源诊断 | 中（修的是启动期字体加载失败） |
 
 ---
 
@@ -472,4 +473,24 @@
 1. `SecRandomDocumentsProvider` 的文档树 `RootId` 仍为 `secrandom`（Android 内容提供程序内部节点 ID，不是产品身份，未改）。
 2. `ChangeLog.md` 与 README 里的下载/协议说明需要在正式发版时同步核对（README 目前未提及协议标识）。
 3. 本改名涉及 CI 产物名与发布任务正则，需在下次完整 CI 跑通后才能确认端到端一致（本机无 .NET 10 SDK）。
+
+---
+
+## 15. 桌面资源覆盖加载器的健壮性修复
+
+**症状**：启动或退出时崩溃，堆栈落在首次显示窗口的排版阶段，异常为 `Could not create glyphTypeface. Font family: FluentSystemIcons-Resizable (key: avares://secrandom/Assets/Fonts/)`。
+
+**成因**：桌面头**刻意不内嵌** `Assets`，全部依赖 `OverlayAssetLoader` 把 `avares://SecRandom/Assets/...` 映射到可执行文件旁的物理目录。该加载器里有两处会让映射静默失败、进而退回到「内嵌资源」这个必然失败的回退路径：
+
+1. `IsHandledAvaresUri` 用 **`StringComparison.Ordinal`** 比较 `uri.Authority` 与 `Assembly.GetName().Name`。`avares` 是非标准 scheme，键的大小写不由本程序保证（报错里就是小写 `secrandom`），一旦比对不中，overlay 整体失效。
+2. `assetRoot` 取自 `appAssembly.Location` 所在目录；当进程不是在含有 `Assets` 的目录下启动时，物理文件根本不存在。
+
+**修改文件**：
+
+| 文件 | 改动 |
+|------|------|
+| `SecRandom/OverlayAssetLoader.cs` | `IsHandledAvaresUri` 的 authority 比较改为 `OrdinalIgnoreCase`，消除「大小写不中 → 静默回退 → 字体/图片加载失败」这一整类故障 |
+| `SecRandom.Desktop/Program.cs` | `BindAssetLoader` 在绑定前检查物理 `Assets/Fonts` 是否存在，缺失时通过 `Trace` 与 `stderr` 明确报出「资源根不完整」并指出目录，避免故障只以字型异常的形式出现 |
+
+**说明**：本节的修复与 §14 的标识改名无关（改名刻意保留了 `avares://SecRandom/...`）。
 

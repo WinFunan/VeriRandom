@@ -121,9 +121,14 @@ public sealed class OverlayAssetLoader(
 
     private bool IsHandledAvaresUri(Uri uri)
     {
+        // The authority must be compared case-insensitively: `System.Uri` treats `avares` as a non-special
+        // scheme, and the key that reaches this loader is not guaranteed to preserve `SecRandom`'s casing
+        // (a lowercased `avares://secrandom/...` is what a failed font load reports). A case-sensitive miss
+        // here silently falls through to the embedded loader, and the desktop head deliberately does not
+        // embed its assets, so the failure surfaces only as an unloadable font or image.
         return uri.IsAbsoluteUri
                && uri.Scheme.Equals("avares", StringComparison.OrdinalIgnoreCase)
-               && uri.Authority.Equals(assemblyName, StringComparison.Ordinal)
+               && uri.Authority.Equals(assemblyName, StringComparison.OrdinalIgnoreCase)
                && Uri.UnescapeDataString(uri.AbsolutePath).StartsWith(_avaresPrefix, StringComparison.Ordinal);
     }
 

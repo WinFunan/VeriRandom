@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Avalonia;
@@ -108,6 +109,18 @@ internal sealed class Program
         var assetRoot = Path.Combine(
             string.IsNullOrEmpty(assemblyDirectory) ? AppContext.BaseDirectory : assemblyDirectory,
             "Assets");
+
+        // The desktop head deliberately does not embed its assets, so a missing physical root means every
+        // overlay lookup falls through to the embedded loader and fails. Say so here: otherwise the only
+        // symptom is a cryptic "Could not create glyphTypeface" while a window is being measured.
+        if (!Directory.Exists(Path.Combine(assetRoot, "Fonts")))
+        {
+            var message = $"[VeriRandom] Physical asset root is incomplete: '{assetRoot}' has no Fonts directory. "
+                          + "Fonts and images will fail to load; this usually means the process was started from "
+                          + "a directory that does not contain the application's Assets folder.";
+            Trace.TraceWarning(message);
+            Console.Error.WriteLine(message);
+        }
 
         var assetLoader = new OverlayAssetLoader(
             new StandardAssetLoader(appAssembly),
