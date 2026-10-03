@@ -84,6 +84,39 @@ public static class GlobalConstants
     public static bool IsDevelopment => false;
 #endif
 
+    // Fork policy: a TOTP code can only be checked without the user's password by keeping a plaintext
+    // seed copy in `data/config/security/totp-standalone.json`. That readable seed is the one credential
+    // this fork refuses to keep, so TOTP-only verification is off unless the build is a debug build or the
+    // process was started with the explicit opt-in below. USB-only and password-augmented verification are
+    // unaffected.
+    private static bool _allowStandaloneTotpVerification = IsDevelopment;
+
+    public static bool AllowStandaloneTotpVerification => _allowStandaloneTotpVerification;
+
+    /// <summary>Startup opt-in used by <c>--allow-standalone-totp</c>.</summary>
+    public static void EnableStandaloneTotpVerification() => _allowStandaloneTotpVerification = true;
+
+    /// <summary>
+    ///     Enables TOTP-only verification when the process was started with <c>--allow-standalone-totp</c>.
+    ///     Debug builds already allow it, and this must only ever widen, never narrow, that.
+    /// </summary>
+    public static bool EnableStandaloneTotpVerificationIfRequested(IEnumerable<string>? arguments)
+    {
+        if (arguments is null)
+            return false;
+
+        foreach (var argument in arguments)
+        {
+            if (!string.Equals(argument, "--allow-standalone-totp", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            EnableStandaloneTotpVerification();
+            return true;
+        }
+
+        return false;
+    }
+
     public static FontFamily FluentIconsFontFamily { get; } =
         new(@"avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable");
 

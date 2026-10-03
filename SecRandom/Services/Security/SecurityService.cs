@@ -290,7 +290,8 @@ internal sealed class SecurityService(
                             metadata.UsbBindings.Any(IsBindingPresent);
             // 「任意已选验证方式」模式下 TOTP 也能单独通过：该模式会用凭据文件旁的
             // 免密副本校验验证码，因此不需要先解开信封
-            var totpPassed = factors.Contains(SecurityFactor.Totp) &&
+            var totpPassed = GlobalConstants.AllowStandaloneTotpVerification &&
+                             factors.Contains(SecurityFactor.Totp) &&
                              credentialStore.LoadStandaloneTotp() is { } standaloneTotp &&
                              TotpService.Verify(standaloneTotp, response.TotpCode, _timeProvider.GetUtcNow());
             if (!Settings.RequireAllSelectedFactors && (usbPassed || totpPassed))
@@ -882,7 +883,9 @@ internal sealed class SecurityService(
         // 信封先落盘，再同步免密 TOTP 副本，避免出现「新种子 / 旧信封」的错配
         try
         {
-            if (Settings.RequireAllSelectedFactors || string.IsNullOrWhiteSpace(context.Credentials.TotpSecret))
+            if (!GlobalConstants.AllowStandaloneTotpVerification
+                || Settings.RequireAllSelectedFactors
+                || string.IsNullOrWhiteSpace(context.Credentials.TotpSecret))
                 credentialStore.DeleteStandaloneTotp();
             else
                 credentialStore.SaveStandaloneTotp(context.Credentials.TotpSecret);

@@ -46,6 +46,8 @@ internal sealed class Program
         ProtocolActivation.SetStartupArguments(args);
         CrashRecoveryRuntime.SetStartupArguments(args);
         PluginManager.SetStartupArguments(args);
+        // Fork opt-in for TOTP-only verification; debug builds already allow it (GlobalConstants).
+        GlobalConstants.EnableStandaloneTotpVerificationIfRequested(args);
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
         try

@@ -236,6 +236,11 @@ internal sealed class SecurityCredentialStore
     /// </summary>
     public string? LoadStandaloneTotp()
     {
+        // The plaintext seed copy is only ever honoured when TOTP-only verification is allowed; outside a
+        // debug build or an explicit startup opt-in this returns null so a leftover file cannot be used.
+        if (!GlobalConstants.AllowStandaloneTotpVerification)
+            return null;
+
         try
         {
             var path = StandaloneTotpPath;

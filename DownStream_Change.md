@@ -28,6 +28,7 @@
 | 7 | TSA 时间戳改为可显式关闭 + 沃通隐私提示 | 验证设置页、时间戳客户端、OOBE 隐私政策提示 | 中高（改了验证链路的网络行为开关） |
 | 8 | 新增「自有参考链（Own）」补充声明 | 新增 `*.ownproof.json`、自有链头、完整性报告字段 | **高**（新增落盘格式） |
 | 9 | 跨境数据传输闸门 + 抽取上传改为无默认二选一 | 新增枚举/配置、OOBE 与设置页、6 类 SECTL 出网路径、`SectlAuthService`/`SectlHeartbeatService`/`PlatformVersionReportService` 构造函数 | **高**（改动了所有出境路径的开关语义，并与上游的令牌轮换重写叠加） |
+| 10 | 禁用「仅 TOTP」单一验证 | `GlobalConstants` 调试开关、`SecurityService`/`SecurityCredentialStore`、桌面启动参数 | 中（改了安全验证的判定条件） |
 
 ---
 
@@ -364,6 +365,33 @@
 **残留待办**：
 1. `SectlAuthService.InitializeAsync` 中已登录会话的后台令牌刷新可能绕过 `SendAuthorizedAsync`，尚未收口到出境闸门。
 2. 未同意跨境时，`S_AttestationUpload` 单选组会置灰（`RefreshAttestationUpload` 读 `SectlTrafficPolicy`），但**不会**主动引导用户去隐私设置页补签；补签后需要重新进入该页才会解锁。
+
+---
+
+## 13. 禁用「仅 TOTP」单一验证（可调试开关）
+
+**意图**：TOTP 验证码要脱离主密码校验，就只能保留明文种子副本 `data/config/security/totp-standalone.json`（见 §4 与 AGENTS 的安全条目）。本分支不再接受这份可读种子：**仅 TOTP 的单一验证被彻底禁用**，只有调试构建或显式启动参数才允许启用。USB 单独验证、以及「密码 + 其他因素」的组合不受影响。
+
+**新增文件**：
+
+| 文件 | 说明 |
+|------|------|
+| `SecRandom.Core.Tests/TestStandaloneTotpOptIn.cs` | `[ModuleInitializer]` 调用 `GlobalConstants.EnableStandaloneTotpVerification()`；安全测试本来就是在验证「已启用」路径，而 CI 跑 Release，必须显式开启 |
+
+**修改文件**：
+
+| 文件 | 改动 |
+|------|------|
+| `SecRandom.Core/GlobalConstants.cs` | 新增 `AllowStandaloneTotpVerification`（`= IsDevelopment`，即仅 Debug 构建默认可用于 Windows 开发机）、`EnableStandaloneTotpVerification()`、`EnableStandaloneTotpVerificationIfRequested(args)`（识别 `--allow-standalone-totp`） |
+| `SecRandom.Desktop/Program.cs` | 启动时调用 `GlobalConstants.EnableStandaloneTotpVerificationIfRequested(args)`（与 `PluginManager.SetStartupArguments` 并列） |
+| `SecRandom/Services/Security/SecurityCredentialStore.cs` | `LoadStandaloneTotp()` 在未允许时**直接返回 `null`**，遗留副本不再被读取 |
+| `SecRandom/Services/Security/SecurityService.cs` | `totpPassed` 增加 `AllowStandaloneTotpVerification` 前置条件；凭据保存时未允许则改为 `DeleteStandaloneTotp()`，从而在下一次保存时清除遗留明文文件 |
+
+**行为**：
+- 未允许时，"任意已选方式"模式下 TOTP **不能单独通过**；此时不带密码的尝试会走到既有的「免密尝试」分支并计入失败次数（保留对验证码暴破的限制）——该分支无需改动。
+- 已有安装升级后，遗留的 `totp-standalone.json` 在下次保存凭据时被删除；在此之前也不会被读取。
+
+**待办**：移动端 head 没有命令行入口，目前只能靠 Debug 构建开启；若需要在移动端也能调试，需要再加一个 head 级开关。
 
 **界面（已落地）**：
 - OOBE 轮播新增隐私页之后的独立第 3 页「跨境数据传输须知」：`StepCount` 由 8 改为 9，`IsCrossBorderStep => SelectedStep == 2`，页序为 欢迎(0) → 法务/隐私(1) → **跨境须知(2)** → 数据导入(3) → … → 完成(8)。
