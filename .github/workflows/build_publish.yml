@@ -155,8 +155,8 @@ jobs:
           WINDOWS_CODESIGN_TIMESTAMP_URL: ${{ secrets.WINDOWS_CODESIGN_TIMESTAMP_URL }}
         run: |
           function Write-Marker([string]$path, [string]$runtimeKind) {
-            @{ schemaVersion = 1; product = 'SecRandom'; rid = $env:RID; packageKind = 'portable-zip'; runtimeKind = $runtimeKind } |
-              ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $path 'SecRandom.package.json') -Encoding utf8NoBOM
+            @{ schemaVersion = 1; product = 'VeriRandom'; rid = $env:RID; packageKind = 'portable-zip'; runtimeKind = $runtimeKind } |
+              ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $path 'VeriRandom.package.json') -Encoding utf8NoBOM
           }
           function Publish-Launcher([string]$path, [bool]$selfContained) {
             $assemblyVersion = $env:VERSION.TrimStart('v', 'V')
@@ -195,10 +195,10 @@ jobs:
               $signTool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
               if ([string]::IsNullOrWhiteSpace($signTool)) { throw 'signtool.exe was not found on the Windows runner.' }
               foreach ($file in @(
-                (Join-Path $fullRoot 'SecRandomLauncher.exe'),
-                (Join-Path $lightRoot 'SecRandomLauncher.exe'),
-                (Join-Path $fullApp 'SecRandom.Desktop.exe'),
-                (Join-Path $lightApp 'SecRandom.Desktop.exe')
+                (Join-Path $fullRoot 'VeriRandomLauncher.exe'),
+                (Join-Path $lightRoot 'VeriRandomLauncher.exe'),
+                (Join-Path $fullApp 'VeriRandom.Desktop.exe'),
+                (Join-Path $lightApp 'VeriRandom.Desktop.exe')
               )) {
                 Sign-File $file $signTool $certificatePath
               }
@@ -210,8 +210,8 @@ jobs:
           else {
             Write-Warning 'Windows code-signing secrets are unavailable; portable executables will be unsigned.'
           }
-          Compress-Archive -Path "$fullRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom-$env:VERSION-$env:RID-portable-full.zip" -Force
-          Compress-Archive -Path "$lightRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom-$env:VERSION-$env:RID-portable-light.zip" -Force
+          Compress-Archive -Path "$fullRoot/*" -DestinationPath "$releaseRoot/dist/VeriRandom-$env:VERSION-$env:RID-portable-full.zip" -Force
+          Compress-Archive -Path "$lightRoot/*" -DestinationPath "$releaseRoot/dist/VeriRandom-$env:VERSION-$env:RID-portable-light.zip" -Force
 
       - name: Pack Portable Zips (Unix)
         if: ${{ matrix.os != 'windows' }}
@@ -232,12 +232,12 @@ jobs:
           assembly_version="${VERSION#v}"
           cp -a "${release_root}/publish/full/${RID}" "$full_app"
           cp -a "${release_root}/publish/light/${RID}" "$light_app"
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"self-contained"}\n' "$RID" > "$full_app/SecRandom.package.json"
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"framework-dependent"}\n' "$RID" > "$light_app/SecRandom.package.json"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"self-contained"}\n' "$RID" > "$full_app/VeriRandom.package.json"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"framework-dependent"}\n' "$RID" > "$light_app/VeriRandom.package.json"
           dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$full_root"
           dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained false -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$light_root"
-          (cd "$full_root" && zip -qr "../../../dist/SecRandom-${VERSION}-${RID}-portable-full.zip" .)
-          (cd "$light_root" && zip -qr "../../../dist/SecRandom-${VERSION}-${RID}-portable-light.zip" .)
+          (cd "$full_root" && zip -qr "../../../dist/VeriRandom-${VERSION}-${RID}-portable-full.zip" .)
+          (cd "$light_root" && zip -qr "../../../dist/VeriRandom-${VERSION}-${RID}-portable-light.zip" .)
 
       - name: Install Inno Setup Languages
         if: ${{ matrix.os == 'windows' }}
@@ -305,10 +305,10 @@ jobs:
               if (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_TIMESTAMP_URL)) {
                 $arguments += @('/tr', $env:WINDOWS_CODESIGN_TIMESTAMP_URL, '/td', 'SHA256')
               }
-              $arguments += "$outDir/SecRandom.Desktop.exe"
+              $arguments += "$outDir/VeriRandom.Desktop.exe"
               & $signTool @arguments
               if ($LASTEXITCODE -ne 0) { throw "signtool failed with exit code $LASTEXITCODE." }
-              & $signTool verify /pa /v "$outDir/SecRandom.Desktop.exe"
+              & $signTool verify /pa /v "$outDir/VeriRandom.Desktop.exe"
               if ($LASTEXITCODE -ne 0) { throw "signtool verification failed with exit code $LASTEXITCODE." }
             }
             finally {
@@ -322,15 +322,15 @@ jobs:
             Write-Warning "Windows code-signing secrets are unavailable; building the installer without the UIAccess manifest."
           }
 
-          @{ schemaVersion = 1; product = 'SecRandom'; rid = $env:RID; packageKind = 'windows-exe'; runtimeKind = 'self-contained' } |
-            ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $outDir 'SecRandom.package.json') -Encoding utf8NoBOM
+          @{ schemaVersion = 1; product = 'VeriRandom'; rid = $env:RID; packageKind = 'windows-exe'; runtimeKind = 'self-contained' } |
+            ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $outDir 'VeriRandom.package.json') -Encoding utf8NoBOM
           $setupOutput = 'artifacts/release/setup'
           New-Item -ItemType Directory -Path $setupOutput -Force | Out-Null
 
           $isccArguments = @(
             "/DMyAppVersion=$env:VERSION"
             "/DMyAppOutDir=$outDir"
-            "/FSecRandom-$env:VERSION-$env:RID-setup"
+            "/FVeriRandom-$env:VERSION-$env:RID-setup"
             "/O$setupOutput"
           )
           if ($uiAccessBuild) { $isccArguments += '/DUiAccessBuild' }
@@ -367,46 +367,46 @@ jobs:
           pkgroot="${work}/package-root"
           rm -rf "$work"
           mkdir -p "$pkgroot/DEBIAN"
-          mkdir -p "$pkgroot/usr/lib/secrandom"
+          mkdir -p "$pkgroot/usr/lib/verirandom"
           mkdir -p "$pkgroot/usr/bin"
           mkdir -p "$pkgroot/usr/share/applications"
           mkdir -p "$pkgroot/usr/share/icons/hicolor/256x256/apps"
 
-          cp -a "${release_root}/publish/full/${RID}/." "$pkgroot/usr/lib/secrandom/"
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"linux-deb","runtimeKind":"self-contained"}\n' "$RID" > "$pkgroot/usr/lib/secrandom/SecRandom.package.json"
-          chmod +x "$pkgroot/usr/lib/secrandom/SecRandom.Desktop" || true
+          cp -a "${release_root}/publish/full/${RID}/." "$pkgroot/usr/lib/verirandom/"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"linux-deb","runtimeKind":"self-contained"}\n' "$RID" > "$pkgroot/usr/lib/verirandom/VeriRandom.package.json"
+          chmod +x "$pkgroot/usr/lib/verirandom/VeriRandom.Desktop" || true
 
-          cat > "$pkgroot/usr/bin/secrandom" << 'EOF'
+          cat > "$pkgroot/usr/bin/verirandom" << 'EOF'
           #!/bin/sh
-          exec /usr/lib/secrandom/SecRandom.Desktop "$@"
+          exec /usr/lib/verirandom/VeriRandom.Desktop "$@"
           EOF
-          chmod +x "$pkgroot/usr/bin/secrandom"
+          chmod +x "$pkgroot/usr/bin/verirandom"
 
-          cat > "$pkgroot/usr/share/applications/secrandom.desktop" << 'EOF'
+          cat > "$pkgroot/usr/share/applications/verirandom.desktop" << 'EOF'
           [Desktop Entry]
           Type=Application
-          Name=SecRandom
-          Exec=secrandom
-          Icon=secrandom
+          Name=VeriRandom
+          Exec=verirandom
+          Icon=verirandom
           Categories=Utility;
           Terminal=false
           EOF
 
           if [ -f "resources/secrandom-icon-paper.png" ]; then
-            cp "resources/secrandom-icon-paper.png" "$pkgroot/usr/share/icons/hicolor/256x256/apps/secrandom.png"
+            cp "resources/secrandom-icon-paper.png" "$pkgroot/usr/share/icons/hicolor/256x256/apps/verirandom.png"
           fi
 
           cat > "$pkgroot/DEBIAN/control" << EOF
-          Package: secrandom
+          Package: verirandom
           Version: ${version_no_v}
           Section: utils
           Priority: optional
           Architecture: ${deb_arch}
           Maintainer: SECTL
-          Description: SecRandom
+          Description: VeriRandom
           EOF
 
-          dpkg-deb --build "$pkgroot" "${release_root}/dist/SecRandom-${VERSION}-${RID}.deb"
+          dpkg-deb --build "$pkgroot" "${release_root}/dist/VeriRandom-${VERSION}-${RID}.deb"
 
       - name: Build macOS pkg
         if: ${{ matrix.os == 'macos' }}
@@ -431,24 +431,24 @@ jobs:
 
           work="$(pwd)/${release_root}/macos/${RID}"
           rm -rf "$work"
-          mkdir -p "$work/bundle/SecRandom.app/Contents/MacOS"
-          mkdir -p "$work/bundle/SecRandom.app/Contents/Resources"
+          mkdir -p "$work/bundle/VeriRandom.app/Contents/MacOS"
+          mkdir -p "$work/bundle/VeriRandom.app/Contents/Resources"
 
-          cp -a "${release_root}/publish/full/${RID}/." "$work/bundle/SecRandom.app/Contents/MacOS/"
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-app","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
-          chmod +x "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.Desktop" || true
+          cp -a "${release_root}/publish/full/${RID}/." "$work/bundle/VeriRandom.app/Contents/MacOS/"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"macos-app","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/VeriRandom.app/Contents/MacOS/VeriRandom.package.json"
+          chmod +x "$work/bundle/VeriRandom.app/Contents/MacOS/VeriRandom.Desktop" || true
 
-          cat > "$work/bundle/SecRandom.app/Contents/Info.plist" << EOF
+          cat > "$work/bundle/VeriRandom.app/Contents/Info.plist" << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>CFBundleName</key><string>VeriRandom</string>
             <key>CFBundleDisplayName</key><string>VeriRandom</string>
-            <key>CFBundleIdentifier</key><string>top.sectl.secrandom</string>
+            <key>CFBundleIdentifier</key><string>com.yeyixiao.verirandom</string>
             <key>CFBundleVersion</key><string>${version_no_v}</string>
             <key>CFBundleShortVersionString</key><string>${version_no_v}</string>
-            <key>CFBundleExecutable</key><string>SecRandom.Desktop</string>
+            <key>CFBundleExecutable</key><string>VeriRandom.Desktop</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>LSMinimumSystemVersion</key><string>11.0</string>
             <key>CFBundleIconFile</key><string>AppIcon</string>
@@ -467,14 +467,14 @@ jobs:
               double=$((size*2))
               sips -z "$double" "$double" "$icon_png" --out "$iconset/icon_${size}x${size}@2x.png" >/dev/null
             done
-            iconutil -c icns "$iconset" -o "$work/bundle/SecRandom.app/Contents/Resources/AppIcon.icns"
+            iconutil -c icns "$iconset" -o "$work/bundle/VeriRandom.app/Contents/Resources/AppIcon.icns"
           fi
 
           if [ -z "$MACOS_SIGNING_P12_BASE64" ] || [ -z "$MACOS_SIGNING_P12_PASSWORD" ] || [ -z "$MACOS_APPLICATION_SIGNING_IDENTITY" ] || [ -z "$MACOS_INSTALLER_SIGNING_IDENTITY" ] || [ -z "$MACOS_NOTARY_APPLE_ID" ] || [ -z "$MACOS_NOTARY_TEAM_ID" ] || [ -z "$MACOS_NOTARY_PASSWORD" ]; then
             echo "macOS signing or notarization credentials are unavailable; keeping unsigned APP and skipping signed PKG."
             ditto -c -k --sequesterRsrc --keepParent \
-              "$work/bundle/SecRandom.app" \
-              "${release_root}/dist/SecRandom-${VERSION}-${RID}.app.zip"
+              "$work/bundle/VeriRandom.app" \
+              "${release_root}/dist/VeriRandom-${VERSION}-${RID}.app.zip"
             exit 0
           fi
 
@@ -489,30 +489,30 @@ jobs:
           security list-keychain -d user -s "$keychain"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_SIGNING_P12_PASSWORD" "$keychain"
 
-          codesign --force --deep --options runtime --sign "$MACOS_APPLICATION_SIGNING_IDENTITY" "$work/bundle/SecRandom.app"
-          codesign --verify --deep --strict "$work/bundle/SecRandom.app"
+          codesign --force --deep --options runtime --sign "$MACOS_APPLICATION_SIGNING_IDENTITY" "$work/bundle/VeriRandom.app"
+          codesign --verify --deep --strict "$work/bundle/VeriRandom.app"
 
           ditto -c -k --sequesterRsrc --keepParent \
-            "$work/bundle/SecRandom.app" \
-            "${release_root}/dist/SecRandom-${VERSION}-${RID}.app.zip"
+            "$work/bundle/VeriRandom.app" \
+            "${release_root}/dist/VeriRandom-${VERSION}-${RID}.app.zip"
 
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-pkg","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"macos-pkg","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/VeriRandom.app/Contents/MacOS/VeriRandom.package.json"
 
           pkgroot="$work/pkgroot"
           mkdir -p "$pkgroot/Applications"
-          cp -a "$work/bundle/SecRandom.app" "$pkgroot/Applications/"
+          cp -a "$work/bundle/VeriRandom.app" "$pkgroot/Applications/"
 
           pkgbuild \
             --root "$pkgroot" \
-            --identifier "top.sectl.secrandom" \
+            --identifier "com.yeyixiao.verirandom" \
             --version "$version_no_v" \
             --install-location "/" \
             --sign "$MACOS_INSTALLER_SIGNING_IDENTITY" \
-            "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg"
+            "${release_root}/dist/VeriRandom-${VERSION}-${RID}.pkg"
 
-          xcrun notarytool submit "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" --password "$MACOS_NOTARY_PASSWORD" --wait
-          xcrun stapler staple "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg"
-          pkgutil --check-signature "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg"
+          xcrun notarytool submit "${release_root}/dist/VeriRandom-${VERSION}-${RID}.pkg" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" --password "$MACOS_NOTARY_PASSWORD" --wait
+          xcrun stapler staple "${release_root}/dist/VeriRandom-${VERSION}-${RID}.pkg"
+          pkgutil --check-signature "${release_root}/dist/VeriRandom-${VERSION}-${RID}.pkg"
 
       - name: Upload Portable Artifact
         uses: actions/upload-artifact@v7
@@ -775,12 +775,12 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($apk)) {
             throw 'The Android build did not produce an APK.'
           }
-          $assetName = "SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}.apk"
+          $assetName = "VeriRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}.apk"
           if ($env:ANDROID_SIGNED -ne 'true') {
             # Debug-signed build: rename so it can never be mistaken for, or matched as, a release
             # APK. The publish job excludes the "-unsigned" suffix from the release output.
             Write-Host "::warning::Emitting a debug-signed Android APK; it is not release-signed."
-            $assetName = "SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}-unsigned.apk"
+            $assetName = "VeriRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}-unsigned.apk"
           } else {
             $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
             if (!(Test-Path -LiteralPath $keystorePath)) {
@@ -892,7 +892,7 @@ jobs:
           set -euo pipefail
           version="${VERSION#v}"
           version="${version#V}"
-          output="artifacts/mobile/SecRandom-v${version}-ios-arm64-unsigned.ipa"
+          output="artifacts/mobile/VeriRandom-v${version}-ios-arm64-unsigned.ipa"
           mkdir -p artifacts/mobile
           # The AOT step dominates this job. The iOS SDK parallelizes it to
           # Environment.ProcessorCount / 2, which is integer 1 on the 3 vCPU macOS runner and
@@ -914,11 +914,11 @@ jobs:
             -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
           test -s "$output"
           unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
-          unzip -p "$output" 'Payload/*.app/Info.plist' > "$RUNNER_TEMP/SecRandom-iOS-Info.plist"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'VeriRandom'
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'AppIcon'
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "$version"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "${{ github.run_number }}"
+          unzip -p "$output" 'Payload/*.app/Info.plist' > "$RUNNER_TEMP/VeriRandom-iOS-Info.plist"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$RUNNER_TEMP/VeriRandom-iOS-Info.plist")" = 'VeriRandom'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$RUNNER_TEMP/VeriRandom-iOS-Info.plist")" = 'AppIcon'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$RUNNER_TEMP/VeriRandom-iOS-Info.plist")" = "$version"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$RUNNER_TEMP/VeriRandom-iOS-Info.plist")" = "${{ github.run_number }}"
 
       - name: Upload unsigned iOS IPA
         uses: actions/upload-artifact@v7
@@ -1017,20 +1017,20 @@ jobs:
             $releaseOutput = './artifacts/release/output'
             $artifacts = Get-ChildItem $releaseOutput -File | ForEach-Object {
               $name = $_.Name
-              $kind, $runtimeKind, $os, $arch = if ($name -match '^SecRandom-v.+-(?<rid>(?<os>win|linux|osx)-(?<arch>x64|x86|arm64))-portable-(?<runtime>full|light)\.zip$') {
+              $kind, $runtimeKind, $os, $arch = if ($name -match '^VeriRandom-v.+-(?<rid>(?<os>win|linux|osx)-(?<arch>x64|x86|arm64))-portable-(?<runtime>full|light)\.zip$') {
                 $platform = switch ($Matches.os) { 'win' { 'windows' } 'linux' { 'linux' } 'osx' { 'macos' } }
                 @('portable-zip', $(if ($Matches.runtime -eq 'full') { 'self-contained' } else { 'framework-dependent' }), $platform, $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-(?<rid>win-(?<arch>x64|x86|arm64))-setup\.exe$') {
+              } elseif ($name -match '^VeriRandom-v.+-(?<rid>win-(?<arch>x64|x86|arm64))-setup\.exe$') {
                 @('windows-exe', 'self-contained', 'windows', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-(?<rid>linux-(?<arch>x64|arm64))\.deb$') {
+              } elseif ($name -match '^VeriRandom-v.+-(?<rid>linux-(?<arch>x64|arm64))\.deb$') {
                 @('linux-deb', 'self-contained', 'linux', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.pkg$') {
+              } elseif ($name -match '^VeriRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.pkg$') {
                 @('macos-pkg', 'self-contained', 'macos', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.app\.zip$') {
+              } elseif ($name -match '^VeriRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.app\.zip$') {
                 @('macos-app', 'self-contained', 'macos', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-Android-(?<arch>arm64|x64)\.apk$') {
+              } elseif ($name -match '^VeriRandom-v.+-Android-(?<arch>arm64|x64)\.apk$') {
                 @('android-apk', 'self-contained', 'android', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-iOS-(?<arch>arm64)-unsigned\.ipa$') {
+              } elseif ($name -match '^VeriRandom-v.+-iOS-(?<arch>arm64)-unsigned\.ipa$') {
                 @('ios-ipa', 'self-contained', 'ios', $Matches.arch)
               } else {
                 throw "Unrecognized release artifact name: $name"
@@ -1048,15 +1048,15 @@ jobs:
             }
             $manifest = [ordered]@{
               schemaVersion = 1
-              product = 'SecRandom'
+              product = 'VeriRandom'
               channel = $channel
               tag = $releaseTag
               version = $releaseTag.TrimStart('v')
               publishedAt = [DateTimeOffset]::UtcNow.ToString('O')
               artifacts = @($artifacts)
             }
-            $manifestPath = "$releaseOutput/SecRandom-update-manifest.json"
-            $signaturePath = "$releaseOutput/SecRandom-update-manifest.sig"
+            $manifestPath = "$releaseOutput/VeriRandom-update-manifest.json"
+            $signaturePath = "$releaseOutput/VeriRandom-update-manifest.sig"
             $manifest | ConvertTo-Json -Depth 5 -Compress | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM -NoNewline
             & openssl pkeyutl -sign -rawin -inkey $privateKeyPath -in $manifestPath -out $signaturePath
             if ($LASTEXITCODE -ne 0) { throw "OpenSSL Ed25519 signing failed with exit code $LASTEXITCODE." }
@@ -1075,8 +1075,8 @@ jobs:
       - name: Upload APP to release
         uses: ncipollo/release-action@v1
         with:
-          name: SecRandom ${{ github.event.inputs.release_tag }}
-          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/SecRandom-update-manifest.json,./artifacts/release/output/SecRandom-update-manifest.sig"
+          name: VeriRandom ${{ github.event.inputs.release_tag }}
+          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/VeriRandom-update-manifest.json,./artifacts/release/output/VeriRandom-update-manifest.sig"
           draft: true
           prerelease: ${{ contains(github.event.inputs.release_tag, '-') }}
           bodyFile: ./release-note.md

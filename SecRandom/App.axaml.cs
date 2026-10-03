@@ -1509,7 +1509,7 @@ public partial class App : Application
 
     public async Task RestartThroughLauncherAsync()
     {
-        var launcherName = OperatingSystem.IsWindows() ? "SecRandomLauncher.exe" : "SecRandomLauncher";
+        var launcherName = OperatingSystem.IsWindows() ? "VeriRandomLauncher.exe" : "VeriRandomLauncher";
         var launcherPath = Path.Combine(Utils.PackageRoot, launcherName);
         if (!File.Exists(launcherPath))
             throw new FileNotFoundException("便携版 Launcher 不存在。", launcherPath);

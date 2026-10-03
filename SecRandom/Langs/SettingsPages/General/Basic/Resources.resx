@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <root>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
@@ -67,8 +67,8 @@
         <value>URL 协议注册 &amp; IPC 服务</value>
     </data>
     <data name="S_Behavior_UrlProtocol_D" xml:space="preserve">
-        <value>注册自定义 URL 协议 (secrandom://)，并启用 IPC 通信，支持链接启动与外部联动</value>
-    </data>
+        <value>注册自定义 URL 协议 (verirandom://)，并启用 IPC 通信，支持链接启动与外部联动</value>
+    </data><data name="S_Behavior_LegacyUrlProtocol" xml:space="preserve"><value>兼容 secrandom:// 链接</value></data><data name="S_Behavior_LegacyUrlProtocol_D" xml:space="preserve"><value>额外注册上游的 secrandom:// 协议，使已有的 secrandom:// 链接与联动指向本程序；同一协议只能有一个持有者，若同时安装了上游 SecRandom，后注册的一方会抢占它，可能导致链接指向错误的程序或对方失效</value></data><data name="C_LegacyUrlProtocol_Title" xml:space="preserve"><value>注册兼容协议 secrandom://</value></data><data name="C_LegacyUrlProtocol_Body" xml:space="preserve"><value>一个 URL 协议在同一用户下只能有一个持有者；开启后本程序会抢占 secrandom://，若同时安装上游 SecRandom，对方的 secrandom:// 链接将转由本程序处理，反之亦然，取决于最后注册的一方；由此产生的接口不兼容、联动失效或行为异常由你自行承担，本程序不为此负责</value></data><data name="C_LegacyUrlProtocol_Confirm" xml:space="preserve"><value>我已了解，仍然开启</value></data>
     <data name="O_MainWindowTopmostMode_None" xml:space="preserve">
         <value>关闭置顶</value>
     </data>

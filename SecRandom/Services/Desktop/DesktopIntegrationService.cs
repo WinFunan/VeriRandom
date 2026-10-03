@@ -19,12 +19,30 @@ public sealed class DesktopIntegrationService(
     MainConfigHandler configHandler,
     ILogger<DesktopIntegrationService> logger)
 {
-    private const string ApplicationName = "SecRandom";
-    private const string ProtocolScheme = "secrandom";
+    private const string ApplicationName = "VeriRandom";
+    // Primary scheme. VeriRandom coexists with upstream SecRandom, so its registrations must not collide.
+    private const string ProtocolScheme = "verirandom";
+    // Compatibility opt-in: also claim upstream's scheme so existing secrandom:// links reach this app.
+    // A URL scheme can only have one owner, so this can fight with an installed upstream SecRandom and
+    // is therefore off by default.
+    private const string LegacyProtocolScheme = "secrandom";
+    private const string MacBundleIdentifier = "com.yeyixiao.verirandom";
+    private const string MacProtocolBundleName = "VeriRandom URL Handler.app";
+    private const string MacProtocolExecutableName = "VeriRandomUrlHandler";
+    private const string MacAutostartPlistName = "com.yeyixiao.verirandom.plist";
+    private const string LinuxProtocolDesktopFileName = "verirandom-url-handler.desktop";
     private const string WindowsRunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string WindowsProtocolKey = @"Software\Classes\secrandom";
+
+    private static string WindowsProtocolKey(string scheme) => $@"Software\Classes\{scheme}";
 
     private BasicSettingsConfig Settings => configHandler.Data.General.Basic;
+
+    /// <summary>
+    ///     Schemes to register. The legacy upstream scheme is claimed only when the user opts in, because
+    ///     registering it can conflict with an installed upstream SecRandom.
+    /// </summary>
+    private IReadOnlyList<string> ActiveProtocolSchemes =>
+        Settings.LegacyUrlProtocol ? [ProtocolScheme, LegacyProtocolScheme] : [ProtocolScheme];
 
     public bool IsUiAccessAvailable()
     {
@@ -100,12 +118,13 @@ public sealed class DesktopIntegrationService(
     {
         try
         {
+            var schemes = ActiveProtocolSchemes;
             if (OperatingSystem.IsWindows())
-                SetWindowsUrlProtocol(enabled);
+                SetWindowsUrlProtocol(enabled, schemes);
             else if (OperatingSystem.IsLinux())
-                SetLinuxUrlProtocol(enabled);
+                SetLinuxUrlProtocol(enabled, schemes);
             else if (OperatingSystem.IsMacOS())
-                SetMacUrlProtocol(enabled);
+                SetMacUrlProtocol(enabled, schemes);
             else
                 throw new PlatformNotSupportedException();
 
@@ -170,7 +189,7 @@ public sealed class DesktopIntegrationService(
     [SupportedOSPlatform("macos")]
     private static void SetMacAutostart(bool enabled)
     {
-        var path = Path.Combine(GetMacLaunchAgentsDirectory(), "cn.sectl.secrandom.plist");
+        var path = Path.Combine(GetMacLaunchAgentsDirectory(), MacAutostartPlistName);
         if (!enabled)
         {
             if (File.Exists(path) && !RunCommand("launchctl", ["unload", path], allowFailure: false))
@@ -189,34 +208,38 @@ public sealed class DesktopIntegrationService(
     }
 
     [SupportedOSPlatform("windows")]
-    private static void SetWindowsUrlProtocol(bool enabled)
+    private static void SetWindowsUrlProtocol(bool enabled, IReadOnlyList<string> schemes)
     {
-        if (!enabled)
+        foreach (var scheme in schemes)
         {
-            try
+            var keyPath = WindowsProtocolKey(scheme);
+            if (!enabled)
             {
-                Registry.CurrentUser.DeleteSubKeyTree(WindowsProtocolKey, throwOnMissingSubKey: false);
-            }
-            catch (ArgumentException)
-            {
+                try
+                {
+                    Registry.CurrentUser.DeleteSubKeyTree(keyPath, throwOnMissingSubKey: false);
+                }
+                catch (ArgumentException)
+                {
+                }
+
+                continue;
             }
 
-            return;
+            using var protocolKey = Registry.CurrentUser.CreateSubKey(keyPath, writable: true)
+                                    ?? throw new InvalidOperationException("Unable to access the current-user protocol registry key.");
+            protocolKey.SetValue(string.Empty, $"URL:VeriRandom Protocol ({scheme})", RegistryValueKind.String);
+            protocolKey.SetValue("URL Protocol", string.Empty, RegistryValueKind.String);
+            using var commandKey = protocolKey.CreateSubKey(@"shell\open\command", writable: true)
+                                   ?? throw new InvalidOperationException("Unable to register the URL command.");
+            commandKey.SetValue(string.Empty, CreateWindowsCommandLine(["--url", "%1"]), RegistryValueKind.String);
         }
-
-        using var protocolKey = Registry.CurrentUser.CreateSubKey(WindowsProtocolKey, writable: true)
-                                ?? throw new InvalidOperationException("Unable to access the current-user protocol registry key.");
-        protocolKey.SetValue(string.Empty, "URL:SecRandom Protocol", RegistryValueKind.String);
-        protocolKey.SetValue("URL Protocol", string.Empty, RegistryValueKind.String);
-        using var commandKey = protocolKey.CreateSubKey(@"shell\open\command", writable: true)
-                               ?? throw new InvalidOperationException("Unable to register the URL command.");
-        commandKey.SetValue(string.Empty, CreateWindowsCommandLine(["--url", "%1"]), RegistryValueKind.String);
     }
 
-    private static void SetLinuxUrlProtocol(bool enabled)
+    private static void SetLinuxUrlProtocol(bool enabled, IReadOnlyList<string> schemes)
     {
         var applicationsDirectory = Path.Combine(GetXdgDataHome(), "applications");
-        var desktopFileName = "secrandom-url-handler.desktop";
+        var desktopFileName = LinuxProtocolDesktopFileName;
         var path = Path.Combine(applicationsDirectory, desktopFileName);
         if (!enabled)
         {
@@ -231,30 +254,33 @@ public sealed class DesktopIntegrationService(
         [
             "[Desktop Entry]",
             "Type=Application",
-            "Name=SecRandom URL Handler",
+            "Name=VeriRandom URL Handler",
             $"Exec={CreateDesktopCommand(["--url", "%u"])}",
-            "MimeType=x-scheme-handler/secrandom;",
+            $"MimeType={string.Concat(schemes.Select(scheme => $"x-scheme-handler/{scheme};"))}",
             "NoDisplay=true"
         ]) + '\n');
 
-        if (!RunCommand("xdg-mime", ["default", desktopFileName, "x-scheme-handler/secrandom"], allowFailure: true))
+        foreach (var scheme in schemes)
         {
+            if (RunCommand("xdg-mime", ["default", desktopFileName, $"x-scheme-handler/{scheme}"], allowFailure: true))
+                continue;
+
             DeleteFileIfExists(path);
-            throw new InvalidOperationException("xdg-mime could not register the secrandom URL handler.");
+            throw new InvalidOperationException($"xdg-mime could not register the {scheme} URL handler.");
         }
 
         RunCommand("update-desktop-database", [applicationsDirectory], allowFailure: true);
     }
 
     [SupportedOSPlatform("macos")]
-    private static void SetMacUrlProtocol(bool enabled)
+    private static void SetMacUrlProtocol(bool enabled, IReadOnlyList<string> schemes)
     {
-        var bundlePath = Path.Combine(GetMacApplicationSupportDirectory(), "SecRandom URL Handler.app");
+        var bundlePath = Path.Combine(GetMacApplicationSupportDirectory(), MacProtocolBundleName);
         if (!enabled)
         {
             if (Directory.Exists(bundlePath)
                 && !RunCommand(GetMacLsRegisterPath(), ["-u", bundlePath], allowFailure: false))
-                throw new InvalidOperationException("LaunchServices could not unregister the secrandom URL handler.");
+                throw new InvalidOperationException("LaunchServices could not unregister the URL handler.");
             DeleteDirectoryIfExists(bundlePath);
             return;
         }
@@ -262,8 +288,8 @@ public sealed class DesktopIntegrationService(
         var contentsPath = Path.Combine(bundlePath, "Contents");
         var macOsPath = Path.Combine(contentsPath, "MacOS");
         Directory.CreateDirectory(macOsPath);
-        File.WriteAllText(Path.Combine(contentsPath, "Info.plist"), CreateMacProtocolInfoPlist());
-        var launcherPath = Path.Combine(macOsPath, "SecRandomUrlHandler");
+        File.WriteAllText(Path.Combine(contentsPath, "Info.plist"), CreateMacProtocolInfoPlist(schemes));
+        var launcherPath = Path.Combine(macOsPath, MacProtocolExecutableName);
         File.WriteAllText(launcherPath, CreateMacProtocolLauncher());
         File.SetUnixFileMode(launcherPath,
             UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
@@ -273,7 +299,7 @@ public sealed class DesktopIntegrationService(
         if (!RunCommand(GetMacLsRegisterPath(), ["-f", bundlePath], allowFailure: true))
         {
             DeleteDirectoryIfExists(bundlePath);
-            throw new InvalidOperationException("LaunchServices could not register the secrandom URL handler.");
+            throw new InvalidOperationException("LaunchServices could not register the URL handler.");
         }
     }
 
@@ -301,14 +327,15 @@ public sealed class DesktopIntegrationService(
         var argumentXml = string.Concat(arguments.Select(argument => $"<string>{SecurityElement.Escape(argument)}</string>"));
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
-               + $"<plist version=\"1.0\"><dict><key>Label</key><string>cn.sectl.secrandom</string><key>ProgramArguments</key><array>{argumentXml}</array><key>RunAtLoad</key><true/></dict></plist>\n";
+               + $"<plist version=\"1.0\"><dict><key>Label</key><string>{MacBundleIdentifier}</string><key>ProgramArguments</key><array>{argumentXml}</array><key>RunAtLoad</key><true/></dict></plist>\n";
     }
 
-    private static string CreateMacProtocolInfoPlist()
+    private static string CreateMacProtocolInfoPlist(IReadOnlyList<string> schemes)
     {
+        var schemeXml = string.Concat(schemes.Select(scheme => $"<string>{SecurityElement.Escape(scheme)}</string>"));
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
-               + $"<plist version=\"1.0\"><dict><key>CFBundleIdentifier</key><string>cn.sectl.secrandom.urlhandler</string><key>CFBundleName</key><string>VeriRandom URL Handler</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleExecutable</key><string>SecRandomUrlHandler</string><key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>VeriRandom URL</string><key>CFBundleURLSchemes</key><array><string>{ProtocolScheme}</string></array></dict></array></dict></plist>\n";
+               + $"<plist version=\"1.0\"><dict><key>CFBundleIdentifier</key><string>{MacBundleIdentifier}.urlhandler</string><key>CFBundleName</key><string>VeriRandom URL Handler</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleExecutable</key><string>{MacProtocolExecutableName}</string><key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>VeriRandom URL</string><key>CFBundleURLSchemes</key><array>{schemeXml}</array></dict></array></dict></plist>\n";
     }
 
     private static string CreateMacProtocolLauncher()
@@ -403,7 +430,7 @@ public sealed class DesktopIntegrationService(
             else if (OperatingSystem.IsLinux())
                 SetLinuxAutostart(false);
             else if (OperatingSystem.IsMacOS())
-                DeleteFileIfExists(Path.Combine(GetMacLaunchAgentsDirectory(), "cn.sectl.secrandom.plist"));
+                DeleteFileIfExists(Path.Combine(GetMacLaunchAgentsDirectory(), MacAutostartPlistName));
         }
         catch
         {
@@ -411,20 +438,20 @@ public sealed class DesktopIntegrationService(
         }
     }
 
-    private static void TryRemoveUrlProtocolArtifacts()
+    private void TryRemoveUrlProtocolArtifacts()
     {
         try
         {
+            var schemes = ActiveProtocolSchemes;
             if (OperatingSystem.IsWindows())
-                SetWindowsUrlProtocol(false);
+                SetWindowsUrlProtocol(false, schemes);
             else if (OperatingSystem.IsLinux())
             {
-                const string desktopFileName = "secrandom-url-handler.desktop";
-                RemoveLinuxProtocolAssociations(desktopFileName);
-                DeleteFileIfExists(Path.Combine(GetXdgDataHome(), "applications", desktopFileName));
+                RemoveLinuxProtocolAssociations(LinuxProtocolDesktopFileName);
+                DeleteFileIfExists(Path.Combine(GetXdgDataHome(), "applications", LinuxProtocolDesktopFileName));
             }
             else if (OperatingSystem.IsMacOS())
-                DeleteDirectoryIfExists(Path.Combine(GetMacApplicationSupportDirectory(), "SecRandom URL Handler.app"));
+                DeleteDirectoryIfExists(Path.Combine(GetMacApplicationSupportDirectory(), MacProtocolBundleName));
         }
         catch
         {

@@ -117,7 +117,7 @@
   <data name="C_Copy" xml:space="preserve"><value>コピー</value></data>
   <data name="M_Copied" xml:space="preserve"><value>コピーしました。</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>USB 登録を管理</value></data>
-  <data name="M_UsbSetupDescription" xml:space="preserve"><value>一覧からリムーバブル USB ドライブを選択してください。SecRandom.safety.key がそこに作成されます。</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>一覧からリムーバブル USB ドライブを選択してください。VeriRandom.safety.key がそこに作成されます。</value></data>
   <data name="M_UsbShortDescription" xml:space="preserve"><value>認証に使用する USB ドライブを選択します。</value></data>
   <data name="M_NoBindableUsb" xml:space="preserve"><value>登録できるリムーバブル USB ドライブがありません</value></data>
   <data name="M_NoBoundUsb" xml:space="preserve"><value>登録済みの USB ドライブはありません</value></data>

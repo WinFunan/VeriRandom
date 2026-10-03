@@ -106,7 +106,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_ShowStartupWindow" xml:space="preserve"><value>Show main window at startup</value></data>
   <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>Choose whether the main window opens automatically when VeriRandom starts.</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>External links and integration</value></data>
-  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>Register secrandom:// so external applications can open VeriRandom.</value></data>
+  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>Register verirandom:// so external applications can open VeriRandom.</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>Privacy</value></data>
   <data name="C_PrivacyDescription" xml:space="preserve"><value>Choose the diagnostic and online-status information that VeriRandom may send after startup. You can change these options later in Settings.</value></data>
   <data name="C_PrivacyDataDestination" xml:space="preserve"><value>Note: when enabled, the related data will be sent to SecRandom (the upstream project and its organization SECTL); this fork does not receive it</value></data>

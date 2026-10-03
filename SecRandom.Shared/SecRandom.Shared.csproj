@@ -7,7 +7,7 @@
         <PackageId>SecRandom.Shared</PackageId>
         <Description>Cross-project shared contracts for SecRandom: config bases, profile/list/history models, attached-settings interfaces, and path utilities.</Description>
         <Authors>SECTL</Authors>
-        <Company>SECTL</Company>
+        <Company>WinFunan</Company>
         <RepositoryUrl>https://github.com/SECTL/SecRandom</RepositoryUrl>
         <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
         <PackageTags>secrandom;draw;random;education</PackageTags>

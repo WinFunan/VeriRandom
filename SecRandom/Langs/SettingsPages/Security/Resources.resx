@@ -140,7 +140,7 @@
   <data name="M_TotpDialogTitle" xml:space="preserve"><value>设置 TOTP 动态口令</value></data>
   <data name="M_TotpSetupDescription" xml:space="preserve"><value>请在认证器应用中添加以下密钥，然后输入当前 6 位验证码确认</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>管理 U 盘绑定</value></data>
-  <data name="M_UsbSetupDescription" xml:space="preserve"><value>从可移动设备列表中选择 U 盘，绑定时会在其中创建 SecRandom.safety.key</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>从可移动设备列表中选择 U 盘，绑定时会在其中创建 VeriRandom.safety.key</value></data>
   <data name="M_VerificationDialogTitle" xml:space="preserve"><value>安全验证</value></data>
   <data name="M_VerificationAllFactors" xml:space="preserve"><value>请完成全部已选验证方式</value></data>
   <data name="M_VerificationAnyFactor" xml:space="preserve"><value>完成任一已选验证方式即可继续</value></data>

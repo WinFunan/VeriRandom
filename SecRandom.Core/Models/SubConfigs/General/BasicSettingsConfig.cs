@@ -14,6 +14,10 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private bool _backgroundResident = true;
     [ObservableProperty] private bool _urlProtocol = false;
 
+    // Compatibility opt-in for the upstream secrandom:// scheme. Off by default: a URL scheme has a single
+    // owner, so claiming it can fight with an installed upstream SecRandom (and the app says so in the UI).
+    [ObservableProperty] private bool _legacyUrlProtocol = false;
+
     // Stored separately from the user-facing switches so a disabled size setting retains its last size.
     [ObservableProperty] private double _mainWindowWidth = 1200;
     [ObservableProperty] private double _mainWindowHeight = 800;

@@ -117,7 +117,7 @@
   <data name="C_Copy" xml:space="preserve"><value>Copy</value></data>
   <data name="M_Copied" xml:space="preserve"><value>Copied.</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>Manage USB Binding</value></data>
-  <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select a removable USB drive from the list. SecRandom.safety.key will be created there.</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select a removable USB drive from the list. VeriRandom.safety.key will be created there.</value></data>
   <data name="M_UsbShortDescription" xml:space="preserve"><value>Select the USB drive used for verification.</value></data>
   <data name="M_NoBindableUsb" xml:space="preserve"><value>No unbound removable USB drives are available</value></data>
   <data name="M_NoBoundUsb" xml:space="preserve"><value>No USB drives are currently bound</value></data>

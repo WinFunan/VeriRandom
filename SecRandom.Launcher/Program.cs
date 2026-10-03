@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json;
 
-const string packageRootEnvironmentVariable = "SECRANDOM_PACKAGE_ROOT";
+const string packageRootEnvironmentVariable = "VERIRANDOM_PACKAGE_ROOT";
 var root = Path.GetFullPath(AppContext.BaseDirectory);
-var executableName = OperatingSystem.IsWindows() ? "SecRandom.Desktop.exe" : "SecRandom.Desktop";
+var executableName = OperatingSystem.IsWindows() ? "VeriRandom.Desktop.exe" : "VeriRandom.Desktop";
 
 var installation = Directory.EnumerateDirectories(root, "app-*")
     .Where(path => IsValidInstallation(path, executableName))
@@ -14,7 +14,7 @@ var installation = Directory.EnumerateDirectories(root, "app-*")
 
 if (installation is null)
 {
-    Console.Error.WriteLine("找不到可启动的 SecRandom 版本。请重新下载完整安装包。");
+    Console.Error.WriteLine("找不到可启动的 VeriRandom 版本。请重新下载完整安装包。");
     return 1;
 }
 
@@ -44,7 +44,7 @@ static bool IsValidInstallation(string path, string executableName)
     if (File.Exists(Path.Combine(path, ".partial")) || !File.Exists(Path.Combine(path, executableName)))
         return false;
 
-    var markerPath = Path.Combine(path, "SecRandom.package.json");
+    var markerPath = Path.Combine(path, "VeriRandom.package.json");
     if (!File.Exists(markerPath))
         return false;
 
@@ -53,7 +53,7 @@ static bool IsValidInstallation(string path, string executableName)
         using var marker = JsonDocument.Parse(File.ReadAllText(markerPath));
         var root = marker.RootElement;
         return root.TryGetProperty("product", out var product)
-               && string.Equals(product.GetString(), "SecRandom", StringComparison.Ordinal)
+               && string.Equals(product.GetString(), "VeriRandom", StringComparison.Ordinal)
                && root.TryGetProperty("schemaVersion", out var schemaVersion)
                && schemaVersion.GetInt32() == 1
                && root.TryGetProperty("packageKind", out var packageKind)

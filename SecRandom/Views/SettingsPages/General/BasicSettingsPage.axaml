@@ -96,6 +96,16 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Behavior_LegacyUrlProtocol"
+                                    Header="{x:Static lsb:Resources.S_Behavior_LegacyUrlProtocol}"
+                                    Description="{x:Static lsb:Resources.S_Behavior_LegacyUrlProtocol_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi WarningFilled}}"
+                                    IsVisible="{Binding Settings.UrlProtocol}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.LegacyUrlProtocol}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_Behavior_CrashRecovery"
                                     Header="{x:Static lsb:Resources.S_Behavior_CrashRecovery}"
                                     Description="{x:Static lsb:Resources.S_Behavior_CrashRecovery_D}"

@@ -24,7 +24,7 @@
 - 一个版本一个 `#` 标题，标题下按下面的固定小节组织；没有内容的小节直接省略。
 - 版本号沿用上游的 `vX.Y.Z` 与阶段命名（`alpha.N` / `beta.N` / `release.N`）。同一个上游版本由本仓库发布多次修订时，追加 `-fork.N` 区分。
 - 条目请写**用户能看懂的效果**，不要写实现细节（实现细节属于 `DownStream_Change.md`）。
-- 涉及内部标识时必须保持 `SecRandom` 不变（命名空间、`secrandom://`、`SecRandom.package.json` 等），详见 `DownStream_Change.md` §7。
+- 标识归属见 `DownStream_Change.md` §7：**产品身份类**（包名、`verirandom://`、`VeriRandom.Desktop.exe`、`VeriRandom.package.json`、单实例名、数据目录、安装目录等）为 VeriRandom 自有；**代码级内部标识**（命名空间、项目与文件夹名、`avares://SecRandom/...`、证明文件格式、上游服务与外部契约）仍保持 `SecRandom`
 - 上游同步后，把上游带来的改动的**用户可见部分**摘要进本文件对应版本，并注明来自上游；完整上游日志仍以上游 `CHANGELOG/` 为准。
 
 ### 小节模板
@@ -50,7 +50,7 @@
 
 ## 🚀 主要更新
 
-- 新增 **VeriRandom 分支身份**：对外产品名统一为 VeriRandom，窗口标题、托盘提示、macOS 应用菜单、移动端应用名、About 页与 README 均使用 VeriRandom；所有内部标识（命名空间、`avares://SecRandom/...`、`secrandom://` 协议、`SecRandom.package.json` 标记、数据目录等）保持不变，因此可以平滑覆盖安装、数据与更新兼容性不受影响；About 页与 README 均声明本产品是 SecRandom 的开源分支，不应被视为 SecRandom 本身
+- 新增 **VeriRandom 自有标识，可与上游 SecRandom 同机共存**：android/iOS 包名改为 `com.yeyixiao.verirandom`，链接协议主标识改为 `verirandom://`（可另开兼容开关注册上游的 `secrandom://`，开启前会有明确警告），Windows 协议注册表、macOS bundle 与启动项、Linux 包名与桌面项、可执行文件名（`VeriRandom.Desktop` / `VeriRandomLauncher`）、安装包标记（`VeriRandom.package.json`）、更新清单、单实例名、USB 绑定标记、数据目录与安装目录全部改为自有标识，安装器使用独立 `AppId`，因此不会与上游互相覆盖安装或抢占系统级注册；About 页与 README 仍声明本产品是 SecRandom 的开源分支，不应被视为 SecRandom 本身
 - 新增 **抽取证明双链**：普通模式的证明改为「Up 链 + Own 链」两个文件。Up 链是面向上游服务的兼容记录（不再携带信标数据），信标改由「时间戳周期 + 预设」在验证时重新获取脉冲并重新派生种子来核对；Own 链是自有参考声明，每个节点绑定对应的 Up 节点，记录信标脉冲索引与同一脉冲内的种子递增因子，并**先于** Up 链申请时间戳，用于说明它不是抽取完成后的补加。Own 链只用于参考声明，不参与公平性判定
 - 新增 **外部信标熵源**（普通模式，默认关闭）：开启后抽取种子来自已发布的 NIST Beacon 脉冲而不是本机随机数，主持人无法注入自定义熵；同一脉冲内用从 0 开始、公差为 1 的序号保证不重复；信标不可用时本次抽取直接失败，不会退回本地随机数
 - 新增 **时间戳服务开关**（默认开启）：每份证明会向沃通 TSA 申请 RFC 3161 第三方时间戳，只发送证明摘要；现在可以在「抽取验证」设置页显式关闭

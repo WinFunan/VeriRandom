@@ -240,12 +240,12 @@ public sealed class SecurityServiceTests : IDisposable
             new UsbDriveInfo("H:", "Remove password USB", "volume:remove-password", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:remove-password", TestContext.Current.CancellationToken));
-        Assert.True(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
+        Assert.True(File.Exists(Path.Combine(usbRoot, ".VeriRandom.safety.key")));
 
         var removed = await fixture.Service.RemovePasswordAsync("secret1", TestContext.Current.CancellationToken);
 
         Assert.True(removed);
-        Assert.False(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
+        Assert.False(File.Exists(Path.Combine(usbRoot, ".VeriRandom.safety.key")));
     }
 
     [Fact]
@@ -558,7 +558,7 @@ public sealed class SecurityServiceTests : IDisposable
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:missing-marker", TestContext.Current.CancellationToken));
 
-        File.Delete(Path.Combine(usbRoot, ".SecRandom.safety.key"));
+        File.Delete(Path.Combine(usbRoot, ".VeriRandom.safety.key"));
 
         var device = Assert.Single(await fixture.Service.GetUsbDevicesAsync(TestContext.Current.CancellationToken));
         Assert.False(device.IsBound);
@@ -580,7 +580,7 @@ public sealed class SecurityServiceTests : IDisposable
         var bound = await fixture.Service.BindUsbAsync(null!, "volume:G", TestContext.Current.CancellationToken);
 
         Assert.False(bound);
-        Assert.False(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
+        Assert.False(File.Exists(Path.Combine(usbRoot, ".VeriRandom.safety.key")));
         Assert.Empty(await fixture.Service.GetUsbBindingsAsync(TestContext.Current.CancellationToken));
     }
 
@@ -596,7 +596,7 @@ public sealed class SecurityServiceTests : IDisposable
         var bound = await fixture.Service.BindUsbAsync(null!, usbRoot, TestContext.Current.CancellationToken);
 
         Assert.False(bound);
-        Assert.False(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
+        Assert.False(File.Exists(Path.Combine(usbRoot, ".VeriRandom.safety.key")));
     }
 
     [Fact]
@@ -614,7 +614,7 @@ public sealed class SecurityServiceTests : IDisposable
         var bound = await fixture.Service.BindUsbAsync(null!, "volume:save-failure", TestContext.Current.CancellationToken);
 
         Assert.False(bound);
-        Assert.False(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
+        Assert.False(File.Exists(Path.Combine(usbRoot, ".VeriRandom.safety.key")));
         Assert.Empty(await fixture.Service.GetUsbBindingsAsync(TestContext.Current.CancellationToken));
     }
 
@@ -622,7 +622,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task BindUsbAsync_WhenUsbAlreadyContainsASafetyKey_RejectsAndPreservesTheKey()
     {
         var usbRoot = CreateUsbDirectory("existing-key-save-failure");
-        var existingKeyPath = Path.Combine(usbRoot, ".SecRandom.safety.key");
+        var existingKeyPath = Path.Combine(usbRoot, ".VeriRandom.safety.key");
         File.WriteAllText(existingKeyPath, "existing-token", System.Text.Encoding.ASCII);
         var fixture = CreateFixture(
             Password("secret1"),
@@ -653,7 +653,7 @@ public sealed class SecurityServiceTests : IDisposable
         var unbound = await fixture.Service.UnbindUsbAsync(null!, binding.Id, TestContext.Current.CancellationToken);
 
         Assert.False(unbound);
-        Assert.True(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
+        Assert.True(File.Exists(Path.Combine(usbRoot, ".VeriRandom.safety.key")));
         Assert.Single(await fixture.Service.GetUsbBindingsAsync(TestContext.Current.CancellationToken));
     }
 
@@ -666,7 +666,7 @@ public sealed class SecurityServiceTests : IDisposable
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(await fixture.Service.BindUsbAsync(null!, drive.DeviceId, TestContext.Current.CancellationToken));
 
-        var markerPath = Path.Combine(usbRoot, ".SecRandom.safety.key");
+        var markerPath = Path.Combine(usbRoot, ".VeriRandom.safety.key");
         var originalToken = File.ReadAllText(markerPath, System.Text.Encoding.ASCII);
         var binding = Assert.Single(await fixture.Service.GetUsbBindingsAsync(TestContext.Current.CancellationToken));
         fixture.UsbCatalog.SetDevices();
@@ -695,7 +695,7 @@ public sealed class SecurityServiceTests : IDisposable
         var removed = await fixture.Service.RemovePasswordAsync("secret1", TestContext.Current.CancellationToken);
 
         Assert.False(removed);
-        Assert.True(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
+        Assert.True(File.Exists(Path.Combine(usbRoot, ".VeriRandom.safety.key")));
         Assert.True(fixture.Service.GetUiState().HasPassword);
         Assert.Single(await fixture.Service.GetUsbBindingsAsync(TestContext.Current.CancellationToken));
     }
@@ -704,7 +704,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task RemovePasswordAsync_WhenTheBoundKeyChanged_StillDeletesTheExternalToken()
     {
         var usbRoot = CreateUsbDirectory("remove-password-replaced-key");
-        var keyPath = Path.Combine(usbRoot, ".SecRandom.safety.key");
+        var keyPath = Path.Combine(usbRoot, ".VeriRandom.safety.key");
         var fixture = CreateFixture(
             Password("secret1"),
             new UsbDriveInfo("O:", "Replaced key USB", "volume:remove-password-replaced-key", usbRoot));

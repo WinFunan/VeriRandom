@@ -4,7 +4,7 @@ namespace SecRandom.Platforms.Linux;
 
 internal sealed class LinuxRemovableStorageBindingMarker : IRemovableStorageBindingMarker
 {
-    public string FileName => ".SecRandom.safety.key";
+    public string FileName => ".VeriRandom.safety.key";
 
     public bool TryHide(string path) => true;
 }

@@ -20,8 +20,8 @@ namespace SecRandom.Services.Mobile;
 public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInstaller installer) : INotifyPropertyChanged
 {
     private const string Repository = "SECTL/SecRandom";
-    private const string ManifestFileName = "SecRandom-update-manifest.json";
-    private const string SignatureFileName = "SecRandom-update-manifest.sig";
+    private const string ManifestFileName = "VeriRandom-update-manifest.json";
+    private const string SignatureFileName = "VeriRandom-update-manifest.sig";
     private const int MaxMetadataBytes = 256 * 1024;
     private const int MaxManifestBytes = 4 * 1024 * 1024;
     private const int MaxSignatureBytes = 64;

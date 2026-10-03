@@ -29,12 +29,13 @@
 | 8 | 新增「自有参考链（Own）」补充声明 | 新增 `*.ownproof.json`、自有链头、完整性报告字段 | **高**（新增落盘格式） |
 | 9 | 跨境数据传输闸门 + 抽取上传改为无默认二选一 | 新增枚举/配置、OOBE 与设置页、6 类 SECTL 出网路径、`SectlAuthService`/`SectlHeartbeatService`/`PlatformVersionReportService` 构造函数 | **高**（改动了所有出境路径的开关语义，并与上游的令牌轮换重写叠加） |
 | 10 | 禁用「仅 TOTP」单一验证 | `GlobalConstants` 调试开关、`SecurityService`/`SecurityCredentialStore`、桌面启动参数 | 中（改了安全验证的判定条件） |
+| 11 | 自有标识改名 | 包名、URI、可执行名、安装包标记、安装器、单实例名、macOS/Linux 路径；收尾需改写 §7 禁止改名表 | **高**（改动产品身份与全部兼容契约） |
 
 ---
 
 ## 1. 品牌与显示名称：对外 VeriRandom、对内 SecRandom
 
-**意图**：用户可见的产品名统一为 VeriRandom；所有内部标识保持 SecRandom 不变（详见 §7）。
+**意图**：用户可见的产品名统一为 VeriRandom；产品身份类标识（包名、URI、可执行名、安装目录等）同样自有，边界见 §7。
 
 **新增文件**：无
 
@@ -64,7 +65,7 @@
 | `SecRandom/Langs/**/Resources*.resx` | 产品名文案（Common / CrashRecovery / FirstRunOobe / Mobile / SettingsView / Notification / Plugins·Overview） |
 | `README.md`、`resources/README_EN.md`、`resources/README_JA.md` | 标题、徽章仓库、下载/社区/贡献者分段（见 §2） |
 
-**注意**：`SecRandom Sync`、`github.com/SECTL/SecRandom`、`SecRandom.safety.key`、`secrandom://`、`SecRandom4Ci` 等**不是**展示名，禁止改（见 §7）。
+**注意**：§7 把标识分成两类——**产品身份类**已改为自有（包名、`verirandom://`、`VeriRandom.Desktop.exe`、`VeriRandom.package.json`、`.VeriRandom.safety.key`、单实例名、安装目录等），而 **`SecRandom Sync`、`SecRandom4Ci`、`fair.sectl.cn`/`sectl.cn`、插件市场索引、上游仓库链接**属于上游服务或外部契约，必须保持 `SecRandom`。
 
 ---
 
@@ -225,21 +226,40 @@
 
 ---
 
-## 7. 刻意保留的内部标识（禁止改名）
+## 7. 标识归属：哪些已改为自有、哪些必须保持 SecRandom
 
-以下标识在本分支中**必须保持 `SecRandom`**，改名会破坏兼容性：
+本分支与上游 SecRandom **同机共存**，因此产品身份类标识必须自有；而**代码级内部标识**（命名空间、项目名等）保持 `SecRandom` 不变，它们不是产品身份，改名只会制造无谓的合并冲突。
 
-- 命名空间、程序集/项目名、`InternalsVisibleTo("SecRandom")`
-- `avares://SecRandom/...` 资源 URI
-- `secrandom://` 协议、`SecRandom.safety.key`
-- `SecRandom.package.json` 及其 `product: "SecRandom"`（被 `SecRandom.Launcher` 与 `UpdateCenterService.Product` 校验）
-- `SecRandom-update-manifest.json` / `.sig`、`SecRandom-cloud-` 前缀、导出文件名
-- `.srproof.json`、`SecRandomProof/...` 与 `SecRandomBeacon/v1` 域分隔符
-- `SecRandom Sync` 服务、`SecRandom4Ci`、`fair.sectl.cn` / `sectl.cn` 等上游端点
-- 数据根目录 `LocalApplicationData/SecRandom/data`
-- Android 包名 `cn.sectl.secrandom.mobile`、iOS bundle id `cn.sectl.secrandom.mobile`、macOS `top.sectl.secrandom`
-- 上游仓库链接 `github.com/SECTL/SecRandom`
-- About 页作者/组织/鸣谢署名行
+### 7.1 已改为自有标识（不得回退为 SecRandom）
+
+| 类别 | 现值 |
+|---|---|
+| Android/iOS 包名 | `com.yeyixiao.verirandom` |
+| URI 协议（主） | `verirandom://` |
+| URI 协议（兼容，默认关闭） | `secrandom://`（可选注册，见 §14） |
+| Windows 协议注册表 | `Software\Classes\verirandom` |
+| macOS bundle id / 启动项 | `com.yeyixiao.verirandom` / `com.yeyixiao.verirandom.plist` |
+| Linux 包名与桌面项 | `verirandom` / `verirandom.desktop` / `/usr/lib/verirandom` / `/usr/bin/verirandom` |
+| 桌面可执行 | `VeriRandom.Desktop.exe`（项目名仍为 `SecRandom.Desktop`，靠 `<AssemblyName>` 改名） |
+| 便携版启动器 | `VeriRandomLauncher.exe` / `VeriRandomLauncher` |
+| 安装包标记 | `VeriRandom.package.json` 且 `product: "VeriRandom"`（由 `SecRandom.Launcher` 与 `UpdateCenterService.Product` 校验） |
+| 更新清单 | `VeriRandom-update-manifest.json` / `.sig` |
+| 单实例 Mutex / Pipe | `VeriRandom_SingleInstance_VeriRandom_7D5E4C21` / `VeriRandom_IPC_…` |
+| USB 绑定标记 | `.VeriRandom.safety.key` |
+| 数据根目录 | `LocalApplicationData/VeriRandom/data` |
+| 便携版环境变量 | `VERIRANDOM_PACKAGE_ROOT` |
+| 安装器 | 自有 `AppId`、`DefaultDirName={autopf|localappdata}\WinFunan\VeriRandom` |
+| 程序集 `<Company>` | `WinFunan` |
+
+### 7.2 必须保持 `SecRandom`（代码级内部标识，不是产品身份）
+
+- 命名空间、程序集/项目/文件夹名、`InternalsVisibleTo("SecRandom")`
+- `avares://SecRandom/...` 资源 URI、MSBuild 属性 `SecRandomPlatform`
+- 证明文件格式：`.srproof.json`、`SecRandomProof/...` 与 `SecRandomBeacon/v1` 域分隔符
+- 上游服务与外部契约（本分支只是消费方，改名即失效）：`SecRandom Sync`、`SecRandom4Ci` ClassIsland 插件、`fair.sectl.cn` / `sectl.cn` 端点、插件市场索引位于 `SECTL/SecRandom-PluginIndex` 且其 `product` 字段为 `SecRandom`（`PluginCatalog.Product` / `PluginMarketService` 据此校验）
+- 上游仓库链接 `github.com/SECTL/SecRandom`、About 页作者/组织/鸣谢署名行
+
+**判断准则**：标识是否出现在**本程序自己的安装/注册/出网身份**里？是 → 必须自有；只是**编译期或与上游服务对接的名字**？是 → 保持 `SecRandom`。
 
 ---
 
@@ -247,7 +267,7 @@
 
 1. **先读本文件**，再 merge/rebase 上游。
 2. 高冲突文件：`build_publish.yml`、`SecRandom/App.axaml.cs`、`PrivacySettingsConfig.cs`、`UpdateCenterService.cs`、`VerificationDrawCoordinator.cs`、`WitnessClient.cs`、`FirstRunOobeViewModel.cs`、`FirstRunOobeWindow.axaml`、各 `Resources*.resx`。
-   上游 2026-10 同步后新增的高冲突面（已实际发生过冲突）：`SecRandom/Services/Verification/DrawProofExportService.cs`（上游给 `RemoveProofsOverStorageLimit` 加了 `protectedPath`，与自有参考证明的成对删除同处一个方法）、`SecRandom/Services/Verification/ProofChainStore.cs`（`RecordRemovedIndices` 的「只能跨连续前缀推进」收紧）、`SecRandom/Services/Auth/SectlAuthService.cs`（上游重写为「单次使用的轮换刷新令牌 + 单飞刷新 + 跨进程锁 `sectl-auth.lock`」，构造函数新增 `SectlTokenStore` 与 `ILogger`，与我们的 `MainConfigHandler` 出境闸门参数叠加）、`SecRandom/Services/Auth/SectlTokenStore.cs`（上游新增），以及三个构造 `SectlAuthService` 的测试文件（`SectlAuthServiceTests`、`SectlCloudStorageClientTests`、`CloudBackupServiceTests`）。
+   已记录的高冲突面：`SecRandom/Services/Verification/DrawProofExportService.cs`（上游给 `RemoveProofsOverStorageLimit` 加了 `protectedPath`，与自有参考证明的成对删除同处一个方法）、`SecRandom/Services/Verification/ProofChainStore.cs`（`RecordRemovedIndices` 的「只能跨连续前缀推进」收紧）、`SecRandom/Services/Auth/SectlAuthService.cs`（上游重写为「单次使用的轮换刷新令牌 + 单飞刷新 + 跨进程锁 `sectl-auth.lock`」，构造函数新增 `SectlTokenStore` 与 `ILogger`，与我们的 `MainConfigHandler` 出境闸门参数叠加）、`SecRandom/Services/Auth/SectlTokenStore.cs`（上游新增），以及三个构造 `SectlAuthService` 的测试文件（`SectlAuthServiceTests`、`SectlCloudStorageClientTests`、`CloudBackupServiceTests`）。
    合并口径：**两侧都要保留**——上游的令牌轮换/链规则与本分支的 `MainConfigHandler` + `SectlTrafficPolicy` 出境闸门必须同时存在于构造函数与调用点。
    AGENTS 类文件同样属于高冲突面：`SecRandom.Core/AGENTS.md`、`SecRandom/AGENTS.md`、`SecRandom/Views/SettingsPages/AGENTS.md` 由上游同步更新；本分支的补充段落需逐条确认仍然存在，尤其 §3（双链）、§4（隐私默认）、§10（TSA 开关）、§12（跨境闸门）。
 3. 上游若新增/改动隐私政策或 OOBE 版本，需同步更新 `SecRandomPrivacyPolicy` 的「引用自 SecRandom vX.Y.Z」前置说明与 `CurrentPrivacyPolicyVersion`。
@@ -318,7 +338,7 @@
 - Own 的 TSA 令牌先于 Up 申请，用于说明参考节点不是事后补加。
 - Own 导出失败**不得**影响已完成的抽取（`DrawProofExportService.Save` 内捕获并告警）。
 
-**待办**：设置页目前只展示 Up 链完整性文本，尚未把 `OwnReference` 计数渲染到界面。
+**已知缺口**：设置页只展示 Up 链完整性文本，`OwnReference` 计数未渲染到界面。
 
 ---
 
@@ -362,11 +382,19 @@
 - 补签统一走 `SectlTrafficPolicy.EnsureTransferAcceptedAsync`（必选勾选 + 5 秒最短显示）。
 - 抽取上传除跨境外还需要 `AttestationUpload == Enabled`，`Unset` 一律不上传。
 
-**残留待办**：
+**已知缺口**：
 1. `SectlAuthService.InitializeAsync` 中已登录会话的后台令牌刷新可能绕过 `SendAuthorizedAsync`，尚未收口到出境闸门。
 2. 未同意跨境时，`S_AttestationUpload` 单选组会置灰（`RefreshAttestationUpload` 读 `SectlTrafficPolicy`），但**不会**主动引导用户去隐私设置页补签；补签后需要重新进入该页才会解锁。
 
 ---
+
+
+**界面（已落地）**：
+- OOBE 轮播新增隐私页之后的独立第 3 页「跨境数据传输须知」：`StepCount` 由 8 改为 9，`IsCrossBorderStep => SelectedStep == 2`，页序为 欢迎(0) → 法务/隐私(1) → **跨境须知(2)** → 数据导入(3) → … → 完成(8)。
+- 该页含：须知正文（含 SECTL 节点属地/IP）、**加粗**的可选说明、非必选勾选（`AcceptedCrossBorderTransfer`），以及**无默认**的抽取上传单选对（`AttestationUploadEnabledChoice` / `AttestationUploadDisabledChoice`，两个 `RadioButton` 同组，未选择时两个都未选中；未勾选跨境时单选对置灰）。
+- `CanContinue` 与 `FinishAsync` 都要求 `AttestationUpload != Unset`（仅在全量设置流程中；`IsPrivacyPolicyOnly` 路径不受影响）。
+- 隐私设置页新增跨境须知行（标题/说明复用 OOBE 资源 `C_CrossBorderTitle` / `C_CrossBorderOptionalNote`，**不复制法律文本**）与 `CrossBorderTransferAccept_OnClick` 补签入口，供首次设置时跳过的安装事后补签。
+- 「抽取验证」设置页新增 `S_AttestationUpload` 行，供**已过首次设置的用户事后改选**提交/不提交；控件用 `x:Name` 直接读写（`RefreshAttestationUpload` / `AttestationUpload_OnClick`），不依赖 `INotifyPropertyChanged`，选项文案复用 OOBE 的 `O_AttestationOn` / `O_AttestationOff`。
 
 ## 13. 禁用「仅 TOTP」单一验证（可调试开关）
 
@@ -391,11 +419,57 @@
 - 未允许时，"任意已选方式"模式下 TOTP **不能单独通过**；此时不带密码的尝试会走到既有的「免密尝试」分支并计入失败次数（保留对验证码暴破的限制）——该分支无需改动。
 - 已有安装升级后，遗留的 `totp-standalone.json` 在下次保存凭据时被删除；在此之前也不会被读取。
 
-**待办**：移动端 head 没有命令行入口，目前只能靠 Debug 构建开启；若需要在移动端也能调试，需要再加一个 head 级开关。
+**已知缺口**：移动端 head 没有命令行入口，该调试路径只能靠 Debug 构建开启；若需要在移动端也能调试，需再加一个 head 级开关。
 
-**界面（已落地）**：
-- OOBE 轮播新增隐私页之后的独立第 3 页「跨境数据传输须知」：`StepCount` 由 8 改为 9，`IsCrossBorderStep => SelectedStep == 2`，页序为 欢迎(0) → 法务/隐私(1) → **跨境须知(2)** → 数据导入(3) → … → 完成(8)。
-- 该页含：须知正文（含 SECTL 节点属地/IP）、**加粗**的可选说明、非必选勾选（`AcceptedCrossBorderTransfer`），以及**无默认**的抽取上传单选对（`AttestationUploadEnabledChoice` / `AttestationUploadDisabledChoice`，两个 `RadioButton` 同组，未选择时两个都未选中；未勾选跨境时单选对置灰）。
-- `CanContinue` 与 `FinishAsync` 都要求 `AttestationUpload != Unset`（仅在全量设置流程中；`IsPrivacyPolicyOnly` 路径不受影响）。
-- 隐私设置页新增跨境须知行（标题/说明复用 OOBE 资源 `C_CrossBorderTitle` / `C_CrossBorderOptionalNote`，**不复制法律文本**）与 `CrossBorderTransferAccept_OnClick` 补签入口，供首次设置时跳过的安装事后补签。
-- 「抽取验证」设置页新增 `S_AttestationUpload` 行，供**已过首次设置的用户事后改选**提交/不提交；控件用 `x:Name` 直接读写（`RefreshAttestationUpload` / `AttestationUpload_OnClick`），不依赖 `INotifyPropertyChanged`，选项文案复用 OOBE 的 `O_AttestationOn` / `O_AttestationOff`。
+---
+
+## 14. 自有标识改名：由「保持 SecRandom」改为「VeriRandom 自有标识」
+
+**意图**：把 §7「内部标识保持 SecRandom」改为自有标识。该约定原本以「不与上游生态冲突」为前提；本产品的定位是**与上游 SecRandom 在同一台机器上共存**，共存意味着包名、URI、可执行名、安装目录、单实例名必须是自有标识，否则会与上游互相抢占或覆盖。§7 的禁止改名表随之整体改写。
+
+**已确定的标识**（域名使用 `yeyixiao.com` 的反写；品牌显示名沿用 `WinFunan`）：
+
+| 项 | 旧值 | 新值 |
+|---|---|---|
+| Android/iOS 包名 | `cn.sectl.secrandom.mobile` | `com.yeyixiao.verirandom` |
+| ContentProvider authority | 派生 | 自动跟随包名 |
+| URI 主标识 | `secrandom://` | `verirandom://` |
+| URI 兼容选项 | — | 额外注册 `secrandom://`，**默认关闭**，开启时弹窗警告 + 免责 |
+| Windows 协议注册表 | `Software\Classes\secrandom` | `Software\Classes\verirandom`（兼容开启时才另加 `secrandom`） |
+| 协议显示串 | `URL:SecRandom Protocol` | `URL:VeriRandom Protocol` |
+| 桌面可执行 | `SecRandom.Desktop.exe` | `VeriRandom.Desktop.exe` |
+| 启动器 | `SecRandomLauncher.exe` | `VeriRandomLauncher.exe` |
+| 安装包标记 | `SecRandom.package.json` / `product:"SecRandom"` | `VeriRandom.package.json` / `product:"VeriRandom"`（必须与 Launcher、`UpdateCenterService.Product` 同步） |
+| 单实例 Mutex / Pipe | `SecRandom_SingleInstance_SecRandom_3F2A1B0E` / `SecRandom_IPC_…` | `VeriRandom_SingleInstance_…` / `VeriRandom_IPC_…`（新 ID） |
+| 自启动 Run 值名 | 产品名 | `VeriRandom` |
+| macOS / Linux | `SecRandom.app`、`/usr/lib/secrandom` | `VeriRandom.app`、`/usr/lib/verirandom` |
+| csproj `<Company>` | `SECTL` | `WinFunan` |
+
+**不存在的项（已核实，无需处理）**：COM CLSID（唯一 COM 用法是调用系统的 `tabtip.exe`，不属于本产品）、硬编码监听端口（OAuth 回环使用 `TcpListener(Loopback, 0)` 临时端口）、特殊指定窗口类名、托盘唯一标识 GUID（仅有 `ToolTipText`，已是 VeriRandom）。
+
+**已改文件**：
+
+| 文件 | 改动 |
+|------|------|
+| `SecRandom.Android/SecRandom.Android.csproj`、`SecRandom.iOS/SecRandom.iOS.csproj` | `ApplicationId` → `com.yeyixiao.verirandom`（ContentProvider authority 派生自包名，自动跟随） |
+| `SecRandom/Services/Desktop/DesktopIntegrationService.cs` | 主协议 `verirandom`、兼容协议 `secrandom`、`ActiveProtocolSchemes`（兼容开关控制）、Windows/macOS/Linux 三端按 scheme 列表注册与反注册、macOS bundle id/启动项/URL handler 处理器名、Linux 桌面项文件名 |
+| `SecRandom.Core/Services/Ipc/ProtocolRequestParser.cs` | 新增 `ProtocolScheme` / `LegacyProtocolScheme` / `IsSupportedScheme`：主协议与兼容协议**都接受**（注册与否由 OS 决定，解析层接受两者是无成本的） |
+| `SecRandom.Core/Models/SubConfigs/General/BasicSettingsConfig.cs` | 新增 `LegacyUrlProtocol`（默认 `false`） |
+| `SecRandom/Views/SettingsPages/General/BasicSettingsPage.axaml(.cs)` | 新增兼容协议行 + `ConfirmLegacyUrlProtocolAsync` 警告弹窗（必选勾选 + `ConfirmDialogGate` 5 秒）；沿用该页既有的 `SettingsOnPropertyChanged` → `TrySetUrlProtocol` 应用/回滚模式，失败只回滚兼容项 |
+| `SecRandom/Langs/SettingsPages/General/Basic/Resources{,.en-US,.ja-JP}.resx` + Designer | 新增 5 个键；`S_Behavior_UrlProtocol_D` 的描述改为主协议 `verirandom://` |
+| `SecRandom.Core/Services/SingleInstance/SingleInstanceService.cs` | `VeriRandom_SingleInstance_VeriRandom_7D5E4C21` / `VeriRandom_IPC_…` |
+| `SecRandom.Launcher/SecRandom.Launcher.csproj`、`SecRandom.Desktop/SecRandom.Desktop.csproj` | `<AssemblyName>` → `VeriRandomLauncher` / `VeriRandom.Desktop`（项目与文件夹名保持 `SecRandom.*`） |
+| `SecRandom.Shared/Utils.cs` | 包标记文件名、数据根目录 `LocalApplicationData/VeriRandom/data`、环境变量 `VERIRANDOM_PACKAGE_ROOT`、写探针临时名 |
+| `SecRandom.Launcher/Program.cs` | 包标记文件名、`product` 比对值、环境变量名、错误文案 |
+| `SecRandom/Services/Updates/UpdateCenterService.cs`、`SecRandom/Services/Mobile/MobileUpdateService.cs` | 包标记与更新清单文件名、`Product`、`Repository` 与 `metadata.yaml` 指向本仓库（更新仍由 `GlobalConstants.UpdatesEnabled = false` 关闭） |
+| `SecRandom.Platforms.{Abstractions,Windows,Linux,MacOs}` 的绑定标记 + `SecRandom.Core.Tests/SecurityServiceTests.cs` | 标记文件 `.VeriRandom.safety.key` |
+| `Setup.iss` | `MyAppName`/`MyAppPublisher`/`MyAppURL`/`MyAppExeName` → VeriRandom；**自有 `AppId`**（不得与上游共用：共用 AppId 会让 Inno 把两者当成同一产品而互相覆盖或卸载）；`DefaultDirName` → `{autopf}`/`{localappdata}` 下 `WinFunan\VeriRandom`；`OutputBaseFilename` → `VeriRandom-Setup`；`[Code]` 的 As-is 免责声明（英文 ASCII，避免 .iss 编码歧义），声明与 SECTL 无关、非 SecRandom 本身、共存时可能争夺同一系统级注册（`secrandom://` 只能有一个持有者）、由此产生的接口不兼容由用户自行承担 |
+| `.github/workflows/build_publish.yml` | 可执行名/包标记/`product`/便携版启动器/更新清单/dist 产物名/Android APK 与 iOS IPA 资产名/发布名/发布任务的产物名正则/Linux 包名与桌面项与图标安装名/macOS bundle id/ISCC 输出名前缀 `/FVeriRandom-…`（`/F` 覆盖 .iss 的 `OutputBaseFilename`，两处必须同时改） |
+| `AGENTS.md` §7 与本文 §7 | 由「禁止改名」改写为「标识归属」：产品身份类自有、代码级内部标识保持 `SecRandom` |
+| `SecRandom/Langs/FirstRunOobe/Resources{,.en-US,.ja-JP}.resx` | `C_ExternalIntegrationDescription` 改为主协议 `verirandom://` |
+
+**已知缺口**：
+1. `SecRandomDocumentsProvider` 的文档树 `RootId` 仍为 `secrandom`（Android 内容提供程序内部节点 ID，不是产品身份，未改）。
+2. `ChangeLog.md` 与 README 里的下载/协议说明需要在正式发版时同步核对（README 目前未提及协议标识）。
+3. 本改名涉及 CI 产物名与发布任务正则，需在下次完整 CI 跑通后才能确认端到端一致（本机无 .NET 10 SDK）。
+

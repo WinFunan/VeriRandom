@@ -439,11 +439,13 @@ public static class CrashRecoveryRuntime
         return File.Exists(fallbackPath) ? fallbackPath : null;
     }
 
-    public const string DesktopAssemblyFileName = "SecRandom.Desktop.dll";
+    // The desktop head renames its output assembly through <AssemblyName>VeriRandom.Desktop</AssemblyName>,
+    // so both the managed entry assembly and the app host follow the new name.
+    public const string DesktopAssemblyFileName = "VeriRandom.Desktop.dll";
 
     public static string DesktopExecutableFileName => OperatingSystem.IsWindows()
-        ? "SecRandom.Desktop.exe"
-        : "SecRandom.Desktop";
+        ? "VeriRandom.Desktop.exe"
+        : "VeriRandom.Desktop";
 
     private static string? ResolveDesktopAppHostPath(string? appBaseDirectory)
     {
@@ -454,7 +456,7 @@ public static class CrashRecoveryRuntime
         if (File.Exists(platformAppHostPath))
             return platformAppHostPath;
 
-        string fallbackAppHostPath = Path.Combine(appBaseDirectory, "SecRandom.Desktop.exe");
+        string fallbackAppHostPath = Path.Combine(appBaseDirectory, "VeriRandom.Desktop.exe");
         return File.Exists(fallbackAppHostPath) ? fallbackAppHostPath : null;
     }
 

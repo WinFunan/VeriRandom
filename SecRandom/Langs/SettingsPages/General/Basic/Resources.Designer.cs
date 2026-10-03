@@ -296,6 +296,36 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         /// <summary>
         ///   Looks up a localized string similar to 注册自定义 URL 协议 (secrandom://)，并启用 IPC 通信，支持链接启动与外部联动.
         /// </summary>
+        public static string S_Behavior_LegacyUrlProtocol {
+            get {
+                return ResourceManager.GetString("S_Behavior_LegacyUrlProtocol", resourceCulture);
+            }
+        }
+        
+        public static string S_Behavior_LegacyUrlProtocol_D {
+            get {
+                return ResourceManager.GetString("S_Behavior_LegacyUrlProtocol_D", resourceCulture);
+            }
+        }
+        
+        public static string C_LegacyUrlProtocol_Title {
+            get {
+                return ResourceManager.GetString("C_LegacyUrlProtocol_Title", resourceCulture);
+            }
+        }
+        
+        public static string C_LegacyUrlProtocol_Body {
+            get {
+                return ResourceManager.GetString("C_LegacyUrlProtocol_Body", resourceCulture);
+            }
+        }
+        
+        public static string C_LegacyUrlProtocol_Confirm {
+            get {
+                return ResourceManager.GetString("C_LegacyUrlProtocol_Confirm", resourceCulture);
+            }
+        }
+        
         public static string S_Behavior_UrlProtocol_D {
             get {
                 return ResourceManager.GetString("S_Behavior_UrlProtocol_D", resourceCulture);

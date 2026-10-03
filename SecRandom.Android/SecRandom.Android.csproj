@@ -8,7 +8,7 @@
         <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
 
         <ApplicationTitle>VeriRandom</ApplicationTitle>
-        <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
+        <ApplicationId>com.yeyixiao.verirandom</ApplicationId>
         <AndroidPackageFormats>apk</AndroidPackageFormats>
         <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     </PropertyGroup>

@@ -117,7 +117,7 @@ VeriRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改�
   <data name="C_ShowStartupWindow" xml:space="preserve"><value>启动显示主窗口</value></data>
   <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>设置软件启动时是否自动显示主窗口</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>外部链接与联动</value></data>
-  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>注册 secrandom:// 链接以允许外部程序唤起 VeriRandom</value></data>
+  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>注册 verirandom:// 链接以允许外部程序唤起 VeriRandom</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>隐私</value></data>
     <data name="C_PrivacyDescription" xml:space="preserve"><value>选择应用启动后可发送的诊断和在线状态信息，后续可随时在设置中调整</value></data>
     <data name="C_PrivacyDataDestination" xml:space="preserve"><value>注意：开启后，相关数据将被发送给 SecRandom（上游项目与其所属组织 SECTL）；本分支不接收这些数据</value></data>

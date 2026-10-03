@@ -4,7 +4,7 @@ namespace SecRandom.Platforms.Windows;
 
 internal sealed class WindowsRemovableStorageBindingMarker : IRemovableStorageBindingMarker
 {
-    public string FileName => ".SecRandom.safety.key";
+    public string FileName => ".VeriRandom.safety.key";
 
     public bool TryHide(string path)
     {

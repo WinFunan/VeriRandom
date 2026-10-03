@@ -3,31 +3,33 @@
 ; Non-commercial use only
 
 #ifndef MyAppName
-#define MyAppName "SecRandom"
+#define MyAppName "VeriRandom"
 #endif
 #ifndef MyAppVersion
 #define MyAppVersion "APP_VERSION"
 #endif
-#define MyAppPublisher "SECTL Studio"
-#define MyAppExeName "SecRandom.Desktop.exe"
-#define MyAppURL "https://secrandom.sectl.cn/"
+#define MyAppPublisher "WinFunan"
+; Renamed together with the desktop head; keep this in step with the AssemblyName of VeriRandom.Desktop.
+#define MyAppExeName "VeriRandom.Desktop.exe"
+#define MyAppURL "https://github.com/WinFunan/VeriRandom"
 #ifndef MyAppOutDir
 #define MyAppOutDir "APP_OUTDIR"
 #endif
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
-; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{841EEEA5-9A56-4DF5-9E75-27EEA063EF1F}
+; VeriRandom coexists with upstream SecRandom on the same machine, so this MUST stay a distinct GUID: sharing
+; upstream's AppId would make Inno treat the two products as one and let either install/uninstall the other.
+AppId={{7C4E1B92-3D5A-4F18-9B6E-A2C80F5D3E47}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppSupportURL={#MyAppURL}
 #ifdef UiAccessBuild
-DefaultDirName={autopf}\SECTL\SecRandom
+DefaultDirName={autopf}\WinFunan\VeriRandom
 #else
-DefaultDirName={localappdata}\SECTL\SecRandom
+DefaultDirName={localappdata}\WinFunan\VeriRandom
 #endif
 UninstallDisplayIcon={app}\{#MyAppExeName}
 #ifdef BuildArchX86
@@ -52,7 +54,7 @@ PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 #endif
 OutputDir=artifacts\release\setup
-OutputBaseFilename=SecRandom-Setup
+OutputBaseFilename=VeriRandom-Setup
 SetupIconFile=SecRandom\Assets\AppLogo.ico
 SolidCompression=yes
 WizardStyle=modern dynamic windows11
@@ -77,4 +79,32 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+// As-is disclaimer shown before anything is written to disk. Kept ASCII-only on purpose: the .iss file is
+// compiled outside this repository's UTF-8 tooling, and a mis-decoded notice is worse than a plain one.
+const
+  AsIsNotice =
+    'VeriRandom - As-is notice' + #13#10 + #13#10 +
+    'This software is an open-source fork of SecRandom and is provided "AS IS", ' +
+    'without warranty of any kind, express or implied, including but not limited to ' +
+    'the warranties of merchantability, fitness for a particular purpose and ' +
+    'non-infringement.' + #13#10 + #13#10 +
+    'In no event shall the authors or copyright holders be liable for any claim, ' +
+    'damages or other liability, whether in an action of contract, tort or otherwise, ' +
+    'arising from, out of or in connection with the software or the use or other ' +
+    'dealings in the software.' + #13#10 + #13#10 +
+    'VeriRandom is designed to coexist with upstream SecRandom. It is not affiliated ' +
+    'with, endorsed by, or a product of SECTL, and it is not SecRandom itself. If both ' +
+    'products are installed, they may compete for the same system-level registrations ' +
+    '(for example the secrandom:// URL scheme, which only one program can own). Any ' +
+    'interface incompatibility caused by installing both products is the user''s own ' +
+    'responsibility.' + #13#10 + #13#10 +
+    'VeriRandom is licensed under the GPLv3; upstream SecRandom code keeps its own license.';
+
+function InitializeSetup(): Boolean;
+begin
+  MsgBox(AsIsNotice, mbInformation, MB_OK);
+  Result := True;
+end;
 

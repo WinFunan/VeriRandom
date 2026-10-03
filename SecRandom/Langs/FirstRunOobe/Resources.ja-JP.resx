@@ -106,7 +106,7 @@ VeriRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_ShowStartupWindow" xml:space="preserve"><value>起動時にメインウィンドウを表示</value></data>
   <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>VeriRandom の起動時にメインウィンドウを自動表示するかを選択します。</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>外部リンクと連携</value></data>
-  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>外部アプリケーションから VeriRandom を開けるよう secrandom:// を登録します。</value></data>
+  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>外部アプリケーションから VeriRandom を開けるよう verirandom:// を登録します。</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>プライバシー</value></data>
   <data name="C_PrivacyDescription" xml:space="preserve"><value>起動後に送信できる診断情報とオンライン状態情報を選択します。後から設定で変更できます。</value></data>
   <data name="C_PrivacyDataDestination" xml:space="preserve"><value>注意：有効にすると、関連データは SecRandom（上流プロジェクトとその団体 SECTL）に送信されます。本フォークはこれを受け取りません</value></data>
