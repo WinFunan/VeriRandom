@@ -480,10 +480,11 @@
 
 **症状**：启动或退出时崩溃，堆栈落在首次显示窗口的排版阶段，异常为 `Could not create glyphTypeface. Font family: FluentSystemIcons-Resizable (key: avares://secrandom/Assets/Fonts/)`。
 
-**成因**：桌面头**刻意不内嵌** `Assets`，全部依赖 `OverlayAssetLoader` 把 `avares://SecRandom/Assets/...` 映射到可执行文件旁的物理目录。该加载器里有两处会让映射静默失败、进而退回到「内嵌资源」这个必然失败的回退路径：
+**成因（已确认）**：桌面头**刻意不内嵌** `Assets`，全部依赖 `OverlayAssetLoader` 把 `avares://SecRandom/Assets/...` 映射到可执行文件旁的物理目录；映射一旦落空就没有可用的回退，直接表现为首个字形测量时的 `Could not create glyphTypeface`。其中 `IsHandledAvaresUri` 用 **`StringComparison.Ordinal`** 比较 `uri.Authority` 与 `Assembly.GetName().Name`，而送进来的 authority 大小写**不由本程序保证**。
 
-1. `IsHandledAvaresUri` 用 **`StringComparison.Ordinal`** 比较 `uri.Authority` 与 `Assembly.GetName().Name`。`avares` 是非标准 scheme，键的大小写不由本程序保证（报错里就是小写 `secrandom`），一旦比对不中，overlay 整体失效。
-2. `assetRoot` 取自 `appAssembly.Location` 所在目录；当进程不是在含有 `Assets` 的目录下启动时，物理文件根本不存在。
+**为什么上游 beta 没暴露**：同一缺陷只在一条路径上出现——**安装版**送进来的 authority 是小写 `secrandom`（比对落空 → 必崩），而**便携版**恰好保留了 `SecRandom`（比对命中 → 正常）。上游 `v3.0.0-beta.1` 与便携版都走命中路径，所以一直未被发现。
+
+**验证**：改为 `OrdinalIgnoreCase` 后的构建运行成功。
 
 **修改文件**：
 
