@@ -75,9 +75,7 @@
     <data name="S_Ack_Contributors" xml:space="preserve">
         <value>贡献人员</value>
     </data>
-    <data name="S_Ack_Contributors_D" xml:space="preserve">
-        <value>查看为 SecRandom 提交代码的 GitHub 贡献者</value>
-    </data>
+    <data name="S_Ack_Contributors_D" xml:space="preserve"><value>查看为本仓库与上游仓库提交代码的 GitHub 贡献者；两个仓库合并展示，按提交数排序</value></data>
     <data name="S_Ack_Contributors_ContributionCount" xml:space="preserve">
         <value>{0} 次提交</value>
     </data>

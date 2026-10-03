@@ -33,7 +33,13 @@ namespace SecRandom.Views.SettingsPages.About;
 [PageInfo("settings.about", FluentIcons.InfoFilled, location: PageLocation.Bottom, hidePageTitle: true)]
 public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 {
-    private const string ContributorsEndpoint = "https://api.github.com/repos/SECTL/SecRandom/contributors?per_page=30";
+    // 贡献者视图合并本仓库与上游：README 的贡献者段落同时列出两个仓库，因此这里也一并展示，
+    // 按 GitHub 登录名去重并把提交数相加
+    private static readonly string[] ContributorsEndpoints =
+    [
+        "https://api.github.com/repos/WinFunan/VeriRandom/contributors?per_page=30",
+        "https://api.github.com/repos/SECTL/SecRandom/contributors?per_page=30"
+    ];
     private const int InternalSettingsActivationClickCount = 20;
     private static readonly TimeSpan InternalSettingsActivationClickInterval = TimeSpan.FromMilliseconds(200);
     private bool _isRefreshingContributors;
@@ -189,29 +195,38 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.UserAgent.ParseAdd($"SecRandom/{GlobalConstants.Version}");
 
-            GitHubContributorResponse[] response;
-            try
+            // Both repositories are merged into one list, and one repository failing to answer must not hide
+            // the other's contributors. Identities are GitHub logins; contributions are summed.
+            var merged = new Dictionary<string, (string ProfileUrl, int Contributions)>(StringComparer.OrdinalIgnoreCase);
+            Exception? lastFailure = null;
+            foreach (var endpoint in ContributorsEndpoints)
             {
-                response = await client.GetFromJsonAsync<GitHubContributorResponse[]>(ContributorsEndpoint) ?? [];
+                try
+                {
+                    foreach (var contributor in await GetContributorsAsync(client, endpoint))
+                    {
+                        if (string.IsNullOrWhiteSpace(contributor.Login) ||
+                            string.IsNullOrWhiteSpace(contributor.HtmlUrl) ||
+                            !string.Equals(contributor.Type, "User", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        merged[contributor.Login] = merged.TryGetValue(contributor.Login, out var existing)
+                            ? (existing.ProfileUrl, existing.Contributions + contributor.Contributions)
+                            : (contributor.HtmlUrl, contributor.Contributions);
+                    }
+                }
+                catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+                {
+                    lastFailure = exception;
+                }
             }
-            catch (HttpRequestException)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(2));
-                response = await client.GetFromJsonAsync<GitHubContributorResponse[]>(ContributorsEndpoint) ?? [];
-            }
-            catch (TaskCanceledException)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(2));
-                response = await client.GetFromJsonAsync<GitHubContributorResponse[]>(ContributorsEndpoint) ?? [];
-            }
-            var contributors = response
-                .Where(contributor => !string.IsNullOrWhiteSpace(contributor.Login) &&
-                                      !string.IsNullOrWhiteSpace(contributor.HtmlUrl) &&
-                                      string.Equals(contributor.Type, "User", StringComparison.OrdinalIgnoreCase))
-                .Select(contributor => new GitHubContributor(
-                    contributor.Login!,
-                    contributor.HtmlUrl!,
-                    contributor.Contributions))
+
+            if (merged.Count == 0 && lastFailure is not null)
+                throw lastFailure;
+
+            var contributors = merged
+                .OrderByDescending(entry => entry.Value.Contributions)
+                .Select(entry => new GitHubContributor(entry.Key, entry.Value.ProfileUrl, entry.Value.Contributions))
                 .ToList();
 
             Contributors.Clear();
@@ -225,6 +240,20 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         finally
         {
             IsRefreshingContributors = false;
+        }
+    }
+
+    /// <summary>Reads one repository's contributor list, retrying once on a transient network failure.</summary>
+    private static async Task<GitHubContributorResponse[]> GetContributorsAsync(HttpClient client, string endpoint)
+    {
+        try
+        {
+            return await client.GetFromJsonAsync<GitHubContributorResponse[]>(endpoint) ?? [];
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            return await client.GetFromJsonAsync<GitHubContributorResponse[]>(endpoint) ?? [];
         }
     }
 

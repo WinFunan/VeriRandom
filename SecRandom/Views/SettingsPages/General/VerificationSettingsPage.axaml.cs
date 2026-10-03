@@ -20,6 +20,7 @@ using SecRandom.Services.Consent;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Verification;
 using SecRandom.Shared;
+using SecRandom.Shared.Models.Verification;
 using LR = SecRandom.Langs.SettingsPages.General.Verification.Resources;
 
 namespace SecRandom.Views.SettingsPages.General;
@@ -33,6 +34,8 @@ public partial class VerificationSettingsPage : UserControl
     private DrawProofAttestationService AttestationService { get; } = IAppHost.GetService<DrawProofAttestationService>();    private ProofIntegrityVerifier IntegrityVerifier { get; } = IAppHost.GetService<ProofIntegrityVerifier>();
     private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     private INistBeaconClient BeaconClient { get; } = IAppHost.GetService<INistBeaconClient>();
+    private DrawProofExportService ProofExporter { get; } = IAppHost.GetService<DrawProofExportService>();
+    private OwnProofExportService OwnProofExporter { get; } = IAppHost.GetService<OwnProofExportService>();
     private bool _verificationModeSelectionReady;
     private bool _restoringVerificationModeSelection;
     private bool _restoringTimestampAuthority;
@@ -192,6 +195,138 @@ public partial class VerificationSettingsPage : UserControl
     }
 
     public int SelectedVerificationModeIndex => (int)ConfigHandler.Data.General.Verification.Mode;
+
+    /// <summary>
+    ///     Grades the newest ordinary proof against the sources the user chose to trust. Every input comes
+    ///     from the proof pair itself — the Up file supplies the chain position, the receipt and the time
+    ///     stamp, and the reference sibling supplies the beacon pulse — so the score never depends on a
+    ///     network round trip.
+    /// </summary>
+    private void AssessProofTrust_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var trusted = new List<ProofTrustSource>();
+        if (ProofTrustBeacon.IsChecked == true)
+            trusted.Add(ProofTrustSource.BeaconProvider);
+        if (ProofTrustTimestamp.IsChecked == true)
+            trusted.Add(ProofTrustSource.TimestampAuthority);
+        if (ProofTrustServer.IsChecked == true)
+            trusted.Add(ProofTrustSource.SectlServer);
+        if (ProofTrustWitness.IsChecked == true)
+            trusted.Add(ProofTrustSource.SocialWitness);
+
+        if (trusted.Count == 0)
+        {
+            ProofTrustResultText.Text = LR.M_ProofTrust_SelectSource;
+            return;
+        }
+
+        var latestPath = ProofExporter.EnumerateProofPaths()
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .FirstOrDefault();
+        if (latestPath is null || !ProofExporter.TryRead(latestPath, out var proof) || proof is null)
+        {
+            ProofTrustResultText.Text = LR.M_ProofTrust_NoProof;
+            return;
+        }
+
+        var chainIntact = proof.Chain is not null
+                          && proof.Chain.FormatVersion == ProofChainStore.CurrentFormatVersion
+                          && string.Equals(
+                              ProofChainStore.ComputeSelfHash(
+                                  proof.Chain.Index,
+                                  proof.Chain.PrevHash,
+                                  WitnessClient.ComputeAttestedProofHash(proof)),
+                              proof.Chain.SelfHash,
+                              StringComparison.Ordinal);
+
+        // The reference sibling is the only place the pulse is recorded: it is a declaration, so a missing
+        // or unreadable sibling simply means this factor has no evidence.
+        DrawProofBeacon? beacon = null;
+        if (OwnProofExporter.TryRead(OwnProofPaths.FromUpPath(latestPath), out var own) && own is not null)
+            beacon = own.Beacon;
+
+        var timestampToken = proof.Witness?.TimestampToken;
+        DateTimeOffset? timestampedAt = null;
+        if (!string.IsNullOrWhiteSpace(timestampToken))
+        {
+            var validation = TimestampAuthorityClient.Validate(
+                timestampToken, WitnessClient.FromBase64Url(WitnessClient.ComputeAttestedProofHash(proof)));
+            if (validation.IsValid)
+                timestampedAt = validation.Timestamp;
+        }
+
+        var report = ProofTrustScorer.Evaluate(new ProofTrustInput(
+            chainIntact,
+            beacon is not null,
+            !string.IsNullOrWhiteSpace(timestampToken),
+            !string.IsNullOrWhiteSpace(proof.Witness?.Receipt),
+            beacon?.PulseTimeStamp,
+            timestampedAt,
+            proof.CreatedAtUtc,
+            trusted,
+            ReadWitnessTime(),
+            SelectedWitnessConfidence()));
+
+        ProofTrustResultText.Text = FormatTrustReport(report);
+    }
+
+    /// <summary>A remembered draw time only counts when both halves were supplied; otherwise the factor is absent.</summary>
+    private DateTimeOffset? ReadWitnessTime()
+    {
+        if (ProofTrustWitnessDate.SelectedDate is not { } date || ProofTrustWitnessTime.SelectedTime is not { } time)
+            return null;
+
+        var local = date.Date + time;
+        return new DateTimeOffset(local, TimeZoneInfo.Local.GetUtcOffset(local));
+    }
+
+    private WitnessTimeConfidence SelectedWitnessConfidence() => ProofTrustConfidence.SelectedIndex switch
+    {
+        1 => WitnessTimeConfidence.Medium,
+        2 => WitnessTimeConfidence.Low,
+        _ => WitnessTimeConfidence.High
+    };
+
+    private static string TrustSourceLabel(ProofTrustSource source) => source switch
+    {
+        ProofTrustSource.BeaconProvider => LR.C_ProofTrust_Beacon,
+        ProofTrustSource.TimestampAuthority => LR.C_ProofTrust_Timestamp,
+        ProofTrustSource.SectlServer => LR.C_ProofTrust_Server,
+        _ => LR.C_ProofTrust_Witness
+    };
+
+    private static string FormatTrustReport(ProofTrustReport report)
+    {
+        List<string> lines =
+        [
+            string.Format(CultureInfo.CurrentCulture, LR.M_ProofTrust_Score, report.Score)
+        ];
+
+        if (report.IsZeroed)
+            lines.Add(LR.M_ProofTrust_Zeroed);
+        if (report.PulsePenalized)
+        {
+            lines.Add(report.PulseTier == ProofTrustPulseTier.BeyondTolerance
+                ? LR.M_ProofTrust_PulseExpired
+                : LR.M_ProofTrust_PreviousPeriod);
+        }
+
+        foreach (var factor in report.Factors)
+        {
+            var name = TrustSourceLabel(factor.Source);
+            lines.Add(factor.State switch
+            {
+                ProofTrustFactorState.Satisfied =>
+                    string.Format(CultureInfo.CurrentCulture, LR.M_ProofTrust_Factor_Ok, name),
+                ProofTrustFactorState.PartiallySatisfied =>
+                    string.Format(CultureInfo.CurrentCulture, LR.M_ProofTrust_Factor_Partial,
+                        name, factor.ErrorSeconds ?? 0d, factor.ToleranceSeconds ?? 0d),
+                _ => string.Format(CultureInfo.CurrentCulture, LR.M_ProofTrust_Factor_Missing, name)
+            });
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
 
     private static TextBlock CreateDialogText(string text, bool bold = false, double topMargin = 0) => new()
     {

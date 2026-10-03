@@ -31,6 +31,7 @@
 | 10 | 禁用「仅 TOTP」单一验证 | `GlobalConstants` 调试开关、`SecurityService`/`SecurityCredentialStore`、桌面启动参数 | 中（改了安全验证的判定条件） |
 | 11 | 自有标识改名 | 包名、URI、可执行名、安装包标记、安装器、单实例名、macOS/Linux 路径；收尾需改写 §7 禁止改名表 | **高**（改动产品身份与全部兼容契约） |
 | 12 | 桌面资源覆盖加载器健壮性修复 | `OverlayAssetLoader`、桌面 `Program` 启动资源诊断 | 中（修的是启动期字体加载失败） |
+| 13 | 普通模式证明可信度评分 | 新增 Core 评分器与测试、验证设置页新增评估区块 | 中（新增功能，不动既有证明格式） |
 
 ---
 
@@ -92,7 +93,7 @@
 | `SecRandom/Views/SettingsPages/About/AboutSettingsPage.axaml` | `S_App` 头部改 VeriRandom；新增 `S_App_ForkNotice` 行 |
 | `SecRandom/Langs/SettingsPages/About/Resources{,.en-US,.ja-JP}.resx` + `Resources.Designer.cs` | 新增 `S_App_ForkNotice` / `M_App_ForkNotice` |
 | `CONTRIBUTING.md` / `resources/CONTRIBUTING_EN.md` / `resources/CONTRIBUTING_JA.md` | 标题与正文改 VeriRandom；加入 CLA 小节与签署语；Issue 与 clone 指向本仓库；保留 `upstream` remote 说明 |
-| `SecRandom/Views/SettingsPages/About/AboutSettingsPage.axaml(.cs)` + `Langs/SettingsPages/About/Resources{,.en-US,.ja-JP}.resx` + Designer | About 页按当前 README 重组：原 `S_Author`（上游作者/组织/爱发电/哔哩哔哩）整块改为**默认折叠**（`IsExpanded="False"`）并补上 README 的「对上游仓库支持与社区」入口（QQ 群 833875216、QQ 频道、邮箱、官方文档、DeepWiki、上游贡献指南），首行加入范围说明；在原位置新增 `S_Community`（本分支自己的 QQ 群 768421833、邮箱、哔哩哔哩、Issue、贡献指南，全部指向本仓库）。横幅改为本分支自有文件名 `verirandom-banner-{cn,en,ja}.png`（缺失时 `BannerSource` 为 `null`，界面显示带说明的占位框；补资源后自动替换，无需改代码），社区图片同样先放占位。**同时移除贡献者头像的外链预加载**（原实现按接口返回的 `avatar_url` 逐张下载 GitHub CDN 图片并渲染，属供应链面），改为本地 `FluentIcon`，整行保留为跳转到该贡献者 GitHub 主页的链接；`GitHubContributor` 随之去掉 `Avatar`/`AvatarUrl`/`LoadAvatarAsync` 与 `INotifyPropertyChanged` |
+| `SecRandom/Views/SettingsPages/About/AboutSettingsPage.axaml(.cs)` + `Langs/SettingsPages/About/Resources{,.en-US,.ja-JP}.resx` + Designer | About 页按当前 README 重组：原 `S_Author`（上游作者/组织/爱发电/哔哩哔哩）整块改为**默认折叠**（`IsExpanded="False"`）并补上 README 的「对上游仓库支持与社区」入口（QQ 群 833875216、QQ 频道、邮箱、官方文档、DeepWiki、上游贡献指南），首行加入范围说明；在原位置新增 `S_Community`（本分支自己的 QQ 群 768421833、邮箱、哔哩哔哩、Issue、贡献指南，全部指向本仓库）。横幅改为本分支自有文件名 `verirandom-banner-{cn,en,ja}.png`（缺失时 `BannerSource` 为 `null`，界面显示带说明的占位框；补资源后自动替换，无需改代码），社区图片同样先放占位。**同时移除贡献者头像的外链预加载**（原实现按接口返回的 `avatar_url` 逐张下载 GitHub CDN 图片并渲染，属供应链面），改为本地 `FluentIcon`，整行保留为跳转到该贡献者 GitHub 主页的链接；`GitHubContributor` 随之去掉 `Avatar`/`AvatarUrl`/`LoadAvatarAsync` 与 `INotifyPropertyChanged`；贡献者抽屉改为**同时拉取本仓库与上游**两个仓库的贡献者，按 GitHub 登录名合并、提交数相加后排序，说明文案同步更新 |
 
 **CLA 的边界（必须保持）**：
 - 只约束**签署它的贡献者**的新贡献，不能追溯既有贡献。
@@ -422,6 +423,40 @@
 - 已有安装升级后，遗留的 `totp-standalone.json` 在下次保存凭据时被删除；在此之前也不会被读取。
 
 **已知缺口**：移动端 head 没有命令行入口，该调试路径只能靠 Debug 构建开启；若需要在移动端也能调试，需再加一个 head 级开关。
+
+---
+
+## 16. 普通模式证明可信度评分（本分支新增）
+
+**意图**：给普通模式的证明加一个**可解释的可信度**判断——由用户选择「您所信任的来源方」，程序从满分开始，按「有哪些证据真的能支撑」扣分。它是一份**证据覆盖度**报告，不是密码学强度结论。
+
+**评分规则（`ProofTrustScorer`，Core 纯函数）**：
+
+| 规则 | 行为 |
+|---|---|
+| 来源方缺失 | 每个被勾选的来源方权重 **25**，分数 = 已获支持权重 / 已选权重 × 100（归一化，故只选一个且成立时也是 100） |
+| 链自身完整性不通过 | **直接置零**（自证不成立则无从评分），其余证据不再计入 |
+| 脉冲时效：时间戳 − 脉冲发布时间 **≤ 60 秒**（信标周期即 60 秒，同周期） | 不扣分 |
+| 脉冲时效：**60–110 秒**（跨一个周期，属容忍范围） | 分数**减半**（`PreviousPeriodFactor = 0.5`） |
+| 脉冲时效：**> 110 秒**（至少老两个周期，超出容忍） | **扣四分之三**（`BeyondToleranceFactor = 0.25`） |
+| 脉冲时效的夹逼 | 结果始终夹逼到 `[0, 100]`，**不会为负**；档位以 `ProofTrustPulseTier` 返回（SamePeriod / PreviousPeriod / BeyondTolerance） |
+| 社会见证 | 由用户提供「记忆中大致抽取时间」与「时间置信度」；高/中/低分别断言 5 分钟 / 30 分钟 / 2 小时的窗口，误差在窗口内**不扣分**；超出后按 `(误差−窗口)/窗口` 线性衰减，最多扣光该因子 |
+
+**设计与边界**：
+- 四个来源方**等权**，刻意不把密码学锚点排在人的记忆之上（那会变成密码学强度主张）。
+- Core **不产出面向用户的文案**：因子结果以 `ProofTrustFactorState`（Satisfied/Missing/PartiallySatisfied/NotAssessed）+ 数值返回，由调用方本地化。
+- 评估取**最新一份** `.srproof.json`：链位置、回执、时间戳来自 Up 文件，脉冲来自**参考兄弟文件**（`*.ownproof.json`），因此**不需要任何网络往返**；时间戳的**可信时间**由 `TimestampAuthorityClient.Validate` 离线校验后取得。
+
+**新增文件**：
+
+| 文件 | 说明 |
+|------|------|
+| `SecRandom.Core/Services/Verification/ProofTrustScorer.cs` | `ProofTrustSource` / `WitnessTimeConfidence` / `ProofTrustFactorState` / `ProofTrustInput` / `ProofTrustFactor` / `ProofTrustReport` / `ProofTrustScorer` |
+| `SecRandom.Core.Tests/ProofTrustScorerTests.cs` | 14 个用例：满分、链断置零、缺因子按比例扣、只选一个的归一化、不选来源为 0、上一周期（90 秒）减半、**110 秒边界仍属容忍**、**超过 110 秒扣四分之三**、减半/扣分不为负、同周期不罚、社会见证窗口内不扣 / 窗口外衰减 / 严重偏离不扣、未填时间视为缺因子 |
+
+**修改文件**：`SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml(.cs)`（新增 `S_ProofTrust` 区块：四个来源方勾选、日期+时间输入、置信度下拉、评估按钮与结果文本；`AssessProofTrust_OnClick` 组装输入并格式化结果）、`SecRandom/Langs/SettingsPages/General/Verification/Resources{,.en-US,.ja-JP}.resx` + Designer（新增 21 个键）。
+
+**已知缺口**：日期/时间输入用的是 Avalonia `DatePicker` + `TimePicker`，本机无法编译验证其成员名（`SelectedDate` / `SelectedTime`）；若 CI 报错，改这两处属性名即可。
 
 ---
 

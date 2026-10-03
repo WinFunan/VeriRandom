@@ -133,6 +133,65 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_ProofTrust"
+                                    Header="{x:Static lv:Resources.S_ProofTrust}"
+                                    Description="{x:Static lv:Resources.S_ProofTrust_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi DocumentCheckmarkFilled}}">
+                <fa:FASettingsExpanderItem x:Name="S_ProofTrust_Sources"
+                                           Content="{x:Static lv:Resources.C_ProofTrust_Sources}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <WrapPanel>
+                            <CheckBox x:Name="ProofTrustBeacon"
+                                      Content="{x:Static lv:Resources.C_ProofTrust_Beacon}"
+                                      IsChecked="True"
+                                      Margin="0 0 12 0" />
+                            <CheckBox x:Name="ProofTrustTimestamp"
+                                      Content="{x:Static lv:Resources.C_ProofTrust_Timestamp}"
+                                      IsChecked="True"
+                                      Margin="0 0 12 0" />
+                            <CheckBox x:Name="ProofTrustServer"
+                                      Content="{x:Static lv:Resources.C_ProofTrust_Server}"
+                                      IsChecked="True"
+                                      Margin="0 0 12 0" />
+                            <CheckBox x:Name="ProofTrustWitness"
+                                      Content="{x:Static lv:Resources.C_ProofTrust_Witness}"
+                                      Margin="0 0 12 0" />
+                        </WrapPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lv:Resources.C_ProofTrust_WitnessHint}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <DatePicker x:Name="ProofTrustWitnessDate" />
+                            <TimePicker x:Name="ProofTrustWitnessTime" />
+                            <ComboBox x:Name="ProofTrustConfidence"
+                                      MinWidth="190"
+                                      SelectedIndex="0"
+                                      ToolTip.Tip="{x:Static lv:Resources.C_ProofTrust_Confidence}">
+                                <ComboBoxItem Content="{x:Static lv:Resources.O_ProofTrust_Confidence_High}" />
+                                <ComboBoxItem Content="{x:Static lv:Resources.O_ProofTrust_Confidence_Medium}" />
+                                <ComboBoxItem Content="{x:Static lv:Resources.O_ProofTrust_Confidence_Low}" />
+                            </ComboBox>
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem>
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="8">
+                            <Button x:Name="AssessProofTrustButton"
+                                    Content="{x:Static lv:Resources.C_ProofTrust_Assess}"
+                                    Click="AssessProofTrust_OnClick" />
+                            <TextBlock x:Name="ProofTrustResultText"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="440"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_LocalProofStorageLimit"
                                     Header="{x:Static lv:Resources.S_LocalProofStorageLimit}"
                                     Description="{x:Static lv:Resources.S_LocalProofStorageLimit_D}"

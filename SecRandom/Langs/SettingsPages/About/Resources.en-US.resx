@@ -72,9 +72,7 @@
     <data name="S_Ack_Contributors" xml:space="preserve">
         <value>Contributors</value>
     </data>
-    <data name="S_Ack_Contributors_D" xml:space="preserve">
-        <value>View GitHub contributors who have committed code to SecRandom</value>
-    </data>
+    <data name="S_Ack_Contributors_D" xml:space="preserve"><value>View the GitHub contributors of both this repository and the upstream repository; the two are merged and sorted by contributions</value></data>
     <data name="S_Ack_Contributors_ContributionCount" xml:space="preserve">
         <value>{0} commits</value>
     </data>
