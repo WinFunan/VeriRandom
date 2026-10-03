@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -45,7 +44,11 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         .GetServices<IHostedService>().OfType<OnlineStatusService>().First();
     private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     public int OnlineUsersCount => OnlineStatusService.CachedOnlineCount;
-    public Bitmap BannerSource { get; } = LoadBanner();
+    /// <summary>
+    ///     This fork's own banner, or null while the asset has not been supplied yet — the view then shows a
+    ///     labelled placeholder. The fork must not present upstream SecRandom's banner artwork as its own.
+    /// </summary>
+    public Bitmap? BannerSource { get; } = LoadBanner();
     public ObservableCollection<GitHubContributor> Contributors { get; } = [];
 
     public bool IsRefreshingContributors
@@ -78,16 +81,35 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         InitializeComponent();
     }
 
-    private static Bitmap LoadBanner()
+    /// <summary>
+    ///     Loads this fork's own banner. Until those assets exist the About page shows a placeholder instead,
+    ///     and a partially supplied set falls back to the English banner so one file is enough to start.
+    /// </summary>
+    private static Bitmap? LoadBanner()
     {
-        var fileName = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch
+        var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        var candidates = culture switch
         {
-            "zh" => "secrandom-banner-cn.png",
-            "ja" => "secrandom-banner-ja.png",
-            _ => "secrandom-banner-en.png"
+            "zh" => new[] { "verirandom-banner-cn.png", "verirandom-banner-en.png" },
+            "ja" => new[] { "verirandom-banner-ja.png", "verirandom-banner-en.png" },
+            _ => new[] { "verirandom-banner-en.png" }
         };
 
-        return new Bitmap(AssetLoader.Open(new Uri($"avares://SecRandom/Assets/Banners/{fileName}")));
+        foreach (var fileName in candidates)
+        {
+            try
+            {
+                var uri = new Uri($"avares://SecRandom/Assets/Banners/{fileName}");
+                if (AssetLoader.Exists(uri))
+                    return new Bitmap(AssetLoader.Open(uri));
+            }
+            catch (Exception)
+            {
+                // A missing or unreadable banner must never block the About page.
+            }
+        }
+
+        return null;
     }
 
     private void OrganizationIcon_OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -189,15 +211,12 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
                 .Select(contributor => new GitHubContributor(
                     contributor.Login!,
                     contributor.HtmlUrl!,
-                    contributor.AvatarUrl,
                     contributor.Contributions))
                 .ToList();
 
             Contributors.Clear();
             foreach (var contributor in contributors)
                 Contributors.Add(contributor);
-
-            await Task.WhenAll(contributors.Select(contributor => contributor.LoadAvatarAsync(client)));
         }
         catch (Exception exception)
         {
@@ -218,50 +237,12 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 public sealed class GitHubContributor(
     string login,
     string profileUrl,
-    string? avatarUrl,
-    int contributions) : INotifyPropertyChanged
+    int contributions)
 {
-    private Bitmap? _avatar;
-
     public string Login { get; } = login;
     public string ProfileUrl { get; } = profileUrl;
-    public string? AvatarUrl { get; } = avatarUrl;
     public int Contributions { get; } = contributions;
     public string ContributionText => string.Format(LR.S_Ack_Contributors_ContributionCount, Contributions);
-
-    public Bitmap? Avatar
-    {
-        get => _avatar;
-        private set
-        {
-            if (ReferenceEquals(_avatar, value))
-                return;
-
-            _avatar?.Dispose();
-            _avatar = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Avatar)));
-        }
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    public async Task LoadAvatarAsync(HttpClient client)
-    {
-        if (string.IsNullOrWhiteSpace(AvatarUrl))
-            return;
-
-        try
-        {
-            await using var stream = await client.GetStreamAsync(AvatarUrl);
-            using var buffer = new MemoryStream();
-            await stream.CopyToAsync(buffer);
-            buffer.Position = 0;
-            Avatar = new Bitmap(buffer);
-        }
-        catch (Exception)
-        {
-        }
-    }
 }
 
 public sealed class GitHubContributorResponse
@@ -271,9 +252,6 @@ public sealed class GitHubContributorResponse
 
     [JsonPropertyName("html_url")]
     public string? HtmlUrl { get; init; }
-
-    [JsonPropertyName("avatar_url")]
-    public string? AvatarUrl { get; init; }
 
     [JsonPropertyName("contributions")]
     public int Contributions { get; init; }

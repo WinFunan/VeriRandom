@@ -92,6 +92,7 @@
 | `SecRandom/Views/SettingsPages/About/AboutSettingsPage.axaml` | `S_App` 头部改 VeriRandom；新增 `S_App_ForkNotice` 行 |
 | `SecRandom/Langs/SettingsPages/About/Resources{,.en-US,.ja-JP}.resx` + `Resources.Designer.cs` | 新增 `S_App_ForkNotice` / `M_App_ForkNotice` |
 | `CONTRIBUTING.md` / `resources/CONTRIBUTING_EN.md` / `resources/CONTRIBUTING_JA.md` | 标题与正文改 VeriRandom；加入 CLA 小节与签署语；Issue 与 clone 指向本仓库；保留 `upstream` remote 说明 |
+| `SecRandom/Views/SettingsPages/About/AboutSettingsPage.axaml(.cs)` + `Langs/SettingsPages/About/Resources{,.en-US,.ja-JP}.resx` + Designer | About 页按当前 README 重组：原 `S_Author`（上游作者/组织/爱发电/哔哩哔哩）整块改为**默认折叠**（`IsExpanded="False"`）并补上 README 的「对上游仓库支持与社区」入口（QQ 群 833875216、QQ 频道、邮箱、官方文档、DeepWiki、上游贡献指南），首行加入范围说明；在原位置新增 `S_Community`（本分支自己的 QQ 群 768421833、邮箱、哔哩哔哩、Issue、贡献指南，全部指向本仓库）。横幅改为本分支自有文件名 `verirandom-banner-{cn,en,ja}.png`（缺失时 `BannerSource` 为 `null`，界面显示带说明的占位框；补资源后自动替换，无需改代码），社区图片同样先放占位。**同时移除贡献者头像的外链预加载**（原实现按接口返回的 `avatar_url` 逐张下载 GitHub CDN 图片并渲染，属供应链面），改为本地 `FluentIcon`，整行保留为跳转到该贡献者 GitHub 主页的链接；`GitHubContributor` 随之去掉 `Avatar`/`AvatarUrl`/`LoadAvatarAsync` 与 `INotifyPropertyChanged` |
 
 **CLA 的边界（必须保持）**：
 - 只约束**签署它的贡献者**的新贡献，不能追溯既有贡献。
