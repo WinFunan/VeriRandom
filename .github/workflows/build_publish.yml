@@ -823,7 +823,10 @@ jobs:
   build_ios:
     name: Build_iOS
     needs: validate_release
-    if: ${{ always() && !cancelled() && (needs.validate_release.result == 'success' || needs.validate_release.result == 'skipped') }}
+    # Fork policy: the unsigned iOS arm64 IPA has no distribution path yet (device distribution and
+    # in-app update delivery remain deferred), so this job is disabled. The publish job no longer waits
+    # for it. To re-enable, delete the leading `false &&` — the validate_release condition is unchanged.
+    if: ${{ false && always() && !cancelled() && (needs.validate_release.result == 'success' || needs.validate_release.result == 'skipped') }}
     runs-on: macos-26
 
     steps:
@@ -931,8 +934,8 @@ jobs:
   publish:
     name: Publish_Release
     runs-on: windows-2022
-    needs: [build_desktop, build_android, build_ios, build_pluginsdk]
-    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_ios') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    needs: [build_desktop, build_android, build_pluginsdk]
+    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
     permissions:
       contents: write
       id-token: write
@@ -972,13 +975,20 @@ jobs:
           Write-Host "Combined files:"
           Get-ChildItem $releaseOutput -File | Select-Object Name, Length
 
+      # Fork policy: publishing the Plugin SDK to nuget.org is disabled — this fork has neither a package
+      # identity nor a Trusted Publishing setup there yet. The packing job still runs and uploads the
+      # `pluginsdk` artifact on every CI run, and this job still downloads it into
+      # artifacts/release/downloaded/pluginsdk, so the packages remain available from the workflow run.
+      # To re-enable, delete both `if: ${{ false }}` guards below.
       - name: NuGet login (OIDC → temp API key)
+        if: ${{ false }}
         uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
         id: login
         with:
           user: ${{ secrets.NUGET_USER }}
 
       - name: NuGet push
+        if: ${{ false }}
         shell: pwsh
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
