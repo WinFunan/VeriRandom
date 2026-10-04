@@ -54,7 +54,10 @@ public partial class VerificationSettingsPage : UserControl
             var mode = ConfigHandler.Data.General.Verification.AttestationUpload;
             AttestationUploadOnRadio.IsChecked = mode == AttestationUploadMode.Enabled;
             AttestationUploadOffRadio.IsChecked = mode == AttestationUploadMode.Disabled;
-            AttestationUploadGroup.IsEnabled = SectlTrafficPolicy.IsEgressAllowed(ConfigHandler);
+            var egressAllowed = SectlTrafficPolicy.IsEgressAllowed(ConfigHandler);
+            AttestationUploadGroup.IsEnabled = egressAllowed;
+            // 未同意出境须知时就地给出补签入口：既告诉用户去哪里补，也省掉「补签后还要重进本页」
+            EgressConsentPrompt.IsVisible = !egressAllowed;
         }
         finally
         {
@@ -75,6 +78,26 @@ public partial class VerificationSettingsPage : UserControl
 
         ConfigHandler.Data.General.Verification.AttestationUpload = mode;
         ConfigHandler.Save();
+    }
+
+    /// <summary>
+    ///     出境需要**两个**同意——上游的在线服务须知与本分支的跨境须知，缺一个都不放行。这里按顺序补齐
+    ///     缺失的那个（各自的对话框由策略自己负责），成功后**就地刷新**，单选组立即解锁。
+    /// </summary>
+    private async void GrantEgressConsent_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not { } xamlRoot)
+            return;
+
+        if (!SectlTrafficPolicy.IsServicesPolicyAccepted(ConfigHandler)
+            && !await SecRandomServicesConsent.EnsureAsync(ConfigHandler, xamlRoot))
+            return;
+
+        if (!SectlTrafficPolicy.IsTransferNoticeAccepted(ConfigHandler)
+            && !await SectlTrafficPolicy.EnsureTransferAcceptedAsync(ConfigHandler, xamlRoot))
+            return;
+
+        RefreshAttestationUpload();
     }
 
     public VerificationSettingsPage()
@@ -425,10 +448,32 @@ public partial class VerificationSettingsPage : UserControl
     {
         var counts = string.Format(
             CultureInfo.CurrentCulture, LR.M_ProofIntegrityCounts, report.Total, report.Chained, report.Unchained);
-        List<string> lines = [counts, LR.M_ProofIntegrityLimits];
+        var own = report.OwnReference;
+        List<string> lines =
+        [
+            counts,
+            string.Format(
+                CultureInfo.CurrentCulture,
+                LR.M_ProofIntegrityOwnReference,
+                own.Nodes,
+                own.Timestamped,
+                own.HeadIndex,
+                own.RetainedFromIndex),
+            LR.M_ProofIntegrityLimits
+        ];
+
+        // 参考链（Own）的问题单独报：它刻意不参与 IsHealthy，所以不能因为 Up 链健康就被吞掉
+        if (!own.IsIntact)
+            lines.Add(string.Format(
+                CultureInfo.CurrentCulture,
+                LR.M_ProofIntegrityOwnReferenceProblems,
+                own.Modified,
+                own.SequenceViolations));
+
         if (report.IsHealthy && report.MissingTail == 0)
         {
-            lines.Add(LR.M_ProofIntegrityHealthy);
+            if (own.IsIntact)
+                lines.Add(LR.M_ProofIntegrityHealthy);
             return string.Join(Environment.NewLine, lines);
         }
 

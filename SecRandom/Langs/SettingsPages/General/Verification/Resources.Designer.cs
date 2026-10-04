@@ -99,6 +99,10 @@ public class Resources
     public static string M_ProofIntegrityHealthy => Get(nameof(M_ProofIntegrityHealthy));
     public static string M_ProofIntegrityCounts => Get(nameof(M_ProofIntegrityCounts));
     public static string M_ProofIntegrityProblems => Get(nameof(M_ProofIntegrityProblems));
+    public static string M_ProofIntegrityOwnReference => Get(nameof(M_ProofIntegrityOwnReference));
+    public static string M_ProofIntegrityOwnReferenceProblems => Get(nameof(M_ProofIntegrityOwnReferenceProblems));
+    public static string M_EgressConsentRequired => Get(nameof(M_EgressConsentRequired));
+    public static string C_EgressConsentGrant => Get(nameof(C_EgressConsentGrant));
     public static string M_ProofIntegrityLimits => Get(nameof(M_ProofIntegrityLimits));
     public static string M_ProofIssue_Unreadable => Get(nameof(M_ProofIssue_Unreadable));
     public static string M_ProofIssue_Modified => Get(nameof(M_ProofIssue_Modified));

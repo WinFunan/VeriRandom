@@ -72,15 +72,28 @@
                                     Description="{x:Static lv:Resources.S_AttestationUpload_D}"
                                     IconSource="{sr:FluentIconSource {sr:Fi DocumentCheckmarkFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <StackPanel x:Name="AttestationUploadGroup" Spacing="4">
-                        <RadioButton x:Name="AttestationUploadOnRadio"
-                                     GroupName="SettingsAttestationUpload"
-                                     Click="AttestationUpload_OnClick"
-                                     Content="{x:Static oobe:Resources.O_AttestationOn}" />
-                        <RadioButton x:Name="AttestationUploadOffRadio"
-                                     GroupName="SettingsAttestationUpload"
-                                     Click="AttestationUpload_OnClick"
-                                     Content="{x:Static oobe:Resources.O_AttestationOff}" />
+                    <StackPanel Spacing="6">
+                        <StackPanel x:Name="AttestationUploadGroup" Spacing="4">
+                            <RadioButton x:Name="AttestationUploadOnRadio"
+                                         GroupName="SettingsAttestationUpload"
+                                         Click="AttestationUpload_OnClick"
+                                         Content="{x:Static oobe:Resources.O_AttestationOn}" />
+                            <RadioButton x:Name="AttestationUploadOffRadio"
+                                         GroupName="SettingsAttestationUpload"
+                                         Click="AttestationUpload_OnClick"
+                                         Content="{x:Static oobe:Resources.O_AttestationOff}" />
+                        </StackPanel>
+                        <!-- 未同意出境须知时上面的单选组会置灰。补签入口必须放在该组**外面**，否则
+                             它会跟着一起被禁用；就地补签后立即解锁，用户不必离开页面重进 -->
+                        <StackPanel x:Name="EgressConsentPrompt" Spacing="4" IsVisible="False">
+                            <TextBlock Text="{x:Static lv:Resources.M_EgressConsentRequired}"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="320"
+                                       FontWeight="SemiBold" />
+                            <Button Content="{x:Static lv:Resources.C_EgressConsentGrant}"
+                                    Click="GrantEgressConsent_OnClick"
+                                    HorizontalAlignment="Left" />
+                        </StackPanel>
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

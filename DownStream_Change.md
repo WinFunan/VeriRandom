@@ -365,7 +365,7 @@
 
 **尚未接线**：来源选择目前只是 Core 目录（含 `RoundAt` / `RoundTime` 换算），还没有配置字段、设置页选项、三语文案，也还没有 drand 客户端。`RoundAt`/`RoundTime` 只对 drand 来源有效，NIST 的 `period` 在 API 上以**毫秒**返回（60000），目录里统一为秒，接线时必须换算。
 
-**已知缺口**：设置页只展示 Up 链完整性文本，`OwnReference` 计数未渲染到界面。
+**参考链展示**：设置页现同时展示参考链（Own）的节点数、已时间戳数、链头与保留底线，并在 `IsIntact` 为假时单列「被篡改 / 序号异常」。**它刻意不参与 `IsHealthy`，因此不得因为 Up 链健康就在展示上被吞掉**——`FormatIntegrityReport` 必须保留这个独立分支。
 
 ---
 
@@ -409,11 +409,9 @@
 - 补签统一走 `SectlTrafficPolicy.EnsureTransferAcceptedAsync`（必选勾选 + 5 秒最短显示）。
 - 抽取上传除跨境外还需要 `AttestationUpload == Enabled`，`Unset` 一律不上传。
 
-**已收口**：`SectlAuthService.RefreshCoreAsync` 现在先查 `SectlTrafficPolicy.IsEgressAllowed`，未同意跨境须知时**不发出任何请求**（连 refresh token 也不送到令牌端点），返回可重试的 `cross_border_not_accepted`；并**刻意不清除本地令牌**——撤回同意不应销毁账号会话，重新同意后仍可继续轮换。`SectlHeartbeatService` 本就有同一闸门，无需处理。
+**已收口**：`SectlAuthService.RefreshCoreAsync` 现在先查 `SectlTrafficPolicy.IsEgressAllowed`，未同意跨境须知时**不发出任何请求**（连 refresh token 也不送到令牌端点），返回可重试的 `cross_border_not_accepted`；并**刻意不清除本地令牌**——撤回同意不应销毁账号会话，重新同意后仍可继续轮换。`AnnouncementService.GetAsync` 同样先判闸门，未同意时直接返回空列表而非向 Appwrite 网关发请求（公告是可选内容，静默留空）。`SectlHeartbeatService` 本就有同一闸门。`PlatformVersionReportService` 仍是**已记录在案**的唯一例外，上述路径都不属于例外。
 
-**已知缺口**：
-1. 未同意跨境时，`S_AttestationUpload` 单选组会置灰（`RefreshAttestationUpload` 读 `SectlTrafficPolicy`），但**不会**主动引导用户去隐私设置页补签；补签后需要重新进入该页才会解锁。
-2. `AnnouncementService.GetAsync` 直接向 Appwrite 网关请求公告，**不经过** `SectlTrafficPolicy`。那是向 SECTL 基础设施发起的真实出境请求（会暴露设备 IP 与「正在运行本应用」），按本分支「凡可能向 SECTL 发送数据的路径都必须过该闸门」的约定应当收口。修法是构造函数注入 `MainConfigHandler`，发请求前判 `IsEgressAllowed`，未同意时返回空列表（公告是可选内容，静默留空即可）。注意 `PlatformVersionReportService` 是**已记录在案**的例外，公告不属于例外。
+**补签就地完成**：未同意出境须知时，`S_AttestationUpload` 的单选组会置灰，同时在**该组外面**出现说明与「立即同意」按钮——补签入口必须放在被禁用的组之外，否则会跟着一起禁用。出境需要**两个**同意（上游在线服务须知与本分支跨境须知），按钮按顺序补齐缺失的那个（对话框由各自的策略负责），成功后**就地刷新**并立即解锁，因此不必离开页面重进。本节的出境闸门相关事项至此全部收口。
 
 ---
 
@@ -497,10 +495,10 @@
 | `AGENTS.md` §7 与本文 §7 | 由「禁止改名」改写为「标识归属」：产品身份类自有、代码级内部标识保持 `SecRandom` |
 | `SecRandom/Langs/FirstRunOobe/Resources{,.en-US,.ja-JP}.resx` | `C_ExternalIntegrationDescription` 改为主协议 `verirandom://` |
 
-**已知缺口**：
-1. `SecRandomDocumentsProvider` 的文档树 `RootId` 仍为 `secrandom`（Android 内容提供程序内部节点 ID，不是产品身份，未改）。
-2. `ChangeLog.md` 与 README 里的下载/协议说明需要在正式发版时同步核对（README 目前未提及协议标识）。
-3. 本改名涉及 CI 产物名与发布任务正则，需在下次完整 CI 跑通后才能确认端到端一致（本机无 .NET 10 SDK）。
+**刻意保留与后续核对**：
+1. `SecRandomDocumentsProvider` 的文档树 `RootId` 仍为 `secrandom`——Android 内容提供程序内部节点 ID，不是产品身份，**刻意保留**，不是待办。
+2. `ChangeLog.md` 与 README 的下载/协议说明在正式发版时同步核对（README 目前未提及协议标识）；这是发版动作，不是当前缺口。
+3. CI 产物名与发布任务正则的一致性以完整 CI 跑通为准。
 
 ---
 
@@ -612,7 +610,7 @@
 
 | 文件 | 说明 |
 |------|------|
-| `docs/dual-draw-server-integration.md` | 服务端对接文档（协议 v1）：目的与信任边界、术语、时序、承诺记录模型、六个端点、规范哈希（`inputDigest` / `commitmentHash` / 响应签名投影）、两种脉冲来源的身份格式与内置验签材料、哈希链与公开归档要求、**强制对账流程**、客户端会做的校验、错误与边界情形、安全运维要求、与客户端既有字段的对应，以及待确认的设计取舍清单 |
+| `docs/dual-draw-server-integration.md` | 服务端对接文档（协议 v1）：目的与信任边界、术语、时序、承诺记录模型、六个端点、规范哈希（`inputDigest` / `commitmentHash` / 响应签名投影）、两种脉冲来源的身份格式与内置验签材料、哈希链与公开归档要求、**强制对账流程**、客户端会做的校验、**第三方（接收方）验证的两层模型**（单件离线可验证 + 拉取该身份全量历史逐条对账）、错误与边界情形、安全运维要求、与客户端既有字段的对应，以及已确认的设计决定清单 |
 
 **必须保留的设计决定**：
 - **承诺必须覆盖抽取输入**（`rosterDigest` + 人数 + 抽样模式 + 算法配置档），不能只承诺 nonce。脉冲一发布种子即确定，若此时名单与规则尚未被承诺，操作者可以在**所有校验都通过**的情况下挑名单来操纵结果。

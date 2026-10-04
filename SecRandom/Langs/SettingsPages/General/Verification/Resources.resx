@@ -69,7 +69,7 @@
   <data name="M_ProofIntegrityIdle" xml:space="preserve"><value>尚未验证</value></data>
   <data name="M_ProofIntegrityHealthy" xml:space="preserve"><value>证明链完整</value></data>
   <data name="M_ProofIntegrityCounts" xml:space="preserve"><value>共 {0} 份，已入链 {1} 份，旧格式 {2} 份</value></data>
-  <data name="M_ProofIntegrityProblems" xml:space="preserve"><value>缺口 {0}，断链 {1}，被改动 {2}，超出链头 {3}，未落盘 {4}，已过期 {5}</value></data>
+  <data name="M_ProofIntegrityProblems" xml:space="preserve"><value>缺口 {0}，断链 {1}，被改动 {2}，超出链头 {3}，未落盘 {4}，已过期 {5}</value></data><data name="M_ProofIntegrityOwnReference" xml:space="preserve"><value>参考链（Own）：{0} 个节点，{1} 个已时间戳，链头 {2}，保留底线 {3}</value></data><data name="M_ProofIntegrityOwnReferenceProblems" xml:space="preserve"><value>参考链问题：被篡改 {0} 个，序号异常 {1} 个</value></data><data name="M_EgressConsentRequired" xml:space="preserve"><value>需先同意出境相关须知才能启用此项</value></data><data name="C_EgressConsentGrant" xml:space="preserve"><value>立即同意</value></data>
   <data name="M_ProofIntegrityLimits" xml:space="preserve"><value>本地链只能发现删改，不能证明没有更早的记录被删除</value></data>
   <data name="M_ProofIssue_Unreadable" xml:space="preserve"><value>无法解析</value></data>
   <data name="M_ProofIssue_Modified" xml:space="preserve"><value>内容被改动</value></data>
