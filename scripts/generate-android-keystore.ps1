@@ -93,9 +93,20 @@ $keytoolArguments = @(
     '-storepass', $StorePassword,
     '-keypass', $KeyPassword
 )
-& keytool @keytoolArguments
-if ($LASTEXITCODE -ne 0) {
-    throw "keytool failed with exit code $LASTEXITCODE."
+# Java tools write their progress to stderr, and under $ErrorActionPreference='Stop' PowerShell turns
+# that into a terminating NativeCommandError that aborts this script before the key pair is even written.
+# Merge this one call's stderr into the host output, the same shape the workflow's keytool steps use.
+$previousErrorAction = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    & keytool @keytoolArguments 2>&1 | ForEach-Object { Write-Host "$_" }
+    $keytoolExitCode = $LASTEXITCODE
+}
+finally {
+    $ErrorActionPreference = $previousErrorAction
+}
+if ($keytoolExitCode -ne 0) {
+    throw "keytool failed with exit code $keytoolExitCode."
 }
 
 # Normalizes to standard base64 (no line breaks) so it can be pasted straight into the secret.

@@ -217,7 +217,7 @@
 
 | 文件 | 说明 |
 |------|------|
-| `scripts/generate-android-keystore.ps1` | 生成本仓库自有 Android 发布密钥并打印需要配置的四个 secret |
+| `scripts/generate-android-keystore.ps1` | 生成本仓库自有 Android 发布密钥并打印需要配置的四个 secret。**keytool 调用必须把 stderr 并进宿主输出**：Java 工具把提示写到 stderr，而脚本开头是 `$ErrorActionPreference='Stop'`，stderr 会被转成终止性 `NativeCommandError`，且**中断发生在密钥写盘之前**——每次运行都会失败且不留产物。workflow 里的两步 keytool 校验本来就用 `2>&1`，此处与之保持一致，不得"简化"掉 |
 
 **修改文件**：
 
