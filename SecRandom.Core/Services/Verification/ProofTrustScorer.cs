@@ -104,17 +104,21 @@ public sealed record ProofTrustReport(
 ///     <list type="number">
 ///         <item>
 ///             A proof whose own chain no longer verifies scores zero regardless of everything else — a
-///             record that cannot prove itself cannot be graded.
+///             record that cannot prove itself cannot be graded. That verdict only covers the proofs which
+///             still exist: older proofs legitimately deleted by the retention age or storage limit are
+///             explained by the chain's removal ledger and retention floor, so a removed tail must never be
+///             reported as a broken chain. Absence below that floor is retention, not damage.
 ///         </item>
 ///         <item>
 ///             Each selected factor is worth <see cref="WeightPerSource" />; the score is the share of the
 ///             selected weight that is actually backed by evidence.
 ///         </item>
 ///         <item>
-///             A pulse more than one beacon period after the stamp is still tolerated — a draw can start just
-///             before a period boundary — but it halves the score; once the pulse is older than
-///             <see cref="MaximumPulseAge" /> the seed-to-pulse binding is too weak and three quarters are
-///             deducted. The score never goes negative.
+///             The pulse's age is graded against <see cref="BeaconPulsePeriodPolicy" /> — the same policy the
+///             chain verifier applies — so scoring and verification can never disagree about what counts as a
+///             usable pulse. A pulse from the previous period is tolerated but halves the score; one outside
+///             tolerance, whether too old or newer than the stamp beyond the clock skew, keeps a quarter. The
+///             score never goes negative.
 ///         </item>
 ///         <item>
 ///             A social witness scores the full weight while the remembered time is inside the window its
@@ -133,17 +137,10 @@ public static class ProofTrustScorer
     /// <summary>The NIST beacon period. A stamp inside the pulse's own period needs no adjustment.</summary>
     public static readonly TimeSpan PulsePeriod = TimeSpan.FromSeconds(60);
 
-    /// <summary>
-    ///     The oldest tolerated pulse age. A pulse from the previous period is normal — a draw can start just
-    ///     before a period boundary — but beyond this the pulse is at least two periods old and the
-    ///     seed-to-pulse binding is too weak to keep most of the score.
-    /// </summary>
-    public static readonly TimeSpan MaximumPulseAge = TimeSpan.FromSeconds(110);
-
     /// <summary>Share of the score kept when the pulse is one period old (a half is deducted).</summary>
     public const double PreviousPeriodFactor = 0.5d;
 
-    /// <summary>Share kept once the pulse is older than <see cref="MaximumPulseAge" />: three quarters deducted.</summary>
+    /// <summary>Share kept once the pulse is outside <see cref="BeaconPulsePeriodPolicy" />'s tolerance: three quarters deducted.</summary>
     public const double BeyondToleranceFactor = 0.25d;
 
     /// <summary>The window each confidence level asserts for a remembered draw time.</summary>
@@ -201,21 +198,22 @@ public static class ProofTrustScorer
     }
 
     /// <summary>
-    ///     Grades the distance between the pulse and the stamp. Crossing one period is tolerated; the pulse
-    ///     simply may not be older than <see cref="MaximumPulseAge" />.
+    ///     Grades the distance between the pulse and the stamp through <see cref="BeaconPulsePeriodPolicy" />,
+    ///     the canonical rule the chain verifier also applies. Besides the period comparison that policy
+    ///     refuses a pulse postdating the stamp by more than its clock skew: such a pulse cannot be the source
+    ///     of this draw's seed, whereas comparing absolute seconds alone would treat it as perfectly normal.
     /// </summary>
     private static ProofTrustPulseTier ResolvePulseTier(ProofTrustInput input)
     {
         if (input.TimestampedAtUtc is not { } stamped || input.PulsePublishedAtUtc is not { } published)
             return ProofTrustPulseTier.SamePeriod;
 
-        var age = stamped - published;
-        if (age <= PulsePeriod)
-            return ProofTrustPulseTier.SamePeriod;
-
-        return age <= MaximumPulseAge
-            ? ProofTrustPulseTier.PreviousPeriod
-            : ProofTrustPulseTier.BeyondTolerance;
+        return BeaconPulsePeriodPolicy.Match(stamped, published, (int)PulsePeriod.TotalSeconds) switch
+        {
+            BeaconPeriodMatch.CurrentPeriod => ProofTrustPulseTier.SamePeriod,
+            BeaconPeriodMatch.PreviousPeriodWithinTolerance => ProofTrustPulseTier.PreviousPeriod,
+            _ => ProofTrustPulseTier.BeyondTolerance
+        };
     }
 
     private static ProofTrustFactor Simple(ProofTrustSource source, bool present) =>

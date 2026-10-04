@@ -66,7 +66,8 @@ public sealed class NistBeaconClient(HttpClient httpClient, ILogger<NistBeaconCl
             timeStamp,
             pulse.OutputValue,
             pulse.SignatureValue,
-            pulse.CertificateId);
+            pulse.CertificateId,
+            pulse.CipherSuite);
     }
 
     private sealed class NistBeaconEnvelope

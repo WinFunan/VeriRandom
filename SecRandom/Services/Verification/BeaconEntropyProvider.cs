@@ -24,6 +24,12 @@ public sealed class BeaconEntropyProvider(
     ILogger<BeaconEntropyProvider> logger)
 {
     private const string StateFileName = "beacon-state.json";
+
+    /// <summary>
+    ///     Provider family of the beacon this build fetches. It also prefixes every recorded beacon source id,
+    ///     so a mixed-source draw can still be traced back to the authority that published each pulse.
+    /// </summary>
+    private const string BeaconProviderId = "nist-beacon-v2";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true
@@ -57,7 +63,7 @@ public sealed class BeaconEntropyProvider(
 
             return new BeaconSeedReservation(seed, new DrawProofBeacon
             {
-                Provider = "nist-beacon-v2",
+                Provider = BeaconProviderId,
                 Endpoint = endpoint.ToString(),
                 PulseIndex = pulse.PulseIndex,
                 ChainIndex = pulse.ChainIndex,
@@ -66,6 +72,8 @@ public sealed class BeaconEntropyProvider(
                 OutputValue = pulse.OutputValue,
                 SignatureValue = pulse.SignatureValue,
                 CertificateId = pulse.CertificateId,
+                CipherSuite = pulse.CipherSuite,
+                BeaconSources = [$"{BeaconProviderId}@{endpoint}"],
                 Sequence = sequence,
                 Derivation = BeaconSeedDerivation.DerivationId
             });

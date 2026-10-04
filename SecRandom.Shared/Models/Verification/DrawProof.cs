@@ -98,6 +98,23 @@ public sealed class DrawProofBeacon
     [JsonPropertyName("certificateId")]
     public string CertificateId { get; init; } = string.Empty;
 
+    /// <summary>
+    ///     The authority's cipher suite for the recorded pulse. The canonical byte layout its signature was
+    ///     computed over depends on this value, so a verifier must refuse an unknown suite rather than assume
+    ///     one; -1 means the node was written before this field existed.
+    /// </summary>
+    [JsonPropertyName("cipherSuite")]
+    public int CipherSuite { get; init; } = -1;
+
+    /// <summary>
+    ///     Which beacon source(s) contributed to this seed, as stable source identifiers. A single-source draw
+    ///     has exactly one entry; the planned beacon-mixing capability appends further sources without
+    ///     changing this shape, so a verifier can always tell whose pulse it has to check a signature against
+    ///     instead of assuming the NIST beacon.
+    /// </summary>
+    [JsonPropertyName("beaconSources")]
+    public List<string> BeaconSources { get; init; } = [];
+
     // Zero-based, gapless, monotonic counter scoped to one pulse. It must never restart below its stored
     // value for the same pulse, otherwise a draw could reuse a previously used seed.
     [JsonPropertyName("sequence")]

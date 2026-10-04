@@ -341,12 +341,18 @@
 | `SecRandom/Services/Verification/DrawProofAttestationService.cs` | 新增 `TimestampOwnProofAsync` 作为队列条目**第一阶段**（早于回执与 Up 时间戳）；失败只记录 `_lastError` 并继续上游提交；构造注入 `OwnProofExportService` |
 | `SecRandom/Services/Verification/ProofIntegrityVerifier.cs` | 新增 `VerifyOwnReference`，报告节点哈希与「从 0、公差 1」序号，输出 `ProofIntegrityReport.OwnReference`；**不参与** `IsHealthy` |
 | `SecRandom/App.axaml.cs` | 注册 `OwnProofChainStore`、`OwnProofExportService`（同步注册到 `ProofChainTests` / `DrawProofAttestationQueueTests` 的测试容器） |
+| `SecRandom.Shared/Models/Verification/DrawProof.cs` | `DrawProofBeacon` 新增 `cipherSuite`（默认 `-1` 表示未记录；校验方必须**拒绝**未知套件，而不是假定一种）与 `beaconSources`（每个贡献种子的信标源一条稳定标识；当前恒为一条，为后续**信标混杂**预留形状，使校验方始终知道该拿哪家权威的证书验签）。二者**只影响 Own 参考节点**，Up 链字节形态与上游兼容不变 |
+| `SecRandom.Core/Models/Verification/BeaconPulse.cs` | 新增 `CipherSuite`（尾随默认参数，不破坏既有构造调用）。此前 `NistBeaconClient` 解析了 `cipherSuite` 却没有传出，导致验签所需的规范字节序无法拼出 |
 
 **行为与边界**：
 - Up 链字节形态与上游一致（已置空信标），提交 `fair.sectl.cn` 与 TSA 的字段集不变。
 - Own **仅**在启用信标熵时写入；它是参考声明，不提供额外密码学可信度，也不参与公平性判定。
 - Own 的 TSA 令牌先于 Up 申请，用于说明参考节点不是事后补加。
 - Own 导出失败**不得**影响已完成的抽取（`DrawProofExportService.Save` 内捕获并告警）。
+
+**链判决的用户可见性**：服务端在每次抽取回执里返回的链锚点判决（`chain.status`）**每次新抽取都会更新一次**。本分支把它从「计数摘要里的一段文字」提升为**独立、加粗、告警色**的提示（`ProofChainAlertText`），因为 `behind` 是「本地链被删过或倒退过」唯一的外部信号，埋在摘要里太容易被忽略。它**不做持久化**（`ChainAlertCount` 仍是进程内计数，重启归零），也不参与证据评分。
+
+**信标脉冲验签尚未实现**：需要按 `cipherSuite` 拼出权威机构的规范字节序、按 `certificateId` 取证书，并决定信任锚点。本分支已先补齐缺失的 `cipherSuite` 与来源标识，**落地验签时不必再改 Own 格式**；但已写出的旧 Own 节点缺 `cipherSuite`，只能判定为「无法验签」而不是「验签失败」。
 
 **已知缺口**：设置页只展示 Up 链完整性文本，`OwnReference` 计数未渲染到界面。
 
@@ -524,25 +530,26 @@
 |---|---|
 | 来源方缺失 | 每个被勾选的来源方权重 **25**，分数 = 已获支持权重 / 已选权重 × 100（归一化，故只选一个且成立时也是 100） |
 | 链自身完整性不通过 | **直接置零**（自证不成立则无从评分），其余证据不再计入 |
-| 脉冲时效：时间戳 − 脉冲发布时间 **≤ 60 秒**（信标周期即 60 秒，同周期） | 不扣分 |
-| 脉冲时效：**60–110 秒**（跨一个周期，属容忍范围） | 分数**减半**（`PreviousPeriodFactor = 0.5`） |
-| 脉冲时效：**> 110 秒**（至少老两个周期，超出容忍） | **扣四分之三**（`BeyondToleranceFactor = 0.25`） |
+| 脉冲时效 | 交给 **`BeaconPulsePeriodPolicy`**（唯一规范，链校验器用的是同一份）判定：同周期不扣分；上一周期内（容忍 1 个周期）**减半**（`PreviousPeriodFactor = 0.5`）；超出容忍**扣四分之三**（`BeyondToleranceFactor = 0.25`） |
+| 脉冲**晚于**时间戳超过策略的 60 秒时钟偏移 | 判为超出容忍——未来脉冲不可能是本次抽取的种子来源。**不得**回退成「只比绝对秒数」：那会把未来脉冲当成完全正常 |
 | 脉冲时效的夹逼 | 结果始终夹逼到 `[0, 100]`，**不会为负**；档位以 `ProofTrustPulseTier` 返回（SamePeriod / PreviousPeriod / BeyondTolerance） |
 | 社会见证 | 由用户提供「记忆中大致抽取时间」与「时间置信度」；高/中/低分别断言 5 分钟 / 30 分钟 / 2 小时的窗口，误差在窗口内**不扣分**；超出后按 `(误差−窗口)/窗口` 线性衰减，最多扣光该因子 |
 
 **设计与边界**：
 - 四个来源方**等权**，刻意不把密码学锚点排在人的记忆之上（那会变成密码学强度主张）。
+- **每个证据都按其方向内可实现的最高规格校验，而不是只判断「存在」**：链交给 `ProofIntegrityVerifier`——它是唯一能发现断链、超出链头、以及未记入删除台账的缺口的实现，读的是已持久化的 `chain-head.json`，因此**不需要新增任何持久化**；时间戳必须 `TimestampAuthorityClient.Validate` 通过（验不过的 token 不构成证据）；回执必须经 `WitnessClient.TryValidateStoredReceipt` 校验**服务端签名 + 与本证明的绑定**（签名只证明「发过某个回执」，绑定比对不可省）。
+- **打分器不判断是否存在被移除的链尾。** 链判定只覆盖**仍然存在**的证明：因保留期或存储上限被正常删除的旧证明，由 `chain-head.json` 的删除台账与 `RetainedFromIndex` 底线解释，属正常保留行为而非篡改。这条必须保持——否则按期清理证明会被误报成链断，评分与完整性报告都会失真。
 - Core **不产出面向用户的文案**：因子结果以 `ProofTrustFactorState`（Satisfied/Missing/PartiallySatisfied/NotAssessed）+ 数值返回，由调用方本地化。
-- 评估取**最新一份** `.srproof.json`：链位置、回执、时间戳来自 Up 文件，脉冲来自**参考兄弟文件**（`*.ownproof.json`），因此**不需要任何网络往返**；时间戳的**可信时间**由 `TimestampAuthorityClient.Validate` 离线校验后取得。
+- 评估取**最新一份** `.srproof.json`：链位置、回执、时间戳来自 Up 文件，脉冲来自**参考兄弟文件**（`*.ownproof.json`）。**离线只是当前实现方式，不是约束**——凡证据只能对着权威机构确认的方向，允许联网取（例如信标脉冲的签名验证要取 NIST 对应 `certificateId` 的证书）；时间戳的**可信时间**由 `TimestampAuthorityClient.Validate` 校验后取得（验签 + 摘要绑定 + 证书链）。
 
 **新增文件**：
 
 | 文件 | 说明 |
 |------|------|
 | `SecRandom.Core/Services/Verification/ProofTrustScorer.cs` | `ProofTrustSource` / `WitnessTimeConfidence` / `ProofTrustFactorState` / `ProofTrustInput` / `ProofTrustFactor` / `ProofTrustReport` / `ProofTrustScorer` |
-| `SecRandom.Core.Tests/ProofTrustScorerTests.cs` | 14 个用例：满分、链断置零、缺因子按比例扣、只选一个的归一化、不选来源为 0、上一周期（90 秒）减半、**110 秒边界仍属容忍**、**超过 110 秒扣四分之三**、减半/扣分不为负、同周期不罚、社会见证窗口内不扣 / 窗口外衰减 / 严重偏离不扣、未填时间视为缺因子 |
+| `SecRandom.Core.Tests/ProofTrustScorerTests.cs` | 16 个用例：满分、链断置零、缺因子按比例扣、只选一个的归一化、不选来源为 0、上一周期（90 秒）减半、**110 秒边界仍属容忍**、超过容忍扣四分之三、**未来脉冲（晚于时间戳 10 分钟）判为超出容忍**、**仅略新（晚 30 秒）仍属同周期**、减半/扣分不为负、同周期不罚、社会见证窗口内不扣 / 窗口外衰减 / 严重偏离不扣、未填时间视为缺因子 |
 
-**修改文件**：`SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml(.cs)`（新增 `S_ProofTrust` 区块：四个来源方勾选、日期+时间输入、置信度下拉、评估按钮与结果文本；`AssessProofTrust_OnClick` 组装输入并格式化结果）、`SecRandom/Langs/SettingsPages/General/Verification/Resources{,.en-US,.ja-JP}.resx` + Designer（新增 21 个键）。
+**修改文件**：`SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml(.cs)`（新增 `S_ProofTrust` 区块：四个来源方勾选、日期+时间输入、置信度下拉、评估按钮与结果文本；`AssessProofTrust_OnClick` 组装输入并格式化结果，其四项证据改为**校验后**传入而非仅判存在）、`SecRandom/Services/Verification/WitnessClient.cs`（新增 `internal static TryValidateStoredReceipt`，把 `AttestAsync` 的绑定比对复用于「重新校验已存储回执」）、`SecRandom.Core/Services/Verification/ProofTrustScorer.cs`（脉冲档委托给 `BeaconPulsePeriodPolicy`，并删除此前重复的 `MaximumPulseAge` 上限）、`SecRandom/Langs/SettingsPages/General/Verification/Resources{,.en-US,.ja-JP}.resx` + Designer（新增 21 个键）。
 
 **已知缺口**：日期/时间输入用的是 Avalonia `DatePicker` + `TimePicker`，本机无法编译验证其成员名（`SelectedDate` / `SelectedTime`）；若 CI 报错，改这两处属性名即可。
 

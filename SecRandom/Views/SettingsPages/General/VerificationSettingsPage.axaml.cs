@@ -172,13 +172,17 @@ public partial class VerificationSettingsPage : UserControl
             parts.Add(string.Format(CultureInfo.CurrentCulture, LR.M_ProofQueueFailed, status.ReceiptFailedCount));
         if (status.TimestampFailedCount > 0)
             parts.Add(string.Format(CultureInfo.CurrentCulture, LR.M_ProofQueueTimestampFailed, status.TimestampFailedCount));
-        if (status.ChainAlertCount > 0)
-            parts.Add(string.Format(CultureInfo.CurrentCulture, LR.M_ProofQueueChainAlert, status.ChainAlertCount));
         if (status.ConflictCount > 0)
             parts.Add(string.Format(CultureInfo.CurrentCulture, LR.M_ProofQueueConflict, status.ConflictCount));
 
         ProofQueueStatusText.Text = parts.Count == 0 ? LR.M_ProofQueueIdle : string.Join(" · ", parts);
         RetryProofQueueButton.IsEnabled = status.HasOutstandingWork;
+
+        // 链告警单独醒目提示：它是「服务端记的链头比本地高」的唯一信号，混在计数摘要里太容易被忽略
+        ProofChainAlertText.Text = status.ChainAlertCount > 0
+            ? string.Format(CultureInfo.CurrentCulture, LR.M_ProofQueueChainAlert, status.ChainAlertCount)
+            : string.Empty;
+        ProofChainAlertText.IsVisible = status.ChainAlertCount > 0;
     }
 
     private async void RetryProofQueue_OnClick(object? sender, RoutedEventArgs e)
@@ -199,8 +203,11 @@ public partial class VerificationSettingsPage : UserControl
     /// <summary>
     ///     Grades the newest ordinary proof against the sources the user chose to trust. Every input comes
     ///     from the proof pair itself — the Up file supplies the chain position, the receipt and the time
-    ///     stamp, and the reference sibling supplies the beacon pulse — so the score never depends on a
-    ///     network round trip.
+    ///     stamp, and the reference sibling supplies the beacon pulse — so an assessment can be made from the
+    ///     artifacts alone. That is a convenience, not a requirement: a source whose evidence can only be
+    ///     confirmed against an authority is allowed to fetch it. Each input is verified rather than merely
+    ///     present: the chain goes through <see cref="ProofIntegrityVerifier" />, the time stamp must
+    ///     validate, and the receipt must be bound to this proof.
     /// </summary>
     private void AssessProofTrust_OnClick(object? sender, RoutedEventArgs e)
     {
@@ -229,15 +236,10 @@ public partial class VerificationSettingsPage : UserControl
             return;
         }
 
-        var chainIntact = proof.Chain is not null
-                          && proof.Chain.FormatVersion == ProofChainStore.CurrentFormatVersion
-                          && string.Equals(
-                              ProofChainStore.ComputeSelfHash(
-                                  proof.Chain.Index,
-                                  proof.Chain.PrevHash,
-                                  WitnessClient.ComputeAttestedProofHash(proof)),
-                              proof.Chain.SelfHash,
-                              StringComparison.Ordinal);
+        // 链的判定必须交给带链头、保留底线与删除台账的校验器：单文件自洽只能发现「文件被改却没
+        // 重算 selfHash」，发现不了断链、超出链头，以及未记入台账的缺口。注意这**不**判断被移除的
+        // 链尾：因保留期或存储上限被删掉的旧证明，由删除台账与保留底线解释，属于正常保留行为
+        var chainIntact = proof.Chain is not null && IntegrityVerifier.Verify().IsHealthy;
 
         // The reference sibling is the only place the pulse is recorded: it is a declaration, so a missing
         // or unreadable sibling simply means this factor has no evidence.
@@ -245,12 +247,15 @@ public partial class VerificationSettingsPage : UserControl
         if (OwnProofExporter.TryRead(OwnProofPaths.FromUpPath(latestPath), out var own) && own is not null)
             beacon = own.Beacon;
 
+        // 时间戳只有签名与证书链都通过才算证据：一个验不过的 token 证明不了「权威机构盖过章」
         var timestampToken = proof.Witness?.TimestampToken;
         DateTimeOffset? timestampedAt = null;
+        var timestampValid = false;
         if (!string.IsNullOrWhiteSpace(timestampToken))
         {
             var validation = TimestampAuthorityClient.Validate(
                 timestampToken, WitnessClient.FromBase64Url(WitnessClient.ComputeAttestedProofHash(proof)));
+            timestampValid = validation.IsValid;
             if (validation.IsValid)
                 timestampedAt = validation.Timestamp;
         }
@@ -258,8 +263,8 @@ public partial class VerificationSettingsPage : UserControl
         var report = ProofTrustScorer.Evaluate(new ProofTrustInput(
             chainIntact,
             beacon is not null,
-            !string.IsNullOrWhiteSpace(timestampToken),
-            !string.IsNullOrWhiteSpace(proof.Witness?.Receipt),
+            timestampValid,
+            WitnessClient.TryValidateStoredReceipt(proof, out _),
             beacon?.PulseTimeStamp,
             timestampedAt,
             proof.CreatedAtUtc,

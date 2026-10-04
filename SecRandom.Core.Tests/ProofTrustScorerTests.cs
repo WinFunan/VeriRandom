@@ -115,6 +115,30 @@ public sealed class ProofTrustScorerTests
     }
 
     [Fact]
+    public void APulseNewerThanTheStampIsOutsideTolerance()
+    {
+        // 脉冲晚于时间戳超过策略的时钟偏移时，它不可能是本次抽取的种子来源；只比较「年龄」会把它
+        // 当成一个完全正常的脉冲，这正是委托给规范策略要关掉的洞
+        var report = ProofTrustScorer.Evaluate(Input(
+            pulsePublishedAt: DrawTime + TimeSpan.FromMinutes(10),
+            timestampedAt: DrawTime));
+
+        Assert.Equal(ProofTrustPulseTier.BeyondTolerance, report.PulseTier);
+        Assert.Equal(25, report.Score);
+    }
+
+    [Fact]
+    public void APulseOnlySlightlyNewerThanTheStampIsStillTolerated()
+    {
+        // 本机时钟不是权威，权威机构也会稍晚应答，所以「看起来略新」的脉冲仍然接受
+        var report = ProofTrustScorer.Evaluate(Input(
+            pulsePublishedAt: DrawTime + TimeSpan.FromSeconds(30),
+            timestampedAt: DrawTime));
+
+        Assert.Equal(ProofTrustPulseTier.SamePeriod, report.PulseTier);
+    }
+
+    [Fact]
     public void ThePulsePenaltyCanNeverProduceANegativeScore()
     {
         var report = ProofTrustScorer.Evaluate(Input(

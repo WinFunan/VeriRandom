@@ -170,6 +170,40 @@ public sealed class WitnessClient(
             ?? throw new InvalidDataException("Witness token payload is invalid.");
     }
 
+    /// <summary>
+    ///     Re-validates the receipt already stored inside a proof. <see cref="AttestAsync" /> runs these checks
+    ///     when a receipt first arrives, but any later reader has to repeat them: a token's signature alone
+    ///     only proves the service issued *some* attestation, so without the binding comparison an unrelated
+    ///     (yet perfectly valid) receipt would pass as evidence for this proof.
+    /// </summary>
+    internal static bool TryValidateStoredReceipt(DrawProof proof, out WitnessReceipt? receipt)
+    {
+        ArgumentNullException.ThrowIfNull(proof);
+        receipt = null;
+
+        if (string.IsNullOrWhiteSpace(proof.Witness?.Receipt))
+            return false;
+
+        try
+        {
+            var parsed = VerifyToken<WitnessReceipt>(proof.Witness!.Receipt!);
+            if (parsed.ProofId != proof.ProofId || parsed.InputHash != proof.InputHash ||
+                parsed.PayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.Payload))) ||
+                parsed.AuditPayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.AuditPayload))) ||
+                parsed.ProofHash != ComputeAttestedProofHash(proof) ||
+                parsed.Mode != proof.Mode)
+                return false;
+
+            receipt = parsed;
+            return true;
+        }
+        catch (Exception exception) when (exception is InvalidDataException or CryptographicException
+                                              or FormatException or JsonException or ArgumentException)
+        {
+            return false;
+        }
+    }
+
     internal static string ToBase64Url(ReadOnlySpan<byte> bytes) => Convert.ToBase64String(bytes)
         .TrimEnd('=')
         .Replace('+', '-')

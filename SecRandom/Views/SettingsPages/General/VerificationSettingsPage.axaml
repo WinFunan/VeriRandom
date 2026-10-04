@@ -116,6 +116,14 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <!-- 链判决在每次抽取回执返回时都会更新。它是「本地链被删过或倒退过」唯一的外部信号，
+                 所以单独显著提示，而不是埋进上面的计数摘要里 -->
+            <TextBlock x:Name="ProofChainAlertText"
+                       TextWrapping="Wrap"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                       IsVisible="False" />
+
             <fa:FASettingsExpander x:Name="S_ProofIntegrity"
                                     Header="{x:Static lv:Resources.S_ProofIntegrity}"
                                     Description="{x:Static lv:Resources.S_ProofIntegrity_D}"
