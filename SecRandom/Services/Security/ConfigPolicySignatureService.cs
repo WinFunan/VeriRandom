@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Security;
 using SecRandom.Shared;
