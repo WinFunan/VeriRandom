@@ -836,7 +836,7 @@ jobs:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
 
       - name: Set up Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
           xcode-version: '26.6'
 
@@ -973,7 +973,7 @@ jobs:
           Get-ChildItem $releaseOutput -File | Select-Object Name, Length
 
       - name: NuGet login (OIDC → temp API key)
-        uses: NuGet/login@v1
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
         id: login
         with:
           user: ${{ secrets.NUGET_USER }}
@@ -1073,7 +1073,7 @@ jobs:
         run: pwsh -ep bypass ./scripts/gen-release-note.ps1
 
       - name: Upload APP to release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
         with:
           name: VeriRandom ${{ github.event.inputs.release_tag }}
           artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/VeriRandom-update-manifest.json,./artifacts/release/output/VeriRandom-update-manifest.sig"

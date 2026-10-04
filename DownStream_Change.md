@@ -223,8 +223,14 @@
 
 | 文件 | 改动 |
 |------|------|
-| `.github/workflows/build_publish.yml` | ① 四处 `Get Latest Tag` / `Get Version` 增加无 tag 兜底（`try/catch` / `|| true`，回退 `git tag --sort=-v:refname`，再回退**主号取自 `PluginApiVersions.Current`** 的 `<major>.0.0-dev`）；② Android 四个签名 secret 缺失时改为告警 + debug 签名，产出 `-android-<arch>-unsigned.apk` 并跳过 keystore/证书校验（secret 齐全时严格校验不变）；③ `Combine Artifacts` 过滤 `-unsigned.apk`，避免 debug 签名包进入 release 与清单 |
+| `.github/workflows/build_publish.yml` | ① 四处 `Get Latest Tag` / `Get Version` 增加无 tag 兜底（`try/catch` / `|| true`，回退 `git tag --sort=-v:refname`，再回退**主号取自 `PluginApiVersions.Current`** 的 `<major>.0.0-dev`）；② Android 四个签名 secret 缺失时改为告警 + debug 签名，产出 `-android-<arch>-unsigned.apk` 并跳过 keystore/证书校验（secret 齐全时严格校验不变）；③ `Combine Artifacts` 过滤 `-unsigned.apk`，避免 debug 签名包进入 release 与清单；④ 三个第三方 action 由浮动主标签改为 **commit SHA 绑定**（见下） |
 | `SecRandom.Android/SecRandom.Android.csproj` | `ApplicationDisplayVersion` 优先取 `$(Version)`，仅在为空/`1.0` 时回退 `$(GitTag)`（与 iOS 一致） |
+
+**第三方 action 必须 SHA 绑定，不得回退成 `@v1`**：`@v1` 这类浮动主标签可以在不通知使用方的情况下被重指向，而 `ncipollo/release-action` 正是发布 job 里**创建 GitHub Release 并上传全部产物**的那一步，一旦被替换就是供应链入口。绑定写法为 `uses: <owner>/<repo>@<40 位 commit sha> # <原标签>`，保留尾注释是为了让 Dependabot 仍能识别版本并提出升级 PR。当前已绑定 `ncipollo/release-action`、`NuGet/login`、`maxim-lobanov/setup-xcode`。
+
+**必须区分附注标签与轻量标签**：`v1` 是哪种标签决定该钉哪个 SHA。附注标签的 `refs/tags/v1` 是**标签对象**，直接钉它 GitHub Actions 会在解析阶段失败；必须钉 `refs/tags/v1^{}` 的 deref commit。当前 `ncipollo/release-action` 的 `v1` 是轻量标签（两者同一 SHA），`NuGet/login` 与 `maxim-lobanov/setup-xcode` 的 `v1` 是附注标签，已按 deref commit 绑定。核对方式：`git ls-remote --tags https://github.com/<owner>/<repo>`，出现 `^{}` 行即为附注标签。
+
+**`actions/*` 仍保持主标签**：`actions/checkout`、`setup-dotnet`、`upload-artifact`、`download-artifact`、`setup-java` 以及 `github/codeql-action/*` 均为 GitHub 官方维护，未做 SHA 绑定，以免在上游频繁改动这些行时制造无谓冲突。
 
 **注意**：`build_publish.yml` 与上游差异最大，且上游也在频繁改这个文件，冲突概率最高。
 
