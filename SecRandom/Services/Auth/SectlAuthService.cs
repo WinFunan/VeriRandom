@@ -477,6 +477,14 @@ public sealed class SectlAuthService(
 
     private async Task<SectlRefreshOutcome> RefreshCoreAsync()
     {
+        // 未同意跨境须知时一个 SECTL 请求都不能发出——连 refresh token 也不得送到令牌端点。
+        // 这里刻意**不**清除本地令牌：撤回同意不应销毁账号会话，重新同意后仍可继续轮换。
+        if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
+        {
+            logger.LogInformation("未同意跨境数据传输须知，已阻止 SECTL 令牌刷新。");
+            return SectlRefreshOutcome.Unavailable("cross_border_not_accepted", retryable: true);
+        }
+
         var current = _token;
         var refreshToken = current?.RefreshToken;
         if (current is null || string.IsNullOrWhiteSpace(refreshToken))

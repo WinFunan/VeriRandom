@@ -409,9 +409,11 @@
 - 补签统一走 `SectlTrafficPolicy.EnsureTransferAcceptedAsync`（必选勾选 + 5 秒最短显示）。
 - 抽取上传除跨境外还需要 `AttestationUpload == Enabled`，`Unset` 一律不上传。
 
+**已收口**：`SectlAuthService.RefreshCoreAsync` 现在先查 `SectlTrafficPolicy.IsEgressAllowed`，未同意跨境须知时**不发出任何请求**（连 refresh token 也不送到令牌端点），返回可重试的 `cross_border_not_accepted`；并**刻意不清除本地令牌**——撤回同意不应销毁账号会话，重新同意后仍可继续轮换。`SectlHeartbeatService` 本就有同一闸门，无需处理。
+
 **已知缺口**：
-1. `SectlAuthService.InitializeAsync` 中已登录会话的后台令牌刷新可能绕过 `SendAuthorizedAsync`，尚未收口到出境闸门。
-2. 未同意跨境时，`S_AttestationUpload` 单选组会置灰（`RefreshAttestationUpload` 读 `SectlTrafficPolicy`），但**不会**主动引导用户去隐私设置页补签；补签后需要重新进入该页才会解锁。
+1. 未同意跨境时，`S_AttestationUpload` 单选组会置灰（`RefreshAttestationUpload` 读 `SectlTrafficPolicy`），但**不会**主动引导用户去隐私设置页补签；补签后需要重新进入该页才会解锁。
+2. `AnnouncementService.GetAsync` 直接向 Appwrite 网关请求公告，**不经过** `SectlTrafficPolicy`。那是向 SECTL 基础设施发起的真实出境请求（会暴露设备 IP 与「正在运行本应用」），按本分支「凡可能向 SECTL 发送数据的路径都必须过该闸门」的约定应当收口。修法是构造函数注入 `MainConfigHandler`，发请求前判 `IsEgressAllowed`，未同意时返回空列表（公告是可选内容，静默留空即可）。注意 `PlatformVersionReportService` 是**已记录在案**的例外，公告不属于例外。
 
 ---
 
@@ -562,7 +564,7 @@
 
 **修改文件**：`SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml(.cs)`（新增 `S_ProofTrust` 区块：四个来源方勾选、日期+时间输入、置信度下拉、评估按钮与结果文本；`AssessProofTrust_OnClick` 组装输入并格式化结果，其四项证据改为**校验后**传入而非仅判存在）、`SecRandom/Services/Verification/WitnessClient.cs`（新增 `internal static TryValidateStoredReceipt`，把 `AttestAsync` 的绑定比对复用于「重新校验已存储回执」）、`SecRandom.Core/Services/Verification/ProofTrustScorer.cs`（脉冲档委托给 `BeaconPulsePeriodPolicy`，并删除此前重复的 `MaximumPulseAge` 上限）、`SecRandom/Langs/SettingsPages/General/Verification/Resources{,.en-US,.ja-JP}.resx` + Designer（新增 21 个键）。
 
-**已知缺口**：日期/时间输入用的是 Avalonia `DatePicker` + `TimePicker`，本机无法编译验证其成员名（`SelectedDate` / `SelectedTime`）；若 CI 报错，改这两处属性名即可。
+**成员名已证实**：`DatePicker.SelectedDate` 与 `TimePicker.SelectedTime` 是 Avalonia 12 的正确成员名，已由既有用例互证——上游带进来的 `HistoryManagementSettingsPage` 用 `DatePicker.SelectedDate`，`TimerView.axaml` 绑定 `TimePicker.SelectedTime`。不要改名。
 
 ---
 
