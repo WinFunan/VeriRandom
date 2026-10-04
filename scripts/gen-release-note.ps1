@@ -23,14 +23,14 @@ if (-not $files) {
 $downloadSummary = @"
 **下载链接**
 
-| 文件名 | GitHub | SECTL 高速 |
+| 文件名 | GitHub | GitHub 镜像 |
 | --- | --- | --- |
 "@
 
 foreach ($file in $files) {
     $gh = "https://github.com/${repo}/releases/download/${tag}/$($file.Name)"
-    $stk = "https://stk.sectl.cn/SecRandom/%E6%80%9D%E6%8B%93%E5%88%9B%E8%81%94%20Gihub%20%E9%95%9C%E5%83%8F%E6%BA%90/${tag}/$($file.Name)"
-    $downloadSummary += "`n| $($file.Name) | [下载](${gh}) | [下载](${stk}) |"
+    $mirror = "https://ghproxy.sectl.cn/${gh}"
+    $downloadSummary += "`n| $($file.Name) | [下载](${gh}) | [下载]($mirror) |"
 }
 
 $md5Summary = @"
@@ -50,7 +50,31 @@ foreach ($file in $files) {
 }
 $md5Summary += "`n`n</details>"
 
-$changelog = if (Test-Path $changelogPath) {
+# The release body comes from this fork's own ChangeLog.md first. CHANGELOG/ is upstream's tree: reading it
+# would publish upstream's release notes (and upstream's banner/links) under this fork's release, describing
+# features this fork never shipped. Fall back to the upstream file, then to a placeholder, so a missing
+# section never breaks the release.
+$forkSection = ''
+if (Test-Path "./ChangeLog.md") {
+    $lines = Get-Content "./ChangeLog.md"
+    $start = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match ("^#\s+" + [regex]::Escape($tag) + "(\s|$)")) { $start = $i; break }
+    }
+
+    if ($start -ge 0) {
+        $end = $lines.Count
+        for ($i = $start + 1; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^#\s') { $end = $i; break }
+        }
+
+        $forkSection = ($lines[$start..($end - 1)] -join "`n").TrimEnd()
+    }
+}
+
+$changelog = if (-not [string]::IsNullOrWhiteSpace($forkSection)) {
+    $forkSection
+} elseif (Test-Path $changelogPath) {
     Get-Content $changelogPath -Raw
 } else {
     "- 发布说明待补充。`n---`n"

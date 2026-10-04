@@ -19,14 +19,14 @@ namespace SecRandom.Services.Mobile;
 
 public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInstaller installer) : INotifyPropertyChanged
 {
-    private const string Repository = "SECTL/SecRandom";
+    private const string Repository = "WinFunan/VeriRandom";
     private const string ManifestFileName = "VeriRandom-update-manifest.json";
     private const string SignatureFileName = "VeriRandom-update-manifest.sig";
     private const int MaxMetadataBytes = 256 * 1024;
     private const int MaxManifestBytes = 4 * 1024 * 1024;
     private const int MaxSignatureBytes = 64;
     private const int MaxArtifactBytes = 512 * 1024 * 1024;
-    private static readonly Uri MetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
+    private static readonly Uri MetadataUri = new("https://raw.githubusercontent.com/WinFunan/VeriRandom/master/metadata.yaml");
     private static readonly Uri MirrorPrefix = new("https://ghproxy.sectl.cn/");
     private readonly IDeserializer _yaml = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private UpdateArtifact? _artifact;

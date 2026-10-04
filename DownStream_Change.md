@@ -640,6 +640,8 @@
 |------|------|
 | `metadata.yaml` | `product` 改为 `VeriRandom`（**必需**，见上）；`repository` / `manifest.file_name` / `manifest.signature_file_name` / `public_key_id` 改为本分支自有值，与客户端实际使用的仓库常量、清单文件名和内置验证公钥保持一致。客户端**只读取** `schema_version` / `product` / `channels`，其余字段为说明性质 |
 | `.github/workflows/build_publish.yml` | 第三方 action 固定到 commit SHA（见 §6） |
+| `scripts/gen-release-note.ps1` | 发布说明**优先取本仓库的 `ChangeLog.md`** 中该标签的章节，`CHANGELOG/` 只作回退。`CHANGELOG/` 是上游的树，直接读它会把**上游的发布说明与横幅**（含 `appwrite.sectl.cn` 图片与上游链接）当作本分支的发布说明发布出去，而描述的却是本分支没有的功能。下载表的镜像列也改为本分支自己的镜像前缀 `ghproxy.sectl.cn`，不再指向 `stk.sectl.cn/SecRandom` |
+| `SecRandom/Services/Mobile/MobileUpdateService.cs` | `Repository` 与 `MetadataUri` 改为本分支（`WinFunan/VeriRandom`），此前移动端仍指向上游仓库与上游元数据，与桌面端 `UpdateCenterService` 不一致 |
 
 **发布标签的三个注意点**：
 1. 本分支与上游共用 `vX.Y.Z` 标签体系，因此**移动一个已存在的标签前必须确认它尚未发布过产物**；标签一旦被推送并有人据此构建，移动它就会让同一版本号对应两份不同的构建。
