@@ -270,18 +270,34 @@ public partial class App : Application
 
             // 防篡改校验是设置文件的启动闸门：记录不符时按配置自动恢复，或先用安全密码确认当前内容
             _settingsIntegrity = IAppHost.GetService<SettingsIntegrityService>();
-            if (_settingsIntegrity.GetPendingMismatch() is { } settingsMismatch)
+            var settingsMismatch = _settingsIntegrity.GetPendingMismatch();
+            if (settingsMismatch is null)
+            {
+                // 分离签名：策略由另一台设备签发，本机只持有公钥。校验失败时复用同一个闸门，
+                // 因为「按配置自动恢复」与「用安全密码确认」对两种机制是同一种处理。
+                var verification = IAppHost.GetService<ConfigPolicySignatureService>().Verify();
+                if (verification.IsConfigured && !verification.IsVerified)
+                {
+                    WriteDesktopStartupDiagnostic($"Signed policy verification failed: {verification.Status}.");
+                    settingsMismatch = new SettingsIntegrityMismatch(
+                        verification.SignedAtUtc ?? DateTimeOffset.UtcNow,
+                        verification.SignerLabel ?? verification.Status.ToString(),
+                        null);
+                }
+            }
+
+            if (settingsMismatch is { } mismatch)
             {
                 if (IAppHost.GetService<MainConfigHandler>().Data.SecuritySettings.SettingsIntegrityAction
                     == SettingsIntegrityAction.AutoRestore)
                 {
                     WriteDesktopStartupDiagnostic("Settings integrity check is attempting automatic recovery.");
-                    ShowSettingsIntegrityRecovery(desktop, startupProtocolUri, settingsMismatch);
+                    ShowSettingsIntegrityRecovery(desktop, startupProtocolUri, mismatch);
                 }
                 else
                 {
                     WriteDesktopStartupDiagnostic("Settings integrity check requires confirmation.");
-                    ShowSettingsIntegrityGate(desktop, startupProtocolUri, settingsMismatch);
+                    ShowSettingsIntegrityGate(desktop, startupProtocolUri, mismatch);
                 }
 
                 base.OnFrameworkInitializationCompleted();
@@ -1136,6 +1152,7 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<IImportExportService>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityRecoveryService>>()));
+                services.AddSingleton<ConfigPolicySignatureService>();
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");

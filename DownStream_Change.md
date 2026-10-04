@@ -32,6 +32,7 @@
 | 11 | 自有标识改名 | 包名、URI、可执行名、安装包标记、安装器、单实例名、macOS/Linux 路径；收尾需改写 §7 禁止改名表 | **高**（改动产品身份与全部兼容契约） |
 | 12 | 桌面资源覆盖加载器健壮性修复 | `OverlayAssetLoader`、桌面 `Program` 启动资源诊断 | 中（修的是启动期字体加载失败） |
 | 13 | 普通模式证明可信度评分 | 新增 Core 评分器与测试、验证设置页新增评估区块 | 中（新增功能，不动既有证明格式） |
+| 14 | 强化文件完整性校验：分离签名 | 新增 Core 签名/摘要与测试、`SecuritySettingsConfig.ConfigIntegrityMode` | 中（新增能力，默认仍为本地指纹） |
 
 ---
 
@@ -426,40 +427,6 @@
 
 ---
 
-## 16. 普通模式证明可信度评分（本分支新增）
-
-**意图**：给普通模式的证明加一个**可解释的可信度**判断——由用户选择「您所信任的来源方」，程序从满分开始，按「有哪些证据真的能支撑」扣分。它是一份**证据覆盖度**报告，不是密码学强度结论。
-
-**评分规则（`ProofTrustScorer`，Core 纯函数）**：
-
-| 规则 | 行为 |
-|---|---|
-| 来源方缺失 | 每个被勾选的来源方权重 **25**，分数 = 已获支持权重 / 已选权重 × 100（归一化，故只选一个且成立时也是 100） |
-| 链自身完整性不通过 | **直接置零**（自证不成立则无从评分），其余证据不再计入 |
-| 脉冲时效：时间戳 − 脉冲发布时间 **≤ 60 秒**（信标周期即 60 秒，同周期） | 不扣分 |
-| 脉冲时效：**60–110 秒**（跨一个周期，属容忍范围） | 分数**减半**（`PreviousPeriodFactor = 0.5`） |
-| 脉冲时效：**> 110 秒**（至少老两个周期，超出容忍） | **扣四分之三**（`BeyondToleranceFactor = 0.25`） |
-| 脉冲时效的夹逼 | 结果始终夹逼到 `[0, 100]`，**不会为负**；档位以 `ProofTrustPulseTier` 返回（SamePeriod / PreviousPeriod / BeyondTolerance） |
-| 社会见证 | 由用户提供「记忆中大致抽取时间」与「时间置信度」；高/中/低分别断言 5 分钟 / 30 分钟 / 2 小时的窗口，误差在窗口内**不扣分**；超出后按 `(误差−窗口)/窗口` 线性衰减，最多扣光该因子 |
-
-**设计与边界**：
-- 四个来源方**等权**，刻意不把密码学锚点排在人的记忆之上（那会变成密码学强度主张）。
-- Core **不产出面向用户的文案**：因子结果以 `ProofTrustFactorState`（Satisfied/Missing/PartiallySatisfied/NotAssessed）+ 数值返回，由调用方本地化。
-- 评估取**最新一份** `.srproof.json`：链位置、回执、时间戳来自 Up 文件，脉冲来自**参考兄弟文件**（`*.ownproof.json`），因此**不需要任何网络往返**；时间戳的**可信时间**由 `TimestampAuthorityClient.Validate` 离线校验后取得。
-
-**新增文件**：
-
-| 文件 | 说明 |
-|------|------|
-| `SecRandom.Core/Services/Verification/ProofTrustScorer.cs` | `ProofTrustSource` / `WitnessTimeConfidence` / `ProofTrustFactorState` / `ProofTrustInput` / `ProofTrustFactor` / `ProofTrustReport` / `ProofTrustScorer` |
-| `SecRandom.Core.Tests/ProofTrustScorerTests.cs` | 14 个用例：满分、链断置零、缺因子按比例扣、只选一个的归一化、不选来源为 0、上一周期（90 秒）减半、**110 秒边界仍属容忍**、**超过 110 秒扣四分之三**、减半/扣分不为负、同周期不罚、社会见证窗口内不扣 / 窗口外衰减 / 严重偏离不扣、未填时间视为缺因子 |
-
-**修改文件**：`SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml(.cs)`（新增 `S_ProofTrust` 区块：四个来源方勾选、日期+时间输入、置信度下拉、评估按钮与结果文本；`AssessProofTrust_OnClick` 组装输入并格式化结果）、`SecRandom/Langs/SettingsPages/General/Verification/Resources{,.en-US,.ja-JP}.resx` + Designer（新增 21 个键）。
-
-**已知缺口**：日期/时间输入用的是 Avalonia `DatePicker` + `TimePicker`，本机无法编译验证其成员名（`SelectedDate` / `SelectedTime`）；若 CI 报错，改这两处属性名即可。
-
----
-
 ## 14. 自有标识改名：由「保持 SecRandom」改为「VeriRandom 自有标识」
 
 **意图**：把 §7「内部标识保持 SecRandom」改为自有标识。该约定原本以「不与上游生态冲突」为前提；本产品的定位是**与上游 SecRandom 在同一台机器上共存**，共存意味着包名、URI、可执行名、安装目录、单实例名必须是自有标识，否则会与上游互相抢占或覆盖。§7 的禁止改名表随之整体改写。
@@ -539,4 +506,75 @@
 |------|------|
 | `SecRandom.Core/GlobalConstants.cs` | `ReadMetadata` 新增 `LooksLikeVersionTag`：Tag 必须是「数字 `MAJOR.MINOR`」形态，否则回退到 `v3.0.0-dev`（主号需与 `PluginApiVersions.Current` 保持一致）；同时把「无 informational version」时的旧占位 `v0.0.0.0` 也改为该回退值，因为主号 `0` 与本构建写出的归档主号不符。提交哈希仍照常保留 |
 | `SecRandom.Core.Tests/GlobalConstantsTests.cs` | 原 `AssemblyWithoutInformationalVersionKeepsThePlaceholder` 改为断言新回退值；新增 `TaglessGitDescribeOutputIsNotAdoptedAsTheVersion` 覆盖「工具输出不得被采纳为版本」这一回归 |
+
+
+## 16. 普通模式证明可信度评分（本分支新增）
+
+**意图**：给普通模式的证明加一个**可解释的可信度**判断——由用户选择「您所信任的来源方」，程序从满分开始，按「有哪些证据真的能支撑」扣分。它是一份**证据覆盖度**报告，不是密码学强度结论。
+
+**评分规则（`ProofTrustScorer`，Core 纯函数）**：
+
+| 规则 | 行为 |
+|---|---|
+| 来源方缺失 | 每个被勾选的来源方权重 **25**，分数 = 已获支持权重 / 已选权重 × 100（归一化，故只选一个且成立时也是 100） |
+| 链自身完整性不通过 | **直接置零**（自证不成立则无从评分），其余证据不再计入 |
+| 脉冲时效：时间戳 − 脉冲发布时间 **≤ 60 秒**（信标周期即 60 秒，同周期） | 不扣分 |
+| 脉冲时效：**60–110 秒**（跨一个周期，属容忍范围） | 分数**减半**（`PreviousPeriodFactor = 0.5`） |
+| 脉冲时效：**> 110 秒**（至少老两个周期，超出容忍） | **扣四分之三**（`BeyondToleranceFactor = 0.25`） |
+| 脉冲时效的夹逼 | 结果始终夹逼到 `[0, 100]`，**不会为负**；档位以 `ProofTrustPulseTier` 返回（SamePeriod / PreviousPeriod / BeyondTolerance） |
+| 社会见证 | 由用户提供「记忆中大致抽取时间」与「时间置信度」；高/中/低分别断言 5 分钟 / 30 分钟 / 2 小时的窗口，误差在窗口内**不扣分**；超出后按 `(误差−窗口)/窗口` 线性衰减，最多扣光该因子 |
+
+**设计与边界**：
+- 四个来源方**等权**，刻意不把密码学锚点排在人的记忆之上（那会变成密码学强度主张）。
+- Core **不产出面向用户的文案**：因子结果以 `ProofTrustFactorState`（Satisfied/Missing/PartiallySatisfied/NotAssessed）+ 数值返回，由调用方本地化。
+- 评估取**最新一份** `.srproof.json`：链位置、回执、时间戳来自 Up 文件，脉冲来自**参考兄弟文件**（`*.ownproof.json`），因此**不需要任何网络往返**；时间戳的**可信时间**由 `TimestampAuthorityClient.Validate` 离线校验后取得。
+
+**新增文件**：
+
+| 文件 | 说明 |
+|------|------|
+| `SecRandom.Core/Services/Verification/ProofTrustScorer.cs` | `ProofTrustSource` / `WitnessTimeConfidence` / `ProofTrustFactorState` / `ProofTrustInput` / `ProofTrustFactor` / `ProofTrustReport` / `ProofTrustScorer` |
+| `SecRandom.Core.Tests/ProofTrustScorerTests.cs` | 14 个用例：满分、链断置零、缺因子按比例扣、只选一个的归一化、不选来源为 0、上一周期（90 秒）减半、**110 秒边界仍属容忍**、**超过 110 秒扣四分之三**、减半/扣分不为负、同周期不罚、社会见证窗口内不扣 / 窗口外衰减 / 严重偏离不扣、未填时间视为缺因子 |
+
+**修改文件**：`SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml(.cs)`（新增 `S_ProofTrust` 区块：四个来源方勾选、日期+时间输入、置信度下拉、评估按钮与结果文本；`AssessProofTrust_OnClick` 组装输入并格式化结果）、`SecRandom/Langs/SettingsPages/General/Verification/Resources{,.en-US,.ja-JP}.resx` + Designer（新增 21 个键）。
+
+**已知缺口**：日期/时间输入用的是 Avalonia `DatePicker` + `TimePicker`，本机无法编译验证其成员名（`SelectedDate` / `SelectedTime`）；若 CI 报错，改这两处属性名即可。
+
+---
+
+## 17. 强化文件完整性校验：分离签名
+
+**意图**：现有本地指纹存放在凭据信封的**明文部分**，代码注释自己写明「能改凭据文件的人也能改这份指纹」，因此只能发现误改、不能防本地攻击者。本节的分离签名把**签发能力搬离抽取机**：私钥只存在于主持人自己的可信设备，抽取机只携带公钥，因此它能验证策略但永远无法自行签发。
+
+**必须遵守的设计决定（不得回退）**：
+- **签名私钥绝不由用户密码派生，必须随机生成。** 密码是低熵的：若私钥由它确定性派生，任何拿到「公钥 + 一条签名」的人都能离线穷举密码（对每个候选密码派生公钥去比对），签名会变成密码破解的验证器；且改密码会让已部署到抽取机的历史签名全部失效。密码/口令只在**私钥落盘时用于加密保护**，不参与密钥本身。`ConfigSignatureTests.ThePrivateKeyIsNeverDerivedFromAUserPassword` 锁住这一点。
+- **Argon2id 是口令 KDF，不是签名方案**；PKCS#8 是容器格式不是算法。实际形态：私钥 PKCS#8、公钥 SPKI、算法 **ECDSA P-256 + SHA-256**——复用本仓库既有的加密栈（`WitnessClient` 已用 `ECDsa` + `ImportSubjectPublicKeyInfo` + `DSASignatureFormat.Rfc3279DerSequence`），不引入新依赖。
+- **签名对象是策略子集的规范化摘要，不是整份 `settings.json`。** 该文件含大量运行期可变字段（窗口尺寸/最大化、最近使用列表、计时器预设、主题色等），抽取机正常使用就会改写它们；若覆盖这些，签名会在第一次普通交互后失效，功能反而不可用。
+- **公钥不做持久化钉住**（按当前决定）。指纹比对因此是**唯一**的防替换手段，界面必须显著展示简短摘要并明确要求与可信设备逐字核对；文案不得暗示比实际更强的保护——本地攻击者若同时替换公钥与签名，程序无法自行察觉。
+
+**新增文件**：
+
+| 文件 | 说明 |
+|------|------|
+| `SecRandom.Core/Enums/Configs/ConfigIntegrityMode.cs` | `Off` / `LocalFingerprint` / `SignedPolicy`；放在叶子命名空间以避免 `Core.Models` 与 `Core.Services` 相互依赖 |
+| `SecRandom.Core/Services/Security/ConfigSignature.cs` | `ConfigSignatureDocument`（formatVersion / algorithm / scope / publicKey / digest / signature / signedAtUtc / signerLabel）与 `CreateKeyPair` / `ComputeDigest` / `Sign` / `Verify` / `Fingerprint` / `IsDocumentWellFormed`；签名按**摘要原值**进行（`SignHash`），不再二次哈希 |
+| `SecRandom.Core/Services/Security/ConfigPolicyDigest.cs` | 覆盖范围：`general.securitySettings`（**排除完整性字段自身**：`SettingsIntegrityCheckEnabled` / `SettingsIntegrityAction` / `SettingsIntegrityRestoreSource` / `ConfigIntegrityMode`）、`general.verification`、`general.privacySettings`、`linkageSettings`、`fairDrawSettings`、`moreSettings.lotteryEnabled`；`ScopeId = "verirandom-config-policy/v1"`，覆盖字段集变化必须同步改该 id；投影递归**按成员名排序**，因此调整声明顺序不算策略变化 |
+| `SecRandom.Core.Tests/ConfigSignatureTests.cs` | 8 个用例：只对原摘要成立、篡改摘要被拒、**换密钥对不能冒充签发者**、翻转签名位被拒、畸形输入返回 false 而不抛、指纹稳定且与密钥绑定、文档格式校验（错误算法/版本/空 scope 被拒）、两次生成必须互相独立 |
+| `SecRandom.Core.Tests/ConfigPolicyDigestTests.cs` | 5 个用例（含 1 个 6 分支 Theory）：确定性；改动范围内设置必变；**改动运行期状态（窗口几何、计时器预设、默认名单、主题色）必须不变**；**改动完整性检查自身必须不变**；端到端微缩流程（宿主签名 → 抽取机重建摘要验签通过 → 抽取机改策略后验签失败） |
+| `SecRandom/Services/Security/ConfigPolicySignatureService.cs` | 读写部署文档 `data/config/config-policy.json`：`Verify()`（模式未开→NotConfigured；文档缺失/不可读/scope 不符→DocumentMissing/DocumentMalformed；摘要不符→SignatureInvalid；通过→Verified 并给出签名者与公钥指纹）、`Sign(privateKey, signerLabel)`（**私钥以参数传入，本类不持有**，原子写入）、`ReadDocument()`；文档只含公钥与签名，因此可安全随备份分发 |
+| `SecRandom.Core/Services/Security/ConfigSignature.cs` 增加 `PublicKeyFromPrivateKey` | 主持人粘贴既有私钥时能派生公钥，无需重新生成密钥对 |
+
+**启动闸门**：`SecRandom/App.axaml.cs` 的既有设置完整性闸门扩展为「本地指纹 **或** 分离签名」——本地指纹无异常时再校验签名，失败则复用同一套处理（`SettingsIntegrityAction.AutoRestore` 走自动恢复，否则走需要安全密码的确认闸门），并写入启动诊断。DI 注册 `ConfigPolicySignatureService`。
+
+**设置页 UI**：`SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml(.cs)` 的「防篡改」区块新增 `S_SignedPolicy` 分组——三选一模式下拉、公钥简短指纹**显著展示**（`SelectableTextBlock` + 加粗的逐字核对提示 + 状态行）、签名者标签、私钥粘贴框，以及「生成新密钥对」「签发当前配置」两个按钮。两条约定必须保持：
+- **模式切换走既有的安全授权链路**（`ApplySecuritySettingsUpdateAsync`），与本地指纹、恢复来源共用同一条密码闸门，不得直接落盘；
+- **生成密钥对**使用随机 `ECDsa` P-256（`ConfigSignature.CreateKeyPair`），私钥只经**剪贴板**交给用户带走，本机既不落盘也不存入任何字段；剪贴板不可用时宁可不生成，避免造出一个用户无法带走的私钥。**签发**经 `AuthorizeAsync(ChangeSecuritySettings)`：未启用安全保护时不弹窗，启用后按已选因子校验，被拒时保留输入框内容。
+
+**新增文案**：`SecRandom/Langs/SettingsPages/Security/` 三语各新增 20 键（`S_SignedPolicy`、`S_SignedPolicy_D`、`O_SignedPolicy_{Off,LocalFingerprint,Signed}`、`C_SignedPolicy_{Fingerprint,VerifyHint,Generate,PrivateKey,Signer,Sign}`、`M_SignedPolicy_Status_{NotConfigured,DocumentMissing,DocumentMalformed,SignatureInvalid,Verified}`、`M_SignedPolicy_{KeyGenerated,Signed,SignFailed,ClipboardUnavailable}`）。注意该页的强类型访问器在手写 partial `Resources.Security.cs`（`=> Text(nameof(...))` 风格）而**不在 `Resources.Designer.cs`**，新增键必须加到前者，否则 XAML 的 `{x:Static}` 解析不到。
+
+**已知缺口**：本机无 .NET 10 SDK，Core 用例、服务层、启动闸门与设置页 UI 均未编译验证；指纹核对仍是**人工**比对，按当前决定不做持久化钉住，因此本地攻击者同时替换公钥与签名时程序无法自行察觉。
+
+**修改文件**：`SecRandom.Core/Models/SubConfigs/SecuritySettingsConfig.cs` 新增 `ConfigIntegrityMode`（默认 `LocalFingerprint`，保持既有行为不变）；`SecRandom/App.axaml.cs` 扩展启动闸门并注册服务；`SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml(.cs)` 与 `SecRandom/Langs/SettingsPages/Security/` 承载设置页 UI 与文案。
+
+---
 

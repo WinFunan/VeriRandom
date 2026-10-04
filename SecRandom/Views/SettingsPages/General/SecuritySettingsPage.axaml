@@ -236,6 +236,64 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_SignedPolicy"
+                                    Header="{x:Static lsp:Resources.S_SignedPolicy}"
+                                    Description="{x:Static lsp:Resources.S_SignedPolicy_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi LockShieldFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox MinWidth="240"
+                              ItemsSource="{Binding SignedPolicyModeOptions}"
+                              SelectedItem="{Binding SelectedSignedPolicyModeOption, Mode=OneWay}"
+                              SelectionChanged="SignedPolicyMode_OnSelectionChanged"
+                              IsEnabled="{Binding CanEditProtectedOperations}" />
+                </fa:FASettingsExpander.Footer>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_SignedPolicy_Fingerprint}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="4" MaxWidth="460">
+                            <!-- 不做持久化钉住时，与可信设备逐字核对是唯一的防替换手段，所以指纹必须显著可见 -->
+                            <SelectableTextBlock Text="{Binding SignedPolicyFingerprint}"
+                                                 FontSize="14"
+                                                 FontWeight="SemiBold"
+                                                 HorizontalAlignment="Right" />
+                            <TextBlock Text="{Binding SignedPolicyStatus}"
+                                       TextWrapping="Wrap"
+                                       HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{x:Static lsp:Resources.C_SignedPolicy_VerifyHint}"
+                                       TextWrapping="Wrap"
+                                       HorizontalAlignment="Right"
+                                       FontWeight="Bold" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_SignedPolicy_Signer}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBox x:Name="SignedPolicySignerBox"
+                                 MinWidth="240"
+                                 Watermark="{x:Static lsp:Resources.C_SignedPolicy_Signer}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_SignedPolicy_PrivateKey}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="6" MinWidth="320">
+                            <TextBox x:Name="SignedPolicyPrivateKeyBox"
+                                     PasswordChar="*"
+                                     Watermark="{x:Static lsp:Resources.C_SignedPolicy_PrivateKey}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="{x:Static lsp:Resources.C_SignedPolicy_Generate}"
+                                        Click="SignedPolicyGenerate_OnClick" />
+                                <Button Classes="accent"
+                                        Content="{x:Static lsp:Resources.C_SignedPolicy_Sign}"
+                                        Click="SignedPolicySign_OnClick" />
+                            </StackPanel>
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
             <TextBlock Text="{Binding LockoutText}"
                        IsVisible="{Binding IsLockedOut}"
                        Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
