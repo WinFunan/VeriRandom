@@ -626,3 +626,25 @@
 
 ---
 
+## 19. 发布元数据与版本标签
+
+**意图**：`metadata.yaml` 是更新客户端「频道 → 发布标签」的解析来源，因此它必须与本分支的**产品名与发布标签**一致，否则客户端会直接拒绝整份元数据。
+
+**必须保持的两条**：
+- **`product` 必须是 `VeriRandom`。** `UpdateCenterService` 的 `Product = "VeriRandom"` 会与这份元数据做**精确匹配**（不相等即抛异常）。因此本仓库的 `metadata.yaml` 永远不能是 `product: SecRandom`——那是上游的值，会让本分支自己的元数据被自己的客户端拒绝。`MobileUpdateService` 目前仍指向上游仓库的 `metadata.yaml`，与桌面端的指向不一致，属遗留项。
+- **`channels.<频道>.tag` 必须与发布标签完全相等。** `scripts/validate-release-metadata.ps1` 在每次手动发布前做这道闸门，而发布任务检出的正是该标签，所以修正必须落在被标签指向的那个提交里。
+
+**修改文件**：
+
+| 文件 | 改动 |
+|------|------|
+| `metadata.yaml` | `product` 改为 `VeriRandom`（**必需**，见上）；`repository` / `manifest.file_name` / `manifest.signature_file_name` / `public_key_id` 改为本分支自有值，与客户端实际使用的仓库常量、清单文件名和内置验证公钥保持一致。客户端**只读取** `schema_version` / `product` / `channels`，其余字段为说明性质 |
+| `.github/workflows/build_publish.yml` | 第三方 action 固定到 commit SHA（见 §6） |
+
+**发布标签的三个注意点**：
+1. 本分支与上游共用 `vX.Y.Z` 标签体系，因此**移动一个已存在的标签前必须确认它尚未发布过产物**；标签一旦被推送并有人据此构建，移动它就会让同一版本号对应两份不同的构建。
+2. `scripts/validate-release-metadata.ps1` 只接受 `-alpha.N` / `-beta.N` 或无连字符的稳定标签，所以**不能用 `-fork.N` 这类后缀**走发布闸门——尽管 `ChangeLog.md` 的维护约定允许该后缀区分多次修订。两者冲突时**以发布闸门为准**。
+3. 无 tag 的检出会被 `GlobalConstants.ReadMetadata` 回退成主号取自 `PluginApiVersions.Current` 的 `<major>.0.0-dev`（见 §15），因此发布前必须让标签落在被构建的那个提交上。
+
+---
+

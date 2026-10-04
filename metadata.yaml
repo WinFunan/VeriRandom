@@ -1,10 +1,19 @@
+# VeriRandom 发布频道元数据（本分支自有）
+#
+# 更新客户端用它把「频道」解析成「发布标签」，再据此校验发布清单的标签与频道是否一致。
+# 其中两个字段是**承重**的，改动前务必先看 DownStream_Change.md §19：
+#   - product：必须等于 UpdateCenterService.Product（"VeriRandom"）。不相等时桌面客户端会
+#     直接拒绝整份元数据，因此本仓库的这份文件永远不能写 product: SecRandom。
+#   - channels.<频道>.tag：必须与发布标签完全相等，scripts/validate-release-metadata.ps1
+#     在每次手动发布前做这道闸门。
+# 其余字段为说明性质：客户端下载地址由自身的仓库常量拼出，清单文件名也是硬编码的。
 schema_version: 2
-product: SecRandom
-repository: SECTL/SecRandom
+product: VeriRandom
+repository: WinFunan/VeriRandom
 manifest:
-  file_name: SecRandom-update-manifest.json
-  signature_file_name: SecRandom-update-manifest.sig
-  public_key_id: secrandom-release-2026-01
+  file_name: VeriRandom-update-manifest.json
+  signature_file_name: VeriRandom-update-manifest.sig
+  public_key_id: verirandom-release-2026-01
 runtime:
   lite: net10.0-desktop
 sources:
