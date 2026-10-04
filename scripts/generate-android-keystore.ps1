@@ -25,7 +25,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$OutputDirectory = 'artifacts/android-keystore',
+    [string]$OutputDirectory,
     [string]$Alias = 'verirandom',
     [string]$StorePassword,
     [string]$KeyPassword,
@@ -62,6 +62,13 @@ if ([string]::IsNullOrWhiteSpace($KeyPassword)) {
 elseif ($KeyPassword -cne $StorePassword) {
     Write-Warning 'PKCS12 keystores require the key password to match the store password; using the keystore password for both.'
     $KeyPassword = $StorePassword
+}
+
+# Anchor the default to the repository root instead of the caller's current directory. Invoking this
+# script by absolute path from an elevated shell (whose working directory is C:\Windows\System32) used to
+# try to create C:\Windows\System32\artifacts and fail with an access-denied error.
+if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
+    $OutputDirectory = Join-Path (Split-Path -Parent $PSScriptRoot) 'artifacts/android-keystore'
 }
 
 $outputRoot = [IO.Path]::GetFullPath($OutputDirectory)
