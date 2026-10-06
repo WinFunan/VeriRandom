@@ -650,3 +650,31 @@
 
 ---
 
+## 20. 品牌图标与首启引导的社区入口
+
+**意图**：本分支的产品图标与社区入口必须是自有的，不能再显示上游 SecRandom/SECTL 的图标与链接。
+
+**图标母版**：仓库根目录的 `logo.jpg`（529×529、`Format24bppRgb`）是全部软件图标的**唯一母版**，由 PowerShell + `System.Drawing` 离线派生，不依赖任何外部转换工具。
+
+| 目标 | 尺寸 | 说明 |
+|------|------|------|
+| `SecRandom/Assets/AppLogo.png` | 512×512 | 托盘、窗口与界面内 logo 的源图。原为 128×128；所有引用处都显式指定宽高，放大不改变布局，且 HiDPI 下更清晰 |
+| `SecRandom/Assets/AppLogo.ico` | 16/24/32/48/64/128/256 共 7 档 | `System.Drawing` 的 `Icon.Save` 只能写单一尺寸，故按 ICO 容器格式**手写多尺寸**（PNG 压缩条目，Vista 起支持），保证资源管理器与任务栏取到清晰档位 |
+| `SecRandom.Android/Icon.png` | 512×512 | `AndroidManifest.xml` 的 `android:icon="@drawable/Icon"` 指向它 |
+| `resources/secrandom-icon-paper.png` | **256×256** | 同时供 README 与 Linux 包使用；Linux 会把它装到 `usr/share/icons/hicolor/**256x256**/apps/verirandom.png`，原来 128×128 与目标目录声明不符，属顺带修正 |
+| `SecRandom.iOS/.../AppIcon.appiconset/Icon-*.png` | 逐个沿用**原有像素尺寸** | 共 15 个（含 `-ipad` 变体），尺寸取自原文件，避免与 `Contents.json` 不一致 |
+
+**注意**：母版是 JPEG 且**无 alpha 通道**，派生出的图标因此**不透明**。要透明背景或圆角外留空，必须换带 alpha 的 PNG 母版重新派生。
+
+**修改文件**：
+
+| 文件 | 改动 |
+|------|------|
+| `SecRandom/Views/SettingsPages/About/AboutSettingsPage.axaml` | 版权区新增一行 `Copyright (c) 2025-<年> WinFunan`，位于原 SECTL 版权行**之上**。两行放进同一个 `StackPanel`——`FASettingsExpanderItem` 只接受单个内容子元素 |
+| `SecRandom/Views/FirstRunOobeWindow.axaml` | 首启引导结束页的链接由上游站点、上游作者 B 站与爱发电、上游 QQ 群，换成本分支社区入口：QQ 群、邮箱、哔哩哔哩、Issue、贡献指南（与关于页 `S_Community` 分组一致）。**上游链接不再出现在该页** |
+| `SecRandom/Langs/FirstRunOobe/Resources{,.en-US,.ja-JP}.resx` + `Resources.Designer.cs` | 新增 5 个 `C_Community*` 键与访问器。注意该页 Designer 是**传统 ResX 生成风格**（`ResourceManager.GetString`），不是 `Verification` 页的 `Get(nameof(...))` 风格，插入时必须匹配对应形态 |
+
+**保留未改**：`xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"` 是**代码级内部标识**（见 §7），保持 `secrandom.sectl.cn` 不变；上游的 `C_SectlWebsite` / `C_Documentation` / `C_AuthorBilibili` / `C_Sponsor` / `C_Community` 五个键**保留未删**（只是不再被该页引用），避免误删仍被别处引用的键。
+
+---
+

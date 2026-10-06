@@ -131,7 +131,7 @@ VeriRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_Documentation" xml:space="preserve"><value>VeriRandom ドキュメント</value></data>
   <data name="C_AuthorBilibili" xml:space="preserve"><value>黎泽懿_Aionflux の Bilibili</value></data>
   <data name="C_Sponsor" xml:space="preserve"><value>Afdian で支援</value></data>
-  <data name="C_Community" xml:space="preserve"><value>SECTL コミュニティグループ</value></data>
+  <data name="C_Community" xml:space="preserve"><value>SECTL コミュニティグループ</value></data><data name="C_CommunityQQGroup" xml:space="preserve"><value>QQ グループ</value></data><data name="C_CommunityEmail" xml:space="preserve"><value>メール</value></data><data name="C_CommunityBilibili" xml:space="preserve"><value>Bilibili</value></data><data name="C_CommunityIssues" xml:space="preserve"><value>問題を報告</value></data><data name="C_CommunityContributing" xml:space="preserve"><value>コントリビュート</value></data>
   <data name="C_CommunityAnswer" xml:space="preserve"><value>QQ グループ：833875216。参加回答：思拓创联/SECTL</value></data>
   <data name="C_Previous" xml:space="preserve"><value>戻る</value></data>
   <data name="C_Start" xml:space="preserve"><value>開始</value></data>

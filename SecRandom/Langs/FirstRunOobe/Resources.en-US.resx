@@ -131,7 +131,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_Documentation" xml:space="preserve"><value>VeriRandom documentation</value></data>
   <data name="C_AuthorBilibili" xml:space="preserve"><value>Lizeyi_Aionflux on Bilibili</value></data>
   <data name="C_Sponsor" xml:space="preserve"><value>Support on Afdian</value></data>
-  <data name="C_Community" xml:space="preserve"><value>SECTL community group</value></data>
+  <data name="C_Community" xml:space="preserve"><value>SECTL community group</value></data><data name="C_CommunityQQGroup" xml:space="preserve"><value>QQ group</value></data><data name="C_CommunityEmail" xml:space="preserve"><value>Email</value></data><data name="C_CommunityBilibili" xml:space="preserve"><value>Bilibili</value></data><data name="C_CommunityIssues" xml:space="preserve"><value>Report an issue</value></data><data name="C_CommunityContributing" xml:space="preserve"><value>Contributing</value></data>
   <data name="C_CommunityAnswer" xml:space="preserve"><value>QQ group: 833875216. Join answer: 思拓创联/SECTL</value></data>
   <data name="C_Previous" xml:space="preserve"><value>Previous</value></data>
   <data name="C_Start" xml:space="preserve"><value>Start</value></data>

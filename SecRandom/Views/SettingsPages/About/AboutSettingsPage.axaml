@@ -210,11 +210,19 @@
                 </fa:FASettingsExpander.IconSource>
 
                 <fa:FASettingsExpanderItem x:Name="S_App_License" Description="{x:Static lc:Resources.App_License}">
-                    <TextBlock Background="Transparent">
-                        <Run Text="Copyright (c) 2025-" />
-                        <Run Text="{Binding Year, Source={x:Static system:DateTime.Now}, Mode=OneWay}" />
-                        SECTL
-                    </TextBlock>
+                    <!-- 本分支的版权行在上，上游 SECTL 的版权行保持原样在下 -->
+                    <StackPanel Background="Transparent">
+                        <TextBlock>
+                            <Run Text="Copyright (c) 2025-" />
+                            <Run Text="{Binding Year, Source={x:Static system:DateTime.Now}, Mode=OneWay}" />
+                            WinFunan
+                        </TextBlock>
+                        <TextBlock>
+                            <Run Text="Copyright (c) 2025-" />
+                            <Run Text="{Binding Year, Source={x:Static system:DateTime.Now}, Mode=OneWay}" />
+                            SECTL
+                        </TextBlock>
+                    </StackPanel>
                 </fa:FASettingsExpanderItem>
 
                 <fa:FASettingsExpanderItem x:Name="S_App_ForkNotice"

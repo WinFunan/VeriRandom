@@ -409,20 +409,23 @@
                                         <Setter Property="Padding" Value="4" />
                                     </Style>
                                 </WrapPanel.Styles>
-                                <HyperlinkButton CommandParameter="https://sectl.cn/" Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_SectlWebsite}" />
-                                <HyperlinkButton CommandParameter="https://secrandom.sectl.cn/"
+                                <!-- 本分支社区入口，与关于页的 S_Community 分组一致；上游站点、上游作者与赞助链接
+                                     不再出现在此页 -->
+                                <HyperlinkButton CommandParameter="https://qm.qq.com/q/EvhyCJWqCA"
                                                  Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_Documentation}" />
-                                <HyperlinkButton CommandParameter="https://space.bilibili.com/520571577"
+                                                 Content="{x:Static langs:Resources.C_CommunityQQGroup}" />
+                                <HyperlinkButton CommandParameter="mailto:love-code-yeyixiao@outlook.com"
                                                  Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_AuthorBilibili}" />
-                                <HyperlinkButton CommandParameter="https://afdian.com/a/lzy0983"
+                                                 Content="{x:Static langs:Resources.C_CommunityEmail}" />
+                                <HyperlinkButton CommandParameter="https://space.bilibili.com/510993086"
                                                  Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_Sponsor}" />
-                                <HyperlinkButton CommandParameter="https://qm.qq.com/q/k0l04MbSXS"
+                                                 Content="{x:Static langs:Resources.C_CommunityBilibili}" />
+                                <HyperlinkButton CommandParameter="https://github.com/WinFunan/VeriRandom/issues"
                                                  Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_Community}" />
+                                                 Content="{x:Static langs:Resources.C_CommunityIssues}" />
+                                <HyperlinkButton CommandParameter="https://github.com/WinFunan/VeriRandom/blob/master/CONTRIBUTING.md"
+                                                 Click="OpenLink_OnClick"
+                                                 Content="{x:Static langs:Resources.C_CommunityContributing}" />
                             </WrapPanel>
                             <Border Padding="12,8" BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                                     BorderThickness="1" CornerRadius="6">

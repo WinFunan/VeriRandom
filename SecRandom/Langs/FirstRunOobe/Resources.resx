@@ -142,7 +142,7 @@ VeriRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改�
   <data name="C_Documentation" xml:space="preserve"><value>VeriRandom 文档</value></data>
   <data name="C_AuthorBilibili" xml:space="preserve"><value>黎泽懿_Aionflux 的哔哩哔哩</value></data>
   <data name="C_Sponsor" xml:space="preserve"><value>爱发电赞助</value></data>
-  <data name="C_Community" xml:space="preserve"><value>SECTL 社区群</value></data>
+  <data name="C_Community" xml:space="preserve"><value>SECTL 社区群</value></data><data name="C_CommunityQQGroup" xml:space="preserve"><value>QQ 群</value></data><data name="C_CommunityEmail" xml:space="preserve"><value>邮箱</value></data><data name="C_CommunityBilibili" xml:space="preserve"><value>哔哩哔哩</value></data><data name="C_CommunityIssues" xml:space="preserve"><value>问题反馈</value></data><data name="C_CommunityContributing" xml:space="preserve"><value>贡献指南</value></data>
   <data name="C_CommunityAnswer" xml:space="preserve"><value>QQ群：833875216；进群答案：思拓创联/SECTL</value></data>
   <data name="C_Previous" xml:space="preserve"><value>上一步</value></data>
   <data name="C_Start" xml:space="preserve"><value>开始</value></data>
