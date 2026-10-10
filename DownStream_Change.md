@@ -664,7 +664,7 @@
 | `resources/secrandom-icon-paper.png` | **256×256** | 同时供 README 与 Linux 包使用；Linux 会把它装到 `usr/share/icons/hicolor/**256x256**/apps/verirandom.png`，原来 128×128 与目标目录声明不符，属顺带修正 |
 | `SecRandom.iOS/.../AppIcon.appiconset/Icon-*.png` | 逐个沿用**原有像素尺寸** | 共 15 个（含 `-ipad` 变体），尺寸取自原文件，避免与 `Contents.json` 不一致 |
 
-**注意**：母版是 JPEG 且**无 alpha 通道**，派生出的图标因此**不透明**。要透明背景或圆角外留空，必须换带 alpha 的 PNG 母版重新派生。
+**圆角与 alpha**：母版是 JPEG 且**无 alpha 通道**，所以圆角必须在派生时切出来——桌面与 Android 那套用「反相路径（外方框 + 内圆角，`FillMode.Alternate` 只剩四角）+ `CompositingMode.SourceCopy`」把四角替换成透明，比例 **22.37%**（macOS 图标比例，可调），因此它们是 `Format32bppArgb` 且四角透明。**iOS 的 AppIcon 必须保持方形且不透明**：iOS 会自行套用圆角遮罩，带 alpha 的 AppIcon 也不被接受，所以那 15 个文件**不参与圆角处理**，脚本改动它们即为错误。
 
 **修改文件**：
 
