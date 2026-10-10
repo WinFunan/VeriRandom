@@ -20,7 +20,7 @@ namespace SecRandom.Core.Services.Security;
 public static class ConfigPolicyDigest
 {
     /// <summary>Identifies the covered field set. Adding or removing a covered setting must change this id.</summary>
-    public const string ScopeId = "verirandom-config-policy/v1";
+    public const string ScopeId = "verirandom-config-policy/v2";
 
     /// <summary>
     ///     Security fields that describe the integrity check itself. Covering them would make switching the
@@ -40,7 +40,16 @@ public static class ConfigPolicyDigest
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public static byte[] Compute(MainConfigModel model)
+    /// <summary>
+    ///     Computes the digest of the policy this machine is running.
+    /// </summary>
+    /// <param name="rosterDigest">
+    ///     Digest of the roster/list files, or null when the operator did not opt into covering them. The
+    ///     member's <em>presence</em> is what records that choice: a signature made with rosters covered must
+    ///     not verify against a policy that no longer covers them, and turning the option on must invalidate
+    ///     the previous signature rather than silently widening the scope.
+    /// </param>
+    public static byte[] Compute(MainConfigModel model, string? rosterDigest = null)
     {
         ArgumentNullException.ThrowIfNull(model);
 
@@ -56,6 +65,9 @@ public static class ConfigPolicyDigest
             ["fairDrawSettings"] = Project(model.FairDrawSettings),
             ["lotteryEnabled"] = JsonValue.Create(model.MoreSettings.LotteryEnabled)
         };
+
+        if (!string.IsNullOrWhiteSpace(rosterDigest))
+            scope["rosters"] = JsonValue.Create(rosterDigest);
 
         return SHA256.HashData(Encoding.UTF8.GetBytes(scope.ToJsonString(SerializerOptions)));
     }

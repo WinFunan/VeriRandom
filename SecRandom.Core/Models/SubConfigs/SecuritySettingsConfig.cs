@@ -34,6 +34,13 @@ public partial class SecuritySettingsConfig : ObservableObject
     /// </summary>
     [ObservableProperty] private ConfigIntegrityMode _configIntegrityMode = ConfigIntegrityMode.LocalFingerprint;
 
+    /// <summary>
+    ///     Whether the signed policy also covers the roster/list files. Opt-in on purpose: covering them means
+    ///     every list edit invalidates the signature and needs a re-sign, which is right for a locked-down draw
+    ///     machine and wrong for one whose rosters change during the term.
+    /// </summary>
+    [ObservableProperty] private bool _configIntegrityIncludeRosters;
+
     [ObservableProperty] private bool _protectOpenSettings;
     [ObservableProperty] private bool _protectToggleMainWindow;
     [ObservableProperty] private bool _protectToggleFloatingWindow;

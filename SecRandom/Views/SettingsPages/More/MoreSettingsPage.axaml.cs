@@ -39,6 +39,8 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
         Settings = ConfigHandler.Data.MoreSettings;
         DataContext = this;
         InitializeComponent();
+        // 被覆盖的只有「抽奖功能总开关」这一项，其余页面管理项不在策略范围内
+        ConfigPolicyLock.Apply(S_LotteryEnabled);
         Settings.PropertyChanged += SettingsOnPropertyChanged;
         ConfigHandler.Reloaded += ConfigHandlerOnReloaded;
     }

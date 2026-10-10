@@ -21,6 +21,8 @@ public partial class PrivacySettingsPage : UserControl
         Settings = ViewModel.Config.General.PrivacySettings;
         DataContext = this;
         InitializeComponent();
+        // 隐私设置整体被策略覆盖
+        ConfigPolicyLock.Apply(S_SentryTelemetry_Enabled, S_OnlineStatus_Mode);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }

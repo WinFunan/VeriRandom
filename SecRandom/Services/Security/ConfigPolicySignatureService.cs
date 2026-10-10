@@ -106,6 +106,15 @@ public sealed class ConfigPolicySignatureService(
     }
 
     /// <summary>
+    ///     True while a deployed signed policy is in force. Its covered settings must then be locked in the UI:
+    ///     any edit is exactly what invalidates this signature, so the operator is not allowed to make one by
+    ///     accident. The integrity fields themselves stay editable because they are deliberately outside the
+    ///     covered set — switching the mode off, changing the policy, re-signing, and switching it back on is
+    ///     the intended way to change a covered setting.
+    /// </summary>
+    public bool IsPolicyLockEnforced => Verify().IsVerified;
+
+    /// <summary>
     ///     Signs the policy this machine is currently running and writes the document atomically, so a failed
     ///     write can never leave a half-written signature on disk. Intended to run on the trusted device.
     /// </summary>

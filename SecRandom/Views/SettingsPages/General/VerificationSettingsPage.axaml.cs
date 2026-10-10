@@ -104,6 +104,9 @@ public partial class VerificationSettingsPage : UserControl
     {
         DataContext = this;
         InitializeComponent();
+        // 有签名在生效时，抽取验证设置整体属于被覆盖范围：改动它等于让签名失效，故禁用这些输入
+        ConfigPolicyLock.Apply(
+            S_VerificationMode, S_BeaconEntropy, S_TimestampAuthority, S_BeaconEndpoint, S_AttestationUpload);
         _restoringTimestampAuthority = true;
         TimestampAuthorityToggle.IsChecked = ConfigHandler.Data.General.Verification.TimestampAuthorityEnabled;
         _restoringTimestampAuthority = false;
