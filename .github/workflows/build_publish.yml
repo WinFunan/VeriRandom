@@ -1001,6 +1001,7 @@ jobs:
           }
 
       - name: Generate signed update manifest
+        if: ${{ false }}
         shell: pwsh
         env:
           RELEASE_TAG: ${{ github.event.inputs.release_tag }}
