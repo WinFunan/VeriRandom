@@ -85,6 +85,19 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <!--
+                随机数页的高级输出（原始熵 / 按位取值）默认关闭：它改变"结果到底是什么"，不是日常操作。
+                这里只提供开关，具体选项在随机数页自己的折叠块里
+            -->
+            <fa:FASettingsExpander x:Name="S_RawRandomAdvanced"
+                                   Header="{x:Static lsp:Resources.S_RawRandomAdvanced}"
+                                   Description="{x:Static lsp:Resources.S_RawRandomAdvanced_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi NumberSymbolFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.RawRandomAdvancedOptionsEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_LotteryPanelPosition"
                                    Header="{x:Static lsp:Resources.S_LotteryPanelPosition}"
                                    Description="{x:Static lsp:Resources.S_LotteryPanelPosition_D}"

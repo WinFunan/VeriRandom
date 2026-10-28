@@ -176,4 +176,6 @@
   <data name="C_ShortcutExampleLottery" xml:space="preserve">
     <value>例如 Ctrl+Alt+L</value>
   </data>
+  <data name="S_RawRandomAdvanced" xml:space="preserve"><value>随机数高级输出</value></data>
+  <data name="S_RawRandomAdvanced_D" xml:space="preserve"><value>允许在「随机数」页输出原始熵、按位取值并按十六进制或 ASCII 显示；关闭时该页不显示高级选项</value></data>
 </root>

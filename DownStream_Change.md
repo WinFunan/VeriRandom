@@ -1216,3 +1216,34 @@ version(1) flags(1) count(1) delay×10(1) inputs(1) armedSeconds(1) expiresUnixD
 
 ---
 
+## 45. 随机数页：批量、指定集合、高级输出；证明详情；浮窗按钮；课件标记触发
+
+同一批下游改动，按提交顺序记录（`880a2fda` → `37152121`、`0107dc80`、`0e4b4378` 等）：
+
+| 文件 | 改动 |
+|---|---|
+| `SecRandom.Core/Services/Draw/RejectionSampler.cs` | 新增 `SampleFromSet` / `SampleMany` / `SampleManyFromSet`；批次每项用 `SHA256("VeriRandomRaw/v1/batch" ‖ i ‖ 主种子)` 派生独立种子 |
+| `SecRandom.Core/Models/Verification/RawNumberProof.cs` | 新增 `Values`（候选集合）、`Results`（整批结果）；两者**只在存在时**进入载荷哈希，否则老记录摘要会变 |
+| `SecRandom.Core/Services/Verification/RawEntropyOutput.cs` | 新增：按位展开（SHA-256 计数器模式）、大写十六进制、可打印 ASCII（**拒绝采样 188 = 2×94**，不用取模）、香农熵测量 |
+| `SecRandom/Services/Verification/RawNumberProofService.cs` | `Verify` 增加批次/集合分支（整批逐位比对，不是只看第一位） |
+| `SecRandom.Core/Models/SubConfigs/MoreSettingsConfig.cs` | `RawRandomUseValues` / `RawRandomValuesText` / `RawRandomAdvancedOptionsEnabled` / `RawRandomRawEntropyEnabled` / `RawRandomBitCount` / `RawRandomAsciiOutput` |
+| `SecRandom.Core/Models/SubConfigs/FloatingWindowSettingsConfig.cs` | `ShowRawRandomButton`，**默认 false** |
+| `SecRandom/Views/FloatingWindow.axaml.cs` | 工厂 `"raw_random"` + 可见列表 + `GetRawRandomButton`（`App.ToggleMainWindow("main.rawRandom")`） |
+| `SecRandom/Views/SettingsPages/More/MoreSettingsPage.axaml` | 「随机数高级输出」开关（`S_RawRandomAdvanced`），高级块的总闸 |
+| `SecRandom/ViewModels/MainPages/RawRandomPageViewModel.cs`、`Views/MainPages/RawRandomPage.axaml` | 生成个数、指定集合、高级折叠块（默认收起）、信息熵行 |
+
+**批量为什么不是"连续抽几次"**：每个位置的值只依赖（主种子，索引），所以校验端可以单独重算第 N 个值，而整个批次仍绑定同一个种子。重算入口是 `MatchesRecordedValues`。
+
+**集合为什么必须进证明**：区间能从 `lower/upper` 复原，集合不能；不记录就等于这份证明无法复核。重复值在解析时折叠成 `SortedSet`，否则输入 `5,5,10` 会静默给 5 双倍权重。
+
+**高级输出记种子、不记展示文本**：文本是 `(种子, 位数, 格式)` 的确定性函数，`SeedDigest` 已入证明，再存一份只是重复。位数越宽不等于熵越多，界面同时显示实测香农熵与熵源上限（256 bit）。
+
+**浮窗按钮默认关闭**：浮窗是教室里长期挂着的东西，每个按钮都是"点错就抽一次"的操作面。
+
+**证明详细信息**（`0107dc80`）：`ProofReplayFileService.TryBuildDetails` 重读文件构建 `ProofDetails`，弹窗顶部固定提示"为证明文件自身宣称的信息"。**审计承诺是本机重算的** `SHA256(auditPayload)`，不是读取的字段。
+
+**结果浮窗触控**（`89279662` / `bc18d804`）：鼠标走 `BeginMoveDrag`/`BeginResizeDrag`；**触控走手动移动与缩放**（原生循环是鼠标语义，手指按下去毫无反应），并用 `_manualPointer` 闸门保证同一时刻只有一个指针（此前第二根手指重入原生循环直接崩溃）。尺寸记忆在 `MoreSettings.ResultMiniWindowWidth/Height`，位置刻意不记。
+
+**课件标记自动识别**（`2965f24f` → `0e4b4378`）：`SlideTriggerWatcher` 每 100 ms 读 `GetLastInputInfo`，输入变化且前台是全屏放映时，按 +200/600/1200 ms 抓帧解码；`SlideTriggerExecutor` 先 `EvaluateGate(RollCallStart)`，不允许就放弃（不弹密码框），否则 `AuthorizeAsync` → `RollCallDrawService.DrawAsync`。**「可重复」「忽略历史权重」在 `RollCallDrawRequest` 里没有位置，因此命中即跳过并记 warning，而不是按全局配置硬抽**。手动「检测当前画面」改读**所有显示器**（`CaptureAllDisplays`），因为点它时前台一定是设置窗口。
+
+---
