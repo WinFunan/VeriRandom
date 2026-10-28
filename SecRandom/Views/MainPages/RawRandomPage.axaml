@@ -79,6 +79,12 @@
                                   IsChecked="{Binding ViewModel.IsSettingsLocked, Mode=OneWay}"
                                   Click="LockSettings_OnClick" />
 
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_BatchCount}" />
+                            <NumericUpDown Minimum="1" Maximum="50" Value="{Binding ViewModel.Count}" Width="140"
+                                           IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+                        </StackPanel>
+
                         <Separator />
 
                         <CheckBox Content="{x:Static langs:Resources.C_UseValues}"

@@ -31,6 +31,7 @@ public class Resources
         set => resourceCulture = value;
     }
 
+    public static string C_BatchCount => ResourceManager.GetString(nameof(C_BatchCount), resourceCulture)!;
     public static string C_EntropySources => ResourceManager.GetString(nameof(C_EntropySources), resourceCulture)!;
     public static string C_Generate => ResourceManager.GetString(nameof(C_Generate), resourceCulture)!;
     public static string C_LocalCsprng => ResourceManager.GetString(nameof(C_LocalCsprng), resourceCulture)!;

@@ -104,10 +104,7 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
             proof.SeedDigest,
             StringComparison.Ordinal);
 
-        var valueMatches = seedMatches
-                           && (proof.Values is { Count: > 0 } set
-                               ? RejectionSampler.SampleFromSet(set, seed) == proof.Value
-                               : RejectionSampler.Sample(proof.LowerBound, proof.UpperBound, seed) == proof.Value);
+        var valueMatches = seedMatches && MatchesRecordedValues(proof, seed);
 
         var chainMatches = string.Equals(
             RawNumberProofHashing.ComputeSelfHash(
@@ -170,6 +167,28 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
             files.Count,
             failed,
             files.Count == 0 ? 0 : files[^1].Proof.Index);
+    }
+
+    /// <summary>
+    ///     Recomputes the recorded value(s) from the seed. A batch is recomputed as a batch — every index from the same
+    ///     master seed — so a record whose middle entry was edited fails instead of passing on its first value alone.
+    /// </summary>
+    private static bool MatchesRecordedValues(RawNumberProof proof, byte[] seed)
+    {
+        if (proof.Results is { Count: > 1 } results)
+        {
+            var recomputed = proof.Values is { Count: > 0 } set
+                ? RejectionSampler.SampleManyFromSet(set, seed, results.Count)
+                : RejectionSampler.SampleMany(proof.LowerBound, proof.UpperBound, seed, results.Count);
+
+            return recomputed.SequenceEqual(results);
+        }
+
+        var single = proof.Values is { Count: > 0 } singleSet
+            ? RejectionSampler.SampleFromSet(singleSet, seed)
+            : RejectionSampler.Sample(proof.LowerBound, proof.UpperBound, seed);
+
+        return single == proof.Value;
     }
 
     private static string ProofDirectory => Utils.GetFilePath("proofs", "raw");

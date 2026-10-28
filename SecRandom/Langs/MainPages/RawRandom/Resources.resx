@@ -35,4 +35,5 @@
   <data name="C_UseValues" xml:space="preserve"><value>使用指定集合</value></data>
   <data name="C_ValuesWatermark" xml:space="preserve"><value>只从这些值里抽，例如 5,10（逗号或空格分隔）</value></data>
   <data name="M_ValuesInvalid" xml:space="preserve"><value>集合无效：请至少填一个整数</value></data>
+  <data name="C_BatchCount" xml:space="preserve"><value>生成个数</value></data>
 </root>

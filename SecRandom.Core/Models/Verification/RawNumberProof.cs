@@ -43,6 +43,12 @@ public sealed class RawNumberProof
     public long Value { get; set; }
 
     /// <summary>
+    ///     Every value produced in this generation, or null for a single-value record. <see cref="Value" /> repeats the
+    ///     first entry so older readers still show something sensible.
+    /// </summary>
+    public List<long>? Results { get; set; }
+
+    /// <summary>
     ///     The explicit candidate set the value was drawn from, or null for a plain range draw. Recorded because a set
     ///     cannot be reconstructed from a lower/upper bound, and without it the record could not be recomputed.
     /// </summary>
@@ -121,6 +127,10 @@ public static class RawNumberProofHashing
         // Appended only when a set was used, so a range record written before sets existed keeps its exact digest.
         if (proof.Values is { Count: > 0 } values)
             builder.Append("|set:").AppendJoin(',', values);
+
+        // Same rule for batches: a single-value record keeps the digest it had before batches existed.
+        if (proof.Results is { Count: > 1 } results)
+            builder.Append("|results:").AppendJoin(',', results);
 
         foreach (var entropy in proof.Entropy)
             builder.Append('|')

@@ -35,4 +35,5 @@
   <data name="C_UseValues" xml:space="preserve"><value>指定した集合から抽選</value></data>
   <data name="C_ValuesWatermark" xml:space="preserve"><value>この値だけから抽選します。例：5,10（カンマまたは空白区切り）</value></data>
   <data name="M_ValuesInvalid" xml:space="preserve"><value>集合が無効です：整数を 1 つ以上入力してください</value></data>
+  <data name="C_BatchCount" xml:space="preserve"><value>生成する個数</value></data>
 </root>

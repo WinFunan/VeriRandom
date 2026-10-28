@@ -110,6 +110,9 @@ public partial class RawRandomPageViewModel : ViewModelBase
     [ObservableProperty] private string _upperBoundText = "100";
     [ObservableProperty] private bool _useValues;
     [ObservableProperty] private string _valuesText = string.Empty;
+
+    /// <summary>How many values one generation produces. Each value is independent; duplicates inside a batch are fine.</summary>
+    [ObservableProperty] private int _count = 1;
     [ObservableProperty] private bool _isSettingsLocked;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _resultText = string.Empty;
@@ -166,15 +169,17 @@ public partial class RawRandomPageViewModel : ViewModelBase
             var seed = RawNumberSeedDerivation.Derive(entropy
                 .Select(item => new RawNumberEntropyInput(item.SourceId, item.OutputValue))
                 .ToList());
-            var value = values.Count > 0
-                ? RejectionSampler.SampleFromSet(values, seed)
-                : RejectionSampler.Sample(lower, upper, seed);
+            var count = Math.Clamp(Count, 1, 50);
+            var results = values.Count > 0
+                ? RejectionSampler.SampleManyFromSet(values, seed, count)
+                : RejectionSampler.SampleMany(lower, upper, seed, count);
 
             var proof = new RawNumberProof
             {
                 LowerBound = lower,
                 UpperBound = upper,
-                Value = value,
+                Value = results[0],
+                Results = results.Length > 1 ? [.. results] : null,
                 Values = values.Count > 0 ? [.. values] : null,
                 Verifiable = !IsVerifiabilityReduced,
                 SeedDigest = RawNumberSeedDerivation.Digest(seed),
@@ -187,7 +192,7 @@ public partial class RawRandomPageViewModel : ViewModelBase
             var path = await _proofService.SaveAsync(proof).ConfigureAwait(true);
             var verification = _proofService.Verify(proof);
 
-            ResultText = string.Format(Resources.M_ResultFormat, value);
+            ResultText = string.Format(Resources.M_ResultFormat, string.Join("、", results));
             StatusText = verification.Succeeded
                 ? string.Format(Resources.M_ProofSavedFormat, Path.GetFileName(path))
                 : Resources.M_ProofVerifyFailed;

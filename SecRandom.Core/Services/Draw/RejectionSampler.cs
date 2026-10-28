@@ -32,6 +32,8 @@ public static class RejectionSampler
 {
     private static readonly byte[] DomainSeparator = Encoding.ASCII.GetBytes("VeriRandomRaw/v1");
 
+    private static readonly byte[] BatchDomainSeparator = Encoding.ASCII.GetBytes("VeriRandomRaw/v1/batch");
+
     /// <summary>How many candidates a single seed may be asked for before the caller is told the range is unusable.</summary>
     private const int MaximumAttempts = 1024;
 
@@ -104,6 +106,64 @@ public static class RejectionSampler
 
         throw new InvalidOperationException(
             "Rejection sampling did not settle within the attempt budget; the set is too large for the sample width.");
+    }
+
+    /// <summary>
+    ///     Several independent values from one range. Each index gets its own derived seed, so the batch is
+    ///     reproducible as a whole: a verifier recomputes every value from the master seed and the index, and a
+    ///     repeated value inside the batch is a legitimate outcome rather than a duplicated draw.
+    /// </summary>
+    public static long[] SampleMany(long lower, long upper, ReadOnlySpan<byte> seed, int count)
+    {
+        if (count <= 0)
+            return [];
+
+        var results = new long[count];
+        Span<byte> indexSeed = stackalloc byte[32];
+
+        for (var index = 0; index < count; index++)
+        {
+            DeriveIndexSeed(seed, index, indexSeed);
+            results[index] = Sample(lower, upper, indexSeed);
+        }
+
+        return results;
+    }
+
+    /// <summary>Batch form of <see cref="SampleFromSet" />, with the same per-index seed derivation.</summary>
+    public static long[] SampleManyFromSet(IReadOnlyList<long> values, ReadOnlySpan<byte> seed, int count)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        if (count <= 0)
+            return [];
+
+        var results = new long[count];
+        Span<byte> indexSeed = stackalloc byte[32];
+
+        for (var index = 0; index < count; index++)
+        {
+            DeriveIndexSeed(seed, index, indexSeed);
+            results[index] = SampleFromSet(values, indexSeed);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    ///     Seed for one position in a batch. Derived rather than consuming a stream, so value <c>i</c> depends only on
+    ///     the master seed and <c>i</c> — which is what makes "recompute the third value" possible without replaying
+    ///     the first two.
+    /// </summary>
+    private static void DeriveIndexSeed(ReadOnlySpan<byte> seed, int index, Span<byte> destination)
+    {
+        Span<byte> material = stackalloc byte[BatchDomainSeparator.Length + sizeof(int)];
+        BatchDomainSeparator.CopyTo(material);
+        BinaryPrimitives.WriteInt32BigEndian(material[BatchDomainSeparator.Length..], index);
+
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        hash.AppendData(material);
+        hash.AppendData(seed);
+        hash.GetHashAndReset(destination);
     }
 
     /// <summary>SHA-256 counter mode over the seed, so one seed yields an unlimited stream of independent candidates.</summary>
