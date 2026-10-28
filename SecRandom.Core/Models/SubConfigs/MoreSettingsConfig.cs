@@ -69,6 +69,11 @@ public partial class MoreSettingsConfig : ObservableObject
     [ObservableProperty] private long _rawRandomLowerBound;
     [ObservableProperty] private long _rawRandomUpperBound = 100;
 
+    // Explicit candidate set, e.g. "5,10". A set is what a teacher actually needs when the values are fixed tiers
+    // (money denominations, seat numbers); a range cannot express that without allowing the values in between.
+    [ObservableProperty] private bool _rawRandomUseValues;
+    [ObservableProperty] private string _rawRandomValuesText = string.Empty;
+
     // Result mini-window size. Resizing it on a classroom touchscreen is a deliberate, effortful action, so the
     // chosen size is remembered; the position is not, because the card re-centres on whichever display the app runs on
     // and a remembered position from a disconnected monitor would put it off-screen.

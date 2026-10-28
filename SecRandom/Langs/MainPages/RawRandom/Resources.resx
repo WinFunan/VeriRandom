@@ -32,4 +32,7 @@
   <data name="M_ProofVerifyFailed" xml:space="preserve"><value>结果已生成，但证明自校验未通过：请勿使用这份记录，并把日志反馈给开发者</value></data>
   <data name="M_UnlockCancelled" xml:space="preserve"><value>未通过验证，仍保持锁定</value></data>
   <data name="M_Unlocked" xml:space="preserve"><value>已解锁，范围与熵源可以修改</value></data>
+  <data name="C_UseValues" xml:space="preserve"><value>使用指定集合</value></data>
+  <data name="C_ValuesWatermark" xml:space="preserve"><value>只从这些值里抽，例如 5,10（逗号或空格分隔）</value></data>
+  <data name="M_ValuesInvalid" xml:space="preserve"><value>集合无效：请至少填一个整数</value></data>
 </root>

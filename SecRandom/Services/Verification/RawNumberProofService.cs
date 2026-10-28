@@ -105,7 +105,9 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
             StringComparison.Ordinal);
 
         var valueMatches = seedMatches
-                           && RejectionSampler.Sample(proof.LowerBound, proof.UpperBound, seed) == proof.Value;
+                           && (proof.Values is { Count: > 0 } set
+                               ? RejectionSampler.SampleFromSet(set, seed) == proof.Value
+                               : RejectionSampler.Sample(proof.LowerBound, proof.UpperBound, seed) == proof.Value);
 
         var chainMatches = string.Equals(
             RawNumberProofHashing.ComputeSelfHash(

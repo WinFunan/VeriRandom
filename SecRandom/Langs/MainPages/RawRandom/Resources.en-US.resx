@@ -32,4 +32,7 @@
   <data name="M_ProofVerifyFailed" xml:space="preserve"><value>The number was generated, but the proof failed its own check: do not use this record, and report it together with the log</value></data>
   <data name="M_UnlockCancelled" xml:space="preserve"><value>Verification was not completed, so the lock stays on</value></data>
   <data name="M_Unlocked" xml:space="preserve"><value>Unlocked: the range and entropy sources can be changed</value></data>
+  <data name="C_UseValues" xml:space="preserve"><value>Draw from a specific set</value></data>
+  <data name="C_ValuesWatermark" xml:space="preserve"><value>Only these values, e.g. 5,10 (comma or space separated)</value></data>
+  <data name="M_ValuesInvalid" xml:space="preserve"><value>Invalid set: enter at least one whole number</value></data>
 </root>

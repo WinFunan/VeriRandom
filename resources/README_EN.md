@@ -29,6 +29,25 @@
 
 VeriRandom is a fair random-selection application for classrooms, teams, events, decision-making, and other scenarios.
 
+## Fork-specific features
+
+These are the capabilities this fork adds on top of upstream SecRandom. The sections after this one describe behaviour both projects share.
+
+1. **NIST Beacon entropy and Up/Own dual-chain proofs** — an authoritative external beacon can seed a draw, so the operator cannot inject entropy of their own; Up-chain nodes stay readable after a migration to upstream.
+2. **Proof trust scoring** — a built-in evidence grader takes the sources the operator trusts (chain integrity, timestamp, server receipt, human time attestation) and produces an explainable report instead of leaving trust to judgement.
+3. **TSA timestamping can be switched off** — turning it off raises a dialog explaining how the beacon period anchor depends on it; the privacy page discloses that a time-stamp request sends de-identified data to WoTrus.
+4. **Cross-border transfer gate, nothing uploaded by default** — every path that could send data to SECTL goes through one gate, and uploading a draw to the upstream witness service is off unless it is turned on.
+5. **More conservative privacy defaults** — telemetry and online status are both off on a fresh install.
+6. **Detached configuration signing** — the private key stays on the operator's trusted device while the draw machine holds only the public key, so a tampered policy is refused at startup; the public key fingerprint is shown for comparison.
+7. **TOTP alone is disabled** — a TOTP code can no longer be the only factor; it must pair with a password or a USB key, and leftover standalone seeds are cleaned up on upgrade.
+8. **Independent product identity** — its own program name, install directory, `verirandom://` scheme, single-instance name and installer id, so it coexists with SecRandom on one machine; the legacy `secrandom://` scheme is opt-in.
+9. **Two quick-draw refinements** — focus returns to the previous window after the quick-draw closes, and beacon pulses can be prefetched to remove the network pause.
+10. **Proof replay** — replays a proof locally against a roster you supply and compares the recomputed names with what was displayed, which upstream verification does not do.
+11. **Raw random number page** — generates a raw number inside a range and immediately writes its own proof record, and warns on the spot when a source that cannot be re-checked later (random.org, the local CSPRNG) is mixed in.
+12. **Courseware markers** — a QR code pasted onto a slide starts the draw with the parameters it carries when that slide is shown, so a presentation clicker only has to turn pages.
+13. **Proof details** — shows the same public parameters a server-side verification page shows, under a notice that they are what the file claims rather than a conclusion checked locally.
+14. **Resizable result card** — the floating result card can be dragged and resized from any edge or corner, remembers its size, and works with touch.
+
 ## Features
 
 ### Draw workflows

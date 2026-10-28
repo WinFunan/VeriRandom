@@ -32,4 +32,7 @@
   <data name="M_ProofVerifyFailed" xml:space="preserve"><value>乱数は生成されましたが証明の自己チェックに失敗しました。この記録は使わず、ログとともに報告してください</value></data>
   <data name="M_UnlockCancelled" xml:space="preserve"><value>検証が完了しなかったため、ロックは維持されます</value></data>
   <data name="M_Unlocked" xml:space="preserve"><value>ロックを解除しました。範囲とエントロピー源を変更できます</value></data>
+  <data name="C_UseValues" xml:space="preserve"><value>指定した集合から抽選</value></data>
+  <data name="C_ValuesWatermark" xml:space="preserve"><value>この値だけから抽選します。例：5,10（カンマまたは空白区切り）</value></data>
+  <data name="M_ValuesInvalid" xml:space="preserve"><value>集合が無効です：整数を 1 つ以上入力してください</value></data>
 </root>

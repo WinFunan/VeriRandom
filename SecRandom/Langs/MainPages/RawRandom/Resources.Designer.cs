@@ -42,6 +42,8 @@ public class Resources
     public static string C_SourceNist => ResourceManager.GetString(nameof(C_SourceNist), resourceCulture)!;
     public static string C_SourceRandomOrg => ResourceManager.GetString(nameof(C_SourceRandomOrg), resourceCulture)!;
     public static string C_UpperBound => ResourceManager.GetString(nameof(C_UpperBound), resourceCulture)!;
+    public static string C_UseValues => ResourceManager.GetString(nameof(C_UseValues), resourceCulture)!;
+    public static string C_ValuesWatermark => ResourceManager.GetString(nameof(C_ValuesWatermark), resourceCulture)!;
     public static string M_GenerateFailedFormat => ResourceManager.GetString(nameof(M_GenerateFailedFormat), resourceCulture)!;
     public static string M_Locked => ResourceManager.GetString(nameof(M_Locked), resourceCulture)!;
     public static string M_ProofSavedFormat => ResourceManager.GetString(nameof(M_ProofSavedFormat), resourceCulture)!;
@@ -59,4 +61,5 @@ public class Resources
     public static string M_Ready => ResourceManager.GetString(nameof(M_Ready), resourceCulture)!;
     public static string M_ResultFormat => ResourceManager.GetString(nameof(M_ResultFormat), resourceCulture)!;
     public static string M_VerifiableNotice => ResourceManager.GetString(nameof(M_VerifiableNotice), resourceCulture)!;
+    public static string M_ValuesInvalid => ResourceManager.GetString(nameof(M_ValuesInvalid), resourceCulture)!;
 }

@@ -81,6 +81,15 @@
 
                         <Separator />
 
+                        <CheckBox Content="{x:Static langs:Resources.C_UseValues}"
+                                  IsChecked="{Binding ViewModel.UseValues}"
+                                  IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+                        <TextBox Text="{Binding ViewModel.ValuesText}"
+                                 Watermark="{x:Static langs:Resources.C_ValuesWatermark}"
+                                 IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+
+                        <Separator />
+
                         <TextBlock Classes="section-title" Text="{x:Static langs:Resources.C_EntropySources}" />
                         <!--
                             锁定是整段生效的：范围与熵源都由「更多设置」里的开关统一管，IsEnabled 沿视觉树继承下来，

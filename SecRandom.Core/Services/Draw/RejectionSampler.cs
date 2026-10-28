@@ -72,6 +72,40 @@ public static class RejectionSampler
             "Rejection sampling did not settle within the attempt budget; the range is too close to the sample width.");
     }
 
+    /// <summary>
+    ///     One element of an explicit candidate set, chosen uniformly. This is the same rejection construction as
+    ///     <see cref="Sample" />, applied to the set's index rather than to the numeric range — which is what makes
+    ///     "draw from 5 or 10 only" exact instead of approximated by a range.
+    /// </summary>
+    public static long SampleFromSet(IReadOnlyList<long> values, ReadOnlySpan<byte> seed)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        if (values.Count == 0)
+            throw new ArgumentException("The candidate set is empty.", nameof(values));
+        if (seed.IsEmpty)
+            throw new ArgumentException("A seed is required.", nameof(seed));
+        if (values.Count == 1)
+            return values[0];
+
+        var span = (ulong)values.Count;
+        var limit = ulong.MaxValue - (ulong.MaxValue % span);
+
+        for (var attempt = 0; attempt < MaximumAttempts; attempt++)
+        {
+            Span<byte> block = stackalloc byte[sizeof(ulong)];
+            Expand(seed, attempt, block);
+            var candidate = BinaryPrimitives.ReadUInt64BigEndian(block);
+
+            if (candidate >= limit && limit != 0)
+                continue;
+
+            return values[(int)(candidate % span)];
+        }
+
+        throw new InvalidOperationException(
+            "Rejection sampling did not settle within the attempt budget; the set is too large for the sample width.");
+    }
+
     /// <summary>SHA-256 counter mode over the seed, so one seed yields an unlimited stream of independent candidates.</summary>
     private static void Expand(ReadOnlySpan<byte> seed, int counter, Span<byte> destination)
     {

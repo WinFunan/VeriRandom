@@ -42,6 +42,12 @@ public sealed class RawNumberProof
 
     public long Value { get; set; }
 
+    /// <summary>
+    ///     The explicit candidate set the value was drawn from, or null for a plain range draw. Recorded because a set
+    ///     cannot be reconstructed from a lower/upper bound, and without it the record could not be recomputed.
+    /// </summary>
+    public List<long>? Values { get; set; }
+
     /// <summary>True only when a single publishing source seeded this number.</summary>
     public bool Verifiable { get; set; }
 
@@ -111,6 +117,10 @@ public static class RawNumberProofHashing
             .Append(proof.Value).Append('|')
             .Append(proof.Verifiable ? '1' : '0').Append('|')
             .Append(proof.SeedDigest);
+
+        // Appended only when a set was used, so a range record written before sets existed keeps its exact digest.
+        if (proof.Values is { Count: > 0 } values)
+            builder.Append("|set:").AppendJoin(',', values);
 
         foreach (var entropy in proof.Entropy)
             builder.Append('|')

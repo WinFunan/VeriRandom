@@ -79,6 +79,8 @@ public partial class RawRandomPageViewModel : ViewModelBase
         _isLoading = true;
         LowerBoundText = more.RawRandomLowerBound.ToString();
         UpperBoundText = more.RawRandomUpperBound.ToString();
+        UseValues = more.RawRandomUseValues;
+        ValuesText = more.RawRandomValuesText;
         RefreshLockState();
 
         EntropySources = new ObservableCollection<EntropySourceOption>(
@@ -106,6 +108,8 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
     [ObservableProperty] private string _lowerBoundText = "0";
     [ObservableProperty] private string _upperBoundText = "100";
+    [ObservableProperty] private bool _useValues;
+    [ObservableProperty] private string _valuesText = string.Empty;
     [ObservableProperty] private bool _isSettingsLocked;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _resultText = string.Empty;
@@ -121,7 +125,25 @@ public partial class RawRandomPageViewModel : ViewModelBase
         if (IsBusy)
             return;
 
-        if (!TryReadRange(out var lower, out var upper))
+        long lower = 0;
+        long upper = 0;
+        IReadOnlyList<long> values = [];
+
+        if (UseValues)
+        {
+            // A candidate set replaces the bounds entirely: "5 or 10" is not "[5,10]". The recorded lower/upper stay as
+            // the set's span so the record still reads sensibly, but the draw never consults them in this mode.
+            values = ParseValues(ValuesText);
+            if (values.Count == 0)
+            {
+                StatusText = Resources.M_ValuesInvalid;
+                return;
+            }
+
+            lower = values[0];
+            upper = values[^1];
+        }
+        else if (!TryReadRange(out lower, out upper))
         {
             StatusText = Resources.M_RangeInvalid;
             return;
@@ -144,13 +166,16 @@ public partial class RawRandomPageViewModel : ViewModelBase
             var seed = RawNumberSeedDerivation.Derive(entropy
                 .Select(item => new RawNumberEntropyInput(item.SourceId, item.OutputValue))
                 .ToList());
-            var value = RejectionSampler.Sample(lower, upper, seed);
+            var value = values.Count > 0
+                ? RejectionSampler.SampleFromSet(values, seed)
+                : RejectionSampler.Sample(lower, upper, seed);
 
             var proof = new RawNumberProof
             {
                 LowerBound = lower,
                 UpperBound = upper,
                 Value = value,
+                Values = values.Count > 0 ? [.. values] : null,
                 Verifiable = !IsVerifiabilityReduced,
                 SeedDigest = RawNumberSeedDerivation.Digest(seed),
                 Entropy = entropy
@@ -271,6 +296,46 @@ public partial class RawRandomPageViewModel : ViewModelBase
     partial void OnLowerBoundTextChanged(string value) => PersistRange();
 
     partial void OnUpperBoundTextChanged(string value) => PersistRange();
+
+    partial void OnUseValuesChanged(bool value)
+    {
+        if (_isLoading)
+            return;
+
+        _configHandler.Data.MoreSettings.RawRandomUseValues = value;
+        _configHandler.Save();
+    }
+
+    partial void OnValuesTextChanged(string value)
+    {
+        if (_isLoading)
+            return;
+
+        _configHandler.Data.MoreSettings.RawRandomValuesText = value ?? string.Empty;
+        _configHandler.Save();
+    }
+
+    /// <summary>
+    ///     Parses the candidate set. Duplicates collapse into a set on purpose: repeating a value in the list would
+    ///     otherwise silently weight it, which is not what "5 and 10" means.
+    /// </summary>
+    private static IReadOnlyList<long> ParseValues(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return [];
+
+        var values = new SortedSet<long>();
+
+        foreach (var part in text.Split(
+                     [',', '，', ';', '；', ' ', '\t', '\r', '\n'],
+                     StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (long.TryParse(part.Trim(), out var value))
+                values.Add(value);
+        }
+
+        return [.. values];
+    }
 
     /// <summary>
     ///     The security settings live in the encrypted store, which is <c>internal</c> to this assembly — so it is
