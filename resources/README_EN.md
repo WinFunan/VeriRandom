@@ -37,6 +37,8 @@ VeriRandom is a fair random-selection application for classrooms, teams, events,
 - **Quick draw**: Quickly draws students through a standalone floating window.
 - **Lottery**: Supports prize-wheel and inventory draws, with students and prizes managed independently.
 - **Rich presentation**: Provides unified settings for animation, results, speech, music, and notifications, with fallback when a notification fails.
+- **Courseware markers**: Paste an application-generated QR code onto a slide and the draw starts by itself when that slide is shown, so a presentation clicker only has to turn the page. The list, count, timing (a delay, or waiting for the next button press), animation and speech settings all travel inside the code, which is why the same deck works on another computer; one click on "start a new lesson" re-arms everything, and one slide fires once per lesson. The screen is read once after a key press, never while idle, and no frame is stored or sent anywhere.
+- **Resizable result card**: The floating result card can be dragged and resized from any edge or corner, remembers the size you left it at, and accepts touch as well as a mouse.
 
 ### Fairness and list management
 
@@ -49,6 +51,7 @@ VeriRandom is a fair random-selection application for classrooms, teams, events,
 
 - Every draw automatically saves a proof record file.
 - The random-number page generates a raw number inside the chosen range and immediately writes its own proof record; the value can be recomputed later from the source material that record stores.
+- Selecting a proof in the replay window shows the same public parameters a server-side verification page shows: input and audit commitments, random material, pool rule, sampling, average-gap protection, and the share-debt parameters. The dialog says plainly at the top that these are what the proof file itself claims, and that trust has to come from the evidence grader and the replay result.
 - You can choose to involve the server in and witness the draw process.
 - Draw results can be checked again through official channels.
 
