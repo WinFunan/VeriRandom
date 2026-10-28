@@ -111,6 +111,7 @@ public partial class FloatingWindow : Window
                 "quick_draw" => GetQuickDrawButton(settings),
                 "lottery" => GetLotteryButton(settings),
                 "timer" => GetTimerButton(settings),
+                "raw_random" => GetRawRandomButton(settings),
                 _ => null
             };
 
@@ -190,6 +191,7 @@ public partial class FloatingWindow : Window
         if (settings.ShowQuickDrawButton) yield return "quick_draw";
         if (settings.ShowLotteryButton && isLotteryEnabled) yield return "lottery";
         if (settings.ShowTimerButton) yield return "timer";
+        if (settings.ShowRawRandomButton) yield return "raw_random";
     }
 
     private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
@@ -261,6 +263,18 @@ public partial class FloatingWindow : Window
         b.Click += (sender, args) =>
         {
             App.ShowQuickDrawWindow();
+        };
+
+        return b;
+    }
+
+    private static Button GetRawRandomButton(FloatingWindowSettingsConfig settings)
+    {
+        var b = CreateButton(FluentIcons.NumberSymbolFilled, Langs.MainPages.RawRandom.Resources.C_PageTitle, settings);
+
+        b.Click += (sender, args) =>
+        {
+            App.ToggleMainWindow("main.rawRandom");
         };
 
         return b;

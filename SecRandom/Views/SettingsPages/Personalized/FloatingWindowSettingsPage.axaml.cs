@@ -95,6 +95,8 @@ public partial class FloatingWindowSettingsPage : UserControl
         {
             new(LR.S_Buttons_RollCall, () => Settings.ShowRollCallButton,
                 value => Settings.ShowRollCallButton = value),
+            new(Langs.MainPages.RawRandom.Resources.C_PageTitle, () => Settings.ShowRawRandomButton,
+                value => Settings.ShowRawRandomButton = value),
             new(LR.S_Buttons_QuickDraw, () => Settings.ShowQuickDrawButton,
                 value => Settings.ShowQuickDrawButton = value),
             new(LR.S_Buttons_Lottery, () => Settings.ShowLotteryButton,

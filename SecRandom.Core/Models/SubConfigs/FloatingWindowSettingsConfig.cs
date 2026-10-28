@@ -9,6 +9,12 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private int _floatingWindowOpacity = 80;
     [ObservableProperty] private TopmostMode _floatingWindowTopmostMode = TopmostMode.Topmost;
     [ObservableProperty] private bool _showRollCallButton = true;
+
+    /// <summary>
+    ///     Raw-number page button. Off by default: it is a utility for a teacher who asked for it, not part of the
+    ///     default classroom surface.
+    /// </summary>
+    [ObservableProperty] private bool _showRawRandomButton;
     [ObservableProperty] private bool _showQuickDrawButton = true;
     [ObservableProperty] private bool _showLotteryButton = false;
     [ObservableProperty] private bool _showTimerButton = false;
