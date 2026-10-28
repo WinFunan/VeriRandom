@@ -117,10 +117,45 @@
                                    Text="{Binding ViewModel.VerifiabilityNotice}" />
                     </StackPanel>
                 </Border>
+
+                <!--
+                    高级选项：默认折叠，且只在本机开启「允许高级选项」后出现。它改变的是"结果到底是什么"，
+                    不是日常操作，所以和普通生成分成两块
+                -->
+                <Expander Header="{x:Static langs:Resources.C_AdvancedOptions}"
+                          IsExpanded="False"
+                          IsVisible="{Binding ViewModel.ShowAdvancedOptions}">
+                    <StackPanel Spacing="10" Margin="0 8 0 0">
+                        <CheckBox Content="{x:Static langs:Resources.C_RawEntropy}"
+                                  IsChecked="{Binding ViewModel.UseRawEntropy}"
+                                  IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_BitCount}" />
+                                <ComboBox x:Name="BitCountBox" SelectedIndex="0" Width="120"
+                                          IsEnabled="{Binding !ViewModel.IsSettingsLocked}">
+                                    <ComboBoxItem Content="32" />
+                                    <ComboBoxItem Content="64" />
+                                    <ComboBoxItem Content="128" />
+                                    <ComboBoxItem Content="1280" />
+                                </ComboBox>
+                            </StackPanel>
+                            <CheckBox Content="{x:Static langs:Resources.C_AsciiOutput}"
+                                      IsChecked="{Binding ViewModel.AsciiOutput}"
+                                      VerticalAlignment="Bottom"
+                                      IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+                        </StackPanel>
+
+                        <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_AdvancedHint}" />
+                    </StackPanel>
+                </Expander>
             </StackPanel>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="2">
+        <StackPanel Grid.Row="2" Spacing="8">
+            <TextBlock x:Name="EntropyLine" Text="{Binding ViewModel.EntropyText}" FontSize="12"
+                       Opacity="0.75" TextWrapping="Wrap" HorizontalAlignment="Center" />
             <Button x:Name="GenerateButton"
                     Content="{x:Static langs:Resources.C_Generate}"
                     HorizontalAlignment="Stretch"

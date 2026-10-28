@@ -74,6 +74,13 @@ public partial class MoreSettingsConfig : ObservableObject
     [ObservableProperty] private bool _rawRandomUseValues;
     [ObservableProperty] private string _rawRandomValuesText = string.Empty;
 
+    // Advanced output controls. Off by default because they change what "the result" even is; the page shows the
+    // advanced block only when this is on.
+    [ObservableProperty] private bool _rawRandomAdvancedOptionsEnabled;
+    [ObservableProperty] private bool _rawRandomRawEntropyEnabled;
+    [ObservableProperty] private int _rawRandomBitCount = 32;
+    [ObservableProperty] private bool _rawRandomAsciiOutput;
+
     // Result mini-window size. Resizing it on a classroom touchscreen is a deliberate, effortful action, so the
     // chosen size is remembered; the position is not, because the card re-centres on whichever display the app runs on
     // and a remembered position from a disconnected monitor would put it off-screen.

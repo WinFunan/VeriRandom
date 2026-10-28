@@ -31,6 +31,12 @@ public class Resources
         set => resourceCulture = value;
     }
 
+    public static string C_AdvancedOptions => ResourceManager.GetString(nameof(C_AdvancedOptions), resourceCulture)!;
+    public static string C_RawEntropy => ResourceManager.GetString(nameof(C_RawEntropy), resourceCulture)!;
+    public static string C_BitCount => ResourceManager.GetString(nameof(C_BitCount), resourceCulture)!;
+    public static string C_AsciiOutput => ResourceManager.GetString(nameof(C_AsciiOutput), resourceCulture)!;
+    public static string M_AdvancedHint => ResourceManager.GetString(nameof(M_AdvancedHint), resourceCulture)!;
+    public static string M_EntropyFormat => ResourceManager.GetString(nameof(M_EntropyFormat), resourceCulture)!;
     public static string C_BatchCount => ResourceManager.GetString(nameof(C_BatchCount), resourceCulture)!;
     public static string C_EntropySources => ResourceManager.GetString(nameof(C_EntropySources), resourceCulture)!;
     public static string C_Generate => ResourceManager.GetString(nameof(C_Generate), resourceCulture)!;

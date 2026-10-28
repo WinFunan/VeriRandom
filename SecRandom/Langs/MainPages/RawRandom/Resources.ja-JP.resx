@@ -36,4 +36,10 @@
   <data name="C_ValuesWatermark" xml:space="preserve"><value>この値だけから抽選します。例：5,10（カンマまたは空白区切り）</value></data>
   <data name="M_ValuesInvalid" xml:space="preserve"><value>集合が無効です：整数を 1 つ以上入力してください</value></data>
   <data name="C_BatchCount" xml:space="preserve"><value>生成する個数</value></data>
+  <data name="C_AdvancedOptions" xml:space="preserve"><value>詳細オプション</value></data>
+  <data name="C_RawEntropy" xml:space="preserve"><value>範囲の値ではなく生のエントロピーを出力</value></data>
+  <data name="C_BitCount" xml:space="preserve"><value>ビット数</value></data>
+  <data name="C_AsciiOutput" xml:space="preserve"><value>印刷可能な ASCII で表示</value></data>
+  <data name="M_AdvancedHint" xml:space="preserve"><value>ビット数を増やしてもエントロピーは増えません。出力はシードから決定的に展開されるため、使えるエントロピーは情報源を超えません</value></data>
+  <data name="M_EntropyFormat" xml:space="preserve"><value>記号 {0} 個 · 1 記号あたり {1:F2} bit · 合計 {2:F0} bit · 情報源の上限 {3} bit</value></data>
 </root>

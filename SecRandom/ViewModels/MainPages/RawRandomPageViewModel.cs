@@ -81,6 +81,9 @@ public partial class RawRandomPageViewModel : ViewModelBase
         UpperBoundText = more.RawRandomUpperBound.ToString();
         UseValues = more.RawRandomUseValues;
         ValuesText = more.RawRandomValuesText;
+        UseRawEntropy = more.RawRandomRawEntropyEnabled;
+        BitCount = more.RawRandomBitCount;
+        AsciiOutput = more.RawRandomAsciiOutput;
         RefreshLockState();
 
         EntropySources = new ObservableCollection<EntropySourceOption>(
@@ -106,6 +109,12 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
     public ObservableCollection<EntropySourceOption> EntropySources { get; }
 
+    /// <summary>
+    ///     Advanced output is opt-in per machine. Read once when the page is built: flipping it is a settings change that
+    ///     requires reopening the page, which is the right weight for a control that changes what "the result" means.
+    /// </summary>
+    public bool ShowAdvancedOptions => Config.MoreSettings.RawRandomAdvancedOptionsEnabled;
+
     [ObservableProperty] private string _lowerBoundText = "0";
     [ObservableProperty] private string _upperBoundText = "100";
     [ObservableProperty] private bool _useValues;
@@ -113,6 +122,17 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
     /// <summary>How many values one generation produces. Each value is independent; duplicates inside a batch are fine.</summary>
     [ObservableProperty] private int _count = 1;
+
+    /// <summary>Advanced output: emit entropy instead of in-range values.</summary>
+    [ObservableProperty] private bool _useRawEntropy;
+
+    [ObservableProperty] private int _bitCount = 32;
+
+    /// <summary>Render the bits as printable ASCII rather than hex.</summary>
+    [ObservableProperty] private bool _asciiOutput;
+
+    /// <summary>Measured information content of the last output, shown beside it rather than kept in a log.</summary>
+    [ObservableProperty] private string _entropyText = string.Empty;
     [ObservableProperty] private bool _isSettingsLocked;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _resultText = string.Empty;
@@ -169,6 +189,38 @@ public partial class RawRandomPageViewModel : ViewModelBase
             var seed = RawNumberSeedDerivation.Derive(entropy
                 .Select(item => new RawNumberEntropyInput(item.SourceId, item.OutputValue))
                 .ToList());
+
+            if (UseRawEntropy)
+            {
+                // Advanced mode: show entropy instead of an in-range value. The record still binds the *seed*, because
+                // the text is a deterministic function of it — storing the presentation too would only duplicate it.
+                var bits = Math.Clamp(BitCount, 8, 4096);
+                var output = AsciiOutput
+                    ? RawEntropyOutput.ToPrintableAscii(seed, Math.Max(1, bits / 8))
+                    : RawEntropyOutput.ToHex(RawEntropyOutput.Expand(seed, bits));
+
+                ResultText = output;
+
+                var report = RawEntropyOutput.Analyze(output, seed.Length * 8);
+                EntropyText = string.Format(
+                    Resources.M_EntropyFormat,
+                    report.SymbolCount,
+                    report.BitsPerSymbol,
+                    report.TotalBits,
+                    report.AvailableSourceBits);
+
+                var advancedProof = new RawNumberProof
+                {
+                    Value = 0,
+                    Verifiable = !IsVerifiabilityReduced,
+                    SeedDigest = RawNumberSeedDerivation.Digest(seed),
+                    Entropy = entropy
+                };
+
+                var advancedPath = await _proofService.SaveAsync(advancedProof).ConfigureAwait(true);
+                StatusText = string.Format(Resources.M_ProofSavedFormat, Path.GetFileName(advancedPath));
+                return;
+            }
             var count = Math.Clamp(Count, 1, 50);
             var results = values.Count > 0
                 ? RejectionSampler.SampleManyFromSet(values, seed, count)
