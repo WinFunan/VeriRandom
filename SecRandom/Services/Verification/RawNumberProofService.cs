@@ -170,6 +170,33 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
     }
 
     /// <summary>
+    ///     Recomputes the value(s) a record should have produced. Separate from <see cref="Verify" /> because replay is
+    ///     a question about the <em>result</em> — "what does this seed actually give" — while verification is about the
+    ///     file, and a reviewer wants to see both numbers rather than only the verdict.
+    /// </summary>
+    public RawNumberReplay Replay(RawNumberProof proof)
+    {
+        ArgumentNullException.ThrowIfNull(proof);
+
+        var inputs = proof.Entropy
+            .Select(entropy => new RawNumberEntropyInput(entropy.SourceId, entropy.OutputValue))
+            .ToList();
+
+        if (inputs.Count == 0)
+            return new RawNumberReplay([], false);
+
+        var seed = RawNumberSeedDerivation.Derive(inputs);
+        var recorded = proof.Results is { Count: > 0 } results ? results : [proof.Value];
+        var count = recorded.Count;
+
+        var recomputed = proof.Values is { Count: > 0 } set
+            ? RejectionSampler.SampleManyFromSet(set, seed, count)
+            : RejectionSampler.SampleMany(proof.LowerBound, proof.UpperBound, seed, count);
+
+        return new RawNumberReplay(recomputed, recomputed.SequenceEqual(recorded));
+    }
+
+    /// <summary>
     ///     Recomputes the recorded value(s) from the seed. A batch is recomputed as a batch — every index from the same
     ///     master seed — so a record whose middle entry was edited fails instead of passing on its first value alone.
     /// </summary>
@@ -257,3 +284,6 @@ public sealed record RawNumberBatchVerification(
     int Total,
     IReadOnlyList<string> FailedFileNames,
     long LastIndex);
+
+/// <summary>What a raw-number record's seed actually produces.</summary>
+public sealed record RawNumberReplay(IReadOnlyList<long> Recomputed, bool Matches);

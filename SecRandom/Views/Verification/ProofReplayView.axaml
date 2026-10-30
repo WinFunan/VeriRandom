@@ -156,6 +156,22 @@
                             Click="VerifyRawProofs_OnClick" />
                     <TextBlock x:Name="VerifyRawProofsText" FontSize="12" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                    <!--
+                        随机数记录单独一行：它们不在抽签链上（没有候选池，抽签内核无法重放），
+                        但"记录了什么值、用种子重算出来是什么值"同样要能在同一个窗口里点到
+                    -->
+                    <CheckBox x:Name="IncludeRawBox"
+                              Content="{x:Static lv:Resources.C_ProofReplay_IncludeRaw}"
+                              IsCheckedChanged="IncludeRaw_OnChanged" />
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  MaxHeight="120"
+                                  IsVisible="{Binding #IncludeRawBox.IsChecked}">
+                        <StackPanel x:Name="RawNodesPanel" Orientation="Horizontal" Spacing="6" />
+                    </ScrollViewer>
+                    <TextBlock x:Name="RawReplayText" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </ScrollViewer>
         </Border>

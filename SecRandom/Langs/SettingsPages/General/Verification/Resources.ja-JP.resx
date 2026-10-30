@@ -209,4 +209,9 @@
   <data name="M_ProofDetail_GapNotApplied" xml:space="preserve"><value>未適用</value></data>
   <data name="M_ProofDetail_ReceiptPresent" xml:space="preserve"><value>確認済み</value></data>
   <data name="M_ProofDetail_ReceiptAbsent" xml:space="preserve"><value>未確認</value></data>
+  <data name="C_ProofReplay_IncludeRaw" xml:space="preserve"><value>乱数記録を含める</value></data>
+  <data name="M_RawReplayFormat" xml:space="preserve"><value>記録値 {0} · 再計算値 {1} · {2}</value></data>
+  <data name="M_RawReplayMatch" xml:space="preserve"><value>一致</value></data>
+  <data name="M_RawReplayMismatch" xml:space="preserve"><value>不一致です。この記録は使わないでください</value></data>
+  <data name="M_RawReplayNone" xml:space="preserve"><value>乱数記録はまだありません</value></data>
 </root>

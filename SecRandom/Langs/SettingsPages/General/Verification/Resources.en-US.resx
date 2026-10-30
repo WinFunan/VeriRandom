@@ -209,4 +209,9 @@ It prevents replacement of local draw code, random seeds, or result files during
   <data name="M_ProofDetail_GapNotApplied" xml:space="preserve"><value>Not applied</value></data>
   <data name="M_ProofDetail_ReceiptPresent" xml:space="preserve"><value>Confirmed</value></data>
   <data name="M_ProofDetail_ReceiptAbsent" xml:space="preserve"><value>Not confirmed</value></data>
+  <data name="C_ProofReplay_IncludeRaw" xml:space="preserve"><value>Include random-number records</value></data>
+  <data name="M_RawReplayFormat" xml:space="preserve"><value>recorded {0} · recomputed {1} · {2}</value></data>
+  <data name="M_RawReplayMatch" xml:space="preserve"><value>matches</value></data>
+  <data name="M_RawReplayMismatch" xml:space="preserve"><value>does not match, do not use this record</value></data>
+  <data name="M_RawReplayNone" xml:space="preserve"><value>No random-number records yet</value></data>
 </root>

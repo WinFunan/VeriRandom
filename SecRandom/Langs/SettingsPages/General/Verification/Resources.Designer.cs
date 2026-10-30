@@ -172,6 +172,11 @@ public class Resources
     public static string M_ProofDetail_ReceiptAbsent => Get(nameof(M_ProofDetail_ReceiptAbsent));
     public static string M_RawProofsAllValidFormat => Get(nameof(M_RawProofsAllValidFormat));
     public static string M_RawProofsNone => Get(nameof(M_RawProofsNone));
+    public static string C_ProofReplay_IncludeRaw => Get(nameof(C_ProofReplay_IncludeRaw));
+    public static string M_RawReplayFormat => Get(nameof(M_RawReplayFormat));
+    public static string M_RawReplayMatch => Get(nameof(M_RawReplayMatch));
+    public static string M_RawReplayMismatch => Get(nameof(M_RawReplayMismatch));
+    public static string M_RawReplayNone => Get(nameof(M_RawReplayNone));
     public static string M_RawProofsSomeInvalidFormat => Get(nameof(M_RawProofsSomeInvalidFormat));
     public static string M_RawProofsUnavailable => Get(nameof(M_RawProofsUnavailable));
     public static string M_ProofReplay_SignatureVerifiedExpired => Get(nameof(M_ProofReplay_SignatureVerifiedExpired));

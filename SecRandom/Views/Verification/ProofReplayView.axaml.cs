@@ -207,6 +207,65 @@ public sealed partial class ProofReplayView : ViewBase
         await dialog.ShowDialog(owner);
     }
 
+    /// <summary>
+    ///     Fills the raw-record row on demand. Deliberately separate from the draw chain: those records have no candidate
+    ///     pool, so the draw kernel cannot replay them — but "what value does this seed actually give" is still a
+    ///     question a reviewer asks, and it belongs in the same window.
+    /// </summary>
+    private void IncludeRaw_OnChanged(object? sender, RoutedEventArgs e) => RenderRawNodes();
+
+    private void RenderRawNodes()
+    {
+        RawNodesPanel.Children.Clear();
+        RawReplayText.Text = string.Empty;
+
+        if (IncludeRawBox.IsChecked != true)
+            return;
+
+        if (Core.Abstraction.IAppHost.TryGetService<RawNumberProofService>() is not { } service)
+        {
+            RawReplayText.Text = LR.M_ProofDetailsUnreadable;
+            return;
+        }
+
+        var files = service.LoadAll();
+        if (files.Count == 0)
+        {
+            RawReplayText.Text = LR.M_RawReplayNone;
+            return;
+        }
+
+        foreach (var file in files)
+        {
+            var button = new Button
+            {
+                Content = $"#{file.Proof.Index} {file.Proof.CreatedAt.ToLocalTime():MM-dd HH:mm}",
+                Tag = file.Proof
+            };
+
+            button.Click += RawNode_OnClick;
+            RawNodesPanel.Children.Add(button);
+        }
+    }
+
+    private void RawNode_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: Core.Models.Verification.RawNumberProof proof })
+            return;
+
+        if (Core.Abstraction.IAppHost.TryGetService<RawNumberProofService>() is not { } service)
+            return;
+
+        var replay = service.Replay(proof);
+        var recorded = proof.Results is { Count: > 0 } results ? results : [proof.Value];
+
+        RawReplayText.Text = string.Format(
+            LR.M_RawReplayFormat,
+            string.Join("、", recorded),
+            string.Join("、", replay.Recomputed),
+            replay.Matches ? LR.M_RawReplayMatch : LR.M_RawReplayMismatch);
+    }
+
     private void VerifyRawProofs_OnClick(object? sender, RoutedEventArgs e)
     {
         var service = Core.Abstraction.IAppHost.TryGetService<RawNumberProofService>();

@@ -287,4 +287,9 @@
   <data name="M_ProofDetail_GapNotApplied" xml:space="preserve"><value>未应用</value></data>
   <data name="M_ProofDetail_ReceiptPresent" xml:space="preserve"><value>已确认</value></data>
   <data name="M_ProofDetail_ReceiptAbsent" xml:space="preserve"><value>未确认</value></data>
+  <data name="C_ProofReplay_IncludeRaw" xml:space="preserve"><value>包含随机数记录</value></data>
+  <data name="M_RawReplayFormat" xml:space="preserve"><value>记录值 {0} · 重算值 {1} · {2}</value></data>
+  <data name="M_RawReplayMatch" xml:space="preserve"><value>一致</value></data>
+  <data name="M_RawReplayMismatch" xml:space="preserve"><value>不一致，请勿使用这份记录</value></data>
+  <data name="M_RawReplayNone" xml:space="preserve"><value>还没有随机数记录</value></data>
 </root>
