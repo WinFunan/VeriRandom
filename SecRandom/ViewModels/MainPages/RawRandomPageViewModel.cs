@@ -120,6 +120,19 @@ public partial class RawRandomPageViewModel : ViewModelBase
     [ObservableProperty] private bool _useValues;
     [ObservableProperty] private string _valuesText = string.Empty;
 
+    /// <summary>Exclusions subtracted from the candidates, e.g. <c>7,8</c> or <c>13-15</c>.</summary>
+    [ObservableProperty] private string _exclusionsText = string.Empty;
+
+    /// <summary>Enumeration generator bounds; empty disables it.</summary>
+    [ObservableProperty] private string _generatorFromText = string.Empty;
+    [ObservableProperty] private string _generatorToText = string.Empty;
+
+    /// <summary>Predicate over <c>X</c> the generated values must satisfy.</summary>
+    [ObservableProperty] private string _predicateText = string.Empty;
+
+    /// <summary>Pool size as resolved, so the teacher can see what the expression actually selected.</summary>
+    [ObservableProperty] private string _candidatesText = string.Empty;
+
     /// <summary>How many values one generation produces. Each value is independent; duplicates inside a batch are fine.</summary>
     [ObservableProperty] private int _count = 1;
 
@@ -150,26 +163,42 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
         long lower = 0;
         long upper = 0;
-        IReadOnlyList<long> values = [];
+        RawCandidateSpec? space = null;
 
         if (UseValues)
         {
-            // A candidate set replaces the bounds entirely: "5 or 10" is not "[5,10]". The recorded lower/upper stay as
-            // the set's span so the record still reads sensibly, but the draw never consults them in this mode.
-            values = ParseValues(ValuesText);
-            if (values.Count == 0)
+            // Candidates plus exclusions plus an optional predicate resolve to one interval space. The space — not the
+            // teacher's text — is what the proof records, so a later parser change cannot alter an old record.
+            var generatorFrom = string.IsNullOrWhiteSpace(GeneratorFromText) ? (long?)null : long.TryParse(GeneratorFromText, out var from) ? from : null;
+            var generatorTo = string.IsNullOrWhiteSpace(GeneratorToText) ? (long?)null : long.TryParse(GeneratorToText, out var to) ? to : null;
+
+            if (!RawCandidateSpec.TryCreate(
+                    ValuesText,
+                    ExclusionsText,
+                    generatorFrom,
+                    generatorTo,
+                    PredicateText,
+                    out space,
+                    out var error))
             {
-                StatusText = Resources.M_ValuesInvalid;
+                StatusText = string.Format(Resources.M_ValuesInvalidFormat, error);
+                CandidatesText = string.Empty;
                 return;
             }
 
-            lower = values[0];
-            upper = values[^1];
+            lower = space!.Intervals[0].Start;
+            upper = space.Intervals[^1].End;
+            CandidatesText = string.Format(Resources.M_CandidatesFormat, space.Cardinality);
         }
-        else if (!TryReadRange(out lower, out upper))
+        else
         {
-            StatusText = Resources.M_RangeInvalid;
-            return;
+            CandidatesText = string.Empty;
+
+            if (!TryReadRange(out lower, out upper))
+            {
+                StatusText = Resources.M_RangeInvalid;
+                return;
+            }
         }
 
         var selected = EntropySources.Where(option => option.IsSelected).ToList();
@@ -222,8 +251,8 @@ public partial class RawRandomPageViewModel : ViewModelBase
                 return;
             }
             var count = Math.Clamp(Count, 1, 50);
-            var results = values.Count > 0
-                ? RejectionSampler.SampleManyFromSet(values, seed, count)
+            var results = space is not null
+                ? space.SampleMany(seed, count)
                 : RejectionSampler.SampleMany(lower, upper, seed, count);
 
             var proof = new RawNumberProof
@@ -232,7 +261,8 @@ public partial class RawRandomPageViewModel : ViewModelBase
                 UpperBound = upper,
                 Value = results[0],
                 Results = results.Length > 1 ? [.. results] : null,
-                Values = values.Count > 0 ? [.. values] : null,
+                Intervals = space?.Intervals.Select(interval => new[] { interval.Start, interval.End }).ToList(),
+                Cardinality = space?.Cardinality ?? 0,
                 Verifiable = !IsVerifiabilityReduced,
                 SeedDigest = RawNumberSeedDerivation.Digest(seed),
                 Entropy = entropy

@@ -42,4 +42,12 @@
   <data name="C_AsciiOutput" xml:space="preserve"><value>Show as printable ASCII</value></data>
   <data name="M_AdvancedHint" xml:space="preserve"><value>A wider output is not more entropy: everything past the seed is a deterministic expansion, so the usable entropy never exceeds the source's</value></data>
   <data name="M_EntropyFormat" xml:space="preserve"><value>{0} symbols · {1:F2} bit/symbol · {2:F0} bit total · source cap {3} bit</value></data>
+  <data name="C_ExclusionsWatermark" xml:space="preserve"><value>Excluded from the candidates, e.g. 7,8 or 13-15 (may be empty)</value></data>
+  <data name="C_Generator" xml:space="preserve"><value>Enumeration generator</value></data>
+  <data name="C_GeneratorFrom" xml:space="preserve"><value>X from</value></data>
+  <data name="C_GeneratorTo" xml:space="preserve"><value>X to</value></data>
+  <data name="C_PredicateWatermark" xml:space="preserve"><value>Condition, e.g. X%2==0 (empty keeps everything)</value></data>
+  <data name="M_PredicateHint" xml:space="preserve"><value>The condition has one variable X and supports + - * / %, comparisons and logic; there is no assignment and no loop</value></data>
+  <data name="M_CandidatesFormat" xml:space="preserve"><value>{0} candidates</value></data>
+  <data name="M_ValuesInvalidFormat" xml:space="preserve"><value>Invalid filter: {0}</value></data>
 </root>

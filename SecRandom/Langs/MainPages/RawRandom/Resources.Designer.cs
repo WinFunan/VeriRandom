@@ -37,6 +37,14 @@ public class Resources
     public static string C_AsciiOutput => ResourceManager.GetString(nameof(C_AsciiOutput), resourceCulture)!;
     public static string M_AdvancedHint => ResourceManager.GetString(nameof(M_AdvancedHint), resourceCulture)!;
     public static string M_EntropyFormat => ResourceManager.GetString(nameof(M_EntropyFormat), resourceCulture)!;
+    public static string C_ExclusionsWatermark => ResourceManager.GetString(nameof(C_ExclusionsWatermark), resourceCulture)!;
+    public static string C_Generator => ResourceManager.GetString(nameof(C_Generator), resourceCulture)!;
+    public static string C_GeneratorFrom => ResourceManager.GetString(nameof(C_GeneratorFrom), resourceCulture)!;
+    public static string C_GeneratorTo => ResourceManager.GetString(nameof(C_GeneratorTo), resourceCulture)!;
+    public static string C_PredicateWatermark => ResourceManager.GetString(nameof(C_PredicateWatermark), resourceCulture)!;
+    public static string M_PredicateHint => ResourceManager.GetString(nameof(M_PredicateHint), resourceCulture)!;
+    public static string M_CandidatesFormat => ResourceManager.GetString(nameof(M_CandidatesFormat), resourceCulture)!;
+    public static string M_ValuesInvalidFormat => ResourceManager.GetString(nameof(M_ValuesInvalidFormat), resourceCulture)!;
     public static string C_BatchCount => ResourceManager.GetString(nameof(C_BatchCount), resourceCulture)!;
     public static string C_EntropySources => ResourceManager.GetString(nameof(C_EntropySources), resourceCulture)!;
     public static string C_Generate => ResourceManager.GetString(nameof(C_Generate), resourceCulture)!;

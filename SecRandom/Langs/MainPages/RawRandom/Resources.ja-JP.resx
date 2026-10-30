@@ -42,4 +42,12 @@
   <data name="C_AsciiOutput" xml:space="preserve"><value>印刷可能な ASCII で表示</value></data>
   <data name="M_AdvancedHint" xml:space="preserve"><value>ビット数を増やしてもエントロピーは増えません。出力はシードから決定的に展開されるため、使えるエントロピーは情報源を超えません</value></data>
   <data name="M_EntropyFormat" xml:space="preserve"><value>記号 {0} 個 · 1 記号あたり {1:F2} bit · 合計 {2:F0} bit · 情報源の上限 {3} bit</value></data>
+  <data name="C_ExclusionsWatermark" xml:space="preserve"><value>候補から除外します。例：7,8 または 13-15（空欄可）</value></data>
+  <data name="C_Generator" xml:space="preserve"><value>列挙ジェネレーター</value></data>
+  <data name="C_GeneratorFrom" xml:space="preserve"><value>X の開始</value></data>
+  <data name="C_GeneratorTo" xml:space="preserve"><value>X の終了</value></data>
+  <data name="C_PredicateWatermark" xml:space="preserve"><value>条件。例：X%2==0（空欄ならすべて）</value></data>
+  <data name="M_PredicateHint" xml:space="preserve"><value>条件の変数は X だけで、+ - * / % と比較・論理演算に対応します。代入やループはありません</value></data>
+  <data name="M_CandidatesFormat" xml:space="preserve"><value>候補 {0} 件</value></data>
+  <data name="M_ValuesInvalidFormat" xml:space="preserve"><value>絞り込み条件が無効です：{0}</value></data>
 </root>
