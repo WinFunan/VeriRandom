@@ -1247,3 +1247,73 @@ version(1) flags(1) count(1) delay×10(1) inputs(1) armedSeconds(1) expiresUnixD
 **课件标记自动识别**（`2965f24f` → `0e4b4378`）：`SlideTriggerWatcher` 每 100 ms 读 `GetLastInputInfo`，输入变化且前台是全屏放映时，按 +200/600/1200 ms 抓帧解码；`SlideTriggerExecutor` 先 `EvaluateGate(RollCallStart)`，不允许就放弃（不弹密码框），否则 `AuthorizeAsync` → `RollCallDrawService.DrawAsync`。**「可重复」「忽略历史权重」在 `RollCallDrawRequest` 里没有位置，因此命中即跳过并记 warning，而不是按全局配置硬抽**。手动「检测当前画面」改读**所有显示器**（`CaptureAllDisplays`），因为点它时前台一定是设置窗口。
 
 ---
+
+## 46. 配置策略摘要扩容（v6）、设置摘要徽标、候选空间与高级输出
+
+### 46.1 策略摘要覆盖范围变更（**作废已签发文档**）
+
+`SecRandom.Core/Services/Security/ConfigPolicyDigest.cs`
+
+| 项 | 变化 |
+|---|---|
+| 新增覆盖 | `defaultDrawSettings`、`rollCallSettings`、`quickDrawSettings`、`lotterySettings` 四棵子树 |
+| `ScopeId` | `verirandom-config-policy/v5` → **`v6`** |
+
+**为什么必须补**：这四棵子树决定重复模式、抽取数量、闪抽名单、动画等**直接影响抽取结果**的设置，此前完全不在签名范围内——改掉它们，签名照样"验证通过"，而文档写着"关键抽取策略被签名锁定"。这是一个真实的声明与实现的偏差，不是形式问题。
+
+**后果**：已按 v5 签发的策略文档会被判为 `DocumentMalformed`，需在可信设备上重新签发。该文件自身的规则就是"覆盖字段集变化必须改 id"，因此这一步不可省。
+
+**仍然不覆盖**（有意）：`appearance`、`floatingWindow`、`timer`、`voice`、`historyManagement`、`notification`、`update`、`moreSettings`（除 `lotteryEnabled`）。理由：它们不影响抽取结果。这条判断记录在此，便于将来被推翻时有据可查。
+
+`SecRandom.Core.Tests/ConfigSignatureTests.cs` 里的 `Scope = "verirandom-config-policy/v1"` 只用于测 `IsDocumentWellFormed` 的非空判断，**不受**本次升级影响。
+
+### 46.2 设置摘要徽标（本地哈希模式）
+
+| 文件 | 改动 |
+|---|---|
+| `SecRandom.Core/Models/SubConfigs/MoreSettingsConfig.cs` | 新增 `ShowSettingsDigestBadge`（**默认 true**） |
+| `SecRandom/ViewModels/MainPages/RollCallPageViewModel.cs` | 新增 `TrySetLocalDigestBadge()`，挂在原「策略徽标」的**未验签分支**上 |
+| `SecRandom/Views/SettingsPages/More/MoreSettingsPage.axaml` | 「显示设置摘要徽标」开关（`S_SettingsDigestBadge`） |
+
+行为：分离签名已验证 → 仍显示公钥指纹（不受开关影响）；未启用签名且 `ConfigIntegrityMode.LocalFingerprint` → 显示设置摘要前 12 位，悬停看完整 SHA-256 与路径；其余 → 不显示。
+
+**摘要是现算的**（重读 `data/config/settings.json` 再 SHA-256），不从凭据信封读记录值：徽标必须显示"此刻磁盘上是什么"，否则它只是另一份可能过期的声明。读不到文件就隐藏徽标，真实问题由启动闸门报告。
+
+### 46.3 候选空间：列表 + 区间 + 排除 + 枚举生成器
+
+| 文件 | 内容 |
+|---|---|
+| `SecRandom.Core/Services/Verification/RawCandidateSpec.cs` | 新增：解析 → 合并区间 → 相减 → 基数 → 索引抽样（`Sample`/`SampleMany`） |
+| `SecRandom.Core/Services/Verification/RawPredicate.cs` | 新增：受限判定式求值器（递归下降，仅 `X` 一个变量） |
+| `SecRandom.Core/Models/Verification/RawNumberProof.cs` | 新增 `Intervals`（`List<long[]>`）+ `Cardinality`，仅在存在时进入载荷哈希 |
+
+关键决定：
+
+- **区间表示**：`1-1000000 排除 7` 是两段区间、基数 999999，不物化、不拒绝循环。抽样是"均匀索引 → 按段长定位"，一次抽中。
+- **证明记解析后的区间，不记表达式**：记表达式就得在重放时重新解析/重新求值，一次语义变化会让**老记录重放出不同结果而文件本身看不出异常**。
+- **判定式不是脚本引擎**：手写递归下降，语法只有整数、`+ - * / %`、比较、`&& || !`、括号、`X`。没有赋值、循环、I/O、反射。除零/模零**报错**而不是丢值。
+- **相邻区间合并**：`5-6,7-8` → `5-8`（`nextStart <= end + 1`），否则基数会算少。
+- **重复值折叠**：集合模式用 `SortedSet`，否则输入 `5,5,10` 会静默给 5 双倍权重。
+
+### 46.4 高级输出：位宽、三种表示、拼接熵
+
+| 项 | 决定 |
+|---|---|
+| 位宽 | `NumericUpDown` 可手输（8–16384），32/64/128/1280 只是快捷按钮 |
+| 表示方式 | 十进制（`BigInteger` 无符号大端）、十六进制（大写）、可打印 ASCII |
+| ASCII | 字符数**独立于位宽**（1–4096）；拒绝采样 `188 = 2×94`，不用取模 |
+| 拼接熵 | `RawRandomEntropyConcatEnabled`：每轮重新取数、串接派生材料；文案写明只有本地 CSPRNG 与 random.org 会带来新熵 |
+| 实测熵 | 按**源的发布宽度**累加（NIST 512 bit 脉冲 = 512，不是派生种子的 256），并显示熵源上限 |
+
+`SecRandom.Core/Services/Verification/RawEntropyOutput.cs`（新增）：`Expand`（SHA-256 计数器模式）、`ToHex`、`ToDecimal`、`ToPrintableAscii`、`Analyze`（香农熵）。
+
+**记录的是种子而非展示文本**：输出是 `(种子, 位数, 格式)` 的确定性函数，`SeedDigest` 已入证明；再存一份只是重复。日志与证明里都不出现那段 hex/ASCII。
+
+### 46.5 其它小项
+
+- **随机数记录进重放窗口**（`5f7d4666`）：`RawNumberProofService.Replay` 返回理论重算值，窗口用「包含随机数记录」开关显示，**不进抽签链画布**（无候选池，抽签内核无法重放）。
+- **结果可选中 + 一键复制**（`6dc193b0`）：`SelectableTextBlock` + 「复制结果」；长输出（1280 bit = 320 字符）此前连选中都做不到。
+- **锁定覆盖候选块与生成器**（`9cba043a`）：改为整块包 `IsEnabled`，不再逐控件绑——逐控件绑必然漏。`生成个数`不受锁（属"抽几次"，非"从哪抽"）。
+- **`More/Resources.Designer.cs` 由 resx 整体重新生成**（`6fe915f0`）：该文件是多行块属性结构，局部插入连续出错三次（其中两次还被"括号平衡"掩盖）。以后修改 designer 一律重新生成 + 深度校验。
+
+---
