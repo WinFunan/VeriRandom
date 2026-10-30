@@ -85,6 +85,7 @@ public partial class RawRandomPageViewModel : ViewModelBase
         BitCount = more.RawRandomBitCount;
         OutputFormat = more.RawRandomOutputFormat;
         AsciiCharCount = more.RawRandomAsciiCharCount;
+        AllowEntropyConcat = more.RawRandomEntropyConcatEnabled;
         RefreshLockState();
 
         EntropySources = new ObservableCollection<EntropySourceOption>(
@@ -154,6 +155,9 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
     /// <summary>Measured information content of the last output, shown beside it rather than kept in a log.</summary>
     [ObservableProperty] private string _entropyText = string.Empty;
+
+    /// <summary>Concatenate several independent samples to fill an output wider than one seed.</summary>
+    [ObservableProperty] private bool _allowEntropyConcat;
     [ObservableProperty] private bool _isSettingsLocked;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _resultText = string.Empty;
@@ -232,17 +236,42 @@ public partial class RawRandomPageViewModel : ViewModelBase
                 // Advanced mode: show entropy instead of an in-range value. The record still binds the *seed*, because
                 // the text is a deterministic function of it — storing the presentation too would only duplicate it.
                 var bits = Math.Clamp(BitCount, 8, 16384);
+
+                // One seed is seed.Length bytes wide. A wider output can either be expanded from that one seed (no extra
+                // entropy, which the measured line says openly) or filled by concatenating further independent samples.
+                var seedBits = Math.Max(8, seed.Length * 8);
+                var rounds = AllowEntropyConcat
+                    ? Math.Max(1, (int)Math.Ceiling(bits / (double)seedBits))
+                    : 1;
+
+                var material = new List<byte>(seed);
+                var allEntropy = new List<RawNumberProofEntropy>(entropy);
+                var sourceBits = EntropyBitsOf(entropy);
+
+                for (var round = 1; round < rounds; round++)
+                {
+                    var extra = await CollectEntropyAsync(selected).ConfigureAwait(true);
+                    allEntropy.AddRange(extra);
+                    sourceBits += EntropyBitsOf(extra);
+
+                    material.AddRange(RawNumberSeedDerivation.Derive(extra
+                        .Select(item => new RawNumberEntropyInput(item.SourceId, item.OutputValue))
+                        .ToList()));
+                }
+
+                var combined = material.ToArray();
+
                 var output = OutputFormat switch
                 {
                     // Decimal is the same bits as one unsigned integer: long by design, never truncated.
-                    0 => RawEntropyOutput.ToDecimal(RawEntropyOutput.Expand(seed, bits)),
-                    2 => RawEntropyOutput.ToPrintableAscii(seed, Math.Clamp(AsciiCharCount, 1, 4096)),
-                    _ => RawEntropyOutput.ToHex(RawEntropyOutput.Expand(seed, bits))
+                    0 => RawEntropyOutput.ToDecimal(RawEntropyOutput.Expand(combined, bits)),
+                    2 => RawEntropyOutput.ToPrintableAscii(combined, Math.Clamp(AsciiCharCount, 1, 4096)),
+                    _ => RawEntropyOutput.ToHex(RawEntropyOutput.Expand(combined, bits))
                 };
 
                 ResultText = output;
 
-                var report = RawEntropyOutput.Analyze(output, seed.Length * 8);
+                var report = RawEntropyOutput.Analyze(output, sourceBits);
                 EntropyText = string.Format(
                     Resources.M_EntropyFormat,
                     report.SymbolCount,
@@ -254,8 +283,8 @@ public partial class RawRandomPageViewModel : ViewModelBase
                 {
                     Value = 0,
                     Verifiable = !IsVerifiabilityReduced,
-                    SeedDigest = RawNumberSeedDerivation.Digest(seed),
-                    Entropy = entropy
+                    SeedDigest = RawNumberSeedDerivation.Digest(combined),
+                    Entropy = allEntropy
                 };
 
                 var advancedPath = await _proofService.SaveAsync(advancedProof).ConfigureAwait(true);
@@ -310,6 +339,25 @@ public partial class RawRandomPageViewModel : ViewModelBase
     ///     CSPRNG material is recorded as hex as well, so the proof holds the exact bytes the derivation consumed even
     ///     though nothing external can re-anchor them.
     /// </summary>
+    /// <summary>
+    ///     Real entropy contributed by one collection round. The source's own published width is what counts, not the
+    ///     width of the derived seed: a 512-bit NIST pulse still yields a 256-bit key, and the pulse is the part that
+    ///     carries the entropy.
+    /// </summary>
+    private static int EntropyBitsOf(IEnumerable<RawNumberProofEntropy> entries)
+    {
+        var bits = 0;
+
+        foreach (var entry in entries)
+        {
+            bits += string.Equals(entry.SourceId, RawNumberProofFormat.LocalSourceId, StringComparison.Ordinal)
+                ? 256
+                : entry.OutputValue.Length / 2 * 8;
+        }
+
+        return bits;
+    }
+
     private async Task<List<RawNumberProofEntropy>> CollectEntropyAsync(
         IReadOnlyList<EntropySourceOption> selected)
     {

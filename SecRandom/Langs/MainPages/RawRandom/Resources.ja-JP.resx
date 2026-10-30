@@ -59,4 +59,6 @@
   <data name="O_FormatHex" xml:space="preserve"><value>16 進数</value></data>
   <data name="O_FormatAscii" xml:space="preserve"><value>印刷可能な ASCII</value></data>
   <data name="C_AsciiCharCount" xml:space="preserve"><value>文字数</value></data>
+  <data name="C_AllowConcat" xml:space="preserve"><value>複数回のサンプルを連結して広い出力を埋める</value></data>
+  <data name="M_ConcatHint" xml:space="preserve"><value>取得のたびに新しいエントロピーが得られるのはローカル CSPRNG と random.org だけです。同じビーコンのパルス内では増えないため、出力は広くなっても実測エントロピーは変わりません</value></data>
 </root>

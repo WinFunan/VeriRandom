@@ -188,6 +188,11 @@
                             <NumericUpDown Minimum="1" Maximum="4096" Value="{Binding ViewModel.AsciiCharCount}" Width="150" />
                         </StackPanel>
 
+                        <!-- 拼接熵：只有每次取数都会产生新熵的源才真的变宽，文案把这条边界写明 -->
+                        <CheckBox Content="{x:Static langs:Resources.C_AllowConcat}"
+                                  IsChecked="{Binding ViewModel.AllowEntropyConcat}" />
+                        <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_ConcatHint}" />
+
                         <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_AdvancedHint}" />
                     </StackPanel>
                 </Expander>

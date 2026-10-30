@@ -46,6 +46,8 @@ public class Resources
     public static string M_CandidatesFormat => ResourceManager.GetString(nameof(M_CandidatesFormat), resourceCulture)!;
     public static string M_ValuesInvalidFormat => ResourceManager.GetString(nameof(M_ValuesInvalidFormat), resourceCulture)!;
     public static string C_OutputFormat => ResourceManager.GetString(nameof(C_OutputFormat), resourceCulture)!;
+    public static string C_AllowConcat => ResourceManager.GetString(nameof(C_AllowConcat), resourceCulture)!;
+    public static string M_ConcatHint => ResourceManager.GetString(nameof(M_ConcatHint), resourceCulture)!;
     public static string O_FormatDecimal => ResourceManager.GetString(nameof(O_FormatDecimal), resourceCulture)!;
     public static string O_FormatHex => ResourceManager.GetString(nameof(O_FormatHex), resourceCulture)!;
     public static string O_FormatAscii => ResourceManager.GetString(nameof(O_FormatAscii), resourceCulture)!;

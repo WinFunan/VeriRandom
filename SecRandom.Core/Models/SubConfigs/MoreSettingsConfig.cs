@@ -86,6 +86,13 @@ public partial class MoreSettingsConfig : ObservableObject
     /// <summary>ASCII characters to produce when format 2 is selected, independent of the bit width.</summary>
     [ObservableProperty] private int _rawRandomAsciiCharCount = 16;
 
+    /// <summary>
+    ///     Allow filling a wider output by concatenating several independent samples. Only sources that produce fresh
+    ///     material per fetch (local CSPRNG, random.org) actually gain entropy this way; a beacon inside one pulse does
+    ///     not, and the measured figure on screen says so instead of pretending otherwise.
+    /// </summary>
+    [ObservableProperty] private bool _rawRandomEntropyConcatEnabled;
+
     // Result mini-window size. Resizing it on a classroom touchscreen is a deliberate, effortful action, so the
     // chosen size is remembered; the position is not, because the card re-centres on whichever display the app runs on
     // and a remembered position from a disconnected monitor would put it off-screen.

@@ -59,4 +59,6 @@
   <data name="O_FormatHex" xml:space="preserve"><value>十六进制</value></data>
   <data name="O_FormatAscii" xml:space="preserve"><value>可打印 ASCII</value></data>
   <data name="C_AsciiCharCount" xml:space="preserve"><value>字符个数</value></data>
+  <data name="C_AllowConcat" xml:space="preserve"><value>拼接多个采样填满更宽的输出</value></data>
+  <data name="M_ConcatHint" xml:space="preserve"><value>仅本地 CSPRNG 与 random.org 每次取数会带来新熵；同一信标脉冲内不会，此时输出更宽但实际熵不变（见下方实测值）</value></data>
 </root>
