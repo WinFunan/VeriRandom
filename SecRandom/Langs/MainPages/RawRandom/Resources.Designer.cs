@@ -45,6 +45,9 @@ public class Resources
     public static string M_PredicateHint => ResourceManager.GetString(nameof(M_PredicateHint), resourceCulture)!;
     public static string M_CandidatesFormat => ResourceManager.GetString(nameof(M_CandidatesFormat), resourceCulture)!;
     public static string M_ValuesInvalidFormat => ResourceManager.GetString(nameof(M_ValuesInvalidFormat), resourceCulture)!;
+    public static string C_CopyResult => ResourceManager.GetString(nameof(C_CopyResult), resourceCulture)!;
+    public static string M_CopiedResultFormat => ResourceManager.GetString(nameof(M_CopiedResultFormat), resourceCulture)!;
+    public static string M_NothingToCopy => ResourceManager.GetString(nameof(M_NothingToCopy), resourceCulture)!;
     public static string C_BatchCount => ResourceManager.GetString(nameof(C_BatchCount), resourceCulture)!;
     public static string C_EntropySources => ResourceManager.GetString(nameof(C_EntropySources), resourceCulture)!;
     public static string C_Generate => ResourceManager.GetString(nameof(C_Generate), resourceCulture)!;

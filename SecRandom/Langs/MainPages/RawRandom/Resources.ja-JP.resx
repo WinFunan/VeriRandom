@@ -50,4 +50,7 @@
   <data name="M_PredicateHint" xml:space="preserve"><value>条件の変数は X だけで、+ - * / % と比較・論理演算に対応します。代入やループはありません</value></data>
   <data name="M_CandidatesFormat" xml:space="preserve"><value>候補 {0} 件</value></data>
   <data name="M_ValuesInvalidFormat" xml:space="preserve"><value>絞り込み条件が無効です：{0}</value></data>
+  <data name="C_CopyResult" xml:space="preserve"><value>結果をコピー</value></data>
+  <data name="M_CopiedResultFormat" xml:space="preserve"><value>{0} 文字をコピーしました</value></data>
+  <data name="M_NothingToCopy" xml:space="preserve"><value>コピーできる結果がまだありません</value></data>
 </root>

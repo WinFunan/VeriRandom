@@ -50,4 +50,7 @@
   <data name="M_PredicateHint" xml:space="preserve"><value>判定式只有 X 一个变量，支持 + - * / % 与比较、逻辑运算，没有赋值与循环</value></data>
   <data name="M_CandidatesFormat" xml:space="preserve"><value>候选 {0} 个</value></data>
   <data name="M_ValuesInvalidFormat" xml:space="preserve"><value>筛选条件无效：{0}</value></data>
+  <data name="C_CopyResult" xml:space="preserve"><value>复制结果</value></data>
+  <data name="M_CopiedResultFormat" xml:space="preserve"><value>已复制 {0} 个字符</value></data>
+  <data name="M_NothingToCopy" xml:space="preserve"><value>还没有结果可复制</value></data>
 </root>

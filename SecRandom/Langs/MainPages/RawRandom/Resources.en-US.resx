@@ -50,4 +50,7 @@
   <data name="M_PredicateHint" xml:space="preserve"><value>The condition has one variable X and supports + - * / %, comparisons and logic; there is no assignment and no loop</value></data>
   <data name="M_CandidatesFormat" xml:space="preserve"><value>{0} candidates</value></data>
   <data name="M_ValuesInvalidFormat" xml:space="preserve"><value>Invalid filter: {0}</value></data>
+  <data name="C_CopyResult" xml:space="preserve"><value>Copy result</value></data>
+  <data name="M_CopiedResultFormat" xml:space="preserve"><value>Copied {0} characters</value></data>
+  <data name="M_NothingToCopy" xml:space="preserve"><value>Nothing to copy yet</value></data>
 </root>

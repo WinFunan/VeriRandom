@@ -44,7 +44,7 @@
                 <Border CornerRadius="8" Padding="20"
                         Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
                     <StackPanel Spacing="8">
-                        <TextBlock Classes="result"
+                        <SelectableTextBlock Classes="result"
                                    Text="{Binding ViewModel.ResultText}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Classes="hint"
@@ -185,6 +185,12 @@
                     HorizontalContentAlignment="Center"
                     Classes="accent"
                     Command="{Binding ViewModel.GenerateCommand}" />
+            <!-- 长输出（1280 bit 那档是 320 个十六进制字符）必须能一键取走，否则这个功能不可用 -->
+            <Button x:Name="CopyResultButton"
+                    Content="{x:Static langs:Resources.C_CopyResult}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Click="CopyResult_OnClick" />
         </StackPanel>
     </Grid>
 </UserControl>

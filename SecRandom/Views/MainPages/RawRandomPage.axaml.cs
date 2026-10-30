@@ -1,11 +1,13 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
 using SecRandom.ViewModels.MainPages;
+using SR = SecRandom.Langs.MainPages.RawRandom.Resources;
 
 namespace SecRandom.Views.MainPages;
 
@@ -24,6 +26,31 @@ public sealed partial class RawRandomPage : UserControl
     }
 
     public RawRandomPageViewModel ViewModel { get; }
+
+    /// <summary>
+    ///     Copies exactly what is on screen. Long hex output is the whole reason this exists: a 1280-bit result is 320
+    ///     characters, and "select it with the mouse" is not a workflow a teacher can use in front of a class.
+    /// </summary>
+    private async void CopyResult_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var text = ViewModel.ResultText;
+
+        if (string.IsNullOrEmpty(text))
+        {
+            ViewModel.StatusText = SR.M_NothingToCopy;
+            return;
+        }
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null)
+        {
+            ViewModel.StatusText = SR.M_ClipboardUnavailable;
+            return;
+        }
+
+        await clipboard.SetTextAsync(text);
+        ViewModel.StatusText = string.Format(SR.M_CopiedResultFormat, text.Length);
+    }
 
     /// <summary>
     ///     每次进页面都从加密的安全设置里重读锁定状态：另一个窗口可能刚改过它，页面缓存下来的旧值会让"已锁定"
