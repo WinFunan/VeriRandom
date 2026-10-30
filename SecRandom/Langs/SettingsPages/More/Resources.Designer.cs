@@ -45,116 +45,57 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string Page_Title {
+        public static string C_LotteryGenderSelector {
             get {
-                return ResourceManager.GetString("Page_Title", resourceCulture);
+                return ResourceManager.GetString("C_LotteryGenderSelector", resourceCulture);
             }
         }
         
-        public static string S_PageManagement {
+        public static string C_LotteryListSelector {
             get {
-                return ResourceManager.GetString("S_PageManagement", resourceCulture);
+                return ResourceManager.GetString("C_LotteryListSelector", resourceCulture);
             }
         }
         
-        public static string S_LotteryEnabled {
+        public static string C_LotteryQuantityControl {
             get {
-                return ResourceManager.GetString("S_LotteryEnabled", resourceCulture);
+                return ResourceManager.GetString("C_LotteryQuantityControl", resourceCulture);
             }
         }
         
-        public static string S_LotteryEnabled_D {
+        public static string C_LotteryQuantityLabel {
             get {
-                return ResourceManager.GetString("S_LotteryEnabled_D", resourceCulture);
+                return ResourceManager.GetString("C_LotteryQuantityLabel", resourceCulture);
             }
         }
         
-        public static string S_RawRandomAdvanced {
+        public static string C_LotteryRangeSelector {
             get {
-                return ResourceManager.GetString("S_RawRandomAdvanced", resourceCulture);
+                return ResourceManager.GetString("C_LotteryRangeSelector", resourceCulture);
             }
         }
         
-        public static string S_RawRandomAdvanced_D {
-        public static string S_SettingsDigestBadge {
+        public static string C_LotteryRemainingButton {
             get {
-                return ResourceManager.GetString("S_SettingsDigestBadge", resourceCulture);
+                return ResourceManager.GetString("C_LotteryRemainingButton", resourceCulture);
             }
         }
         
-        public static string S_SettingsDigestBadge_D {
+        public static string C_LotteryResetButton {
             get {
-                return ResourceManager.GetString("S_SettingsDigestBadge_D", resourceCulture);
-            }
-        }
-            get {
-                return ResourceManager.GetString("S_RawRandomAdvanced_D", resourceCulture);
+                return ResourceManager.GetString("C_LotteryResetButton", resourceCulture);
             }
         }
         
-        public static string S_RollCallPanelPosition {
+        public static string C_LotteryStartButton {
             get {
-                return ResourceManager.GetString("S_RollCallPanelPosition", resourceCulture);
+                return ResourceManager.GetString("C_LotteryStartButton", resourceCulture);
             }
         }
         
-        public static string S_RollCallPanelPosition_D {
+        public static string C_LotteryStudentListSelector {
             get {
-                return ResourceManager.GetString("S_RollCallPanelPosition_D", resourceCulture);
-            }
-        }
-        
-        public static string O_Right {
-            get {
-                return ResourceManager.GetString("O_Right", resourceCulture);
-            }
-        }
-        
-        public static string O_Left {
-            get {
-                return ResourceManager.GetString("O_Left", resourceCulture);
-            }
-        }
-        
-        public static string S_RollCallControls {
-            get {
-                return ResourceManager.GetString("S_RollCallControls", resourceCulture);
-            }
-        }
-        
-        public static string S_RollCallControls_D {
-            get {
-                return ResourceManager.GetString("S_RollCallControls_D", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallResetButton {
-            get {
-                return ResourceManager.GetString("C_RollCallResetButton", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallQuantityControl {
-            get {
-                return ResourceManager.GetString("C_RollCallQuantityControl", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallStartButton {
-            get {
-                return ResourceManager.GetString("C_RollCallStartButton", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallListSelector {
-            get {
-                return ResourceManager.GetString("C_RollCallListSelector", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallRangeSelector {
-            get {
-                return ResourceManager.GetString("C_RollCallRangeSelector", resourceCulture);
+                return ResourceManager.GetString("C_LotteryStudentListSelector", resourceCulture);
             }
         }
         
@@ -164,9 +105,15 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string C_RollCallRemainingButton {
+        public static string C_RollCallListSelector {
             get {
-                return ResourceManager.GetString("C_RollCallRemainingButton", resourceCulture);
+                return ResourceManager.GetString("C_RollCallListSelector", resourceCulture);
+            }
+        }
+        
+        public static string C_RollCallQuantityControl {
+            get {
+                return ResourceManager.GetString("C_RollCallQuantityControl", resourceCulture);
             }
         }
         
@@ -176,15 +123,87 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string S_LotteryPanelPosition {
+        public static string C_RollCallRangeSelector {
             get {
-                return ResourceManager.GetString("S_LotteryPanelPosition", resourceCulture);
+                return ResourceManager.GetString("C_RollCallRangeSelector", resourceCulture);
             }
         }
         
-        public static string S_LotteryPanelPosition_D {
+        public static string C_RollCallRemainingButton {
             get {
-                return ResourceManager.GetString("S_LotteryPanelPosition_D", resourceCulture);
+                return ResourceManager.GetString("C_RollCallRemainingButton", resourceCulture);
+            }
+        }
+        
+        public static string C_RollCallResetButton {
+            get {
+                return ResourceManager.GetString("C_RollCallResetButton", resourceCulture);
+            }
+        }
+        
+        public static string C_RollCallStartButton {
+            get {
+                return ResourceManager.GetString("C_RollCallStartButton", resourceCulture);
+            }
+        }
+        
+        public static string C_ShortcutCapture {
+            get {
+                return ResourceManager.GetString("C_ShortcutCapture", resourceCulture);
+            }
+        }
+        
+        public static string C_ShortcutClear {
+            get {
+                return ResourceManager.GetString("C_ShortcutClear", resourceCulture);
+            }
+        }
+        
+        public static string C_ShortcutConflict {
+            get {
+                return ResourceManager.GetString("C_ShortcutConflict", resourceCulture);
+            }
+        }
+        
+        public static string C_ShortcutExampleLottery {
+            get {
+                return ResourceManager.GetString("C_ShortcutExampleLottery", resourceCulture);
+            }
+        }
+        
+        public static string C_ShortcutExampleQuickDraw {
+            get {
+                return ResourceManager.GetString("C_ShortcutExampleQuickDraw", resourceCulture);
+            }
+        }
+        
+        public static string C_ShortcutExampleRollCall {
+            get {
+                return ResourceManager.GetString("C_ShortcutExampleRollCall", resourceCulture);
+            }
+        }
+        
+        public static string M_ShortcutDuplicated {
+            get {
+                return ResourceManager.GetString("M_ShortcutDuplicated", resourceCulture);
+            }
+        }
+        
+        public static string O_Left {
+            get {
+                return ResourceManager.GetString("O_Left", resourceCulture);
+            }
+        }
+        
+        public static string O_Right {
+            get {
+                return ResourceManager.GetString("O_Right", resourceCulture);
+            }
+        }
+        
+        public static string Page_Title {
+            get {
+                return ResourceManager.GetString("Page_Title", resourceCulture);
             }
         }
         
@@ -200,63 +219,105 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string C_LotteryResetButton {
+        public static string S_LotteryEnabled {
             get {
-                return ResourceManager.GetString("C_LotteryResetButton", resourceCulture);
+                return ResourceManager.GetString("S_LotteryEnabled", resourceCulture);
             }
         }
         
-        public static string C_LotteryQuantityControl {
+        public static string S_LotteryEnabled_D {
             get {
-                return ResourceManager.GetString("C_LotteryQuantityControl", resourceCulture);
+                return ResourceManager.GetString("S_LotteryEnabled_D", resourceCulture);
             }
         }
         
-        public static string C_LotteryStartButton {
+        public static string S_LotteryPanelPosition {
             get {
-                return ResourceManager.GetString("C_LotteryStartButton", resourceCulture);
+                return ResourceManager.GetString("S_LotteryPanelPosition", resourceCulture);
             }
         }
         
-        public static string C_LotteryListSelector {
+        public static string S_LotteryPanelPosition_D {
             get {
-                return ResourceManager.GetString("C_LotteryListSelector", resourceCulture);
+                return ResourceManager.GetString("S_LotteryPanelPosition_D", resourceCulture);
             }
         }
         
-        public static string C_LotteryStudentListSelector {
+        public static string S_PageManagement {
             get {
-                return ResourceManager.GetString("C_LotteryStudentListSelector", resourceCulture);
+                return ResourceManager.GetString("S_PageManagement", resourceCulture);
             }
         }
         
-        public static string C_LotteryRangeSelector {
+        public static string S_RawRandomAdvanced {
             get {
-                return ResourceManager.GetString("C_LotteryRangeSelector", resourceCulture);
+                return ResourceManager.GetString("S_RawRandomAdvanced", resourceCulture);
             }
         }
         
-        public static string C_LotteryGenderSelector {
+        public static string S_RawRandomAdvanced_D {
             get {
-                return ResourceManager.GetString("C_LotteryGenderSelector", resourceCulture);
+                return ResourceManager.GetString("S_RawRandomAdvanced_D", resourceCulture);
             }
         }
         
-        public static string C_LotteryRemainingButton {
+        public static string S_RollCallControls {
             get {
-                return ResourceManager.GetString("C_LotteryRemainingButton", resourceCulture);
+                return ResourceManager.GetString("S_RollCallControls", resourceCulture);
             }
         }
         
-        public static string C_LotteryQuantityLabel {
+        public static string S_RollCallControls_D {
             get {
-                return ResourceManager.GetString("C_LotteryQuantityLabel", resourceCulture);
+                return ResourceManager.GetString("S_RollCallControls_D", resourceCulture);
+            }
+        }
+        
+        public static string S_RollCallPanelPosition {
+            get {
+                return ResourceManager.GetString("S_RollCallPanelPosition", resourceCulture);
+            }
+        }
+        
+        public static string S_RollCallPanelPosition_D {
+            get {
+                return ResourceManager.GetString("S_RollCallPanelPosition_D", resourceCulture);
+            }
+        }
+        
+        public static string S_SettingsDigestBadge {
+            get {
+                return ResourceManager.GetString("S_SettingsDigestBadge", resourceCulture);
+            }
+        }
+        
+        public static string S_SettingsDigestBadge_D {
+            get {
+                return ResourceManager.GetString("S_SettingsDigestBadge_D", resourceCulture);
             }
         }
         
         public static string S_Shortcut {
             get {
                 return ResourceManager.GetString("S_Shortcut", resourceCulture);
+            }
+        }
+        
+        public static string S_Shortcut_D {
+            get {
+                return ResourceManager.GetString("S_Shortcut_D", resourceCulture);
+            }
+        }
+        
+        public static string S_Shortcut_DecreaseLotteryCount {
+            get {
+                return ResourceManager.GetString("S_Shortcut_DecreaseLotteryCount", resourceCulture);
+            }
+        }
+        
+        public static string S_Shortcut_DecreaseRollCallCount {
+            get {
+                return ResourceManager.GetString("S_Shortcut_DecreaseRollCallCount", resourceCulture);
             }
         }
         
@@ -272,9 +333,27 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string S_Shortcut_D {
+        public static string S_Shortcut_IncreaseLotteryCount {
             get {
-                return ResourceManager.GetString("S_Shortcut_D", resourceCulture);
+                return ResourceManager.GetString("S_Shortcut_IncreaseLotteryCount", resourceCulture);
+            }
+        }
+        
+        public static string S_Shortcut_IncreaseRollCallCount {
+            get {
+                return ResourceManager.GetString("S_Shortcut_IncreaseRollCallCount", resourceCulture);
+            }
+        }
+        
+        public static string S_Shortcut_OpenLotteryPage {
+            get {
+                return ResourceManager.GetString("S_Shortcut_OpenLotteryPage", resourceCulture);
+            }
+        }
+        
+        public static string S_Shortcut_OpenLotteryPage_D {
+            get {
+                return ResourceManager.GetString("S_Shortcut_OpenLotteryPage_D", resourceCulture);
             }
         }
         
@@ -302,39 +381,9 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string S_Shortcut_OpenLotteryPage {
+        public static string S_Shortcut_StartLottery {
             get {
-                return ResourceManager.GetString("S_Shortcut_OpenLotteryPage", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_OpenLotteryPage_D {
-            get {
-                return ResourceManager.GetString("S_Shortcut_OpenLotteryPage_D", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_IncreaseRollCallCount {
-            get {
-                return ResourceManager.GetString("S_Shortcut_IncreaseRollCallCount", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_DecreaseRollCallCount {
-            get {
-                return ResourceManager.GetString("S_Shortcut_DecreaseRollCallCount", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_IncreaseLotteryCount {
-            get {
-                return ResourceManager.GetString("S_Shortcut_IncreaseLotteryCount", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_DecreaseLotteryCount {
-            get {
-                return ResourceManager.GetString("S_Shortcut_DecreaseLotteryCount", resourceCulture);
+                return ResourceManager.GetString("S_Shortcut_StartLottery", resourceCulture);
             }
         }
         
@@ -344,52 +393,5 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string S_Shortcut_StartLottery {
-            get {
-                return ResourceManager.GetString("S_Shortcut_StartLottery", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutCapture {
-            get {
-                return ResourceManager.GetString("C_ShortcutCapture", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutClear {
-            get {
-                return ResourceManager.GetString("C_ShortcutClear", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutConflict {
-            get {
-                return ResourceManager.GetString("C_ShortcutConflict", resourceCulture);
-            }
-        }
-        
-        public static string M_ShortcutDuplicated {
-            get {
-                return ResourceManager.GetString("M_ShortcutDuplicated", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutExampleRollCall {
-            get {
-                return ResourceManager.GetString("C_ShortcutExampleRollCall", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutExampleQuickDraw {
-            get {
-                return ResourceManager.GetString("C_ShortcutExampleQuickDraw", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutExampleLottery {
-            get {
-                return ResourceManager.GetString("C_ShortcutExampleLottery", resourceCulture);
-            }
-        }
     }
 }
