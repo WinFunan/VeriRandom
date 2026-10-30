@@ -81,41 +81,47 @@
 
                         <StackPanel Spacing="4">
                             <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_BatchCount}" />
-                            <NumericUpDown Minimum="1" Maximum="50" Value="{Binding ViewModel.Count}" Width="140"
-                                           IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+                            <!-- 个数是"抽几次"的选择，不属于被锁定的"范围与熵源"，所以不受锁定影响 -->
+                            <NumericUpDown Minimum="1" Maximum="50" Value="{Binding ViewModel.Count}" Width="140" />
                         </StackPanel>
 
                         <Separator />
 
-                        <CheckBox Content="{x:Static langs:Resources.C_UseValues}"
-                                  IsChecked="{Binding ViewModel.UseValues}"
-                                  IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
-                        <TextBox Text="{Binding ViewModel.ValuesText}"
-                                 Watermark="{x:Static langs:Resources.C_ValuesWatermark}"
-                                 IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
-                        <TextBox Text="{Binding ViewModel.ExclusionsText}"
-                                 Watermark="{x:Static langs:Resources.C_ExclusionsWatermark}"
-                                 IsEnabled="{Binding ViewModel.UseValues}" />
-                        <TextBlock Text="{Binding ViewModel.CandidatesText}" FontSize="12" Opacity="0.75" />
-
                         <!--
-                            枚举生成器：起止范围 + 一个受限判定式（只有 X 一个变量，没有赋值/循环/IO），
-                            结果并入候选。折叠起来是因为它是"批量造数据"，不是日常操作
+                            候选 / 排除 / 枚举生成器整体受锁定保护：它们改变的是"从哪些值里抽"，正是锁定开关的语义。
+                            整块包起来而不是逐个控件绑 IsEnabled —— 逐个绑必然漏掉某一个（生成器那次就漏了）
                         -->
-                        <Expander Header="{x:Static langs:Resources.C_Generator}" IsExpanded="False"
-                                  IsVisible="{Binding ViewModel.UseValues}">
-                            <StackPanel Spacing="8" Margin="0 8 0 0">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <TextBox Text="{Binding ViewModel.GeneratorFromText}" Width="120"
-                                             Watermark="{x:Static langs:Resources.C_GeneratorFrom}" />
-                                    <TextBox Text="{Binding ViewModel.GeneratorToText}" Width="120"
-                                             Watermark="{x:Static langs:Resources.C_GeneratorTo}" />
-                                </StackPanel>
-                                <TextBox Text="{Binding ViewModel.PredicateText}"
-                                         Watermark="{x:Static langs:Resources.C_PredicateWatermark}" />
-                                <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_PredicateHint}" />
+                        <StackPanel Spacing="8" IsEnabled="{Binding !ViewModel.IsSettingsLocked}">
+                            <CheckBox Content="{x:Static langs:Resources.C_UseValues}"
+                                      IsChecked="{Binding ViewModel.UseValues}" />
+                            <!-- 只在候选模式下出现：范围模式下这两个框填了也不生效，摆着只会误导 -->
+                            <StackPanel Spacing="8" IsVisible="{Binding ViewModel.UseValues}">
+                                <TextBox Text="{Binding ViewModel.ValuesText}"
+                                         Watermark="{x:Static langs:Resources.C_ValuesWatermark}" />
+                                <TextBox Text="{Binding ViewModel.ExclusionsText}"
+                                         Watermark="{x:Static langs:Resources.C_ExclusionsWatermark}" />
+                                <TextBlock Text="{Binding ViewModel.CandidatesText}" FontSize="12" Opacity="0.75" />
                             </StackPanel>
-                        </Expander>
+
+                            <!--
+                                枚举生成器：起止范围 + 一个受限判定式（只有 X 一个变量，没有赋值/循环/IO），
+                                结果并入候选。折叠起来是因为它是"批量造数据"，不是日常操作
+                            -->
+                            <Expander Header="{x:Static langs:Resources.C_Generator}" IsExpanded="False"
+                                      IsVisible="{Binding ViewModel.UseValues}">
+                                <StackPanel Spacing="8" Margin="0 8 0 0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <TextBox Text="{Binding ViewModel.GeneratorFromText}" Width="120"
+                                                 Watermark="{x:Static langs:Resources.C_GeneratorFrom}" />
+                                        <TextBox Text="{Binding ViewModel.GeneratorToText}" Width="120"
+                                                 Watermark="{x:Static langs:Resources.C_GeneratorTo}" />
+                                    </StackPanel>
+                                    <TextBox Text="{Binding ViewModel.PredicateText}"
+                                             Watermark="{x:Static langs:Resources.C_PredicateWatermark}" />
+                                    <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_PredicateHint}" />
+                                </StackPanel>
+                            </Expander>
+                        </StackPanel>
 
                         <Separator />
 
