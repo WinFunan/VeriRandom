@@ -178,4 +178,6 @@
   </data>
   <data name="S_RawRandomAdvanced" xml:space="preserve"><value>随机数高级输出</value></data>
   <data name="S_RawRandomAdvanced_D" xml:space="preserve"><value>允许在「随机数」页输出原始熵、按位取值并按十六进制或 ASCII 显示；关闭时该页不显示高级选项</value></data>
+  <data name="S_SettingsDigestBadge" xml:space="preserve"><value>显示设置摘要徽标</value></data>
+  <data name="S_SettingsDigestBadge_D" xml:space="preserve"><value>本地哈希模式下在主界面显示设置文件摘要，便于逐字核对；分离签名模式显示公钥指纹，不受此开关影响</value></data>
 </root>

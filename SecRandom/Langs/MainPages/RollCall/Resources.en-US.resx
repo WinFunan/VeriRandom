@@ -105,4 +105,8 @@
   <data name="C_SignedPolicyBadgeTipFormat" xml:space="preserve">
     <value>Draws on this machine are locked by a signed policy; signer: {0}; signed: {1}</value>
   </data>
+  <data name="C_SettingsDigestBadgeFormat" xml:space="preserve"><value>digest {0}</value></data>
+  <data name="C_SettingsDigestBadgeTipFormat" xml:space="preserve"><value>Settings file digest (SHA-256): {0}
+File: {1}
+This badge can be turned off in More settings</value></data>
 </root>

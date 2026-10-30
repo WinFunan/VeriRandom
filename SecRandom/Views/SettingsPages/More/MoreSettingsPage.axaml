@@ -89,6 +89,19 @@
                 随机数页的高级输出（原始熵 / 按位取值）默认关闭：它改变"结果到底是什么"，不是日常操作。
                 这里只提供开关，具体选项在随机数页自己的折叠块里
             -->
+            <!--
+                本地哈希模式的摘要徽标：没有签发者时，设置文件摘要就是唯一能逐字核对的东西。
+                默认显示，可在此关闭
+            -->
+            <fa:FASettingsExpander x:Name="S_SettingsDigestBadge"
+                                   Header="{x:Static lsp:Resources.S_SettingsDigestBadge}"
+                                   Description="{x:Static lsp:Resources.S_SettingsDigestBadge_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi NumberSymbolFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.ShowSettingsDigestBadge}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_RawRandomAdvanced"
                                    Header="{x:Static lsp:Resources.S_RawRandomAdvanced}"
                                    Description="{x:Static lsp:Resources.S_RawRandomAdvanced_D}"

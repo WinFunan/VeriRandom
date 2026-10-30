@@ -76,6 +76,17 @@ namespace SecRandom.Langs.SettingsPages.More {
         }
         
         public static string S_RawRandomAdvanced_D {
+        public static string S_SettingsDigestBadge {
+            get {
+                return ResourceManager.GetString("S_SettingsDigestBadge", resourceCulture);
+            }
+        }
+        
+        public static string S_SettingsDigestBadge_D {
+            get {
+                return ResourceManager.GetString("S_SettingsDigestBadge_D", resourceCulture);
+            }
+        }
             get {
                 return ResourceManager.GetString("S_RawRandomAdvanced_D", resourceCulture);
             }

@@ -158,14 +158,51 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     public string SignedPolicyTooltip { get; private set; } = string.Empty;
 
+    /// <summary>
+    ///     Fills the badge with the local settings digest when detached signing is not in play. The digest is recomputed
+    ///     from the file rather than read from the credential envelope, so what the badge shows is what is on disk now.
+    /// </summary>
+    private void TrySetLocalDigestBadge()
+    {
+        SignedPolicyBadgeText = string.Empty;
+        SignedPolicyTooltip = string.Empty;
+
+        if (!Config.MoreSettings.ShowSettingsDigestBadge)
+            return;
+
+        var store = IAppHost.TryGetService<SecRandom.Services.Security.SecuritySettingsStore>();
+        if (store is null
+            || store.Data.ConfigIntegrityMode != SecRandom.Core.Enums.Configs.ConfigIntegrityMode.LocalFingerprint)
+            return;
+
+        try
+        {
+            var path = SecRandom.Shared.Utils.GetFilePath("config", "settings.json");
+            if (!System.IO.File.Exists(path))
+                return;
+
+            var hash = Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(System.IO.File.ReadAllBytes(path))).ToLowerInvariant();
+
+            SignedPolicyBadgeText = string.Format(SR.C_SettingsDigestBadgeFormat, hash[..12]);
+            SignedPolicyTooltip = string.Format(SR.C_SettingsDigestBadgeTipFormat, hash, path);
+        }
+        catch (System.IO.IOException)
+        {
+            // A settings file that cannot be read right now just leaves the badge hidden; the integrity gate reports
+            // the real problem at startup.
+        }
+    }
+
     private void RefreshSignedPolicyBadge(ConfigPolicySignatureService service)
     {
         var verification = service.Verify();
         var fingerprint = verification.PublicKeyFingerprint;
         if (!verification.IsVerified || string.IsNullOrWhiteSpace(fingerprint))
         {
-            SignedPolicyBadgeText = string.Empty;
-            SignedPolicyTooltip = string.Empty;
+            // No issuer to compare against: fall back to the local settings digest when that mode is what protects
+            // this machine. A failure to read the file simply leaves the badge hidden.
+            TrySetLocalDigestBadge();
         }
         else
         {

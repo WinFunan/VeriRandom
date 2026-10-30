@@ -96,4 +96,8 @@
   <data name="C_SignedPolicyBadgeTipFormat" xml:space="preserve">
     <value>本机抽取已由签发的策略锁定；签名者：{0}；签发时间：{1}</value>
   </data>
+  <data name="C_SettingsDigestBadgeFormat" xml:space="preserve"><value>摘要 {0}</value></data>
+  <data name="C_SettingsDigestBadgeTipFormat" xml:space="preserve"><value>设置文件摘要（SHA-256）：{0}
+文件：{1}
+可在「更多设置」里关闭这个徽标</value></data>
 </root>

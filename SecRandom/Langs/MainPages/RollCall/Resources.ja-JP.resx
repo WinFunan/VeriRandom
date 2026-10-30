@@ -33,4 +33,8 @@
   <data name="C_SignedPolicyBadgeTipFormat" xml:space="preserve">
     <value>この端末の抽選は署名済みポリシーでロックされています；署名者：{0}；署名日時：{1}</value>
   </data>
+  <data name="C_SettingsDigestBadgeFormat" xml:space="preserve"><value>ダイジェスト {0}</value></data>
+  <data name="C_SettingsDigestBadgeTipFormat" xml:space="preserve"><value>設定ファイルのダイジェスト（SHA-256）：{0}
+ファイル：{1}
+このバッジは「その他の設定」で非表示にできます</value></data>
 </root>

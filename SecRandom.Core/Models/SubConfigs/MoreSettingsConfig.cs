@@ -93,6 +93,12 @@ public partial class MoreSettingsConfig : ObservableObject
     /// </summary>
     [ObservableProperty] private bool _rawRandomEntropyConcatEnabled;
 
+    /// <summary>
+    ///     Show the settings-file digest on the draw surface while the local-hash integrity mode is active. On by
+    ///     default: with no issuer to compare against, that digest is the only value a person can check by eye.
+    /// </summary>
+    [ObservableProperty] private bool _showSettingsDigestBadge = true;
+
     // Result mini-window size. Resizing it on a classroom touchscreen is a deliberate, effortful action, so the
     // chosen size is remembered; the position is not, because the card re-centres on whichever display the app runs on
     // and a remembered position from a disconnected monitor would put it off-screen.
