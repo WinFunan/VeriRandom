@@ -67,15 +67,17 @@ namespace SecRandom.Langs.SettingsPages.More {
             get {
                 return ResourceManager.GetString("S_LotteryEnabled_D", resourceCulture);
             }
+        }
+        
         public static string S_RawRandomAdvanced {
             get {
                 return ResourceManager.GetString("S_RawRandomAdvanced", resourceCulture);
             }
-            }
+        }
+        
         public static string S_RawRandomAdvanced_D {
             get {
                 return ResourceManager.GetString("S_RawRandomAdvanced_D", resourceCulture);
-            }
             }
         }
         
