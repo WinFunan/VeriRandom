@@ -53,4 +53,5 @@
   <data name="C_CopyResult" xml:space="preserve"><value>Copy result</value></data>
   <data name="M_CopiedResultFormat" xml:space="preserve"><value>Copied {0} characters</value></data>
   <data name="M_NothingToCopy" xml:space="preserve"><value>Nothing to copy yet</value></data>
+  <data name="M_ClipboardUnavailable" xml:space="preserve"><value>The clipboard is unavailable, so nothing was copied</value></data>
 </root>

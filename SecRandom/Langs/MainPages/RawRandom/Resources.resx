@@ -53,4 +53,5 @@
   <data name="C_CopyResult" xml:space="preserve"><value>复制结果</value></data>
   <data name="M_CopiedResultFormat" xml:space="preserve"><value>已复制 {0} 个字符</value></data>
   <data name="M_NothingToCopy" xml:space="preserve"><value>还没有结果可复制</value></data>
+  <data name="M_ClipboardUnavailable" xml:space="preserve"><value>剪贴板不可用，无法复制</value></data>
 </root>

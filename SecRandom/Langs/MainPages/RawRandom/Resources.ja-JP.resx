@@ -53,4 +53,5 @@
   <data name="C_CopyResult" xml:space="preserve"><value>結果をコピー</value></data>
   <data name="M_CopiedResultFormat" xml:space="preserve"><value>{0} 文字をコピーしました</value></data>
   <data name="M_NothingToCopy" xml:space="preserve"><value>コピーできる結果がまだありません</value></data>
+  <data name="M_ClipboardUnavailable" xml:space="preserve"><value>クリップボードを利用できないためコピーできません</value></data>
 </root>
