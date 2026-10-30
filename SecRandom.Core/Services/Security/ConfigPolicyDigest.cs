@@ -23,9 +23,11 @@ public static class ConfigPolicyDigest
     /// <summary>
     ///     Identifies the covered field set. Adding or removing a covered setting must change this id.
     ///     v3 added the beacon-prefetch switch to the verification subtree, which the policy projects wholesale;
-    ///     v4 added the periodic beacon-prefetch switch, and v5 the entropy-source id, to the same subtree.
+    ///     v4 added the periodic beacon-prefetch switch, and v5 the entropy-source id, to the same subtree;
+    ///     v6 added the four per-draw-type setting trees, which decide how a draw samples and were previously outside
+    ///     the signature — a signed policy that ignored "默认抽取设置" was not locking what it claimed to lock.
     /// </summary>
-    public const string ScopeId = "verirandom-config-policy/v5";
+    public const string ScopeId = "verirandom-config-policy/v6";
 
     /// <summary>
     ///     Security fields that describe the integrity check itself. Covering them would make switching the
@@ -78,6 +80,12 @@ public static class ConfigPolicyDigest
             },
             ["linkageSettings"] = Project(model.LinkageSettings),
             ["fairDrawSettings"] = Project(model.FairDrawSettings),
+            // The per-draw-type trees hold repeat mode, sample count, animation and the quick-draw list; leaving them
+            // out let a signed policy vouch for a draw it did not actually constrain.
+            ["defaultDrawSettings"] = Project(model.DefaultDrawSettings),
+            ["rollCallSettings"] = Project(model.RollCallSettings),
+            ["quickDrawSettings"] = Project(model.QuickDrawSettings),
+            ["lotterySettings"] = Project(model.LotterySettings),
             ["lotteryEnabled"] = JsonValue.Create(model.MoreSettings.LotteryEnabled)
         };
 
