@@ -11,6 +11,7 @@
 [![测试版本](https://img.shields.io/github/v/release/WinFunan/VeriRandom?include_prereleases&style=for-the-badge&label=测试版)](https://github.com/WinFunan/VeriRandom/releases)
 [![最后更新](https://img.shields.io/github/last-commit/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=最后更新时间)](https://github.com/WinFunan/VeriRandom/commits/master)
 [![累计下载](https://img.shields.io/github/downloads/WinFunan/VeriRandom/total?style=for-the-badge&color=00b4ab&label=累计下载)](https://github.com/WinFunan/VeriRandom/releases)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/WinFunan/VeriRandom)
 
 [![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%20%7C%20768421833-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/EvhyCJWqCA)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](LICENSE)
