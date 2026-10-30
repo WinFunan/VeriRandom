@@ -54,6 +54,16 @@ public sealed class RawNumberProof
     /// </summary>
     public List<long>? Values { get; set; }
 
+    /// <summary>
+    ///     The resolved candidate space as closed intervals, or null for a plain range draw. This is what a candidate
+    ///     list with exclusions or an enumeration generator produces, and it is recorded <em>after</em> resolution — not
+    ///     as the user's expression — so replaying an old record never depends on re-parsing or re-evaluating anything.
+    /// </summary>
+    public List<long[]>? Intervals { get; set; }
+
+    /// <summary>Total number of values in <see cref="Intervals" />; recorded so a reader can see the pool size.</summary>
+    public long Cardinality { get; set; }
+
     /// <summary>True only when a single publishing source seeded this number.</summary>
     public bool Verifiable { get; set; }
 
@@ -131,6 +141,10 @@ public static class RawNumberProofHashing
         // Same rule for batches: a single-value record keeps the digest it had before batches existed.
         if (proof.Results is { Count: > 1 } results)
             builder.Append("|results:").AppendJoin(',', results);
+
+        // Interval space, appended only when present so every earlier record keeps its exact digest.
+        if (proof.Intervals is { Count: > 0 } intervals)
+            builder.Append("|space:").AppendJoin(';', intervals.Select(pair => $"{pair[0]}-{pair[1]}"));
 
         foreach (var entropy in proof.Entropy)
             builder.Append('|')

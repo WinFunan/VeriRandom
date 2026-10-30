@@ -147,10 +147,18 @@ public sealed class RawCandidateSpec
         new(Merge(intervals.ToList()));
 
     /// <summary>The single value this seed lands on, uniformly over the whole space.</summary>
-    public long Sample(ReadOnlySpan<byte> seed)
-    {
-        var index = RejectionSampler.Sample(0, Cardinality - 1, seed);
+    public long Sample(ReadOnlySpan<byte> seed) =>
+        ValueAt(RejectionSampler.Sample(0, Cardinality - 1, seed));
 
+    /// <summary>Batch form: the same per-index seed derivation as a plain range, mapped through the intervals.</summary>
+    public long[] SampleMany(ReadOnlySpan<byte> seed, int count) =>
+        RejectionSampler.SampleMany(0, Cardinality - 1, seed, count)
+            .Select(ValueAt)
+            .ToArray();
+
+    /// <summary>Index inside the space to its value, walking the intervals by length.</summary>
+    private long ValueAt(long index)
+    {
         foreach (var (start, end) in _intervals)
         {
             var length = end - start + 1;

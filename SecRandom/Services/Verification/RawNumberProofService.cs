@@ -189,9 +189,7 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
         var recorded = proof.Results is { Count: > 0 } results ? results : [proof.Value];
         var count = recorded.Count;
 
-        var recomputed = proof.Values is { Count: > 0 } set
-            ? RejectionSampler.SampleManyFromSet(set, seed, count)
-            : RejectionSampler.SampleMany(proof.LowerBound, proof.UpperBound, seed, count);
+        var recomputed = Recompute(proof, seed, count);
 
         return new RawNumberReplay(recomputed, recomputed.SequenceEqual(recorded));
     }
@@ -202,20 +200,26 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
     /// </summary>
     private static bool MatchesRecordedValues(RawNumberProof proof, byte[] seed)
     {
-        if (proof.Results is { Count: > 1 } results)
-        {
-            var recomputed = proof.Values is { Count: > 0 } set
-                ? RejectionSampler.SampleManyFromSet(set, seed, results.Count)
-                : RejectionSampler.SampleMany(proof.LowerBound, proof.UpperBound, seed, results.Count);
+        var recorded = proof.Results is { Count: > 0 } results ? results : [proof.Value];
+        return Recompute(proof, seed, recorded.Count).SequenceEqual(recorded);
+    }
 
-            return recomputed.SequenceEqual(results);
+    /// <summary>
+    ///     Recomputation order: a recorded interval space wins, then a plain explicit set, then the range. The space
+    ///     case is what makes "1-1000000 excluding 7" replayable without storing a million values — the intervals are
+    ///     the space, exactly as they were resolved at draw time.
+    /// </summary>
+    private static long[] Recompute(RawNumberProof proof, byte[] seed, int count)
+    {
+        if (proof.Intervals is { Count: > 0 } intervals)
+        {
+            var space = RawCandidateSpec.FromIntervals(intervals.Select(pair => (pair[0], pair[1])));
+            return space.SampleMany(seed, count);
         }
 
-        var single = proof.Values is { Count: > 0 } singleSet
-            ? RejectionSampler.SampleFromSet(singleSet, seed)
-            : RejectionSampler.Sample(proof.LowerBound, proof.UpperBound, seed);
-
-        return single == proof.Value;
+        return proof.Values is { Count: > 0 } set
+            ? RejectionSampler.SampleManyFromSet(set, seed, count)
+            : RejectionSampler.SampleMany(proof.LowerBound, proof.UpperBound, seed, count);
     }
 
     private static string ProofDirectory => Utils.GetFilePath("proofs", "raw");
