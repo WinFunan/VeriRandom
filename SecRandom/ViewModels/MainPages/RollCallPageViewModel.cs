@@ -170,7 +170,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         if (!Config.MoreSettings.ShowSettingsDigestBadge)
             return;
 
-        var store = IAppHost.TryGetService<SecRandom.Services.Security.SecuritySettingsStore>();
+        var store = SecRandom.Core.Abstraction.IAppHost
+            .TryGetService<SecRandom.Services.Security.SecuritySettingsStore>();
         if (store is null
             || store.Data.ConfigIntegrityMode != SecRandom.Core.Enums.Configs.ConfigIntegrityMode.LocalFingerprint)
             return;

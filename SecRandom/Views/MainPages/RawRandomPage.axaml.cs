@@ -41,7 +41,7 @@ public sealed partial class RawRandomPage : UserControl
             ViewModel.BitCount = bits;
     }
 
-    private void CopyResult_OnClick(object? sender, RoutedEventArgs e)
+    private async void CopyResult_OnClick(object? sender, RoutedEventArgs e)
     {
         var text = ViewModel.ResultText;
 
