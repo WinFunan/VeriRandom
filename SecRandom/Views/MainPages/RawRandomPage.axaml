@@ -162,18 +162,30 @@
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <StackPanel Spacing="4">
                                 <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_BitCount}" />
-                                <ComboBox x:Name="BitCountBox" SelectedIndex="0" Width="120"
-                                          IsEnabled="{Binding !ViewModel.IsSettingsLocked}">
-                                    <ComboBoxItem Content="32" />
-                                    <ComboBoxItem Content="64" />
-                                    <ComboBoxItem Content="128" />
-                                    <ComboBoxItem Content="1280" />
-                                </ComboBox>
+                                <!-- 可手输：常见档位只是快捷按钮，位宽不该被下拉框限制 -->
+                                <NumericUpDown Minimum="8" Maximum="16384" Value="{Binding ViewModel.BitCount}" Width="150" />
                             </StackPanel>
-                            <CheckBox Content="{x:Static langs:Resources.C_AsciiOutput}"
-                                      IsChecked="{Binding ViewModel.AsciiOutput}"
-                                      VerticalAlignment="Bottom"
-                                      IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Bottom">
+                                <Button Content="32" Tag="32" Click="PresetBits_OnClick" />
+                                <Button Content="64" Tag="64" Click="PresetBits_OnClick" />
+                                <Button Content="128" Tag="128" Click="PresetBits_OnClick" />
+                                <Button Content="1280" Tag="1280" Click="PresetBits_OnClick" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_OutputFormat}" />
+                            <ComboBox x:Name="FormatBox" SelectedIndex="{Binding ViewModel.OutputFormat}"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{x:Static langs:Resources.O_FormatDecimal}" />
+                                <ComboBoxItem Content="{x:Static langs:Resources.O_FormatHex}" />
+                                <ComboBoxItem Content="{x:Static langs:Resources.O_FormatAscii}" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4" IsVisible="{Binding ViewModel.IsAsciiFormat}">
+                            <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_AsciiCharCount}" />
+                            <NumericUpDown Minimum="1" Maximum="4096" Value="{Binding ViewModel.AsciiCharCount}" Width="150" />
                         </StackPanel>
 
                         <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_AdvancedHint}" />

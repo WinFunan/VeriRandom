@@ -79,7 +79,12 @@ public partial class MoreSettingsConfig : ObservableObject
     [ObservableProperty] private bool _rawRandomAdvancedOptionsEnabled;
     [ObservableProperty] private bool _rawRandomRawEntropyEnabled;
     [ObservableProperty] private int _rawRandomBitCount = 32;
-    [ObservableProperty] private bool _rawRandomAsciiOutput;
+
+    /// <summary>0 = decimal, 1 = hex, 2 = printable ASCII. Stored as an int so an older build reads a sane default.</summary>
+    [ObservableProperty] private int _rawRandomOutputFormat = 1;
+
+    /// <summary>ASCII characters to produce when format 2 is selected, independent of the bit width.</summary>
+    [ObservableProperty] private int _rawRandomAsciiCharCount = 16;
 
     // Result mini-window size. Resizing it on a classroom touchscreen is a deliberate, effortful action, so the
     // chosen size is remembered; the position is not, because the card re-centres on whichever display the app runs on

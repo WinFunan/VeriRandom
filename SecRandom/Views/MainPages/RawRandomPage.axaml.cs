@@ -31,7 +31,17 @@ public sealed partial class RawRandomPage : UserControl
     ///     Copies exactly what is on screen. Long hex output is the whole reason this exists: a 1280-bit result is 320
     ///     characters, and "select it with the mouse" is not a workflow a teacher can use in front of a class.
     /// </summary>
-    private async void CopyResult_OnClick(object? sender, RoutedEventArgs e)
+    /// <summary>
+    ///     Quick-fills a common width. The value is still typed into a numeric box rather than chosen from a fixed list:
+    ///     the presets are conveniences, not the allowed set.
+    /// </summary>
+    private void PresetBits_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tag } && int.TryParse(tag, out var bits))
+            ViewModel.BitCount = bits;
+    }
+
+    private void CopyResult_OnClick(object? sender, RoutedEventArgs e)
     {
         var text = ViewModel.ResultText;
 

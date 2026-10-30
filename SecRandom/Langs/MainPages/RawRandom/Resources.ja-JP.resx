@@ -54,4 +54,9 @@
   <data name="M_CopiedResultFormat" xml:space="preserve"><value>{0} 文字をコピーしました</value></data>
   <data name="M_NothingToCopy" xml:space="preserve"><value>コピーできる結果がまだありません</value></data>
   <data name="M_ClipboardUnavailable" xml:space="preserve"><value>クリップボードを利用できないためコピーできません</value></data>
+  <data name="C_OutputFormat" xml:space="preserve"><value>表示形式</value></data>
+  <data name="O_FormatDecimal" xml:space="preserve"><value>10 進数</value></data>
+  <data name="O_FormatHex" xml:space="preserve"><value>16 進数</value></data>
+  <data name="O_FormatAscii" xml:space="preserve"><value>印刷可能な ASCII</value></data>
+  <data name="C_AsciiCharCount" xml:space="preserve"><value>文字数</value></data>
 </root>

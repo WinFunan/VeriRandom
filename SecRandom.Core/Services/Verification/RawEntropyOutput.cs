@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -78,6 +80,12 @@ public static class RawEntropyOutput
 
     /// <summary>Uppercase hex, which is what an operator comparing against another tool expects.</summary>
     public static string ToHex(byte[] bytes) => Convert.ToHexString(bytes);
+
+    /// <summary>
+    ///     The same bits read as one unsigned big-endian integer in base 10. Large widths produce very long strings on
+    ///     purpose: "1280 bits as a decimal number" is 386 digits, and truncating it would silently drop entropy.
+    /// </summary>
+    public static string ToDecimal(byte[] bytes) => new BigInteger(bytes, isUnsigned: true, isBigEndian: true).ToString(CultureInfo.InvariantCulture);
 
     /// <summary>Uniform printable ASCII of <paramref name="count" /> characters.</summary>
     public static string ToPrintableAscii(ReadOnlySpan<byte> seed, int count)

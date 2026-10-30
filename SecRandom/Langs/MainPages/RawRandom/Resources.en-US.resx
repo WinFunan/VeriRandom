@@ -54,4 +54,9 @@
   <data name="M_CopiedResultFormat" xml:space="preserve"><value>Copied {0} characters</value></data>
   <data name="M_NothingToCopy" xml:space="preserve"><value>Nothing to copy yet</value></data>
   <data name="M_ClipboardUnavailable" xml:space="preserve"><value>The clipboard is unavailable, so nothing was copied</value></data>
+  <data name="C_OutputFormat" xml:space="preserve"><value>Representation</value></data>
+  <data name="O_FormatDecimal" xml:space="preserve"><value>Decimal</value></data>
+  <data name="O_FormatHex" xml:space="preserve"><value>Hexadecimal</value></data>
+  <data name="O_FormatAscii" xml:space="preserve"><value>Printable ASCII</value></data>
+  <data name="C_AsciiCharCount" xml:space="preserve"><value>Characters</value></data>
 </root>

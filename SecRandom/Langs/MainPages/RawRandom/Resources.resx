@@ -54,4 +54,9 @@
   <data name="M_CopiedResultFormat" xml:space="preserve"><value>已复制 {0} 个字符</value></data>
   <data name="M_NothingToCopy" xml:space="preserve"><value>还没有结果可复制</value></data>
   <data name="M_ClipboardUnavailable" xml:space="preserve"><value>剪贴板不可用，无法复制</value></data>
+  <data name="C_OutputFormat" xml:space="preserve"><value>表示方式</value></data>
+  <data name="O_FormatDecimal" xml:space="preserve"><value>十进制</value></data>
+  <data name="O_FormatHex" xml:space="preserve"><value>十六进制</value></data>
+  <data name="O_FormatAscii" xml:space="preserve"><value>可打印 ASCII</value></data>
+  <data name="C_AsciiCharCount" xml:space="preserve"><value>字符个数</value></data>
 </root>

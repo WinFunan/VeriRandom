@@ -83,7 +83,8 @@ public partial class RawRandomPageViewModel : ViewModelBase
         ValuesText = more.RawRandomValuesText;
         UseRawEntropy = more.RawRandomRawEntropyEnabled;
         BitCount = more.RawRandomBitCount;
-        AsciiOutput = more.RawRandomAsciiOutput;
+        OutputFormat = more.RawRandomOutputFormat;
+        AsciiCharCount = more.RawRandomAsciiCharCount;
         RefreshLockState();
 
         EntropySources = new ObservableCollection<EntropySourceOption>(
@@ -109,11 +110,15 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
     public ObservableCollection<EntropySourceOption> EntropySources { get; }
 
-    /// <summary>
-    ///     Advanced output is opt-in per machine. Read once when the page is built: flipping it is a settings change that
+    /// <summary>Advanced output is opt-in per machine. Read once when the page is built: flipping it is a settings change that
     ///     requires reopening the page, which is the right weight for a control that changes what "the result" means.
     /// </summary>
     public bool ShowAdvancedOptions => Config.MoreSettings.RawRandomAdvancedOptionsEnabled;
+
+    /// <summary>The character-count row only makes sense for the ASCII format.</summary>
+    public bool IsAsciiFormat => OutputFormat == 2;
+
+    partial void OnOutputFormatChanged(int value) => OnPropertyChanged(nameof(IsAsciiFormat));
 
     [ObservableProperty] private string _lowerBoundText = "0";
     [ObservableProperty] private string _upperBoundText = "100";
@@ -141,8 +146,11 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
     [ObservableProperty] private int _bitCount = 32;
 
-    /// <summary>Render the bits as printable ASCII rather than hex.</summary>
-    [ObservableProperty] private bool _asciiOutput;
+    /// <summary>0 = decimal, 1 = hex, 2 = printable ASCII.</summary>
+    [ObservableProperty] private int _outputFormat = 1;
+
+    /// <summary>How many ASCII characters to produce; separate from the bit width because one character is one symbol.</summary>
+    [ObservableProperty] private int _asciiCharCount = 16;
 
     /// <summary>Measured information content of the last output, shown beside it rather than kept in a log.</summary>
     [ObservableProperty] private string _entropyText = string.Empty;
@@ -223,10 +231,14 @@ public partial class RawRandomPageViewModel : ViewModelBase
             {
                 // Advanced mode: show entropy instead of an in-range value. The record still binds the *seed*, because
                 // the text is a deterministic function of it — storing the presentation too would only duplicate it.
-                var bits = Math.Clamp(BitCount, 8, 4096);
-                var output = AsciiOutput
-                    ? RawEntropyOutput.ToPrintableAscii(seed, Math.Max(1, bits / 8))
-                    : RawEntropyOutput.ToHex(RawEntropyOutput.Expand(seed, bits));
+                var bits = Math.Clamp(BitCount, 8, 16384);
+                var output = OutputFormat switch
+                {
+                    // Decimal is the same bits as one unsigned integer: long by design, never truncated.
+                    0 => RawEntropyOutput.ToDecimal(RawEntropyOutput.Expand(seed, bits)),
+                    2 => RawEntropyOutput.ToPrintableAscii(seed, Math.Clamp(AsciiCharCount, 1, 4096)),
+                    _ => RawEntropyOutput.ToHex(RawEntropyOutput.Expand(seed, bits))
+                };
 
                 ResultText = output;
 
