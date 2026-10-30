@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.Linq;
 using System.Text;
 
 namespace SecRandom.Core.Models.Verification;
