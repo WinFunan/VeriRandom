@@ -47,13 +47,10 @@ public sealed class SlideTriggerQuickCopyService(
     ///     Avalonia's clipboard hangs off a top level, and the premise here is that no window is in front. The floating
     ///     window exists from startup, so any live window will do: even a hidden one owns the platform clipboard.
     /// </summary>
-    private static TopLevel? FindTopLevel()
-    {
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            return desktop.MainWindow
-                   ?? desktop.Windows.FirstOrDefault(window => window.IsVisible)
-                   ?? desktop.Windows.FirstOrDefault();
-
-        return Application.Current?.MainWindow;
-    }
+    private static TopLevel? FindTopLevel() =>
+        Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+              ?? desktop.Windows.FirstOrDefault(window => window.IsVisible)
+              ?? desktop.Windows.FirstOrDefault()
+            : null;
 }
