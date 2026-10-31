@@ -212,6 +212,7 @@ public sealed class ProofChainTests : IDisposable
         services.AddSingleton<ProofChainStore>();
         services.AddSingleton<OwnProofChainStore>();
         services.AddSingleton<OwnProofExportService>();
+        services.AddSingleton<GateEvidenceExportService>();
         services.AddSingleton<DrawProofExportService>();
         services.AddSingleton<ProofIntegrityVerifier>();
         return services.BuildServiceProvider();

@@ -88,6 +88,7 @@ public sealed record ProofReplayOutcome(
 public sealed class ProofReplayFileService(
     DrawProofExportService proofExporter,
     OwnProofExportService ownProofExporter,
+    GateEvidenceExportService gateEvidenceExporter,
     ProofIntegrityVerifier integrityVerifier,
     IProfileService profileService,
     ILogger<ProofReplayFileService> logger)
@@ -188,7 +189,37 @@ public sealed class ProofReplayFileService(
             requestedCount,
             candidateCount,
             audit,
-            ProofConsistency.Check(proof));
+            ProofConsistency.Check(proof),
+            ReadGateEvidence(path, proof));
+    }
+
+    /// <summary>
+    ///     Reads the fork-local gate evidence beside this proof. Absence is normal — a draw whose gate removed nobody
+    ///     writes none — so it returns null rather than an error, and the dialog has to say which reading applies
+    ///     instead of showing a silent pass.
+    /// </summary>
+    private ProofGateEvidenceInfo? ReadGateEvidence(string upPath, DrawProof proof)
+    {
+        if (gateEvidenceExporter.TryReadForUpPath(upPath) is not { } evidence)
+            return null;
+
+        var selfHashValid = string.Equals(
+            GateEvidenceHashing.ComputeSelfHash(evidence),
+            evidence.SelfHash,
+            StringComparison.Ordinal);
+
+        var bound = proof.Chain is { } chain
+                    && string.Equals(chain.SelfHash, evidence.UpChainHash, StringComparison.Ordinal)
+                    && chain.Index == evidence.UpChainIndex
+                    && proof.ProofId == evidence.ProofId;
+
+        return new ProofGateEvidenceInfo(
+            evidence.Removed.Count,
+            evidence.CandidateCountBefore,
+            evidence.CandidateCountAfter,
+            evidence.Threshold,
+            selfHashValid,
+            bound);
     }
 
     /// <summary>

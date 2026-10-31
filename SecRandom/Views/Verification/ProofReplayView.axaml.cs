@@ -187,6 +187,7 @@ public sealed partial class ProofReplayView : ViewBase
         AddRow(LR.C_ProofDetail_AuditCommitment, details.AuditHashBase64Url);
         AddRow(LR.C_ProofDetail_Seed, details.SeedBase64Url);
         AddRow(LR.C_ProofDetail_SelfCheck, SelfCheckText(details.Consistency));
+        AddRow(LR.C_ProofDetail_GateEvidence, GateEvidenceText(details.GateEvidence));
         AddRow(LR.C_ProofDetail_ServerReceipt, details.HasServerReceipt
             ? LR.M_ProofDetail_ReceiptPresent
             : LR.M_ProofDetail_ReceiptAbsent);
@@ -393,6 +394,29 @@ public sealed partial class ProofReplayView : ViewBase
             ProofConsistencyIssue.ResultDisagreesWithPayload => LR.M_SelfCheckResultMismatch,
             _ => LR.M_SelfCheckCountsImpossible
         }));
+    }
+
+    /// <summary>
+    ///     What the gate-evidence file says. Absence is stated as absence, never as a pass: a proof written before this
+    ///     evidence existed and a draw whose gate removed nobody both have no file, and neither one has been checked.
+    /// </summary>
+    private static string GateEvidenceText(ProofGateEvidenceInfo? gate)
+    {
+        if (gate is null)
+            return LR.M_GateEvidenceNone;
+
+        var summary = string.Format(
+            CultureInfo.InvariantCulture,
+            LR.M_GateEvidencePresentFormat,
+            gate.RemovedCount,
+            gate.CandidateCountBefore,
+            gate.CandidateCountAfter,
+            gate.Threshold);
+
+        if (!gate.SelfHashValid)
+            return $"{summary} · {LR.M_GateEvidenceSelfHashInvalid}";
+
+        return $"{summary} · {(gate.BoundToProof ? LR.M_GateEvidenceBound : LR.M_GateEvidenceDetached)}";
     }
 
     private void Select(ProofReplayNode node)

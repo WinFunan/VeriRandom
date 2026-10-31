@@ -222,6 +222,7 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
         services.AddSingleton<ProofChainStore>();
         services.AddSingleton<OwnProofChainStore>();
         services.AddSingleton<OwnProofExportService>();
+        services.AddSingleton<GateEvidenceExportService>();
         services.AddSingleton<DrawProofExportService>();
         var provider = services.BuildServiceProvider();
         // The fork gates SECTL submissions on the cross-border consent plus an explicit attestation choice,

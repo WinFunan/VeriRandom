@@ -226,4 +226,10 @@
   <data name="M_SelfCheckInputMismatch" xml:space="preserve"><value>入力コミットメントがファイル内容と一致しません</value></data>
   <data name="M_SelfCheckResultMismatch" xml:space="preserve"><value>記録された当選者が結果フレームと一致しません</value></data>
   <data name="M_SelfCheckCountsImpossible" xml:space="preserve"><value>候補数が矛盾しています</value></data>
+  <data name="C_ProofDetail_GateEvidence" xml:space="preserve"><value>しきい値の証拠</value></data>
+  <data name="M_GateEvidenceNone" xml:space="preserve"><value>しきい値の証拠はありません（今回は誰も除外されていないか、この記録が機能より前のものです）</value></data>
+  <data name="M_GateEvidencePresentFormat" xml:space="preserve"><value>{0} 人を除外（候補 {1} → {2}、しきい値 {3}）</value></data>
+  <data name="M_GateEvidenceBound" xml:space="preserve"><value>この証明に結び付いています</value></data>
+  <data name="M_GateEvidenceDetached" xml:space="preserve"><value>この証明に結び付いていません（別の抽選の証拠です）</value></data>
+  <data name="M_GateEvidenceSelfHashInvalid" xml:space="preserve"><value>証拠の内容検査に失敗しました</value></data>
 </root>

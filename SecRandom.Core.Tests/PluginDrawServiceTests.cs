@@ -183,6 +183,11 @@ public sealed class PluginDrawServiceTests : IDisposable
         services.AddSingleton<IWitnessClient>(_ => new StubWitnessClient());
         services.AddSingleton<ITimestampAuthorityClient>(_ => new StubTimestampAuthorityClient());
         services.AddSingleton<ProofChainStore>();
+        // The exporter chain needs the reference-node store and its writer: resolving DrawProofExportService without
+        // them throws at resolution time, which no build job would catch because CI does not run the test projects.
+        services.AddSingleton<OwnProofChainStore>();
+        services.AddSingleton<OwnProofExportService>();
+        services.AddSingleton<GateEvidenceExportService>();
         services.AddSingleton<DrawProofExportService>();
         services.AddSingleton<DrawProofAttestationService>();
         services.AddSingleton<CsesScheduleParser>();

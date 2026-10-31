@@ -189,14 +189,15 @@ public sealed class VerificationDrawCoordinator(
             result = kernel.Draw(input, seed);
             proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null);
         }
-        return Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input), beacon);
+        return Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input), beacon,
+            input.GateEvidence);
     }
 
     public void Publish<TCandidate>(VerificationDrawOutcome<TCandidate> outcome)
         where TCandidate : class
     {
         ArgumentNullException.ThrowIfNull(outcome);
-        var exported = proofExporter.Save(outcome.Proof, outcome.ExportContext, outcome.Beacon);
+        var exported = proofExporter.Save(outcome.Proof, outcome.ExportContext, outcome.Beacon, outcome.GateEvidence);
         if (outcome.Proof.Mode == VerificationProofMode.OfflineReproducible)
             attestationService.Request(exported.Proof, exported.Path);
     }
@@ -216,14 +217,15 @@ public sealed class VerificationDrawCoordinator(
         DrawProof proof,
         DrawProofExportContext exportContext,
         IReadOnlyDictionary<Guid, double> frozenWeights,
-        DrawProofBeacon? beacon)
+        DrawProofBeacon? beacon,
+        GateEvidenceSnapshot? gateEvidence)
         where TCandidate : class
     {
         var winners = result.Winners.Select(winner => recordLookup.TryGetValue(winner.RecordId, out var record)
             ? record
             : throw new InvalidDataException("Verification kernel returned a record outside the frozen pool."))
             .ToList();
-        return new VerificationDrawOutcome<TCandidate>(winners, proof, frozenWeights, exportContext, beacon);
+        return new VerificationDrawOutcome<TCandidate>(winners, proof, frozenWeights, exportContext, beacon, gateEvidence);
     }
 
     private static DrawProof CreateProof(
@@ -295,4 +297,5 @@ public sealed record VerificationDrawOutcome<TCandidate>(
     DrawProof Proof,
     IReadOnlyDictionary<Guid, double> FrozenWeights,
     DrawProofExportContext ExportContext,
-    DrawProofBeacon? Beacon = null);
+    DrawProofBeacon? Beacon = null,
+    GateEvidenceSnapshot? GateEvidence = null);

@@ -10,4 +10,11 @@ public sealed class VerificationDrawInput
     public required int Count { get; init; }
     public IReadOnlyList<VerificationCandidate> Candidates { get; init; } = [];
     public byte[] AuditPayload { get; init; } = [];
+
+    /// <summary>
+    ///     Who the average-gap gate removed, captured where the gate runs. Deliberately outside the wire frame: the
+    ///     attestation service decodes that frame with a fixed layout, so these facts are written to a fork-local sibling
+    ///     file instead of being appended to the request.
+    /// </summary>
+    public GateEvidenceSnapshot? GateEvidence { get; init; }
 }

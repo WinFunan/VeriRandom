@@ -1218,6 +1218,7 @@ public partial class App : Application
                 services.AddSingleton<ProofChainStore>();
                 services.AddSingleton<OwnProofChainStore>();
                 services.AddSingleton<OwnProofExportService>();
+                services.AddSingleton<GateEvidenceExportService>();
                 services.AddSingleton<DrawProofExportService>();
                 services.AddSingleton<ProofIntegrityVerifier>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();

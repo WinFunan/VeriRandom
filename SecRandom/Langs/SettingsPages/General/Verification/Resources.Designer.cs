@@ -162,6 +162,12 @@ public class Resources
     public static string C_ProofDetail_AuditCommitment => Get(nameof(C_ProofDetail_AuditCommitment));
     public static string C_ProofDetail_Seed => Get(nameof(C_ProofDetail_Seed));
     public static string C_ProofDetail_SelfCheck => Get(nameof(C_ProofDetail_SelfCheck));
+    public static string C_ProofDetail_GateEvidence => Get(nameof(C_ProofDetail_GateEvidence));
+    public static string M_GateEvidenceNone => Get(nameof(M_GateEvidenceNone));
+    public static string M_GateEvidencePresentFormat => Get(nameof(M_GateEvidencePresentFormat));
+    public static string M_GateEvidenceBound => Get(nameof(M_GateEvidenceBound));
+    public static string M_GateEvidenceDetached => Get(nameof(M_GateEvidenceDetached));
+    public static string M_GateEvidenceSelfHashInvalid => Get(nameof(M_GateEvidenceSelfHashInvalid));
     public static string M_SelfCheckOk => Get(nameof(M_SelfCheckOk));
     public static string M_SelfCheckLegacyEngine => Get(nameof(M_SelfCheckLegacyEngine));
     public static string M_SelfCheckUnavailable => Get(nameof(M_SelfCheckUnavailable));

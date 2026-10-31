@@ -304,4 +304,10 @@
   <data name="M_SelfCheckInputMismatch" xml:space="preserve"><value>输入摘要与文件内容不一致</value></data>
   <data name="M_SelfCheckResultMismatch" xml:space="preserve"><value>记录的中奖者与结果帧不一致</value></data>
   <data name="M_SelfCheckCountsImpossible" xml:space="preserve"><value>候选数自相矛盾</value></data>
+  <data name="C_ProofDetail_GateEvidence" xml:space="preserve"><value>门槛证据</value></data>
+  <data name="M_GateEvidenceNone" xml:space="preserve"><value>没有门槛证据（本次未移除任何人，或该证明早于该功能）</value></data>
+  <data name="M_GateEvidencePresentFormat" xml:space="preserve"><value>移除 {0} 人（候选 {1} → {2}，阈值 {3}）</value></data>
+  <data name="M_GateEvidenceBound" xml:space="preserve"><value>与本次证明绑定一致</value></data>
+  <data name="M_GateEvidenceDetached" xml:space="preserve"><value>与本次证明不一致（证据不属于这份证明）</value></data>
+  <data name="M_GateEvidenceSelfHashInvalid" xml:space="preserve"><value>证据内容校验失败</value></data>
 </root>

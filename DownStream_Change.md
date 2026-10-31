@@ -1388,3 +1388,36 @@ version(1) flags(1) count(1) delay×10(1) inputs(1) armedSeconds(1) expiresUnixD
 - `ProofConsistency` 只回答「文件是否自相矛盾」，不回答「抽签是否公平」；公平仍由 `scripts/FairnessAudit` 负责。
 
 ---
+
+## 49. 平均差距门槛的证据（fork-local 兄弟文件 `*.gateevidence.json`）
+
+**动机**：门槛是唯一决定「谁不能抽」的硬过滤，而证明里只留下两个计数——无法区分「按次数移除」与「随手剔掉三人」。
+
+**为什么不是 payload 字段**：wire payload 与匿名审计载荷都由 `fair.sectl.cn` 按固定编码/字段白名单消费（见 §47.3），动它们会让每条普通存证失败；`WitnessClient.ComputeAttestedProofHash` 的字段清单同理被服务端回执与 RFC 3161 绑定。因此新证据只能落成 **fork-local 兄弟文件**，与 `*.ownproof.json` 同构。
+
+### 49.1 实现
+
+| 层 | 位置 | 内容 |
+|---|---|---|
+| 模型 | `SecRandom.Shared/Models/Verification/GateEvidence.cs`（新增） | format `verirandom-gate-evidence/v1`；字段 `proofId`/`upChainIndex`/`upChainHash`/`gateRuleId`/`threshold`/`candidateCountBefore`/`candidateCountAfter`/`removed[{recordId,drawCount}]`/`createdAtUtc`/`selfHash`；`GateEvidenceHashing.ComputeSelfHash`（域分隔 `VeriRandomGateEvidence/v1`，成员按 `recordId` 排序后入哈希，因此枚举顺序不影响结果） |
+| 快照 | `SecRandom.Core/Models/Verification/GateEvidenceSnapshot.cs`（新增） | `GateEvidenceDiff.FromSurvivors(preGate, survivors, threshold)`；**无人被移除时返回 null**——「没有文件」因此是有意义的 |
+| 载体 | `SecRandom.Core/Models/Verification/VerificationDrawInput.cs` | 新增 `GateEvidence` 属性，**刻意不进 wire 帧**：`EncodeInput` 只写显式字段，故 `InputHash` 不变 |
+| 采集 | `SecRandom.Core/Services/Draw/DrawEngine.Verification.cs` | `BuildGateEvidence`：仅 `DrawType.Fair`；阈值取**实际生效**的 `AverageGapProtectionThreshold`（不是设置模型里的 `GapThreshold`）；次数取门槛所用 `historyCache[...].TotalCount` |
+| 写盘 | `SecRandom/Services/Verification/GateEvidenceExportService.cs`（新增） | `GateEvidencePaths`：`.srproof.json` ↔ `.gateevidence.json`，含反向 `ToUpPath`；`Create` 绑定 Up 的 `chain.selfHash`；原子写（临时文件 + move） |
+| 导出顺序 | `SecRandom/Services/Verification/DrawProofExportService.cs` | Up 写盘 → Own → 门槛证据 → 存储上限清理。顺序保证**不可能存在没有 Up 的孤儿证据**；异常只记 warning，绝不让已完成的抽取失败 |
+| 删除配对 | 同上 | `DeleteSiblings(upPath)` 统一删除两个兄弟，年龄清理与存储清理各调用一次，避免将来新增第三种兄弟时漏掉一处 |
+| 校验 | `SecRandom/Services/Verification/ProofIntegrityVerifier.cs` | `VerifyGateEvidence` → `GateEvidenceReport(Nodes, Modified, Detached, RemovedMembers)`；校验 `selfHash`，并校验 Up 绑定（`chainHash`/`chainIndex`/`proofId` 三者）。**不计入 `IsHealthy`**——与 Own 报告同一规则 |
+| 重放窗 | `SecRandom/Services/Verification/ProofDetails.cs`、`ProofReplayView.axaml.cs` | 详情新增「门槛证据」一行：移除人数、候选前后、阈值，以及「与本次证明绑定一致 / 不一致 / 内容校验失败」；**无证据时明写「没有门槛证据」**，绝不按通过处理 |
+| 文案 | `SecRandom/Langs/SettingsPages/General/Verification/` | 三语 6 条（`C_ProofDetail_GateEvidence`、`M_GateEvidenceNone/PresentFormat/Bound/Detached/SelfHashInvalid`） |
+| 测试 | `SecRandom.Core.Tests/GateEvidenceTests.cs`（新增） | 5 例：只报缺失者、无移除则无证据、哈希与顺序无关、计数变化即变更、哈希覆盖 Up 绑定 |
+
+### 49.2 顺手修掉的测试侧断裂
+
+`SecRandom.Core.Tests/PluginDrawServiceTests.cs` 的 DI 容器注册了 `DrawProofExportService` 却没有注册它依赖的 `OwnProofChainStore`/`OwnProofExportService`，一旦运行测试就会在解析时抛异常。CI 的 `Build.yml` 没有测试步骤，只有 `.bak` 里提到过 `dotnet test`，所以这类断裂不会被构建发现。本次一并补上，并给三个测试容器加注 `GateEvidenceExportService`。
+
+### 49.3 残余缺口（如实登记）
+
+- **次数仍是自报的**：历史文件可被清空或被整包导入覆盖，那些路径不产生证明，所以「每人几次」无法从链上独立重算。这份证据把「按次数移除」从**隐含**变成**可复算**，但没有消除「次数是真的」这个假设。
+- **存储上限只统计 `*.srproof.json` 的字节**，兄弟文件不计入（`*.ownproof.json` 早已如此）。本次刻意不改，以免改动既有保留语义；代价是 `data/proofs` 实际占用可超过配置上限。
+- **归档**：`proofs` 根按扩展名无关递归打包，新证据自动进入本地/自动/云端备份；诊断包不含证明文件（这一点未变）。
+- 旧证明与「本次未移除任何人」都表现为没有证据文件，界面对这两种情况给出同一句说明，无法区分——这是格式上没有写入内容的必然结果。

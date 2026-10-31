@@ -68,6 +68,11 @@ public partial class DrawEngine
         var hasInternalRules = includeInternalRules
                                && prepared.WeightedCandidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
         var algorithmProfile = GetStudentAlgorithmProfile(drawType, drawMode, hasInternalRules);
+
+        // Captured here, where the pre-gate pool and its history counts are still in hand: nothing downstream keeps
+        // either of them, and the evidence is worthless if it is reconstructed later from a changed roster.
+        var gateEvidence = BuildGateEvidence(preparedCandidates, prepared, executionPolicy);
+
         return new VerificationDrawInput
         {
             Kind = VerificationDrawKind.Student,
@@ -77,6 +82,7 @@ public partial class DrawEngine
             AlgorithmProfile = algorithmProfile,
             Count = count,
             Candidates = frozen,
+            GateEvidence = gateEvidence,
             AuditPayload = CreateAuditPayload("student", count, frozen, prepared.WeightedCandidates, prepared.HistoryCache, includeInternalRules, new
             {
                 fairDraw = drawType == DrawType.Fair,
@@ -236,6 +242,36 @@ public partial class DrawEngine
         var drawable = frozen.Count(candidate => candidate.IsGuaranteed || candidate.WeightMicros > 0);
         if (drawable < count)
             throw new NoEligibleCandidatesException("The frozen candidate pool has no drawable weight.");
+    }
+
+    /// <summary>
+    ///     Records what the average-gap gate removed, or nothing when it removed nobody.
+    /// </summary>
+    /// <remarks>
+    ///     The gate is the one hard candidate filter that decides who <em>cannot</em> be drawn, and until now its only
+    ///     trace was a pair of counts: a verifier could not tell "the highest-count students were removed" from "three
+    ///     students were skipped". The threshold recorded here is the one the filter actually applied, not the value on
+    ///     the settings model, so the record cannot claim a rule that was not the one in force.
+    /// </remarks>
+    private static GateEvidenceSnapshot? BuildGateEvidence(
+        IReadOnlyCollection<Student> preGateCandidates,
+        DrawPreparedStudentsSnapshot prepared,
+        StudentDrawExecutionPolicy executionPolicy)
+    {
+        if (executionPolicy.DrawType != DrawType.Fair)
+            return null;
+
+        var members = preGateCandidates
+            .Select(student => new GateEvidenceMember
+            {
+                RecordId = GetRecordId(student),
+                DrawCount = prepared.HistoryCache.TryGetValue(student, out var history) ? history.TotalCount : 0
+            })
+            .ToList();
+
+        var survivors = prepared.UsableCandidates.Select(GetRecordId).ToHashSet();
+
+        return GateEvidenceDiff.FromSurvivors(members, survivors, AverageGapProtectionThreshold);
     }
 
     private static IReadOnlyList<VerificationCandidate> FreezeCandidates<TCandidate>(

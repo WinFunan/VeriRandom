@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using SecRandom.Shared.Models.Verification;
 
 namespace SecRandom.Services.Verification;
 
@@ -15,7 +16,8 @@ public sealed class ProofIntegrityVerifier(
     DrawProofExportService proofExporter,
     ProofChainStore chainStore,
     OwnProofExportService ownProofExporter,
-    OwnProofChainStore ownChainStore)
+    OwnProofChainStore ownChainStore,
+    GateEvidenceExportService gateEvidenceExporter)
 {
     private const int MaximumReportedIssues = 50;
 
@@ -142,7 +144,56 @@ public sealed class ProofIntegrityVerifier(
             head.RetainedFromIndex,
             truncated,
             issues,
-            VerifyOwnReference(cancellationToken));
+            VerifyOwnReference(cancellationToken),
+            VerifyGateEvidence(cancellationToken));
+    }
+
+    /// <summary>
+    ///     Checks the fork's gate-evidence files as declarations, like the reference chain: each one must still hash to
+    ///     itself and must still point at the Up proof it sits beside. These counters never make the report unhealthy —
+    ///     the Up chain is what is being verified, and evidence being missing or wrong is information for the reader.
+    /// </summary>
+    private GateEvidenceReport VerifyGateEvidence(CancellationToken cancellationToken)
+    {
+        var nodes = 0;
+        var modified = 0;
+        var detached = 0;
+        var removedMembers = 0;
+
+        foreach (var path in gateEvidenceExporter.EnumeratePaths())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!gateEvidenceExporter.TryRead(path, out var evidence) || evidence is null)
+            {
+                modified++;
+                continue;
+            }
+
+            nodes++;
+
+            if (!string.Equals(GateEvidenceHashing.ComputeSelfHash(evidence), evidence.SelfHash, StringComparison.Ordinal))
+            {
+                modified++;
+                continue;
+            }
+
+            removedMembers += evidence.Removed.Count;
+
+            // The one link that must hold: the evidence names the Up node's chain hash, so evidence copied onto another
+            // proof — the cheapest way to make an exclusion look legitimate — is caught here.
+            var upPath = GateEvidencePaths.ToUpPath(path);
+            if (!proofExporter.TryRead(upPath, out var upProof)
+                || upProof?.Chain is not { } upChain
+                || !string.Equals(upChain.SelfHash, evidence.UpChainHash, StringComparison.Ordinal)
+                || upChain.Index != evidence.UpChainIndex
+                || upProof.ProofId != evidence.ProofId)
+            {
+                detached++;
+            }
+        }
+
+        return new GateEvidenceReport(nodes, modified, detached, removedMembers);
     }
 
     /// <summary>
@@ -248,13 +299,31 @@ public sealed record ProofIntegrityReport(
     long RetainedFromIndex,
     bool IssuesTruncated,
     IReadOnlyList<ProofIntegrityIssue> Issues,
-    OwnReferenceReport OwnReference)
+    OwnReferenceReport OwnReference,
+    GateEvidenceReport GateEvidence)
 {
     /// <summary>
     ///     Missing-tail entries are expected after a crash between the chain-head write and the proof write,
     ///     so they are reported but do not mark the chain unhealthy. Everything else is unexplained.
     /// </summary>
     public bool IsHealthy => Gaps == 0 && BrokenLinks == 0 && Modified == 0 && BeyondHead == 0;
+}
+
+/// <summary>
+///     Status of the fork's gate-evidence files. Reported separately for the same reason the reference chain is: these
+///     records are supplementary declarations, so their counts must never turn the Up chain unhealthy.
+/// </summary>
+/// <param name="Detached">
+///     Files whose recorded Up binding no longer matches the proof beside them. Evidence copied onto another draw is the
+///     cheapest way to make an exclusion look legitimate, which is exactly what this counter is for.
+/// </param>
+public sealed record GateEvidenceReport(
+    int Nodes,
+    int Modified,
+    int Detached,
+    int RemovedMembers)
+{
+    public bool IsIntact => Modified == 0 && Detached == 0;
 }
 
 /// <summary>

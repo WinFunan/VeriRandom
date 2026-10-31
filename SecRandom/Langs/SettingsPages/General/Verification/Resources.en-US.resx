@@ -226,4 +226,10 @@ It prevents replacement of local draw code, random seeds, or result files during
   <data name="M_SelfCheckInputMismatch" xml:space="preserve"><value>the input commitment does not match the file contents</value></data>
   <data name="M_SelfCheckResultMismatch" xml:space="preserve"><value>the recorded winners disagree with the result frame</value></data>
   <data name="M_SelfCheckCountsImpossible" xml:space="preserve"><value>the candidate counts contradict each other</value></data>
+  <data name="C_ProofDetail_GateEvidence" xml:space="preserve"><value>Gate evidence</value></data>
+  <data name="M_GateEvidenceNone" xml:space="preserve"><value>no gate evidence (this draw removed nobody, or the proof predates the feature)</value></data>
+  <data name="M_GateEvidencePresentFormat" xml:space="preserve"><value>removed {0} (candidates {1} → {2}, threshold {3})</value></data>
+  <data name="M_GateEvidenceBound" xml:space="preserve"><value>bound to this proof</value></data>
+  <data name="M_GateEvidenceDetached" xml:space="preserve"><value>not bound to this proof (the evidence belongs to another draw)</value></data>
+  <data name="M_GateEvidenceSelfHashInvalid" xml:space="preserve"><value>the evidence fails its own content check</value></data>
 </root>

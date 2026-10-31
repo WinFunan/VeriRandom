@@ -26,4 +26,20 @@ public sealed record ProofDetails(
     int RequestedCount,
     int CandidateCount,
     AnonymizedAuditPayload? Audit,
-    ProofConsistencyReport Consistency);
+    ProofConsistencyReport Consistency,
+    ProofGateEvidenceInfo? GateEvidence);
+
+/// <summary>
+///     What the fork-local gate-evidence file beside a proof says, and whether it still belongs to that proof.
+/// </summary>
+/// <param name="BoundToProof">
+///     False when the Up chain hash, chain index or proof id the evidence names no longer match the proof beside it —
+///     the shape a copied-onto-another-draw exclusion would take.
+/// </param>
+public sealed record ProofGateEvidenceInfo(
+    int RemovedCount,
+    int CandidateCountBefore,
+    int CandidateCountAfter,
+    int Threshold,
+    bool SelfHashValid,
+    bool BoundToProof);
