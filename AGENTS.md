@@ -96,6 +96,7 @@ Nested instruction files:
 | Localization rules | `SecRandom/Langs/`, `SecRandom.Core/Langs/`, `docs/localization.md` | Per-page resource folders; `.csproj` registers base resx/designer only. Privacy page resources live under `SecRandom/Langs/SettingsPages/General/Privacy/`. |
 | Shared contracts | `SecRandom.Shared/` | Keep UI/runtime dependencies out. Profile list items use hidden stable `RecordId` keys; visible `Id`/student number/prize number is optional metadata. |
 | Project rules | `docs/project_rules.md` | Strongest local convention source. |
+| Threat model (living) | `THREAT_MODEL.md` | What the proofs and the gate evidence can and cannot prove **today**, with per-attack coverage status (✅/🟡/❌/⛔) and a dated change log. Update it in the same change as any verification-logic or gate-evidence change; never mark an attack covered because the data exists — only because a check runs. |
 
 ## CODE MAP
 Keep this map short and stable. When code moves, AI agents should re-read the moved files and update this map in the same task.
@@ -265,6 +266,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 AI agents must update AGENTS files when they:
 - **Ship a fork release or any user-visible fork change: add it to `ChangeLog.md` (append-only, by release time) in the same change, and register the divergence in `DownStream_Change.md`. `DownStream_Change.md` remains the first and mandatory check before finishing any task in this fork.**
 - **Make any change that diverges from upstream SecRandom — including wording, defaults, resources, CI, and governance documents. `DownStream_Change.md` must be updated in the same change; this is the first item to check before finishing any task in this fork.**
+- **Change what a draw proof or the gate evidence can prove: `THREAT_MODEL.md` is a living document and must be updated in the same change — the attack row's status, the mechanism table, and one dated line in its change log. Touching `ProofConsistency`, `ProofIntegrityVerifier`, `GateEvidence`/`GateEvidenceExportService`, the gate rule in `DrawEngine.Filter.cs`/`DrawEngine.Verification.cs`, the pre-commitment client, or the proof-retention defaults without updating it leaves the document claiming a coverage the code no longer has.**
 - Add, remove, or rename top-level folders or projects.
 - Change `TargetFramework`, package family, `AvaloniaVersion`, CI SDK versions, or publish RIDs.
 - Change Host/DI registration, navigation page registration, page IDs, or default pages.
