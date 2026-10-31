@@ -201,6 +201,18 @@ public partial class RawRandomPageViewModel : ViewModelBase
             lower = space!.Intervals[0].Start;
             upper = space.Intervals[^1].End;
             CandidatesText = string.Format(Resources.M_CandidatesFormat, space.Cardinality);
+
+            // An exclusion that matches no candidate is otherwise a silent no-op, and "I excluded 7 and 7 still came up"
+            // is then blamed on the draw. Resolving the same expression without exclusions is cheap and answers it.
+            if (!string.IsNullOrWhiteSpace(ExclusionsText)
+                && RawCandidateSpec.TryCreate(
+                    ValuesText, string.Empty, generatorFrom, generatorTo, PredicateText,
+                    out var withoutExclusions, out _)
+                && withoutExclusions is not null
+                && withoutExclusions.Cardinality == space.Cardinality)
+            {
+                CandidatesText += " · " + Resources.M_ExclusionsIneffective;
+            }
         }
         else
         {
@@ -247,6 +259,7 @@ public partial class RawRandomPageViewModel : ViewModelBase
                 var material = new List<byte>(seed);
                 var allEntropy = new List<RawNumberProofEntropy>(entropy);
                 var sourceBits = EntropyBitsOf(entropy);
+                var firstRoundBits = sourceBits;
 
                 for (var round = 1; round < rounds; round++)
                 {
@@ -278,6 +291,13 @@ public partial class RawRandomPageViewModel : ViewModelBase
                     report.BitsPerSymbol,
                     report.TotalBits,
                     report.AvailableSourceBits);
+
+                // Concatenation is only worth anything when each round brings a beat the previous one did not have. A
+                // source that has not published a new pulse yet hands back the same one, which is the common case when a
+                // teacher generates twice in a row — saying "no new entropy" is what keeps the switch from looking like
+                // it did something.
+                if (AllowEntropyConcat && rounds > 1 && sourceBits == firstRoundBits)
+                    EntropyText += " " + Resources.M_ConcatNoGain;
 
                 var advancedProof = new RawNumberProof
                 {
@@ -349,12 +369,21 @@ public partial class RawRandomPageViewModel : ViewModelBase
     private static int EntropyBitsOf(IEnumerable<RawNumberProofEntropy> entries)
     {
         var bits = 0;
+        var seenBeats = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var entry in entries)
         {
-            bits += string.Equals(entry.SourceId, RawNumberProofFormat.LocalSourceId, StringComparison.Ordinal)
-                ? 256
-                : entry.OutputValue.Length / 2 * 8;
+            if (string.Equals(entry.SourceId, RawNumberProofFormat.LocalSourceId, StringComparison.Ordinal))
+            {
+                // Every local call returns fresh bytes, so each one really is new material.
+                bits += 256;
+                continue;
+            }
+
+            // One pulse is one beat. Fetching the same published pulse again adds no unpredictability, and counting it
+            // twice would advertise entropy the record does not actually contain.
+            if (seenBeats.Add($"{entry.SourceId}:{entry.PulseIndex}"))
+                bits += entry.OutputValue.Length / 2 * 8;
         }
 
         return bits;

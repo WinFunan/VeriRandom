@@ -60,4 +60,6 @@
   <data name="C_AllowConcat" xml:space="preserve"><value>Fill a wider output by concatenating several samples</value></data>
   <data name="M_ConcatHint" xml:space="preserve"><value>Only the local CSPRNG and random.org bring fresh entropy per fetch; repeating inside one beacon pulse does not, so the output gets wider while the measured entropy stays the same</value></data>
   <data name="M_GeneratorHelp" xml:space="preserve"><value>Syntax: X is the only variable&#10;X%2==0 → even numbers&#10;X%3!=0 → not a multiple of 3&#10;X&gt;=10 &amp;&amp; X&lt;=20 → only 10 through 20&#10;Supports + - * / %, comparisons, &amp;&amp; || !, brackets</value></data>
+  <data name="M_ExclusionsIneffective" xml:space="preserve"><value>no exclusion matched a candidate</value></data>
+  <data name="M_ConcatNoGain" xml:space="preserve"><value>(concatenation added no new entropy)</value></data>
 </root>
