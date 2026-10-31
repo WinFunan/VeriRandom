@@ -59,7 +59,13 @@ public sealed partial class RawRandomPage : UserControl
         }
 
         await clipboard.SetTextAsync(text);
-        ViewModel.StatusText = string.Format(SR.M_CopiedResultFormat, text.Length);
+
+        // In confidential mode the value was deliberately kept off disk, so the one place it now outlives the app is the
+        // system clipboard (and its history) — that step is the user's to take, and saying so is cheaper than pretending
+        // the mode covers it.
+        ViewModel.StatusText = ViewModel.ConfidentialMode
+            ? string.Format(SR.M_CopiedConfidentialFormat, text.Length)
+            : string.Format(SR.M_CopiedResultFormat, text.Length);
     }
 
     /// <summary>

@@ -45,6 +45,14 @@ public class Resources
     public static string M_GeneratorHelp => ResourceManager.GetString(nameof(M_GeneratorHelp), resourceCulture)!;
     public static string M_ExclusionsIneffective => ResourceManager.GetString(nameof(M_ExclusionsIneffective), resourceCulture)!;
     public static string M_ConcatNoGain => ResourceManager.GetString(nameof(M_ConcatNoGain), resourceCulture)!;
+    public static string C_ConfidentialMode => ResourceManager.GetString(nameof(C_ConfidentialMode), resourceCulture)!;
+    public static string C_RevealResult => ResourceManager.GetString(nameof(C_RevealResult), resourceCulture)!;
+    public static string C_HideResult => ResourceManager.GetString(nameof(C_HideResult), resourceCulture)!;
+    public static string M_ConfidentialMasked => ResourceManager.GetString(nameof(M_ConfidentialMasked), resourceCulture)!;
+    public static string M_ConfidentialGenerated => ResourceManager.GetString(nameof(M_ConfidentialGenerated), resourceCulture)!;
+    public static string M_ConfidentialNotice => ResourceManager.GetString(nameof(M_ConfidentialNotice), resourceCulture)!;
+    public static string M_ConfidentialHint => ResourceManager.GetString(nameof(M_ConfidentialHint), resourceCulture)!;
+    public static string M_CopiedConfidentialFormat => ResourceManager.GetString(nameof(M_CopiedConfidentialFormat), resourceCulture)!;
     public static string M_CandidatesFormat => ResourceManager.GetString(nameof(M_CandidatesFormat), resourceCulture)!;
     public static string M_ValuesInvalidFormat => ResourceManager.GetString(nameof(M_ValuesInvalidFormat), resourceCulture)!;
     public static string C_OutputFormat => ResourceManager.GetString(nameof(C_OutputFormat), resourceCulture)!;

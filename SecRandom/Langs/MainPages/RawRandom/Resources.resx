@@ -62,4 +62,12 @@
   <data name="M_GeneratorHelp" xml:space="preserve"><value>语法：只有 X 一个变量&#10;X%2==0 → 偶数&#10;X%3!=0 → 不是 3 的倍数&#10;X&gt;=10 &amp;&amp; X&lt;=20 → 只取 10 到 20&#10;支持 + - * / %、比较、&amp;&amp; || !、括号</value></data>
   <data name="M_ExclusionsIneffective" xml:space="preserve"><value>排除项没有匹配到任何候选值</value></data>
   <data name="M_ConcatNoGain" xml:space="preserve"><value>（拼接没有带来新的熵）</value></data>
+  <data name="C_ConfidentialMode" xml:space="preserve"><value>机密模式（不写记录）</value></data>
+  <data name="C_RevealResult" xml:space="preserve"><value>显示结果</value></data>
+  <data name="C_HideResult" xml:space="preserve"><value>隐藏结果</value></data>
+  <data name="M_ConfidentialMasked" xml:space="preserve"><value>结果已遮盖</value></data>
+  <data name="M_ConfidentialGenerated" xml:space="preserve"><value>已生成（机密模式：未写入记录，本次结果无法事后复核）</value></data>
+  <data name="M_ConfidentialNotice" xml:space="preserve"><value>机密模式：不写记录，可复核性为零</value></data>
+  <data name="M_ConfidentialHint" xml:space="preserve"><value>勾选后这次生成不写任何记录，种子与结果只留在内存里；结果默认以 * 遮盖，需要时再显示或复制。复制会把内容放进系统剪贴板（含剪贴板历史），这一步由你决定；关闭应用后无法再复原</value></data>
+  <data name="M_CopiedConfidentialFormat" xml:space="preserve"><value>已复制 {0} 个字符（机密模式：内容已进入系统剪贴板）</value></data>
 </root>

@@ -1421,3 +1421,25 @@ version(1) flags(1) count(1) delay×10(1) inputs(1) armedSeconds(1) expiresUnixD
 - **存储上限只统计 `*.srproof.json` 的字节**，兄弟文件不计入（`*.ownproof.json` 早已如此）。本次刻意不改，以免改动既有保留语义；代价是 `data/proofs` 实际占用可超过配置上限。
 - **归档**：`proofs` 根按扩展名无关递归打包，新证据自动进入本地/自动/云端备份；诊断包不含证明文件（这一点未变）。
 - 旧证明与「本次未移除任何人」都表现为没有证据文件，界面对这两种情况给出同一句说明，无法区分——这是格式上没有写入内容的必然结果。
+
+## 50. 随机数的机密模式（不写记录、结果遮盖、状态不持久）
+
+**动机**：随机数页目前的规则是「每次生成都立即写一份证明」，理由写在代码注释里——没有记录的数字正是这个页面要避免的情况。但课堂上确实存在「这个数不该留下痕迹」（临时口令、分组种子）的用法，因此增加一个**显式例外**，并让它把代价写在脸上。
+
+### 50.1 实现
+
+| 位置 | 变更 |
+|---|---|
+| `SecRandom/ViewModels/MainPages/RawRandomPageViewModel.cs` | 新增 `ConfidentialMode`、`IsResultRevealed`、计算属性 `DisplayResult`/`IsConfidentialMasked`/`RevealButtonText`、`ToggleResultVisibility` 命令；`DisplayResult` 在机密且未显示时返回固定 12 个 `*`（**固定宽度而非按长度**：十进制位数本身就是提示，位宽用户本来就知道） |
+| 生成路径 | 普通与高级两条分支在 `SaveAsync` **之前**判断机密模式：直接返回，不构造、不写入 `RawNumberProof`；状态行改为 `M_ConfidentialGenerated` |
+| 可复核提示 | `RefreshVerifiabilityNotice` 在机密模式下优先返回 `M_ConfidentialNotice` 并置 `IsVerifiabilityReduced`（红色），因为「能不能复核」已经被「没有东西可复核」回答了 |
+| 状态不持久 | `ConfidentialMode` **刻意不进 `MoreSettings`**：其它开关是偏好，这一项是「这次不留证据」的承诺；持久化会让忘记关掉的人连续几周产出不可复核的数字。每次启动重新勾选 |
+| 遮盖与复制 | 结果区绑定改为 `DisplayResult`，遮盖时提供「显示/隐藏结果」按钮；复制按钮仍取真实值 `ResultText`，状态行在机密模式下改为 `M_CopiedConfidentialFormat`，明说内容已进入系统剪贴板（含剪贴板历史） |
+| 锁定 | 机密模式与「输出原始熵」同样受 `IsSettingsLocked` 约束：锁定态下不可改，避免在被锁定的配置上悄悄关掉取证 |
+| 文案 | `SecRandom/Langs/MainPages/RawRandom/` 三语 8 条（`C_ConfidentialMode`、`C_RevealResult`、`C_HideResult`、`M_ConfidentialMasked`、`M_ConfidentialGenerated`、`M_ConfidentialNotice`、`M_ConfidentialHint`、`M_CopiedConfidentialFormat`） |
+
+### 50.2 能保证什么、不能保证什么
+
+- **能**：不产生任何证明文件、不写配置、不写日志；种子与结果只作为进程内对象存在，关闭应用即失去。
+- **不能**：`*` 遮盖只挡肉眼与截屏，不挡**进程内存**——操作系统仍可能把内存页换出，崩溃转储也可能包含它；一旦点了复制，内容进入系统剪贴板并可能进入剪贴板历史，这一步应用无法撤回。文案把这两条写出来，而不是让「机密」二字替用户做决定。
+- 机密模式与「随机数证明只存在本机」并不冲突：它只是把「本机有记录」也一并去掉。

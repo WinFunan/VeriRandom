@@ -62,4 +62,12 @@
   <data name="M_GeneratorHelp" xml:space="preserve"><value>Syntax: X is the only variable&#10;X%2==0 → even numbers&#10;X%3!=0 → not a multiple of 3&#10;X&gt;=10 &amp;&amp; X&lt;=20 → only 10 through 20&#10;Supports + - * / %, comparisons, &amp;&amp; || !, brackets</value></data>
   <data name="M_ExclusionsIneffective" xml:space="preserve"><value>no exclusion matched a candidate</value></data>
   <data name="M_ConcatNoGain" xml:space="preserve"><value>(concatenation added no new entropy)</value></data>
+  <data name="C_ConfidentialMode" xml:space="preserve"><value>Confidential mode (writes no record)</value></data>
+  <data name="C_RevealResult" xml:space="preserve"><value>Show result</value></data>
+  <data name="C_HideResult" xml:space="preserve"><value>Hide result</value></data>
+  <data name="M_ConfidentialMasked" xml:space="preserve"><value>result is masked</value></data>
+  <data name="M_ConfidentialGenerated" xml:space="preserve"><value>generated (confidential mode: nothing was written, so this result cannot be re-checked later)</value></data>
+  <data name="M_ConfidentialNotice" xml:space="preserve"><value>confidential mode: nothing is recorded, so nothing can be re-checked</value></data>
+  <data name="M_ConfidentialHint" xml:space="preserve"><value>While this is on, the generation writes no record at all: the seed and the result stay in memory only. The result is masked with * and is shown or copied on request. Copying puts it on the system clipboard (and in clipboard history), which is a step only you can take; after the app closes the value cannot be recovered</value></data>
+  <data name="M_CopiedConfidentialFormat" xml:space="preserve"><value>copied {0} characters (confidential mode: it is now on the system clipboard)</value></data>
 </root>

@@ -149,6 +149,20 @@ public partial class RawRandomPageViewModel : ViewModelBase
     /// <summary>Advanced output: emit entropy instead of in-range values.</summary>
     [ObservableProperty] private bool _useRawEntropy;
 
+    /// <summary>
+    ///     Confidential mode: this generation writes no record at all.
+    /// </summary>
+    /// <remarks>
+    ///     Deliberately <b>not</b> persisted in the settings file. Every other switch here is a preference; this one is a
+    ///     promise that the number cannot be reconstructed later, and a persisted version of it would let a teacher who
+    ///     forgot that it was on keep producing unrecorded numbers for weeks. A per-session choice makes the exception
+    ///     explicit every time, which is the only honest shape for "do not keep evidence of this".
+    /// </remarks>
+    [ObservableProperty] private bool _confidentialMode;
+
+    /// <summary>Whether the masked result is currently shown. Resets on every generation and on toggling the mode.</summary>
+    [ObservableProperty] private bool _isResultRevealed;
+
     [ObservableProperty] private int _bitCount = 32;
 
     /// <summary>0 = decimal, 1 = hex, 2 = printable ASCII.</summary>
@@ -159,6 +173,21 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
     /// <summary>Measured information content of the last output, shown beside it rather than kept in a log.</summary>
     [ObservableProperty] private string _entropyText = string.Empty;
+
+    /// <summary>
+    ///     A mask that reveals nothing at all, not even the value's length. Length is itself a hint for a decimal
+    ///     output, and a fixed-width mask costs the reader nothing: the bit width is right there in the options.
+    /// </summary>
+    private const string ResultMask = "************";
+
+    /// <summary>What the result area shows: the value, or the mask while confidential mode has it hidden.</summary>
+    public string DisplayResult =>
+        ConfidentialMode && !IsResultRevealed && !string.IsNullOrEmpty(ResultText) ? ResultMask : ResultText;
+
+    /// <summary>Whether the result is currently covered, which is also when the reveal control is offered.</summary>
+    public bool IsConfidentialMasked => ConfidentialMode && !IsResultRevealed && !string.IsNullOrEmpty(ResultText);
+
+    public string RevealButtonText => IsResultRevealed ? Resources.C_HideResult : Resources.C_RevealResult;
 
     /// <summary>Concatenate several independent samples to fill an output wider than one seed.</summary>
     [ObservableProperty] private bool _allowEntropyConcat;
@@ -303,6 +332,15 @@ public partial class RawRandomPageViewModel : ViewModelBase
                 if (AllowEntropyConcat && rounds > 1 && sourceBits == firstRoundBits)
                     EntropyText += " " + Resources.M_ConcatNoGain;
 
+                if (ConfidentialMode)
+                {
+                    // Nothing is written, not even the record that would carry the seed: the seed and the text are this
+                    // process's only copy, and closing the app destroys both.
+                    IsResultRevealed = false;
+                    StatusText = Resources.M_ConfidentialGenerated;
+                    return;
+                }
+
                 var advancedProof = new RawNumberProof
                 {
                     Value = 0,
@@ -337,11 +375,19 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
             // The record is written on every generation, not on request: a number nobody wrote down is exactly the
             // case this page exists to avoid, and a "save this one" button invites saving only the results someone
-            // liked.
+            // liked. Confidential mode is the deliberate exception, and it writes nothing at all.
+            ResultText = string.Format(Resources.M_ResultFormat, string.Join("、", results));
+
+            if (ConfidentialMode)
+            {
+                IsResultRevealed = false;
+                StatusText = Resources.M_ConfidentialGenerated;
+                return;
+            }
+
             var path = await _proofService.SaveAsync(proof).ConfigureAwait(true);
             var verification = _proofService.Verify(proof);
 
-            ResultText = string.Format(Resources.M_ResultFormat, string.Join("、", results));
             StatusText = verification.Succeeded
                 ? string.Format(Resources.M_ProofSavedFormat, Path.GetFileName(path))
                 : Resources.M_ProofVerifyFailed;
@@ -464,6 +510,15 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
     private void RefreshVerifiabilityNotice()
     {
+        // Confidential mode outranks every source combination: the question "can this be re-checked" is already
+        // answered no, because there is nothing on disk to re-check.
+        if (ConfidentialMode)
+        {
+            IsVerifiabilityReduced = true;
+            VerifiabilityNotice = Resources.M_ConfidentialNotice;
+            return;
+        }
+
         var selected = EntropySources.Where(option => option.IsSelected).ToList();
 
         IsVerifiabilityReduced = selected.Count != 1 || !selected[0].IsVerifiable;
@@ -508,6 +563,29 @@ public partial class RawRandomPageViewModel : ViewModelBase
 
     partial void OnPredicateTextChanged(string value) =>
         PersistFilterText(value, text => _configHandler.Data.MoreSettings.RawRandomPredicateText = text);
+
+    [RelayCommand]
+    private void ToggleResultVisibility() => IsResultRevealed = !IsResultRevealed;
+
+    partial void OnResultTextChanged(string value) => NotifyMaskChanged();
+
+    partial void OnIsResultRevealedChanged(bool value) => NotifyMaskChanged();
+
+    partial void OnConfidentialModeChanged(bool value)
+    {
+        // A freshly enabled mode must never leave the previous result on screen: the user asked for a covered value, not
+        // for whatever was already there to stay visible.
+        IsResultRevealed = false;
+        NotifyMaskChanged();
+        RefreshVerifiabilityNotice();
+    }
+
+    private void NotifyMaskChanged()
+    {
+        OnPropertyChanged(nameof(DisplayResult));
+        OnPropertyChanged(nameof(IsConfidentialMasked));
+        OnPropertyChanged(nameof(RevealButtonText));
+    }
 
     /// <summary>
     ///     One save path for the four filter strings. They behave identically and all four have to survive a restart, so

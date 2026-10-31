@@ -45,8 +45,15 @@
                         Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
                     <StackPanel Spacing="8">
                         <SelectableTextBlock Classes="result"
-                                   Text="{Binding ViewModel.ResultText}"
+                                   Text="{Binding ViewModel.DisplayResult}"
                                    HorizontalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center"
+                                    IsVisible="{Binding ViewModel.IsConfidentialMasked}">
+                            <Button Content="{Binding ViewModel.RevealButtonText}"
+                                    Command="{Binding ViewModel.ToggleResultVisibilityCommand}" />
+                            <TextBlock Classes="hint" VerticalAlignment="Center"
+                                       Text="{x:Static langs:Resources.M_ConfidentialMasked}" />
+                        </StackPanel>
                         <TextBlock Classes="hint"
                                    Text="{Binding ViewModel.StatusText}"
                                    TextAlignment="Center" />
@@ -201,6 +208,18 @@
                         <CheckBox Content="{x:Static langs:Resources.C_AllowConcat}"
                                   IsChecked="{Binding ViewModel.AllowEntropyConcat}" />
                         <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_ConcatHint}" />
+
+                        <Separator />
+
+                        <!--
+                            机密模式：两种生成方式都生效，不只是高级输出。它默认不勾、也不写进设置文件——
+                            勾了就代表这次生成不留任何证据，不该被"上次勾过"悄悄延续
+                        -->
+                        <CheckBox Content="{x:Static langs:Resources.C_ConfidentialMode}"
+                                  IsChecked="{Binding ViewModel.ConfidentialMode}"
+                                  IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+                        <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_ConfidentialHint}"
+                                   TextWrapping="Wrap" />
 
                         <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_AdvancedHint}" />
                     </StackPanel>

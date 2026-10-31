@@ -62,4 +62,12 @@
   <data name="M_GeneratorHelp" xml:space="preserve"><value>書式：変数は X のみ&#10;X%2==0 → 偶数&#10;X%3!=0 → 3 の倍数以外&#10;X&gt;=10 &amp;&amp; X&lt;=20 → 10〜20 のみ&#10;+ - * / %、比較、&amp;&amp; || !、括弧に対応</value></data>
   <data name="M_ExclusionsIneffective" xml:space="preserve"><value>除外指定はどの候補値にも一致しません</value></data>
   <data name="M_ConcatNoGain" xml:space="preserve"><value>（連結しても新しいエントロピーは増えていません）</value></data>
+  <data name="C_ConfidentialMode" xml:space="preserve"><value>機密モード（記録を残さない）</value></data>
+  <data name="C_RevealResult" xml:space="preserve"><value>結果を表示</value></data>
+  <data name="C_HideResult" xml:space="preserve"><value>結果を隠す</value></data>
+  <data name="M_ConfidentialMasked" xml:space="preserve"><value>結果は伏せ字です</value></data>
+  <data name="M_ConfidentialGenerated" xml:space="preserve"><value>生成しました（機密モード：記録を残していないため、後から照合できません）</value></data>
+  <data name="M_ConfidentialNotice" xml:space="preserve"><value>機密モード：記録を残さないため、照合はできません</value></data>
+  <data name="M_ConfidentialHint" xml:space="preserve"><value>オンの間はこの生成で一切の記録を残しません。シードと結果はメモリ上にだけ存在します。結果は * で伏せて表示され、必要に応じて表示・コピーできます。コピーすると内容はシステムのクリップボード（履歴を含む）に入ります。この操作はご自身の判断で行ってください。アプリを閉じると復元できません</value></data>
+  <data name="M_CopiedConfidentialFormat" xml:space="preserve"><value>{0} 文字をコピーしました（機密モード：内容はクリップボードにあります）</value></data>
 </root>
