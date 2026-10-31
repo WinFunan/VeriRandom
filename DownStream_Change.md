@@ -1318,3 +1318,36 @@ version(1) flags(1) count(1) delay×10(1) inputs(1) armedSeconds(1) expiresUnixD
 - **已知误导项（未修）**：高级模式（原始熵 / 按位）生成的随机数记录，在重放窗口显示为 `记录值 0 · 重算值 0 · 一致`。这条路径本来就只记种子（`SeedDigest`），`0` 是刻意留空的占位——两个 0 相等属实，但对读者没有任何信息量，反而像"核对通过了"。理想做法是把这类记录在列表上标成"熵记录"而不是数字。
 
 ---
+
+## 47. 课件标记可编辑与快捷键复制；随机数「熵记录」可复核
+
+**动机**：交接清单里的两条半成品——标记只能新建不能改参数、课上取标记必须打开设置页；以及随机数高级模式的记录在重放窗口显示「记录值 0 · 重算值 0 · 一致」，那个「一致」不含任何信息。查证时还发现一个**真实缺陷**：拼接轮数 > 1 的熵记录自校验必然失败（`SeedDigest` 记的是多轮拼接摘要，`Verify` 却按单轮重算），`SaveAsync` 只记 warning，`VerifyAll` 会把这类文件列为无效。
+
+### 47.1 课件标记
+
+| 项 | 文件 | 说明 |
+|---|---|---|
+| 编辑已有标记 | `SecRandom/Views/SettingsPages/SlideTrigger/SlideTriggerSettingsPage.axaml(.cs)` | 行内「编辑」经 `FillForm` 把参数读回表单，保存走**同一 id**（`SlideTriggerStore.Update`），保存后自动把新 PNG 放进剪贴板并提示替换课件里的旧图片；`RemainingDays` 把绝对过期时刻折回天数，避免每次编辑都把有效期往后推 |
+| 更新原子化 | `SecRandom/Services/SlideTrigger/SlideTriggerStore.cs` | `Update` 先 `SlideTriggerPayload.Encode` 再改记录（超长名单名抛 `ArgumentException` 时不留半更新记录）；页面传**分离副本**（`editing` 是 store 自己的实例）；`Find` 落空时拒绝复制空标记文本 |
+| 拒绝不可表达的参数 | 页面 + `SlideTriggerExecutor` | 移除 `AllowRepeatBox`/`IgnoreWeightsBox` 与资源 `C_AllowRepeat`/`C_IgnoreWeights`；运行时拒绝（`UnsupportedParameters`）保留；`DescribeParameters` 对旧标记追加 `M_UnsupportedParamsBadge`，探测结果同样带上 |
+| 快捷键复制 | `SecRandom/Services/SlideTrigger/SlideTriggerQuickCopyService.cs`（新增）、`SecRandom/Services/Desktop/GlobalShortcutService.cs`、`SecRandom.Core/Models/SubConfigs/MoreSettingsConfig.cs` | 新增 `ShortcutAction.CopySlideTriggerMarker` + `MoreSettings.CopySlideTriggerMarkerShortcut`（空 = 不注册，注册仍受 `EnableShortcut` 总开关约束，实测变更即时生效走既有 `WmReload`）；`SlideTriggerCatalog.QuickMarkerId`（`Create` 覆盖为新标记、`Remove` 清空、`SetQuickMarker` 校验存在），经 `SlideTriggerStore.QuickMarker` 解析 |
+| 剪贴板目标窗口 | `SlideTriggerQuickCopyService.FindTopLevel` | 从 `IClassicDesktopStyleApplicationLifetime` 取 `MainWindow`，否则任一枚举窗口；**不弹窗**——弹窗会从放映中的课件抢焦点，而隐藏窗口同样持有平台剪贴板 |
+| 文案 | `SecRandom/Langs/SettingsPages/SlideTrigger/` | 三语新增 14 条（`C_Edit`、`C_CancelEdit`、`M_EditModeFormat`、`M_EditedFormat`、`M_EditCanceled`、`M_UnsupportedParamsHint`、`M_UnsupportedParamsBadge`、`C_QuickCopyShortcut`、`C_ShortcutWatermark`、`C_UseAsQuickCopy`、`M_QuickCopyHint`、`M_QuickCopyTargetFormat`、`M_QuickCopyTargetNone`、`M_QuickCopyTargetSetFormat`），删除 2 条 |
+
+**未做**：原设想的「生成弹窗」（按键 → 小窗改参数 → 复制）改为「按键 → 直接复制已选标记」。课堂现场需要的是零交互，弹窗会抢走放映焦点；改参数仍回设置页。
+
+### 47.2 随机数熵记录
+
+- `SecRandom.Core/Models/Verification/RawNumberProof.cs`：新增 `AdvancedOutput`、`EntropyRoundSize`、`[JsonIgnore] IsEntropyRecord`。`IsEntropyRecord` 同时识别**旧记录**（无区间 / 集合 / 批量且数值全为占位 0），旧记录因此不必改文件就能被正确识别。
+- `RawNumberProofHashing.ComputePayloadHash`：仅在存在时追加 `|advanced` 与 `|roundsize:N`，**旧记录摘要逐字不变**（与 `Values`/`Results`/`Intervals` 同一约定）。
+- `SecRandom/Services/Verification/RawNumberProofService.cs`：`DeriveEntropySeed` 按 `EntropyRoundSize` 分轮派生后拼接；新增 `ReplayEntropy` + `RawDigestVerdict`（`Matches`/`Mismatch`/`Unverifiable`）；`RawNumberVerification` 增加 `ValueApplicable`，熵记录不比较占位值，但 `Succeeded` 仍要求摘要与链哈希。
+  - 旧的多轮熵记录没有分轮信息、无法重组，重放如实显示「无法复核」，**不冒充「不一致」**。
+- `SecRandom/Views/Verification/ProofReplayView.axaml.cs`：熵记录分支不再打印 `0 / 0`，改为核对种子摘要并说明「展示文本不保存在记录里」；列表后缀 `C_RawNodeEntropy`。
+- `SecRandom/ViewModels/MainPages/RawRandomPageViewModel.cs`：`EntropyBitsOf` 按 `(SourceId, PulseIndex)` 去重（本地 CSPRNG 每次取数仍算新熵），拼接未带来新熵时在实测行追加 `M_ConcatNoGain`；排除项未命中任何候选时在候选行追加 `M_ExclusionsIneffective`（判定：以空排除重解一次并比较基数）。
+- `SecRandom/Langs/SettingsPages/General/Verification/`：三语新增 5 条；`SecRandom/Langs/MainPages/RawRandom/`：三语新增 2 条。
+
+**未改**：`ConfigPolicyDigest` 未新增覆盖字段（快捷键与标记库属于本机操作设置，不在签名范围）；`EntropyRoundSize` 只影响记录自校验，不进入抽签证明。
+
+**待真机确认**：快捷键在放映全屏时是否被放映程序吞掉（`RegisterHotKey` 的既有语义如此，但需要在 PPT 全屏下实测）；编辑后的标记图片在投影分辨率下的解码率与新建时是否一致。
+
+---
