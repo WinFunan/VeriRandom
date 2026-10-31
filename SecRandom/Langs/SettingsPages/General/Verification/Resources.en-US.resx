@@ -214,4 +214,9 @@ It prevents replacement of local draw code, random seeds, or result files during
   <data name="M_RawReplayMatch" xml:space="preserve"><value>matches</value></data>
   <data name="M_RawReplayMismatch" xml:space="preserve"><value>does not match, do not use this record</value></data>
   <data name="M_RawReplayNone" xml:space="preserve"><value>No random-number records yet</value></data>
+  <data name="C_RawNodeEntropy" xml:space="preserve"><value>entropy</value></data>
+  <data name="M_RawReplayEntropyFormat" xml:space="preserve"><value>entropy record · recorded digest {0} · recomputed digest {1} · {2}　the displayed text is not stored, only the seed digest is checked</value></data>
+  <data name="M_RawReplayEntropyMatch" xml:space="preserve"><value>matches</value></data>
+  <data name="M_RawReplayEntropyMismatch" xml:space="preserve"><value>does not match, do not use this record</value></data>
+  <data name="M_RawReplayEntropyUnverifiable" xml:space="preserve"><value>cannot be checked (an older record did not store its round structure)</value></data>
 </root>

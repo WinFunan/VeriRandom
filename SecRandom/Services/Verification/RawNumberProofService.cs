@@ -91,6 +91,20 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
     {
         ArgumentNullException.ThrowIfNull(proof);
 
+        if (proof.IsEntropyRecord)
+        {
+            var entropySeed = DeriveEntropySeed(proof);
+            var entropySeedMatches = entropySeed is not null && string.Equals(
+                RawNumberSeedDerivation.Digest(entropySeed),
+                proof.SeedDigest,
+                StringComparison.Ordinal);
+
+            // No value is compared: an entropy record deliberately stores none, because the text on screen is a
+            // presentation of the seed rather than a result to recompute. `ValueApplicable` is what stops `Succeeded`
+            // from reading that placeholder as a failed check.
+            return new RawNumberVerification(entropySeedMatches, false, ChainHashMatches(proof), ValueApplicable: false);
+        }
+
         var inputs = proof.Entropy
             .Select(entropy => new RawNumberEntropyInput(entropy.SourceId, entropy.OutputValue))
             .ToList();
@@ -106,16 +120,16 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
 
         var valueMatches = seedMatches && MatchesRecordedValues(proof, seed);
 
-        var chainMatches = string.Equals(
-            RawNumberProofHashing.ComputeSelfHash(
-                proof.Index,
-                proof.PrevHash,
-                RawNumberProofHashing.ComputePayloadHash(proof)),
-            proof.SelfHash,
-            StringComparison.Ordinal);
-
-        return new RawNumberVerification(seedMatches, valueMatches, chainMatches);
+        return new RawNumberVerification(seedMatches, valueMatches, ChainHashMatches(proof));
     }
+
+    private static bool ChainHashMatches(RawNumberProof proof) => string.Equals(
+        RawNumberProofHashing.ComputeSelfHash(
+            proof.Index,
+            proof.PrevHash,
+            RawNumberProofHashing.ComputePayloadHash(proof)),
+        proof.SelfHash,
+        StringComparison.Ordinal);
 
     /// <summary>
     ///     Every raw-number record on disk, ordered by chain position. They live in their own folder and their own
@@ -192,6 +206,61 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
         var recomputed = Recompute(proof, seed, count);
 
         return new RawNumberReplay(recomputed, recomputed.SequenceEqual(recorded));
+    }
+
+    /// <summary>
+    ///     Recomputes the seed digest an entropy record claims. This is the only check such a record admits: it never
+    ///     stored a value to compare, so "what number did it produce" cannot be answered from the file at all.
+    /// </summary>
+    public RawNumberDigestReplay ReplayEntropy(RawNumberProof proof)
+    {
+        ArgumentNullException.ThrowIfNull(proof);
+
+        var seed = DeriveEntropySeed(proof);
+        var recomputed = seed is null ? string.Empty : RawNumberSeedDerivation.Digest(seed);
+
+        var verdict = recomputed.Length == 0
+            ? RawDigestVerdict.Unverifiable
+            : string.Equals(recomputed, proof.SeedDigest, StringComparison.Ordinal)
+                ? RawDigestVerdict.Matches
+                // A record written before the round size existed can hold several rounds in one flat list, and no
+                // verifier can regroup that. Calling it a mismatch would accuse a record for being old.
+                : proof.AdvancedOutput
+                    ? RawDigestVerdict.Mismatch
+                    : RawDigestVerdict.Unverifiable;
+
+        return new RawNumberDigestReplay(verdict, proof.SeedDigest, recomputed);
+    }
+
+    /// <summary>
+    ///     Rebuilds the seed an entropy record was made from: one derivation per collection round, concatenated in
+    ///     round order. A record without a recorded round size is treated as one round, which is exactly how single-round
+    ///     records were written.
+    /// </summary>
+    private static byte[]? DeriveEntropySeed(RawNumberProof proof)
+    {
+        var entries = proof.Entropy;
+        if (entries.Count == 0)
+            return null;
+
+        var roundSize = proof.EntropyRoundSize > 0
+            ? Math.Min(proof.EntropyRoundSize, entries.Count)
+            : entries.Count;
+
+        var material = new List<byte>(entries.Count * 32);
+
+        for (var start = 0; start < entries.Count; start += roundSize)
+        {
+            var round = entries
+                .Skip(start)
+                .Take(roundSize)
+                .Select(entry => new RawNumberEntropyInput(entry.SourceId, entry.OutputValue))
+                .ToList();
+
+            material.AddRange(RawNumberSeedDerivation.Derive(round));
+        }
+
+        return material.ToArray();
     }
 
     /// <summary>
@@ -275,10 +344,37 @@ public sealed class RawNumberProofService(ILogger<RawNumberProofService> logger)
 }
 
 /// <summary>Outcome of recomputing a record from its own contents.</summary>
-public sealed record RawNumberVerification(bool SeedMatches, bool ValueMatches, bool ChainHashMatches)
+/// <param name="ValueApplicable">
+///     False for an entropy record, which stores no value to compare. <see cref="Succeeded" /> must then judge the
+///     record on its seed and chain alone instead of reading the placeholder as a failed check.
+/// </param>
+public sealed record RawNumberVerification(
+    bool SeedMatches,
+    bool ValueMatches,
+    bool ChainHashMatches,
+    bool ValueApplicable = true)
 {
-    public bool Succeeded => SeedMatches && ValueMatches && ChainHashMatches;
+    public bool Succeeded => SeedMatches && ChainHashMatches && (!ValueApplicable || ValueMatches);
 }
+
+/// <summary>How an entropy record's seed digest compares with the digest stored in it.</summary>
+public enum RawDigestVerdict
+{
+    /// <summary>Rebuilding from the recorded entropy reproduces the recorded digest.</summary>
+    Matches,
+
+    /// <summary>The record is an entropy record and its digest does not rebuild.</summary>
+    Mismatch,
+
+    /// <summary>No rebuild is possible: no entropy recorded, or a record older than the round structure.</summary>
+    Unverifiable
+}
+
+/// <summary>Result of checking an entropy record's seed digest.</summary>
+public sealed record RawNumberDigestReplay(
+    RawDigestVerdict Verdict,
+    string RecordedDigest,
+    string RecomputedDigest);
 
 /// <summary>One record as read back from disk.</summary>
 public sealed record RawNumberProofFile(string Path, RawNumberProof Proof);

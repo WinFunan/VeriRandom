@@ -282,6 +282,8 @@ public partial class RawRandomPageViewModel : ViewModelBase
                 var advancedProof = new RawNumberProof
                 {
                     Value = 0,
+                    AdvancedOutput = true,
+                    EntropyRoundSize = Math.Max(1, selected.Count),
                     Verifiable = !IsVerifiabilityReduced,
                     SeedDigest = RawNumberSeedDerivation.Digest(combined),
                     Entropy = allEntropy

@@ -292,4 +292,9 @@
   <data name="M_RawReplayMatch" xml:space="preserve"><value>一致</value></data>
   <data name="M_RawReplayMismatch" xml:space="preserve"><value>不一致，请勿使用这份记录</value></data>
   <data name="M_RawReplayNone" xml:space="preserve"><value>还没有随机数记录</value></data>
+  <data name="C_RawNodeEntropy" xml:space="preserve"><value>熵</value></data>
+  <data name="M_RawReplayEntropyFormat" xml:space="preserve"><value>熵记录 · 记录摘要 {0} · 重算摘要 {1} · {2}　展示文本不保存在记录里，只核对种子摘要</value></data>
+  <data name="M_RawReplayEntropyMatch" xml:space="preserve"><value>一致</value></data>
+  <data name="M_RawReplayEntropyMismatch" xml:space="preserve"><value>不一致，请勿使用这份记录</value></data>
+  <data name="M_RawReplayEntropyUnverifiable" xml:space="preserve"><value>无法复核（旧记录没有保存分轮信息）</value></data>
 </root>

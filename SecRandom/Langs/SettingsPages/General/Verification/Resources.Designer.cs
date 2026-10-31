@@ -177,6 +177,11 @@ public class Resources
     public static string M_RawReplayMatch => Get(nameof(M_RawReplayMatch));
     public static string M_RawReplayMismatch => Get(nameof(M_RawReplayMismatch));
     public static string M_RawReplayNone => Get(nameof(M_RawReplayNone));
+    public static string C_RawNodeEntropy => Get(nameof(C_RawNodeEntropy));
+    public static string M_RawReplayEntropyFormat => Get(nameof(M_RawReplayEntropyFormat));
+    public static string M_RawReplayEntropyMatch => Get(nameof(M_RawReplayEntropyMatch));
+    public static string M_RawReplayEntropyMismatch => Get(nameof(M_RawReplayEntropyMismatch));
+    public static string M_RawReplayEntropyUnverifiable => Get(nameof(M_RawReplayEntropyUnverifiable));
     public static string M_RawProofsSomeInvalidFormat => Get(nameof(M_RawProofsSomeInvalidFormat));
     public static string M_RawProofsUnavailable => Get(nameof(M_RawProofsUnavailable));
     public static string M_ProofReplay_SignatureVerifiedExpired => Get(nameof(M_ProofReplay_SignatureVerifiedExpired));

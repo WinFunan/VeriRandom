@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace SecRandom.Core.Models.Verification;
 
@@ -67,6 +68,30 @@ public sealed class RawNumberProof
 
     /// <summary>True only when a single publishing source seeded this number.</summary>
     public bool Verifiable { get; set; }
+
+    /// <summary>
+    ///     True when this generation emitted entropy instead of an in-range value. <see cref="Value" /> stays 0 in that
+    ///     case: the text the user saw is a deterministic function of the seed, but the text itself is not stored, so
+    ///     any number written here could not be re-derived — a placeholder is the honest content.
+    /// </summary>
+    public bool AdvancedOutput { get; set; }
+
+    /// <summary>
+    ///     How many entropy entries one collection round contributed, which is what makes a concatenated output's seed
+    ///     rebuildable. Zero on records written before this field existed; such a record can only be replayed when it
+    ///     holds a single round.
+    /// </summary>
+    public int EntropyRoundSize { get; set; }
+
+    /// <summary>
+    ///     Recognises an entropy record, including one written before <see cref="AdvancedOutput" /> existed. Such a
+    ///     record has no range, no explicit set, no interval space and no batch, so every numeric field is a placeholder.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsEntropyRecord =>
+        AdvancedOutput
+        || (LowerBound == 0 && UpperBound == 0 && Value == 0
+            && Results is not { Count: > 0 } && Values is not { Count: > 0 } && Intervals is not { Count: > 0 });
 
     /// <summary>Every contribution, in derivation order.</summary>
     public List<RawNumberProofEntropy> Entropy { get; set; } = [];
@@ -146,6 +171,15 @@ public static class RawNumberProofHashing
         // Interval space, appended only when present so every earlier record keeps its exact digest.
         if (proof.Intervals is { Count: > 0 } intervals)
             builder.Append("|space:").AppendJoin(';', intervals.Select(pair => $"{pair[0]}-{pair[1]}"));
+
+        // Entropy mode and its round structure, both appended only when present so every earlier record keeps its
+        // exact digest. The round size matters because a concatenated output derives one seed per round and hashes
+        // their concatenation; without it a verifier cannot rebuild the seed at all.
+        if (proof.AdvancedOutput)
+            builder.Append("|advanced");
+
+        if (proof.EntropyRoundSize > 0)
+            builder.Append("|roundsize:").Append(proof.EntropyRoundSize);
 
         foreach (var entropy in proof.Entropy)
             builder.Append('|')

@@ -237,9 +237,15 @@ public sealed partial class ProofReplayView : ViewBase
 
         foreach (var file in files)
         {
+            var stamp = file.Proof.CreatedAt.ToLocalTime().ToString("MM-dd HH:mm");
+
             var button = new Button
             {
-                Content = $"#{file.Proof.Index} {file.Proof.CreatedAt.ToLocalTime():MM-dd HH:mm}",
+                // An entropy record has no number to show, so the list has to say what it is; otherwise it looked like a
+                // plain record that happened to have nothing in it.
+                Content = file.Proof.IsEntropyRecord
+                    ? $"#{file.Proof.Index} {stamp} · {LR.C_RawNodeEntropy}"
+                    : $"#{file.Proof.Index} {stamp}",
                 Tag = file.Proof
             };
 
@@ -256,6 +262,25 @@ public sealed partial class ProofReplayView : ViewBase
         if (Core.Abstraction.IAppHost.TryGetService<RawNumberProofService>() is not { } service)
             return;
 
+        if (proof.IsEntropyRecord)
+        {
+            // The visible text was never stored, so there is nothing to recompute: only the seed digest can be rebuilt
+            // from the recorded entropy, and saying that plainly beats printing two zeroes that "match".
+            var digest = service.ReplayEntropy(proof);
+            RawReplayText.Text = string.Format(
+                LR.M_RawReplayEntropyFormat,
+                ShortDigest(digest.RecordedDigest),
+                ShortDigest(digest.RecomputedDigest),
+                digest.Verdict switch
+                {
+                    RawDigestVerdict.Matches => LR.M_RawReplayEntropyMatch,
+                    RawDigestVerdict.Mismatch => LR.M_RawReplayEntropyMismatch,
+                    _ => LR.M_RawReplayEntropyUnverifiable
+                });
+
+            return;
+        }
+
         var replay = service.Replay(proof);
         var recorded = proof.Results is { Count: > 0 } results ? results : [proof.Value];
 
@@ -265,6 +290,10 @@ public sealed partial class ProofReplayView : ViewBase
             string.Join("、", replay.Recomputed),
             replay.Matches ? LR.M_RawReplayMatch : LR.M_RawReplayMismatch);
     }
+
+    /// <summary>Two digests are compared by eye here, and only their prefix is needed to do that.</summary>
+    private static string ShortDigest(string digest) =>
+        string.IsNullOrEmpty(digest) ? "—" : digest.Length <= 16 ? digest : digest[..16] + "…";
 
     private void VerifyRawProofs_OnClick(object? sender, RoutedEventArgs e)
     {

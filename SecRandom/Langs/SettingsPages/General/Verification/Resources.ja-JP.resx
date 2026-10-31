@@ -214,4 +214,9 @@
   <data name="M_RawReplayMatch" xml:space="preserve"><value>一致</value></data>
   <data name="M_RawReplayMismatch" xml:space="preserve"><value>不一致です。この記録は使わないでください</value></data>
   <data name="M_RawReplayNone" xml:space="preserve"><value>乱数記録はまだありません</value></data>
+  <data name="C_RawNodeEntropy" xml:space="preserve"><value>エントロピー</value></data>
+  <data name="M_RawReplayEntropyFormat" xml:space="preserve"><value>エントロピー記録 · 記録ダイジェスト {0} · 再計算ダイジェスト {1} · {2}　表示テキストは保存されておらず、シードのダイジェストのみ照合します</value></data>
+  <data name="M_RawReplayEntropyMatch" xml:space="preserve"><value>一致</value></data>
+  <data name="M_RawReplayEntropyMismatch" xml:space="preserve"><value>不一致です。この記録は使わないでください</value></data>
+  <data name="M_RawReplayEntropyUnverifiable" xml:space="preserve"><value>照合できません（古い記録はラウンド情報を保存していません）</value></data>
 </root>
