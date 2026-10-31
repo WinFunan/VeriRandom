@@ -6,6 +6,7 @@ using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
+using SecRandom.Shared.Models.Verification;
 using System.Text.Json;
 using VerificationDrawKind = SecRandom.Shared.Models.Verification.VerificationDrawKind;
 
