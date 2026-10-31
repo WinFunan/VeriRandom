@@ -174,6 +174,9 @@ public class Resources
     public static string M_SelfCheckInputMismatch => Get(nameof(M_SelfCheckInputMismatch));
     public static string M_SelfCheckResultMismatch => Get(nameof(M_SelfCheckResultMismatch));
     public static string M_SelfCheckCountsImpossible => Get(nameof(M_SelfCheckCountsImpossible));
+    public static string M_SelfCheckGateEvidenceMissing => Get(nameof(M_SelfCheckGateEvidenceMissing));
+    public static string M_SelfCheckGateThresholdMismatch => Get(nameof(M_SelfCheckGateThresholdMismatch));
+    public static string M_SelfCheckGateRemovalContradicts => Get(nameof(M_SelfCheckGateRemovalContradicts));
     public static string C_ProofDetail_ServerReceipt => Get(nameof(C_ProofDetail_ServerReceipt));
     public static string M_ProofDetail_ModeOffline => Get(nameof(M_ProofDetail_ModeOffline));
     public static string M_ProofDetail_ModeOnline => Get(nameof(M_ProofDetail_ModeOnline));

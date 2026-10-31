@@ -146,4 +146,83 @@ public sealed class ProofConsistencyTests
         Assert.Contains(ProofConsistencyIssue.PayloadUndecodable, report.Issues);
         Assert.False(report.IsConsistent);
     }
+
+    private static GateEvidence CreateEvidence(int threshold, int removedCount)
+    {
+        var members = Enumerable.Range(0, removedCount)
+            .Select(index => new GateEvidenceMember
+            {
+                RecordId = Guid.Parse($"0000000{index}-0000-0000-0000-000000000000"),
+                DrawCount = 4
+            })
+            .ToArray();
+
+        return new GateEvidence
+        {
+            Threshold = threshold,
+            CandidateCountBefore = 6,
+            CandidateCountAfter = 3,
+            Removed = members
+        };
+    }
+
+    /// <summary>
+    ///     A declared drop with no evidence file beside it: the cheapest way to hide an exclusion is to delete the record
+    ///     of it, so this has to be said out loud rather than treated as "nothing to check".
+    /// </summary>
+    [Fact]
+    public void AFairDrawThatClaimsRemovalsWithoutEvidenceIsFlagged()
+    {
+        var proof = CreateProof(CreateAudit(before: 6, after: 3), VerificationWireCodec.AlgorithmEngineVersion);
+
+        var report = ProofConsistency.Check(proof);
+
+        Assert.Contains(ProofConsistencyIssue.GateEvidenceMissing, report.Issues);
+    }
+
+    /// <summary>
+    ///     Proofs written before the evidence existed cannot carry it; accusing them would punish a correct record for
+    ///     being old, and a wrong clock can only hide this warning, never invent one.
+    /// </summary>
+    [Fact]
+    public void AProofOlderThanTheFeatureIsNotAccusedForMissingEvidence()
+    {
+        var proof = CreateProof(CreateAudit(before: 6, after: 3), VerificationWireCodec.AlgorithmEngineVersion)
+                    with { CreatedAtUtc = ProofConsistency.GateEvidenceEpoch.AddDays(-1) };
+
+        var report = ProofConsistency.Check(proof);
+
+        Assert.DoesNotContain(ProofConsistencyIssue.GateEvidenceMissing, report.Issues);
+    }
+
+    [Fact]
+    public void EvidenceWhoseThresholdDisagreesWithTheAuditIsFlagged()
+    {
+        var proof = CreateProof(CreateAudit(before: 6, after: 3), VerificationWireCodec.AlgorithmEngineVersion);
+
+        var report = ProofConsistency.Check(proof, CreateEvidence(threshold: 5, removedCount: 1));
+
+        Assert.Contains(ProofConsistencyIssue.GateThresholdMismatch, report.Issues);
+    }
+
+    [Fact]
+    public void EvidenceClaimingMoreRemovalsThanTheDeclaredDropIsFlagged()
+    {
+        var proof = CreateProof(CreateAudit(before: 6, after: 3), VerificationWireCodec.AlgorithmEngineVersion);
+
+        var report = ProofConsistency.Check(proof, CreateEvidence(threshold: 1, removedCount: 4));
+
+        Assert.Contains(ProofConsistencyIssue.GateRemovalContradictsCounts, report.Issues);
+    }
+
+    [Fact]
+    public void EvidenceThatAgreesWithTheAuditAddsNoIssues()
+    {
+        var proof = CreateProof(CreateAudit(before: 6, after: 3), VerificationWireCodec.AlgorithmEngineVersion);
+
+        var report = ProofConsistency.Check(proof, CreateEvidence(threshold: 1, removedCount: 3));
+
+        Assert.True(report.IsConsistent);
+        Assert.Empty(report.Issues);
+    }
 }

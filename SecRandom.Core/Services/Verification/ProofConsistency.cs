@@ -19,7 +19,16 @@ public enum ProofConsistencyIssue
     ResultDisagreesWithPayload,
 
     /// <summary>The audit payload's candidate counts cannot be ordered before ≥ after ≥ frozen pool.</summary>
-    AuditCountsImpossible
+    AuditCountsImpossible,
+
+    /// <summary>A fair draw declares that candidates were removed, yet no gate-evidence record sits beside the proof.</summary>
+    GateEvidenceMissing,
+
+    /// <summary>The gate evidence records a different threshold than the audit claim it substantiates.</summary>
+    GateThresholdMismatch,
+
+    /// <summary>The gate evidence claims more removals than the declared candidate drop can account for.</summary>
+    GateRemovalContradictsCounts
 }
 
 /// <summary>
@@ -64,7 +73,14 @@ public sealed record ProofConsistencyReport(
 /// </remarks>
 public static class ProofConsistency
 {
-    public static ProofConsistencyReport Check(DrawProof proof)
+    /// <summary>
+    ///     Proofs written before this date could not carry gate evidence, so their absence is never reported as a
+    ///     problem. The date is used only to <em>suppress</em> an accusation, never to make one: a wrong clock can hide a
+    ///     warning, it cannot invent one.
+    /// </summary>
+    public static readonly DateTimeOffset GateEvidenceEpoch = new(2026, 10, 31, 0, 0, 0, TimeSpan.Zero);
+
+    public static ProofConsistencyReport Check(DrawProof proof, GateEvidence? gateEvidence = null)
     {
         ArgumentNullException.ThrowIfNull(proof);
 
@@ -96,10 +112,11 @@ public static class ProofConsistency
             issues.Add(ProofConsistencyIssue.ResultDisagreesWithPayload);
 
         var countsOrdered = true;
-        if (AnonymizedAuditPayload.TryParse(auditBytes)?.Fairness is { } fairness)
+        var fairness = AnonymizedAuditPayload.TryParse(auditBytes)?.Fairness;
+        if (fairness is { } audit)
         {
-            var before = fairness.CandidateCountBeforeAverageGapProtection;
-            var after = fairness.CandidateCountAfterAverageGapProtection;
+            var before = audit.CandidateCountBeforeAverageGapProtection;
+            var after = audit.CandidateCountAfterAverageGapProtection;
 
             // Prize draws carry no fairness block, and a record written before those counts existed reports zero; in
             // both cases there is nothing to order, so the check abstains instead of inventing a verdict.
@@ -114,7 +131,55 @@ public static class ProofConsistency
             }
         }
 
+        CheckGateEvidence(proof, fairness, gateEvidence, input, issues);
+
         return new ProofConsistencyReport(checkable, inputHashVerified, resultMatches, countsOrdered, issues);
+    }
+
+    /// <summary>
+    ///     Cross-checks the gate evidence against the audit claim it is supposed to substantiate.
+    /// </summary>
+    /// <remarks>
+    ///     Three distinct failures, deliberately kept apart: an audit that claims a removal with no evidence file (the
+    ///     cheapest way to hide an exclusion is to delete the record of it), an evidence threshold that differs from the
+    ///     one the audit committed (same field, two sources, so they must agree), and an evidence removal count larger
+    ///     than the pool could have lost.
+    /// </remarks>
+    private static void CheckGateEvidence(
+        DrawProof proof,
+        AnonymizedAuditFairness? fairness,
+        GateEvidence? gateEvidence,
+        VerificationDrawInput input,
+        List<ProofConsistencyIssue> issues)
+    {
+        if (fairness is not { FairDraw: true })
+            return;
+
+        var before = fairness.CandidateCountBeforeAverageGapProtection;
+        var after = fairness.CandidateCountAfterAverageGapProtection;
+
+        if (gateEvidence is null)
+        {
+            // "before > after" is sound for a fair draw: the student pool only ever shrinks through this gate, so a
+            // declared decrease means somebody was removed and a missing record is then a real gap. Old proofs are
+            // exempt by date rather than reported, because their absence has an innocent explanation.
+            if (before > after && proof.CreatedAtUtc >= GateEvidenceEpoch)
+                issues.Add(ProofConsistencyIssue.GateEvidenceMissing);
+
+            return;
+        }
+
+        if (fairness.AverageGapProtectionThreshold > 0
+            && gateEvidence.Threshold != fairness.AverageGapProtectionThreshold)
+        {
+            issues.Add(ProofConsistencyIssue.GateThresholdMismatch);
+        }
+
+        // The removed list can be shorter than the declared drop when the pool held duplicate record ids (the survivor
+        // set is deduplicated, the member list is not), so only the upper bound is a sound test.
+        var declaredDrop = Math.Max(0, before - after);
+        if (gateEvidence.Removed.Count > declaredDrop)
+            issues.Add(ProofConsistencyIssue.GateRemovalContradictsCounts);
     }
 
     private static bool TryDecode(

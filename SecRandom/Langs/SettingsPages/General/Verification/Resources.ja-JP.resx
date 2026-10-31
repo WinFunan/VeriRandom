@@ -232,4 +232,7 @@
   <data name="M_GateEvidenceBound" xml:space="preserve"><value>この証明に結び付いています</value></data>
   <data name="M_GateEvidenceDetached" xml:space="preserve"><value>この証明に結び付いていません（別の抽選の証拠です）</value></data>
   <data name="M_GateEvidenceSelfHashInvalid" xml:space="preserve"><value>証拠の内容検査に失敗しました</value></data>
+  <data name="M_SelfCheckGateEvidenceMissing" xml:space="preserve"><value>公平な抽選が除外を行ったと記録していますが、しきい値の証拠が隣にありません（削除されたか、この記録が機能より前のものです）</value></data>
+  <data name="M_SelfCheckGateThresholdMismatch" xml:space="preserve"><value>しきい値の証拠と監査記録のしきい値が一致しません</value></data>
+  <data name="M_SelfCheckGateRemovalContradicts" xml:space="preserve"><value>しきい値の証拠が主張する除外人数が候補数の減少を超えています</value></data>
 </root>

@@ -232,4 +232,7 @@ It prevents replacement of local draw code, random seeds, or result files during
   <data name="M_GateEvidenceBound" xml:space="preserve"><value>bound to this proof</value></data>
   <data name="M_GateEvidenceDetached" xml:space="preserve"><value>not bound to this proof (the evidence belongs to another draw)</value></data>
   <data name="M_GateEvidenceSelfHashInvalid" xml:space="preserve"><value>the evidence fails its own content check</value></data>
+  <data name="M_SelfCheckGateEvidenceMissing" xml:space="preserve"><value>a fair draw claims candidates were removed, but no gate evidence sits beside it (deleted, or the proof predates the feature)</value></data>
+  <data name="M_SelfCheckGateThresholdMismatch" xml:space="preserve"><value>the gate evidence records a different threshold than the audit claim</value></data>
+  <data name="M_SelfCheckGateRemovalContradicts" xml:space="preserve"><value>the gate evidence claims more removals than the candidate drop can account for</value></data>
 </root>

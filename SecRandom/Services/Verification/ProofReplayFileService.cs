@@ -176,6 +176,8 @@ public sealed class ProofReplayFileService(
             }
         }
 
+        var gateEvidence = gateEvidenceExporter.TryReadForUpPath(path);
+
         return new ProofDetails(
             proof.ProofId,
             proof.Mode,
@@ -189,18 +191,18 @@ public sealed class ProofReplayFileService(
             requestedCount,
             candidateCount,
             audit,
-            ProofConsistency.Check(proof),
-            ReadGateEvidence(path, proof));
+            ProofConsistency.Check(proof, gateEvidence),
+            DescribeGateEvidence(proof, gateEvidence));
     }
 
     /// <summary>
-    ///     Reads the fork-local gate evidence beside this proof. Absence is normal — a draw whose gate removed nobody
+    ///     Projects the fork-local gate evidence beside this proof. Absence is normal — a draw whose gate removed nobody
     ///     writes none — so it returns null rather than an error, and the dialog has to say which reading applies
     ///     instead of showing a silent pass.
     /// </summary>
-    private ProofGateEvidenceInfo? ReadGateEvidence(string upPath, DrawProof proof)
+    private static ProofGateEvidenceInfo? DescribeGateEvidence(DrawProof proof, GateEvidence? evidence)
     {
-        if (gateEvidenceExporter.TryReadForUpPath(upPath) is not { } evidence)
+        if (evidence is null)
             return null;
 
         var selfHashValid = string.Equals(
@@ -497,7 +499,7 @@ public sealed class ProofReplayFileService(
             payload ?? [],
             proof.AuditPayload,
             decodeError,
-            ProofConsistency.Check(proof));
+            ProofConsistency.Check(proof, gateEvidenceExporter.TryReadForUpPath(path)));
     }
 
     /// <summary>

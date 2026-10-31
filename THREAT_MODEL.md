@@ -76,8 +76,9 @@
 | **T3** | **移除不正当**：移掉规则不该移除的人 | 门槛证据记录被移除者的 `recordId` + 当时的 `drawCount`；门槛前集合 = 证据的 `removed` ∪ payload 的幸存者；规则是 `(集合, 次数, 阈值, 抽几人)` 的纯函数（补回整档进行，与名单顺序无关），因此**可被逐人复算** | 🟡 **数据齐、复算器未实现** |
 | **T4** | **移除不完整**：把该移除的人留在池里（只宣称移除了别人） | 无。证据只记被移除者，**幸存者的次数没有记录**，因此无法发现「漏移除」 | ❌ |
 | **T5** | **次数伪造**：先把某人的历史改小（或把别人的改大），再抽取 | 无。历史文件的清空、恢复、整包导入都不产生证明，门槛看到的次数与链上可重算的次数可能不一致 | ❌ |
-| **T6** | **删除门槛证据**：抽完删掉 `.gateevidence.json`，宣称没人被移除 | 无自动检查。但 `fairDraw && before > after` 在有门槛的抽取里**确实**意味着有人被移除（学生路径的 `usable` 只经过门槛），因此可作为「证据缺失」的判据 | 🟡 判据成立、检查未实现 |
-| **T7** | **改证据里的阈值** | 证据自哈希只能挡「改了忘重算」；审计载荷里另有 `averageGapProtectionThreshold`，两者应相等 | 🟡 字段在、**交叉核对未实现** |
+| **T6** | **删除门槛证据**：抽完删掉 `.gateevidence.json`，宣称没人被移除 | `ProofConsistency` 交叉核对：公平抽取且审计声明候选数下降（`before > after`）却没有证据文件 → 报 `GateEvidenceMissing`。旧证明按日期豁免，避免把「早于该功能」误报成「被删了」 | ✅ 新证明有效；旧证明仍不可区分 |
+| **T7** | **改证据里的阈值** | 证据自哈希只能挡「改了忘重算」；`ProofConsistency` 另把证据的 `threshold` 与审计的 `averageGapProtectionThreshold` 逐值比对 → `GateThresholdMismatch` | ✅ |
+| **T15** | 证据声称的移除人数多于候选数实际下降量 | `ProofConsistency` 核对 `removed.Count <= before - after`（只取上界：重复记录编号会让「名单人数」多于「去重后的幸存者数」） | ✅ |
 
 ### 4.3 链条与外部锚点
 
@@ -106,6 +107,7 @@
 | 门槛证据（本模型新增） | `SecRandom.Shared/Models/Verification/GateEvidence.cs`、`SecRandom/Services/Verification/GateEvidenceExportService.cs` | ✅ 写入/绑定/自哈希 |
 | 证明重放 | `SecRandom.Core/Services/Verification/ProofReplayService.cs`、`ManagedVerificationKernel` | ✅ |
 | 自洽核对（输入承诺 / 结果帧 / 计数有序） | `SecRandom.Core/Services/Verification/ProofConsistency.cs` | ✅ |
+| 门槛证据交叉核对（缺失 / 阈值 / 移除人数） | 同上（`CheckGateEvidence`） | ✅ |
 | 链与证据校验 | `SecRandom/Services/Verification/ProofIntegrityVerifier.cs`（`OwnReference` / `GateEvidenceReport` 分区，均不影响 `IsHealthy`） | ✅ |
 | **门槛移除正当性复算（T3）** | 待新增 `GateReplay`（用证据的 removed+counts 与 payload 幸存者复算） | 🟡 |
 | **门槛移除完整性（T4）** | 待定：证据全员次数，或链上状态复演 | ❌ |
@@ -160,3 +162,4 @@
 | 2026-10-31 | `af9b70c1` | 新增 `ProofConsistency`：重算输入承诺、结果帧对账、候选数有序性；T1 从「部分」升为「已覆盖」 |
 | 2026-10-31 | `6b17c9d2` | 新增门槛证据 `*.gateevidence.json`（被移除者 + 次数 + 阈值，绑定 Up 链哈希，随 Up 删除）；T3 数据落地（仍为 🟡，复算器未实现） |
 | 2026-10-31 | — | 建立本文件；登记 T4/T5/T6/T7/T14 为已知缺口 |
+| 2026-10-31 | 本提交 | `ProofConsistency` 增加门槛证据交叉核对：缺失（T6）、阈值不一致（T7）、移除人数超过下降量（T15）；T6/T7 升为 ✅，T3 仍为 🟡（复算器未写） |

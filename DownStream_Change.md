@@ -1467,3 +1467,25 @@ version(1) flags(1) count(1) delay×10(1) inputs(1) armedSeconds(1) expiresUnixD
 这条规则的措辞刻意写了「**不得因为数据已存在就标为已覆盖，只有检查真正在跑才算**」——T3 当前正是这种状态（证据数据齐、复算器未实现，标 🟡），这是本文件存在的意义所在。
 
 **登记时点的状态**（供上游合并时对照）：T1 ✅；T3/T6/T7/T13 🟡；T4/T5/T14/T11 ❌；T9 ⛔；其余 🟡。三次状态变化（`af9b70c1`、`6b17c9d2`、本次建立）已写入文件内的变更记录表。
+
+## 52. 门槛证据与审计声明的交叉核对（威胁模型第 1 步 A 的前两项）
+
+**动机**：`GateEvidence` 落地后，证据本身只做了自哈希与 Up 绑定；它与证明里那句「门槛移除了人」之间**没有任何比对**。而「删掉证据再宣称没人被移除」是隐藏一次排除最便宜的办法。
+
+### 52.1 实现
+
+| 检查 | 位置 | 判据 |
+|---|---|---|
+| 证据缺失（T6） | `SecRandom.Core/Services/Verification/ProofConsistency.cs` `CheckGateEvidence` | 公平抽取（审计 `fairDraw: true`）且审计声明候选数下降（`before > after`）却无证据文件 → `GateEvidenceMissing`。学生路径的候选池只经门槛收缩，因此「声明下降」与学生侧「确实移除过人」等价 |
+| 旧证明豁免 | 同上 | `ProofConsistency.GateEvidenceEpoch = 2026-10-31` 之前的证明不报缺失。日期只用于**抑制**指控、从不用于制造指控——时钟被改只会藏掉一条警告，不会凭空造出一条 |
+| 阈值不一致（T7） | 同上 | 证据 `threshold` ≠ 审计 `averageGapProtectionThreshold` → `GateThresholdMismatch` |
+| 移除人数超过下降量（T15） | 同上 | `removed.Count > before - after` → `GateRemovalContradictsCounts`。**只取上界**：幸存者集合按 `RecordId` 去重而候选名单不去重，重复编号会让「名单人数」多于「去重后幸存者数」，等值比较会误报 |
+| 证据读取 | `SecRandom/Services/Verification/ProofReplayFileService.cs` | `Describe` 与 `TryBuildDetails` 均把兄弟文件传入 `ProofConsistency.Check(proof, evidence)`；`ReadGateEvidence` 收敛为静态 `DescribeGateEvidence(proof, evidence)`，避免同一份证据被读两遍 |
+| 文案 | `SecRandom/Langs/SettingsPages/General/Verification/` | 三语 3 条：`M_SelfCheckGateEvidenceMissing`、`M_SelfCheckGateThresholdMismatch`、`M_SelfCheckGateRemovalContradicts` |
+| 测试 | `SecRandom.Core.Tests/ProofConsistencyTests.cs` | 5 例：缺失被报、旧证明不被报、阈值不一致被报、人数超过下降被报、一致则无问题 |
+| 威胁模型 | `THREAT_MODEL.md` | T6/T7 升 ✅，新增 T15 ✅，变更记录追加一行；T3 仍 🟡（复算器未写） |
+
+### 52.2 仍然没做的
+
+- **T3（移除是否正当）**：数据齐了，但「按规则复算并与 `removed` 逐人比对」的 `GateReplay` 尚未实现。它需要复刻门槛的完整语义：`maxEligible = min(avg, min+1)`（仅当极差 > 1 时取后者）与「池子不足时按次数等级**整档**补回」。这一段属于下一步。
+- **T4（移除是否完整）**：幸存者没有次数，任何单次核对都无法发现「该移除的留在池里」。

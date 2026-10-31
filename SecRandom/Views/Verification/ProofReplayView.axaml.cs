@@ -392,6 +392,9 @@ public sealed partial class ProofReplayView : ViewBase
             ProofConsistencyIssue.PayloadUndecodable => LR.M_SelfCheckUnavailable,
             ProofConsistencyIssue.InputHashMismatch => LR.M_SelfCheckInputMismatch,
             ProofConsistencyIssue.ResultDisagreesWithPayload => LR.M_SelfCheckResultMismatch,
+            ProofConsistencyIssue.GateEvidenceMissing => LR.M_SelfCheckGateEvidenceMissing,
+            ProofConsistencyIssue.GateThresholdMismatch => LR.M_SelfCheckGateThresholdMismatch,
+            ProofConsistencyIssue.GateRemovalContradictsCounts => LR.M_SelfCheckGateRemovalContradicts,
             _ => LR.M_SelfCheckCountsImpossible
         }));
     }
