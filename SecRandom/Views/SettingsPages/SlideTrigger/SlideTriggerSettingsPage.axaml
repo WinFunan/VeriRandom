@@ -17,6 +17,15 @@
                                    >
                 <StackPanel Spacing="10">
 
+                    <!-- 编辑态横幅：参数写在二维码里，所以保存后必须把新图片换进课件 -->
+                    <Border x:Name="EditBanner" IsVisible="False" Padding="10" CornerRadius="6"
+                            Background="{DynamicResource SystemFillColorCautionBackgroundBrush}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock x:Name="EditBannerText" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            <Button Content="{x:Static langs:Resources.C_CancelEdit}" Click="CancelEdit_OnClick" />
+                        </StackPanel>
+                    </Border>
+
                     <TextBox x:Name="NameBox" Watermark="{x:Static langs:Resources.C_NameWatermark}" />
 
                     <StackPanel Spacing="4">
@@ -35,10 +44,12 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <CheckBox x:Name="AllowRepeatBox" Content="{x:Static langs:Resources.C_AllowRepeat}" />
-                    <CheckBox x:Name="IgnoreWeightsBox" Content="{x:Static langs:Resources.C_IgnoreWeights}" />
                     <CheckBox x:Name="ShowAnimationBox" Content="{x:Static langs:Resources.C_ShowAnimation}" IsChecked="True" />
                     <CheckBox x:Name="VoiceBox" Content="{x:Static langs:Resources.C_Voice}" IsChecked="True" />
+
+                    <!-- 「可重复」「忽略历史权重」没有对应开关：触发路径表达不了这两项，给出开关只会生成一张永远不触发的标记 -->
+                    <TextBlock Text="{x:Static langs:Resources.M_UnsupportedParamsHint}" FontSize="12"
+                               Opacity="0.7" TextWrapping="Wrap" />
 
                     <StackPanel Spacing="4">
                         <TextBlock Text="{x:Static langs:Resources.C_Timing}" FontSize="12" Opacity="0.7" />

@@ -16,8 +16,6 @@
   <data name="C_ListNameWatermark" xml:space="preserve"><value>空欄なら現在のリストを使用</value></data>
   <data name="C_Count" xml:space="preserve"><value>人数</value></data>
   <data name="C_ExpiresDays" xml:space="preserve"><value>有効期間（日、0 は無期限）</value></data>
-  <data name="C_AllowRepeat" xml:space="preserve"><value>一度選ばれた人も選べる</value></data>
-  <data name="C_IgnoreWeights" xml:space="preserve"><value>履歴の重みを無視</value></data>
   <data name="C_ShowAnimation" xml:space="preserve"><value>抽選アニメーションを表示</value></data>
   <data name="C_Voice" xml:space="preserve"><value>結果を読み上げる</value></data>
   <data name="C_Timing" xml:space="preserve"><value>実行のタイミング</value></data>
@@ -59,4 +57,11 @@
   <data name="M_ProbeFoundFormat" xml:space="preserve"><value>マーカーを検出：{0}</value></data>
   <data name="M_ProbeNotFound" xml:space="preserve"><value>画面に教材マーカーが見つかりません</value></data>
   <data name="M_ProbeUnsupported" xml:space="preserve"><value>この環境では画面検出を使えません</value></data>
+  <data name="C_Edit" xml:space="preserve"><value>編集</value></data>
+  <data name="C_CancelEdit" xml:space="preserve"><value>編集をキャンセル</value></data>
+  <data name="M_EditModeFormat" xml:space="preserve"><value>編集中：{0}　パラメータはマーカー画像の中にあります。保存すると新しい画像ができるので、スライドの古い画像と差し替えてください（古い画像は古い設定のまま発動します）</value></data>
+  <data name="M_EditedFormat" xml:space="preserve"><value>「{0}」を更新しました：{1}　新しいマーカー画像をクリップボードにコピーしました。スライドの古い画像と差し替えてください</value></data>
+  <data name="M_EditCanceled" xml:space="preserve"><value>編集をキャンセルしました（マーカーは変更されていません）</value></data>
+  <data name="M_UnsupportedParamsBadge" xml:space="preserve"><value>未対応のパラメータを含むため発動しません</value></data>
+  <data name="M_UnsupportedParamsHint" xml:space="preserve"><value>「重複可」「履歴の重みを無視」は現在マーカーでは表現できないため、ここには用意していません。これらを含む古いマーカーは発動時に拒否されます</value></data>
 </root>

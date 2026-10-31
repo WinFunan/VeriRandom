@@ -43,8 +43,6 @@ public class Resources
     public static string C_ListNameWatermark => ResourceManager.GetString(nameof(C_ListNameWatermark), resourceCulture)!;
     public static string C_Count => ResourceManager.GetString(nameof(C_Count), resourceCulture)!;
     public static string C_ExpiresDays => ResourceManager.GetString(nameof(C_ExpiresDays), resourceCulture)!;
-    public static string C_AllowRepeat => ResourceManager.GetString(nameof(C_AllowRepeat), resourceCulture)!;
-    public static string C_IgnoreWeights => ResourceManager.GetString(nameof(C_IgnoreWeights), resourceCulture)!;
     public static string C_ShowAnimation => ResourceManager.GetString(nameof(C_ShowAnimation), resourceCulture)!;
     public static string C_Voice => ResourceManager.GetString(nameof(C_Voice), resourceCulture)!;
     public static string C_Timing => ResourceManager.GetString(nameof(C_Timing), resourceCulture)!;
@@ -86,4 +84,11 @@ public class Resources
     public static string M_AllowRepeatBadge => ResourceManager.GetString(nameof(M_AllowRepeatBadge), resourceCulture)!;
     public static string M_IgnoreWeightsBadge => ResourceManager.GetString(nameof(M_IgnoreWeightsBadge), resourceCulture)!;
     public static string M_ExpiresFormat => ResourceManager.GetString(nameof(M_ExpiresFormat), resourceCulture)!;
+    public static string C_Edit => ResourceManager.GetString(nameof(C_Edit), resourceCulture)!;
+    public static string C_CancelEdit => ResourceManager.GetString(nameof(C_CancelEdit), resourceCulture)!;
+    public static string M_EditModeFormat => ResourceManager.GetString(nameof(M_EditModeFormat), resourceCulture)!;
+    public static string M_EditedFormat => ResourceManager.GetString(nameof(M_EditedFormat), resourceCulture)!;
+    public static string M_EditCanceled => ResourceManager.GetString(nameof(M_EditCanceled), resourceCulture)!;
+    public static string M_UnsupportedParamsBadge => ResourceManager.GetString(nameof(M_UnsupportedParamsBadge), resourceCulture)!;
+    public static string M_UnsupportedParamsHint => ResourceManager.GetString(nameof(M_UnsupportedParamsHint), resourceCulture)!;
 }

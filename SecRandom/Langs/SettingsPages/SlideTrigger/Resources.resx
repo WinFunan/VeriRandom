@@ -16,8 +16,6 @@
   <data name="C_ListNameWatermark" xml:space="preserve"><value>留空表示使用当前名单</value></data>
   <data name="C_Count" xml:space="preserve"><value>抽取人数</value></data>
   <data name="C_ExpiresDays" xml:space="preserve"><value>有效期（天，0 表示不过期）</value></data>
-  <data name="C_AllowRepeat" xml:space="preserve"><value>允许抽到已经抽过的人</value></data>
-  <data name="C_IgnoreWeights" xml:space="preserve"><value>忽略历史权重</value></data>
   <data name="C_ShowAnimation" xml:space="preserve"><value>显示抽取动画</value></data>
   <data name="C_Voice" xml:space="preserve"><value>播放语音</value></data>
   <data name="C_Timing" xml:space="preserve"><value>触发时机</value></data>
@@ -59,4 +57,11 @@
   <data name="M_ProbeFoundFormat" xml:space="preserve"><value>检测到标记：{0}</value></data>
   <data name="M_ProbeNotFound" xml:space="preserve"><value>画面上没有找到课件标记</value></data>
   <data name="M_ProbeUnsupported" xml:space="preserve"><value>当前平台不支持画面检测</value></data>
+  <data name="C_Edit" xml:space="preserve"><value>编辑</value></data>
+  <data name="C_CancelEdit" xml:space="preserve"><value>取消编辑</value></data>
+  <data name="M_EditModeFormat" xml:space="preserve"><value>正在编辑：{0}　参数写在标记图片里，保存后要用新的图片替换课件里的旧图片，旧图片仍按旧参数触发</value></data>
+  <data name="M_EditedFormat" xml:space="preserve"><value>已更新「{0}」：{1}　新的标记图片已复制到剪贴板，请替换课件里的旧图片</value></data>
+  <data name="M_EditCanceled" xml:space="preserve"><value>已取消编辑，未改动任何标记</value></data>
+  <data name="M_UnsupportedParamsBadge" xml:space="preserve"><value>含不支持的参数，不会触发</value></data>
+  <data name="M_UnsupportedParamsHint" xml:space="preserve"><value>「可重复」「忽略历史权重」暂时无法通过课件标记表达，因此这里不提供开关；旧的标记如果带着这两项，触发时会被拒绝</value></data>
 </root>

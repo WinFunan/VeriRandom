@@ -77,13 +77,19 @@ public sealed class SlideTriggerStore(ILogger<SlideTriggerStore> logger)
         if (existing is null)
             return;
 
+        var normalized = (definition.Parameters ?? existing.Parameters).Normalize();
+
+        // Encode before touching the stored record: it throws on an over-long list name, and a record that is already
+        // half-updated but whose marker text still describes the old parameters is worse than a refused edit.
+        var markerText = SlideTriggerPayload.Encode(normalized, existing.Id, definition.ExpiresAt);
+
         existing.Name = string.IsNullOrWhiteSpace(definition.Name) ? existing.Name : definition.Name.Trim();
-        existing.Parameters = (definition.Parameters ?? existing.Parameters).Normalize();
+        existing.Parameters = normalized;
         existing.ExpiresAt = definition.ExpiresAt;
 
         // The deck still holds the old PNG until the teacher replaces it; re-encoding here is what makes this record
         // say what the *new* marker would contain, and the page must therefore offer to export it again.
-        existing.MarkerText = SlideTriggerPayload.Encode(existing.Parameters, existing.Id, existing.ExpiresAt);
+        existing.MarkerText = markerText;
 
         Save();
     }

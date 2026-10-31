@@ -42,6 +42,9 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
     private readonly SlideTriggerScreenDecoder _decoder;
     private readonly SlideTriggerWatcher? _watcher;
 
+    /// <summary>Null while the form is creating a marker; set while it is editing an existing one.</summary>
+    private SlideTriggerDefinition? _editing;
+
     public SlideTriggerSettingsPage()
     {
         _store = IAppHost.GetService<SlideTriggerStore>();
@@ -107,11 +110,46 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
     {
         var parameters = ReadParameters();
         var expiresAt = ReadExpiry();
+        var editing = _editing;
 
         SlideTriggerDefinition definition;
         try
         {
-            definition = _store.Create(NameBox.Text ?? string.Empty, parameters, expiresAt);
+            if (editing is null)
+            {
+                definition = _store.Create(NameBox.Text ?? string.Empty, parameters, expiresAt);
+            }
+            else
+            {
+                // Editing keeps the id, so the per-session consumption record and the deck's slide keep pointing at the
+                // same marker — but the parameters live in the PNG, so the teacher has to swap the image for this to
+                // take effect. Both messages below say so rather than letting the edit look applied.
+                //
+                // A detached copy is handed to the store: `editing` is the stored instance itself, so writing the form
+                // into it would leave a half-updated record behind when the encode refuses an over-long list name.
+                var updated = new SlideTriggerDefinition
+                {
+                    Id = editing.Id,
+                    Name = NameBox.Text ?? string.Empty,
+                    Parameters = parameters,
+                    ExpiresAt = expiresAt
+                };
+
+                _store.Update(updated);
+
+                // The record can be gone if the library was refreshed elsewhere; copying an empty marker text would be
+                // worse than saying so, because the clipboard would then paste nothing useful into the deck.
+                var stored = _store.Find(editing.Id);
+                if (stored is null)
+                {
+                    ClearEditMode();
+                    StatusText.Text = string.Format(SR.M_DeletedFormat, updated.Name);
+                    RefreshLibrary();
+                    return;
+                }
+
+                definition = stored;
+            }
         }
         catch (ArgumentException exception)
         {
@@ -136,9 +174,14 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
         {
             var copied = await _images.TryCopyToClipboardAsync(TopLevel.GetTopLevel(this), definition.MarkerText);
             StatusText.Text = copied
-                ? string.Format(SR.M_CopiedFormat, Describe(definition))
+                ? editing is null
+                    ? string.Format(SR.M_CopiedFormat, Describe(definition))
+                    : string.Format(SR.M_EditedFormat, definition.Name, Describe(definition))
                 : SR.M_ClipboardUnavailable;
         }
+
+        if (editing is not null)
+            ClearEditMode();
 
         RefreshLibrary();
     }
@@ -147,8 +190,6 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
     {
         StudentListName = ListBox.Text,
         Count = (int)(CountBox.Value ?? 1),
-        AllowRepeat = AllowRepeatBox.IsChecked == true,
-        IgnoreHistoryWeights = IgnoreWeightsBox.IsChecked == true,
         ShowAnimation = ShowAnimationBox.IsChecked == true,
         VoiceEnabled = VoiceBox.IsChecked == true,
         DelaySeconds = (double)(DelayBox.Value ?? 1),
@@ -166,6 +207,70 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
     {
         var days = (int)(ExpiresBox.Value ?? 0);
         return days <= 0 ? null : DateTimeOffset.UtcNow.AddDays(days);
+    }
+
+    // ---------------------------------------------------------------- editing
+
+    /// <summary>
+    ///     Loads an existing marker into the form. The parameters travel inside the PNG, so this is not a live edit of
+    ///     what a deck already does: it re-issues the marker and the teacher replaces the image. The banner says that
+    ///     explicitly, because an "edited" status that never reaches the slide would be a lie about the deck.
+    /// </summary>
+    private void EditMarker_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: SlideTriggerDefinition definition })
+            return;
+
+        _editing = definition;
+        FillForm(definition);
+
+        EditBannerText.Text = string.Format(SR.M_EditModeFormat, definition.Name);
+        EditBanner.IsVisible = true;
+        StatusText.Text = string.Empty;
+    }
+
+    private void CancelEdit_OnClick(object? sender, RoutedEventArgs e)
+    {
+        ClearEditMode();
+        StatusText.Text = SR.M_EditCanceled;
+    }
+
+    private void FillForm(SlideTriggerDefinition definition)
+    {
+        var parameters = definition.Parameters;
+
+        NameBox.Text = definition.Name;
+        ListBox.Text = parameters.StudentListName ?? string.Empty;
+        CountBox.Value = parameters.Count;
+        ExpiresBox.Value = RemainingDays(definition.ExpiresAt);
+        ShowAnimationBox.IsChecked = parameters.ShowAnimation;
+        VoiceBox.IsChecked = parameters.VoiceEnabled;
+        TimingBox.SelectedIndex = parameters.Timing == SlideTriggerTiming.AfterInputs ? 1 : 0;
+        DelayBox.Value = (decimal)parameters.DelaySeconds;
+        InputsBox.Value = parameters.TriggerAfterInputs;
+        TimeoutBox.Value = (decimal)parameters.ArmedTimeoutSeconds;
+        GenderBox.Text = parameters.Gender ?? string.Empty;
+        GroupBox.Text = parameters.Group ?? string.Empty;
+    }
+
+    private void ClearEditMode()
+    {
+        _editing = null;
+        EditBanner.IsVisible = false;
+        EditBannerText.Text = string.Empty;
+    }
+
+    /// <summary>
+    ///     The expiry is an instant but the form takes a number of days, so editing would otherwise push an old
+    ///     marker's expiry forward by however long ago it was created.
+    /// </summary>
+    private static decimal RemainingDays(DateTimeOffset? expiresAt)
+    {
+        if (expiresAt is not { } expiry)
+            return 0;
+
+        var days = Math.Ceiling((expiry - DateTimeOffset.UtcNow).TotalDays);
+        return days <= 0 ? 0 : (decimal)days;
     }
 
     // ---------------------------------------------------------------- library
@@ -251,6 +356,9 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
         var export = new Button { Content = SR.C_SaveAs, Tag = definition };
         export.Click += ExportMarker_OnClick;
 
+        var edit = new Button { Content = SR.C_Edit, Tag = definition };
+        edit.Click += EditMarker_OnClick;
+
         var remove = new Button { Content = SR.C_Delete, Tag = definition };
         remove.Click += DeleteMarker_OnClick;
 
@@ -258,7 +366,7 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
         {
             Orientation = Orientation.Horizontal,
             Spacing = 6,
-            Children = { copy, export, remove }
+            Children = { edit, copy, export, remove }
         };
 
         return new Border
@@ -318,6 +426,12 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
             return;
 
         _store.Remove(definition.Id);
+
+        // The form may still be pointing at the record that just disappeared; keeping it would let the next save
+        // silently fall back to creating a new marker with the same name.
+        if (_editing is { } editing && string.Equals(editing.Id, definition.Id, StringComparison.Ordinal))
+            ClearEditMode();
+
         StatusText.Text = string.Format(SR.M_DeletedFormat, definition.Name);
         RefreshLibrary();
     }
@@ -354,6 +468,12 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
 
         if (parameters.IgnoreHistoryWeights)
             parts.Add(SR.M_IgnoreWeightsBadge);
+
+        // Both flags come from a marker made before the page stopped offering them: the trigger path cannot express
+        // either, so the marker will be refused at fire time. Saying so here is what turns a silent no-op into a
+        // diagnosable one.
+        if (parameters.AllowRepeat || parameters.IgnoreHistoryWeights)
+            parts.Add(SR.M_UnsupportedParamsBadge);
 
         return string.Join(" · ", parts);
     }
