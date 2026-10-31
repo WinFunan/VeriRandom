@@ -81,6 +81,10 @@ public partial class RawRandomPageViewModel : ViewModelBase
         UpperBoundText = more.RawRandomUpperBound.ToString();
         UseValues = more.RawRandomUseValues;
         ValuesText = more.RawRandomValuesText;
+        ExclusionsText = more.RawRandomExclusionsText;
+        GeneratorFromText = more.RawRandomGeneratorFromText;
+        GeneratorToText = more.RawRandomGeneratorToText;
+        PredicateText = more.RawRandomPredicateText;
         UseRawEntropy = more.RawRandomRawEntropyEnabled;
         BitCount = more.RawRandomBitCount;
         OutputFormat = more.RawRandomOutputFormat;
@@ -490,6 +494,32 @@ public partial class RawRandomPageViewModel : ViewModelBase
             return;
 
         _configHandler.Data.MoreSettings.RawRandomValuesText = value ?? string.Empty;
+        _configHandler.Save();
+    }
+
+    partial void OnExclusionsTextChanged(string value) =>
+        PersistFilterText(value, text => _configHandler.Data.MoreSettings.RawRandomExclusionsText = text);
+
+    partial void OnGeneratorFromTextChanged(string value) =>
+        PersistFilterText(value, text => _configHandler.Data.MoreSettings.RawRandomGeneratorFromText = text);
+
+    partial void OnGeneratorToTextChanged(string value) =>
+        PersistFilterText(value, text => _configHandler.Data.MoreSettings.RawRandomGeneratorToText = text);
+
+    partial void OnPredicateTextChanged(string value) =>
+        PersistFilterText(value, text => _configHandler.Data.MoreSettings.RawRandomPredicateText = text);
+
+    /// <summary>
+    ///     One save path for the four filter strings. They behave identically and all four have to survive a restart, so
+    ///     a separate copy per property would be four places to forget the <see cref="_isLoading" /> guard in — which is
+    ///     exactly how the constructor's own assignments would get written back over the saved values.
+    /// </summary>
+    private void PersistFilterText(string? value, Action<string> assign)
+    {
+        if (_isLoading)
+            return;
+
+        assign(value ?? string.Empty);
         _configHandler.Save();
     }
 

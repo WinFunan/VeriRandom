@@ -80,6 +80,15 @@ public partial class MoreSettingsConfig : ObservableObject
     [ObservableProperty] private bool _rawRandomUseValues;
     [ObservableProperty] private string _rawRandomValuesText = string.Empty;
 
+    // Exclusions, generator bounds and predicate are remembered for the same reason the range is: a classroom reuses one
+    // filter far more often than it rewrites it, and a filter that disappears on every restart reads as a lost setting
+    // rather than as "not saved". They are part of the locked block, so the page's lock still gates whether they can be
+    // changed at all.
+    [ObservableProperty] private string _rawRandomExclusionsText = string.Empty;
+    [ObservableProperty] private string _rawRandomGeneratorFromText = string.Empty;
+    [ObservableProperty] private string _rawRandomGeneratorToText = string.Empty;
+    [ObservableProperty] private string _rawRandomPredicateText = string.Empty;
+
     // Advanced output controls. Off by default because they change what "the result" even is; the page shows the
     // advanced block only when this is on.
     [ObservableProperty] private bool _rawRandomAdvancedOptionsEnabled;

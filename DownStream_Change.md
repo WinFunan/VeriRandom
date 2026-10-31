@@ -1345,6 +1345,7 @@ version(1) flags(1) count(1) delay×10(1) inputs(1) armedSeconds(1) expiresUnixD
 - `SecRandom/Views/Verification/ProofReplayView.axaml.cs`：熵记录分支不再打印 `0 / 0`，改为核对种子摘要并说明「展示文本不保存在记录里」；列表后缀 `C_RawNodeEntropy`。
 - `SecRandom/ViewModels/MainPages/RawRandomPageViewModel.cs`：`EntropyBitsOf` 按 `(SourceId, PulseIndex)` 去重（本地 CSPRNG 每次取数仍算新熵），拼接未带来新熵时在实测行追加 `M_ConcatNoGain`；排除项未命中任何候选时在候选行追加 `M_ExclusionsIneffective`（判定：以空排除重解一次并比较基数）。
 - `SecRandom/Langs/SettingsPages/General/Verification/`：三语新增 5 条；`SecRandom/Langs/MainPages/RawRandom/`：三语新增 2 条。
+- **筛选条件持久化**：`MoreSettingsConfig` 新增 `RawRandomExclusionsText`、`RawRandomGeneratorFromText`、`RawRandomGeneratorToText`、`RawRandomPredicateText`（默认空串），构造函数在 `_isLoading` 保护下回填，四个 `On...Changed` 统一走 `PersistFilterText`（一次性把 `_isLoading` 守卫与 `Save()` 收在一处，否则四个副本里漏一个就会在构造时把默认值写回磁盘）。锁定语义不变：页面把候选/排除/生成器整块放在 `IsEnabled="{Binding !ViewModel.IsSettingsLocked}"` 里，锁上即不可改，因此持久化天然受同一把锁约束。未进入 `ConfigPolicyDigest`（同 §47.2 的既有结论）。
 
 **未改**：`ConfigPolicyDigest` 未新增覆盖字段（快捷键与标记库属于本机操作设置，不在签名范围）；`EntropyRoundSize` 只影响记录自校验，不进入抽签证明。
 
