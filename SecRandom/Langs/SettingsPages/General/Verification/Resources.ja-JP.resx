@@ -219,4 +219,11 @@
   <data name="M_RawReplayEntropyMatch" xml:space="preserve"><value>一致</value></data>
   <data name="M_RawReplayEntropyMismatch" xml:space="preserve"><value>不一致です。この記録は使わないでください</value></data>
   <data name="M_RawReplayEntropyUnverifiable" xml:space="preserve"><value>照合できません（古い記録はラウンド情報を保存していません）</value></data>
+  <data name="C_ProofDetail_SelfCheck" xml:space="preserve"><value>自己整合性</value></data>
+  <data name="M_SelfCheckOk" xml:space="preserve"><value>合格（入力コミットメント・結果フレーム・候補数が一致）</value></data>
+  <data name="M_SelfCheckLegacyEngine" xml:space="preserve"><value>一部合格（別のエンジンバージョンで書かれたため入力コミットメントは再計算できません。結果フレームと候補数は確認済み）</value></data>
+  <data name="M_SelfCheckUnavailable" xml:space="preserve"><value>照合できません（payload をデコードできません）</value></data>
+  <data name="M_SelfCheckInputMismatch" xml:space="preserve"><value>入力コミットメントがファイル内容と一致しません</value></data>
+  <data name="M_SelfCheckResultMismatch" xml:space="preserve"><value>記録された当選者が結果フレームと一致しません</value></data>
+  <data name="M_SelfCheckCountsImpossible" xml:space="preserve"><value>候補数が矛盾しています</value></data>
 </root>

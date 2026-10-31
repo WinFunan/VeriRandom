@@ -219,4 +219,11 @@ It prevents replacement of local draw code, random seeds, or result files during
   <data name="M_RawReplayEntropyMatch" xml:space="preserve"><value>matches</value></data>
   <data name="M_RawReplayEntropyMismatch" xml:space="preserve"><value>does not match, do not use this record</value></data>
   <data name="M_RawReplayEntropyUnverifiable" xml:space="preserve"><value>cannot be checked (an older record did not store its round structure)</value></data>
+  <data name="C_ProofDetail_SelfCheck" xml:space="preserve"><value>Self-check</value></data>
+  <data name="M_SelfCheckOk" xml:space="preserve"><value>passed (input commitment, result frame and candidate counts agree)</value></data>
+  <data name="M_SelfCheckLegacyEngine" xml:space="preserve"><value>partly passed (this proof was written by another engine version, so its input commitment cannot be recomputed here; the result frame and counts were checked)</value></data>
+  <data name="M_SelfCheckUnavailable" xml:space="preserve"><value>cannot be checked (the payload is not decodable)</value></data>
+  <data name="M_SelfCheckInputMismatch" xml:space="preserve"><value>the input commitment does not match the file contents</value></data>
+  <data name="M_SelfCheckResultMismatch" xml:space="preserve"><value>the recorded winners disagree with the result frame</value></data>
+  <data name="M_SelfCheckCountsImpossible" xml:space="preserve"><value>the candidate counts contradict each other</value></data>
 </root>

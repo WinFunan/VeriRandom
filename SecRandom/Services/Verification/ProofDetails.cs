@@ -1,5 +1,6 @@
 using System;
 using SecRandom.Core.Models.Verification;
+using SecRandom.Core.Services.Verification;
 using SecRandom.Shared.Models.Verification;
 
 namespace SecRandom.Services.Verification;
@@ -24,4 +25,5 @@ public sealed record ProofDetails(
     bool HasServerReceipt,
     int RequestedCount,
     int CandidateCount,
-    AnonymizedAuditPayload? Audit);
+    AnonymizedAuditPayload? Audit,
+    ProofConsistencyReport Consistency);

@@ -1352,3 +1352,39 @@ version(1) flags(1) count(1) delay×10(1) inputs(1) armedSeconds(1) expiresUnixD
 **待真机确认**：快捷键在放映全屏时是否被放映程序吞掉（`RegisterHotKey` 的既有语义如此，但需要在 PPT 全屏下实测）；编辑后的标记图片在投影分辨率下的解码率与新建时是否一致。
 
 ---
+
+## 48. 证明自洽核对：重算输入承诺、结果帧对账、候选数有序性
+
+**动机**：重放只信任 payload 帧；`inputHash` 从写入后再没被重算过；`result.winnerRecordIds` 与 payload 结果帧不一致时，界面显示一套、判定另一套；audit 的候选数只被逐字展示。这三处都是「宣称」，不是「核对」。
+
+### 48.1 实现
+
+| 位置 | 变更 |
+|---|---|
+| `SecRandom.Core/Services/Verification/ProofConsistency.cs`（新增） | `ProofConsistency.Check(DrawProof) → ProofConsistencyReport`，三项检查见下 |
+| `SecRandom/Services/Verification/ProofReplayFileService.cs` | `Describe` 与 `TryBuildDetails` 各调用一次；`ProofReplayNode`、`ProofDetails` 增加 `Consistency` 字段 |
+| `SecRandom/Views/Verification/ProofReplayView.axaml.cs` | 节点详情面板新增一行「自洽核对」，证明详情窗新增一行；三态（通过 / 部分通过 · 旧引擎 / 具体问题） |
+| `SecRandom/Langs/SettingsPages/General/Verification/` | 三语 7 条：`C_ProofDetail_SelfCheck`、`M_SelfCheckOk`、`M_SelfCheckLegacyEngine`、`M_SelfCheckUnavailable`、`M_SelfCheckInputMismatch`、`M_SelfCheckResultMismatch`、`M_SelfCheckCountsImpossible` |
+| `SecRandom.Core.Tests/ProofConsistencyTests.cs`（新增） | 6 例 |
+
+三项检查：
+
+1. **输入承诺**：用 payload 解出的 `VerificationDrawInput` 加上 proof 里真实的 audit 字节，走 `VerificationWireCodec.ComputeInputHash` 重算，与记录的 base64url 比对。**只在 `AlgorithmEngineVersion` 等于当前引擎时判定**，否则 `InputHashCheckable = false`——旧引擎的帧编码可能不同，把「编码版本不同」报成「被改过」会冤枉正确记录。
+2. **结果帧对账**：`result.winnerRecordIds` 与 payload 响应帧的中奖者**按位置**比较。页面显示取前者、重放判定取后者，两者不一致时以前无人察觉。
+3. **候选数有序性**：`after > 0 && after <= before && payload 候选数 <= after`。**刻意不做等值判断**：门槛与重复规则会减人，`FreezeCandidates` 还会因零概率内部规则再减人，等值检查会在每次带内部规则的抽取上误报；能说的只有「只能少、不能多」。奖池证明没有 `fairness` 块，旧记录这两个计数为 0，两种情况都**弃权**而不是猜。
+
+### 48.2 为什么门槛证据没有进 payload / audit（重要）
+
+这是本次唯一没做的部分，原因是硬约束，不是取舍：
+
+- **wire payload 与 audit JSON 都被 `fair.sectl.cn` 消费**：服务端按固定字段白名单校验匿名审计载荷，并按固定编码后台重放。改 `RequestFormatVersion` 或给 audit 加属性，会让**每一条普通存证**失败在 `audit_payload_invalid` 或解码阶段。
+- **`WitnessClient.ComputeAttestedProofHash` 的字段清单也不能追加**：服务端回执与 RFC 3161 时间戳都按它绑定，本机口径一动就与服务端分叉。
+- 因此「门槛前集合 + 每人次数 + 门槛规则版本」只能走 **fork-local 兄弟文件**（与 `*.ownproof.json` 同构：引用 Up 节点的 `chain.selfHash`、自带链、永不外发）。落地前需要同时决定归档根、保留策略与删除语义（它必须随 Up 文件一起删除，否则会留下指向不存在证明的证据）。
+
+### 48.3 残余缺口（如实登记）
+
+- 门槛本身仍不可验：证明只有权重，没有门槛前集合，也没有每人历史次数。
+- 即使前述兄弟文件落地，也只能证明「按自报的次数与规则，只少了这些人」，不能证明次数是真的——历史文件可被清空或整包导入覆盖，那些路径不产生证明。
+- `ProofConsistency` 只回答「文件是否自相矛盾」，不回答「抽签是否公平」；公平仍由 `scripts/FairnessAudit` 负责。
+
+---

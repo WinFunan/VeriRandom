@@ -186,6 +186,7 @@ public sealed partial class ProofReplayView : ViewBase
         AddRow(LR.C_ProofDetail_InputCommitment, details.InputHashBase64Url);
         AddRow(LR.C_ProofDetail_AuditCommitment, details.AuditHashBase64Url);
         AddRow(LR.C_ProofDetail_Seed, details.SeedBase64Url);
+        AddRow(LR.C_ProofDetail_SelfCheck, SelfCheckText(details.Consistency));
         AddRow(LR.C_ProofDetail_ServerReceipt, details.HasServerReceipt
             ? LR.M_ProofDetail_ReceiptPresent
             : LR.M_ProofDetail_ReceiptAbsent);
@@ -375,6 +376,25 @@ public sealed partial class ProofReplayView : ViewBase
         }
     }
 
+    /// <summary>
+    ///     Compact self-check verdict, shared by the node panel and the details dialog. Three states rather than two: a
+    ///     proof written by another engine version cannot have its input commitment re-derived here, and reporting that
+    ///     as a failure would accuse a correct old record.
+    /// </summary>
+    private static string SelfCheckText(ProofConsistencyReport report)
+    {
+        if (report.Issues.Count == 0)
+            return report.InputHashCheckable ? LR.M_SelfCheckOk : LR.M_SelfCheckLegacyEngine;
+
+        return string.Join("；", report.Issues.Select(issue => issue switch
+        {
+            ProofConsistencyIssue.PayloadUndecodable => LR.M_SelfCheckUnavailable,
+            ProofConsistencyIssue.InputHashMismatch => LR.M_SelfCheckInputMismatch,
+            ProofConsistencyIssue.ResultDisagreesWithPayload => LR.M_SelfCheckResultMismatch,
+            _ => LR.M_SelfCheckCountsImpossible
+        }));
+    }
+
     private void Select(ProofReplayNode node)
     {
         _selected = node;
@@ -383,13 +403,19 @@ public sealed partial class ProofReplayView : ViewBase
             SetSelectedClass(border, string.Equals(path, node.Path, StringComparison.Ordinal));
 
         SelectedTitleText.Text = $"#{node.ChainIndex}  {node.CreatedAtUtc.ToLocalTime():yyyy-MM-dd HH:mm:ss}";
-        SelectedDetailText.Text = string.Format(
-            LR.M_ProofReplay_NodeDetail,
-            node.Kind == VerificationDrawKind.Student ? LR.O_ProofReplay_Students : LR.O_ProofReplay_Prizes,
-            node.WinnerCount,
-            node.CandidateCount,
-            node.FileName,
-            node.CanReplay ? string.Empty : LR.M_ProofReplay_NotReplayable);
+
+        // The self-check rides on its own line: it can be the one thing that tells the user this node is not the proof it
+        // claims to be, and burying it in the middle of a long detail string would hide exactly that.
+        SelectedDetailText.Text =
+            string.Format(
+                LR.M_ProofReplay_NodeDetail,
+                node.Kind == VerificationDrawKind.Student ? LR.O_ProofReplay_Students : LR.O_ProofReplay_Prizes,
+                node.WinnerCount,
+                node.CandidateCount,
+                node.FileName,
+                node.CanReplay ? string.Empty : LR.M_ProofReplay_NotReplayable)
+            + Environment.NewLine
+            + $"{LR.C_ProofDetail_SelfCheck}：{SelfCheckText(node.Consistency)}";
 
         ReplayButton.IsEnabled = node.CanReplay;
         UseCurrentRosterButton.IsEnabled = true;

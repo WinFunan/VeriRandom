@@ -161,6 +161,13 @@ public class Resources
     public static string C_ProofDetail_InputCommitment => Get(nameof(C_ProofDetail_InputCommitment));
     public static string C_ProofDetail_AuditCommitment => Get(nameof(C_ProofDetail_AuditCommitment));
     public static string C_ProofDetail_Seed => Get(nameof(C_ProofDetail_Seed));
+    public static string C_ProofDetail_SelfCheck => Get(nameof(C_ProofDetail_SelfCheck));
+    public static string M_SelfCheckOk => Get(nameof(M_SelfCheckOk));
+    public static string M_SelfCheckLegacyEngine => Get(nameof(M_SelfCheckLegacyEngine));
+    public static string M_SelfCheckUnavailable => Get(nameof(M_SelfCheckUnavailable));
+    public static string M_SelfCheckInputMismatch => Get(nameof(M_SelfCheckInputMismatch));
+    public static string M_SelfCheckResultMismatch => Get(nameof(M_SelfCheckResultMismatch));
+    public static string M_SelfCheckCountsImpossible => Get(nameof(M_SelfCheckCountsImpossible));
     public static string C_ProofDetail_ServerReceipt => Get(nameof(C_ProofDetail_ServerReceipt));
     public static string M_ProofDetail_ModeOffline => Get(nameof(M_ProofDetail_ModeOffline));
     public static string M_ProofDetail_ModeOnline => Get(nameof(M_ProofDetail_ModeOnline));

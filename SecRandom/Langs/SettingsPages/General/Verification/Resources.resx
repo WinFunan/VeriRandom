@@ -297,4 +297,11 @@
   <data name="M_RawReplayEntropyMatch" xml:space="preserve"><value>一致</value></data>
   <data name="M_RawReplayEntropyMismatch" xml:space="preserve"><value>不一致，请勿使用这份记录</value></data>
   <data name="M_RawReplayEntropyUnverifiable" xml:space="preserve"><value>无法复核（旧记录没有保存分轮信息）</value></data>
+  <data name="C_ProofDetail_SelfCheck" xml:space="preserve"><value>自洽核对</value></data>
+  <data name="M_SelfCheckOk" xml:space="preserve"><value>通过（输入摘要、结果帧与候选数互相吻合）</value></data>
+  <data name="M_SelfCheckLegacyEngine" xml:space="preserve"><value>部分通过（该证明由其它引擎版本写入，本版本无法重算输入摘要；结果帧与候选数已核对）</value></data>
+  <data name="M_SelfCheckUnavailable" xml:space="preserve"><value>无法核对（payload 不可解码）</value></data>
+  <data name="M_SelfCheckInputMismatch" xml:space="preserve"><value>输入摘要与文件内容不一致</value></data>
+  <data name="M_SelfCheckResultMismatch" xml:space="preserve"><value>记录的中奖者与结果帧不一致</value></data>
+  <data name="M_SelfCheckCountsImpossible" xml:space="preserve"><value>候选数自相矛盾</value></data>
 </root>

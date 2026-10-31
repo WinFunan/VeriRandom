@@ -30,7 +30,8 @@ public sealed record ProofReplayNode(
     IReadOnlyList<Guid> WinnerRecordIds,
     byte[] Payload,
     string AuditPayloadBase64,
-    string? DecodeError)
+    string? DecodeError,
+    ProofConsistencyReport Consistency)
 {
     /// <summary>Formal notarization stores a zero seed, so only an ordinary proof can be replayed from its file.</summary>
     public bool CanReplay => DecodeError is null && Mode == VerificationProofMode.OfflineReproducible;
@@ -186,7 +187,8 @@ public sealed class ProofReplayFileService(
             !string.IsNullOrWhiteSpace(proof.Witness?.Receipt),
             requestedCount,
             candidateCount,
-            audit);
+            audit,
+            ProofConsistency.Check(proof));
     }
 
     /// <summary>
@@ -463,7 +465,8 @@ public sealed class ProofReplayFileService(
             proof.Result.WinnerRecordIds,
             payload ?? [],
             proof.AuditPayload,
-            decodeError);
+            decodeError,
+            ProofConsistency.Check(proof));
     }
 
     /// <summary>
