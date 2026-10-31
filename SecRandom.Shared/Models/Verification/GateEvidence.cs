@@ -75,6 +75,20 @@ public sealed record class GateEvidence
     [JsonPropertyName("removed")]
     public IReadOnlyList<GateEvidenceMember> Removed { get; init; } = [];
 
+    /// <summary>
+    ///     Every candidate that entered the gate, with the count the gate saw.
+    /// </summary>
+    /// <remarks>
+    ///     Without this the removal set cannot be judged: the rule's threshold is a function of <em>all</em> counts, so
+    ///     knowing only the removed members' counts can never say whether somebody who should have been removed was
+    ///     left in the pool. Recording the whole pool is what makes the rule replayable per draw and therefore closes
+    ///     both "was the removal justified" and "was it complete". It costs about 40 bytes per candidate and discloses
+    ///     the draw-count distribution of that pool — the price of being able to check rather than be told.
+    ///     Absent on records written before this field existed; a replay then reports "cannot be judged".
+    /// </remarks>
+    [JsonPropertyName("pool")]
+    public IReadOnlyList<GateEvidenceMember> Pool { get; init; } = [];
+
     [JsonPropertyName("createdAtUtc")]
     public DateTimeOffset CreatedAtUtc { get; init; }
 
@@ -122,6 +136,10 @@ public static class GateEvidenceHashing
 
         foreach (var member in evidence.Removed.OrderBy(member => member.RecordId.ToString("N"), StringComparer.Ordinal))
             builder.Append('|').Append(member.RecordId.ToString("N")).Append(':').Append(member.DrawCount);
+
+        // Appended only when present, so records written before the pool was recorded keep their exact hash.
+        foreach (var member in evidence.Pool.OrderBy(member => member.RecordId.ToString("N"), StringComparer.Ordinal))
+            builder.Append("|pool:").Append(member.RecordId.ToString("N")).Append(':').Append(member.DrawCount);
 
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString()))).ToLowerInvariant();
     }

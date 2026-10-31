@@ -79,8 +79,7 @@ public sealed class GateEvidenceTests
         Assert.NotEqual(GateEvidenceHashing.ComputeSelfHash(original), GateEvidenceHashing.ComputeSelfHash(repointed));
     }
 
-    private static GateEvidence Evidence(IReadOnlyList<GateEvidenceMember> removed) => new()
-    {
+    private static GateEvidence Evidence(IReadOnlyList<GateEvidenceMember> removed) => new()    {
         ProofId = Guid.Parse("44444444-4444-4444-4444-444444444444"),
         UpChainIndex = 7,
         UpChainHash = "up-chain-hash",
@@ -91,4 +90,105 @@ public sealed class GateEvidenceTests
         Removed = removed,
         CreatedAtUtc = DateTimeOffset.Parse("2026-10-31T08:00:00Z")
     };
+
+    // ---------------------------------------------------------------- rule replay
+
+    private static GateEvidenceMember At(int index, int count) => new()
+    {
+        RecordId = Guid.Parse($"00000000-0000-0000-0000-{index:D12}"),
+        DrawCount = count
+    };
+
+    /// <summary>
+    ///     The eligible count is the average, tightened to <c>min + threshold</c> only while the spread actually exceeds
+    ///     the threshold. Here the spread (9) does, so the tightened value wins over the average.
+    /// </summary>
+    [Fact]
+    public void TheEligibleCountIsTightenedOnlyWhenTheSpreadExceedsTheThreshold()
+    {
+        var pool = new[] { At(0, 0), At(1, 0), At(2, 5), At(3, 5), At(4, 9) };
+
+        var removed = GateReplay.ComputeRemoved(pool, drawCount: 1, threshold: 1);
+
+        Assert.Equal(3, removed.Count);
+        Assert.DoesNotContain(pool[0].RecordId, removed);
+        Assert.DoesNotContain(pool[1].RecordId, removed);
+    }
+
+    [Fact]
+    public void AnEvenPoolRemovesNobody()
+    {
+        var pool = new[] { At(0, 0), At(1, 0), At(2, 0) };
+
+        Assert.Empty(GateReplay.ComputeRemoved(pool, drawCount: 2, threshold: 1));
+    }
+
+    /// <summary>
+    ///     The top-up adds whole count levels, never single members: that is what makes the outcome independent of
+    ///     roster order, and therefore reproducible by a verifier.
+    /// </summary>
+    [Fact]
+    public void TheTopUpAddsWholeLevels()
+    {
+        // Average 7.86 is tightened to 1, so the three 5s and both 20s are out; the kept pool of 2 is short of the 3
+        // requested draws, the whole 5-level comes back, and only the 20s stay removed.
+        var pool = new[] { At(0, 0), At(1, 0), At(2, 5), At(3, 5), At(4, 5), At(5, 20), At(6, 20) };
+
+        var removed = GateReplay.ComputeRemoved(pool, drawCount: 3, threshold: 1);
+
+        Assert.Equal(2, removed.Count);
+        Assert.Contains(pool[5].RecordId, removed);
+        Assert.Contains(pool[6].RecordId, removed);
+    }
+
+    [Fact]
+    public void ARecordThatMatchesTheRuleReplaysCleanly()
+    {
+        var pool = new[] { At(0, 0), At(1, 0), At(2, 5), At(3, 5), At(4, 9) };
+        var evidence = Evidence([At(2, 5), At(3, 5), At(4, 9)]) with { Pool = pool };
+
+        var replay = GateReplay.Replay(evidence, drawCount: 1);
+
+        Assert.True(replay.Judged);
+        Assert.True(replay.Matches);
+        Assert.Empty(replay.UnexpectedRemoved);
+        Assert.Empty(replay.MissingRemoved);
+    }
+
+    [Fact]
+    public void ARemovalTheRuleWouldNotMakeIsReportedAsUnjustified()
+    {
+        var pool = new[] { At(0, 0), At(1, 0), At(2, 5), At(3, 9) };
+        // The 0-count member was removed although the rule keeps it.
+        var evidence = Evidence([At(0, 0), At(2, 5), At(3, 9)]) with { Pool = pool };
+
+        var replay = GateReplay.Replay(evidence, drawCount: 1);
+
+        Assert.Single(replay.UnexpectedRemoved);
+        Assert.Equal(pool[0].RecordId, replay.UnexpectedRemoved[0]);
+        Assert.False(replay.Matches);
+    }
+
+    [Fact]
+    public void AKeptMemberTheRuleWouldRemoveIsReportedAsIncomplete()
+    {
+        var pool = new[] { At(0, 0), At(1, 0), At(2, 5), At(3, 9) };
+        // The record removed only one of the two members above the eligible count.
+        var evidence = Evidence([At(3, 9)]) with { Pool = pool };
+
+        var replay = GateReplay.Replay(evidence, drawCount: 1);
+
+        Assert.Single(replay.MissingRemoved);
+        Assert.Equal(pool[2].RecordId, replay.MissingRemoved[0]);
+    }
+
+    /// <summary>A record written before the pool was stored cannot be judged — and must not be read as a pass.</summary>
+    [Fact]
+    public void ARecordWithoutAPoolIsNotJudged()
+    {
+        var replay = GateReplay.Replay(Evidence([At(2, 5)]), drawCount: 1);
+
+        Assert.False(replay.Judged);
+        Assert.False(replay.Matches);
+    }
 }

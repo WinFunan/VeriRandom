@@ -28,7 +28,13 @@ public enum ProofConsistencyIssue
     GateThresholdMismatch,
 
     /// <summary>The gate evidence claims more removals than the declared candidate drop can account for.</summary>
-    GateRemovalContradictsCounts
+    GateRemovalContradictsCounts,
+
+    /// <summary>The record removed a candidate the rule would have kept.</summary>
+    GateRemovalNotJustified,
+
+    /// <summary>The rule would have removed a candidate the record kept: the removal is incomplete.</summary>
+    GateRemovalIncomplete
 }
 
 /// <summary>
@@ -180,6 +186,24 @@ public static class ProofConsistency
         var declaredDrop = Math.Max(0, before - after);
         if (gateEvidence.Removed.Count > declaredDrop)
             issues.Add(ProofConsistencyIssue.GateRemovalContradictsCounts);
+
+        if (gateEvidence.Pool.Count == 0)
+            return;
+
+        // A pool that does not match the declared pre-gate size cannot be the pool this draw saw, and a replay over it
+        // would be answering a different question.
+        if (gateEvidence.Pool.Count != before)
+            issues.Add(ProofConsistencyIssue.GateRemovalContradictsCounts);
+
+        var replay = GateReplay.Replay(gateEvidence, input.Count);
+        if (!replay.Judged)
+            return;
+
+        if (replay.UnexpectedRemoved.Count > 0)
+            issues.Add(ProofConsistencyIssue.GateRemovalNotJustified);
+
+        if (replay.MissingRemoved.Count > 0)
+            issues.Add(ProofConsistencyIssue.GateRemovalIncomplete);
     }
 
     private static bool TryDecode(

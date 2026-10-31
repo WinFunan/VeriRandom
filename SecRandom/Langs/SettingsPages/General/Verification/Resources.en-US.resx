@@ -235,4 +235,6 @@ It prevents replacement of local draw code, random seeds, or result files during
   <data name="M_SelfCheckGateEvidenceMissing" xml:space="preserve"><value>a fair draw claims candidates were removed, but no gate evidence sits beside it (deleted, or the proof predates the feature)</value></data>
   <data name="M_SelfCheckGateThresholdMismatch" xml:space="preserve"><value>the gate evidence records a different threshold than the audit claim</value></data>
   <data name="M_SelfCheckGateRemovalContradicts" xml:space="preserve"><value>the gate evidence claims more removals than the candidate drop can account for</value></data>
+  <data name="M_SelfCheckGateRemovalNotJustified" xml:space="preserve"><value>the gate evidence removed somebody the rule would have kept</value></data>
+  <data name="M_SelfCheckGateRemovalIncomplete" xml:space="preserve"><value>the gate evidence missed somebody the rule would have removed (replayed from the recorded pool)</value></data>
 </root>

@@ -70,6 +70,7 @@ public sealed class GateEvidenceExportService(ILogger<GateEvidenceExportService>
             CandidateCountBefore = snapshot.CandidateCountBefore,
             CandidateCountAfter = snapshot.CandidateCountAfter,
             Removed = removed,
+            Pool = snapshot.Pool,
             CreatedAtUtc = chainedUpProof.CreatedAtUtc
         };
 

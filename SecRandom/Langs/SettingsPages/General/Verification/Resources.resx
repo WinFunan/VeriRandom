@@ -313,4 +313,6 @@
   <data name="M_SelfCheckGateEvidenceMissing" xml:space="preserve"><value>公平抽取声称移除了人，但旁边没有门槛证据（可能被删除，或该证明早于此功能）</value></data>
   <data name="M_SelfCheckGateThresholdMismatch" xml:space="preserve"><value>门槛证据的阈值与审计记录不一致</value></data>
   <data name="M_SelfCheckGateRemovalContradicts" xml:space="preserve"><value>门槛证据声称的移除人数超过候选数的下降量</value></data>
+  <data name="M_SelfCheckGateRemovalNotJustified" xml:space="preserve"><value>门槛证据移除了规则本不该移除的人</value></data>
+  <data name="M_SelfCheckGateRemovalIncomplete" xml:space="preserve"><value>门槛证据漏掉了规则本应移除的人（已按记录复算）</value></data>
 </root>

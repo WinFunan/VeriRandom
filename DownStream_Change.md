@@ -1489,3 +1489,48 @@ version(1) flags(1) count(1) delay×10(1) inputs(1) armedSeconds(1) expiresUnixD
 
 - **T3（移除是否正当）**：数据齐了，但「按规则复算并与 `removed` 逐人比对」的 `GateReplay` 尚未实现。它需要复刻门槛的完整语义：`maxEligible = min(avg, min+1)`（仅当极差 > 1 时取后者）与「池子不足时按次数等级**整档**补回」。这一段属于下一步。
 - **T4（移除是否完整）**：幸存者没有次数，任何单次核对都无法发现「该移除的留在池里」。
+
+## 53. 门槛规则复算 `GateReplay`（威胁模型第 1 步 A 收口）
+
+**动机**：`GateEvidence` 原本只记「被移除的人 + 各自的次数」。但门槛的阈值是**全体次数**的函数，只知被移除者的次数，永远无法判断「该移除的人是否还在池里」——T3 与 T4 都卡在这里。要让「正当」与「完整」同时可验，证据必须记录**整个门槛前候选池的次数**。
+
+### 53.1 格式变化（fork-local，不涉及服务端）
+
+| 项 | 变化 |
+|---|---|
+| `GateEvidence` | 新增 `pool[]`（每人 `recordId` + `drawCount`）；`removed[]` 保留（人可读的结论） |
+| 自哈希 | 仅在 `pool` 非空时追加 `|pool:` 段，因此**本功能之前的证据文件哈希不变** |
+| 体积 | 每人约 40 字节；60 人池约 2.4 KB（只在真正发生移除时写） |
+| 隐私 | 随证明公开这一次抽取的**次数分布**（仍只有内部编号，无姓名）→ 已登记进威胁模型 T12 |
+
+### 53.2 复算器
+
+`SecRandom.Core/Services/Verification/GateReplay.cs`（新增，纯函数）：
+
+- `ComputeRemoved(pool, drawCount, threshold)` 逐行复刻 `DrawEngine.ApplyAverageGapProtection`：
+  - `maxEligible = average`；仅当 `max - min > threshold` 时收紧为 `min(average, min + threshold)`；
+  - 池子不足 `drawCount` 时**整档**补回（按次数分组、整档加入，不加半个档）——这是结果与名单顺序无关、因而可复现的原因；
+  - 重复 `RecordId` 按独立条目处理（引擎看到的是两个 `Student` 对象，合并会改变次数）。
+- `Replay(evidence, drawCount)` 返回 `UnexpectedRemoved`（记录移除了但规则不支持）与 `MissingRemoved`（规则应移除但记录留下了）；`pool` 为空时 `Judged = false`（旧文件），**不得**被读成通过。
+
+接线：`ProofConsistency.CheckGateEvidence` 在证据带 `pool` 时执行复算，并新增两个问题码：
+
+| 问题码 | 含义 |
+|---|---|
+| `GateRemovalNotJustified` | 多移：记录移除了规则会保留的人 |
+| `GateRemovalIncomplete` | 漏移：规则会移除的人被记录留在了池里 |
+
+另加一条：`pool.Count != 审计 before` 视为候选数矛盾（`GateRemovalContradictsCounts`），因为那样的池子不是这次抽取看到的池子，照着它复算是在回答另一个问题。
+
+### 53.3 测试与文档
+
+- `SecRandom.Core.Tests/GateEvidenceTests.cs` 增 7 例：收紧阈值、均等池不移除、整档补回、记录一致、多移、漏移、无池不可判定。
+- 文案：三语 2 条（`M_SelfCheckGateRemovalNotJustified`、`M_SelfCheckGateRemovalIncomplete`）。
+- `THREAT_MODEL.md`：T3、T4 升 ✅，T12 补记隐私代价，机制表加 `GateReplay` 行，第 6 节标注 A 已完成。
+- `AGENTS.md` / `SecRandom/AGENTS.md`：两个证明相关条目改写为「记录整个门槛前池 + `GateReplay` 必须与 `ApplyAverageGapProtection` 同步修改」。
+
+### 53.4 仍未闭合
+
+- **T5（次数真实性）**：证据把次数记下来了，但没人能证明这些次数就是当时历史里的值。这需要预承诺协议里加入被承诺的历史状态（`historyRoot`），即威胁模型第 2 步。
+- **T14（保留截断）**：链上状态复演仍受保留策略限制。
+- 证据本身无签名、无时间戳；整体重建链时它随链一起被重建，强度等同链条（T8）。

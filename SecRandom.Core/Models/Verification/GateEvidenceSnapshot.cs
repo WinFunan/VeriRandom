@@ -18,7 +18,8 @@ public sealed record GateEvidenceSnapshot(
     int Threshold,
     int CandidateCountBefore,
     int CandidateCountAfter,
-    IReadOnlyList<GateEvidenceMember> Removed);
+    IReadOnlyList<GateEvidenceMember> Removed,
+    IReadOnlyList<GateEvidenceMember> Pool);
 
 /// <summary>
 ///     Turns "who was in the pool before the gate" plus "who survived it" into the evidence snapshot.
@@ -60,6 +61,7 @@ public static class GateEvidenceDiff
             threshold,
             preGateMembers.Count,
             survivors.Count,
-            removed);
+            removed,
+            preGateMembers);
     }
 }
