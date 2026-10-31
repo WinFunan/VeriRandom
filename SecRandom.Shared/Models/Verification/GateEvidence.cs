@@ -34,6 +34,12 @@ public sealed record class GateEvidence
 {
     public const string CurrentFormat = "verirandom-gate-evidence/v1";
 
+    /// <summary>
+    ///     Identifier of the candidate-gate rule the record belongs to. It is stored in every record rather than assumed
+    ///     by the verifier, so an old record is judged by the rule that actually ran instead of by today's.
+    /// </summary>
+    public const string AverageGapRuleId = "verirandom-average-gap/v1";
+
     [JsonPropertyName("format")]
     public string Format { get; init; } = CurrentFormat;
 
