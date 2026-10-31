@@ -43,6 +43,7 @@ public class Resources
     public static string C_GeneratorTo => ResourceManager.GetString(nameof(C_GeneratorTo), resourceCulture)!;
     public static string C_PredicateWatermark => ResourceManager.GetString(nameof(C_PredicateWatermark), resourceCulture)!;
     public static string M_PredicateHint => ResourceManager.GetString(nameof(M_PredicateHint), resourceCulture)!;
+    public static string M_GeneratorHelp => ResourceManager.GetString(nameof(M_GeneratorHelp), resourceCulture)!;
     public static string M_CandidatesFormat => ResourceManager.GetString(nameof(M_CandidatesFormat), resourceCulture)!;
     public static string M_ValuesInvalidFormat => ResourceManager.GetString(nameof(M_ValuesInvalidFormat), resourceCulture)!;
     public static string C_OutputFormat => ResourceManager.GetString(nameof(C_OutputFormat), resourceCulture)!;

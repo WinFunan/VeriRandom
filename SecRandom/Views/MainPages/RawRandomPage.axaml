@@ -107,8 +107,17 @@
                                 枚举生成器：起止范围 + 一个受限判定式（只有 X 一个变量，没有赋值/循环/IO），
                                 结果并入候选。折叠起来是因为它是"批量造数据"，不是日常操作
                             -->
-                            <Expander Header="{x:Static langs:Resources.C_Generator}" IsExpanded="False"
+                            <Expander IsExpanded="False"
                                       IsVisible="{Binding ViewModel.UseValues}">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{x:Static langs:Resources.C_Generator}" VerticalAlignment="Center" />
+                                        <!-- 不起眼的小问号：语法与示例都在悬浮提示里，不占版面 -->
+                                        <TextBlock Text="?" FontSize="11" Opacity="0.55"
+                                                   VerticalAlignment="Center"
+                                                   ToolTip.Tip="{x:Static langs:Resources.M_GeneratorHelp}" />
+                                    </StackPanel>
+                                </Expander.Header>
                                 <StackPanel Spacing="8" Margin="0 8 0 0">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <TextBox Text="{Binding ViewModel.GeneratorFromText}" Width="120"

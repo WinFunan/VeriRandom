@@ -61,4 +61,5 @@
   <data name="C_AsciiCharCount" xml:space="preserve"><value>文字数</value></data>
   <data name="C_AllowConcat" xml:space="preserve"><value>複数回のサンプルを連結して広い出力を埋める</value></data>
   <data name="M_ConcatHint" xml:space="preserve"><value>取得のたびに新しいエントロピーが得られるのはローカル CSPRNG と random.org だけです。同じビーコンのパルス内では増えないため、出力は広くなっても実測エントロピーは変わりません</value></data>
+  <data name="M_GeneratorHelp" xml:space="preserve"><value>書式：変数は X のみ&#10;X%2==0 → 偶数&#10;X%3!=0 → 3 の倍数以外&#10;X&gt;=10 &amp;&amp; X&lt;=20 → 10〜20 のみ&#10;+ - * / %、比較、&amp;&amp; || !、括弧に対応</value></data>
 </root>
