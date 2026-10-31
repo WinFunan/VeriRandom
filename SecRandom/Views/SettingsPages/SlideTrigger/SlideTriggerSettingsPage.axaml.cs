@@ -12,6 +12,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SlideTrigger;
+using SecRandom.Core.Services.Config;
 using SR = SecRandom.Langs.SettingsPages.SlideTrigger.Resources;
 using SecRandom.Langs.SettingsPages.SlideTrigger;
 using SecRandom.Platforms.Abstractions;
@@ -41,6 +42,7 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
     private readonly SlideTriggerMarkerImageService _images;
     private readonly SlideTriggerScreenDecoder _decoder;
     private readonly SlideTriggerWatcher? _watcher;
+    private readonly MainConfigHandler _configHandler;
 
     /// <summary>Null while the form is creating a marker; set while it is editing an existing one.</summary>
     private SlideTriggerDefinition? _editing;
@@ -51,9 +53,12 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
         _images = IAppHost.GetService<SlideTriggerMarkerImageService>();
         _decoder = IAppHost.GetService<SlideTriggerScreenDecoder>();
         _watcher = IAppHost.TryGetService<SlideTriggerWatcher>();
+        _configHandler = IAppHost.GetService<MainConfigHandler>();
 
         DataContext = this;
         InitializeComponent();
+
+        QuickShortcutBox.Text = _configHandler.Data.MoreSettings.CopySlideTriggerMarkerShortcut;
         RefreshLibrary();
 
         if (_watcher is { IsSupported: true })
@@ -327,6 +332,11 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
         SessionText.Text = string.Format(SR.M_SessionFormat, _store.Session);
         EmptyHint.IsVisible = _store.Triggers.Count == 0;
 
+        var quick = _store.QuickMarker;
+        QuickMarkerText.Text = quick is null
+            ? SR.M_QuickCopyTargetNone
+            : string.Format(SR.M_QuickCopyTargetFormat, quick.Name);
+
         MarkerRows.Children.Clear();
         foreach (var definition in _store.Triggers.OrderByDescending(item => item.CreatedAt))
             MarkerRows.Children.Add(BuildRow(definition));
@@ -359,6 +369,9 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
         var edit = new Button { Content = SR.C_Edit, Tag = definition };
         edit.Click += EditMarker_OnClick;
 
+        var quick = new Button { Content = SR.C_UseAsQuickCopy, Tag = definition };
+        quick.Click += SetQuickMarker_OnClick;
+
         var remove = new Button { Content = SR.C_Delete, Tag = definition };
         remove.Click += DeleteMarker_OnClick;
 
@@ -366,7 +379,7 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
         {
             Orientation = Orientation.Horizontal,
             Spacing = 6,
-            Children = { edit, copy, export, remove }
+            Children = { edit, quick, copy, export, remove }
         };
 
         return new Border
@@ -391,6 +404,30 @@ public sealed partial class SlideTriggerSettingsPage : UserControl
                 }
             }
         };
+    }
+
+    private void SetQuickMarker_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: SlideTriggerDefinition definition })
+            return;
+
+        _store.SetQuickMarker(definition.Id);
+        StatusText.Text = string.Format(SR.M_QuickCopyTargetSetFormat, definition.Name);
+        RefreshLibrary();
+    }
+
+    /// <summary>
+    ///     Persisted on focus loss rather than per keystroke: a half-typed binding ("Ctrl+") would be rejected by the
+    ///     shortcut host and only produce a warning every time the box changed.
+    /// </summary>
+    private void QuickShortcut_OnLostFocus(object? sender, RoutedEventArgs e)
+    {
+        var text = (QuickShortcutBox.Text ?? string.Empty).Trim();
+        if (string.Equals(_configHandler.Data.MoreSettings.CopySlideTriggerMarkerShortcut, text, StringComparison.Ordinal))
+            return;
+
+        _configHandler.Data.MoreSettings.CopySlideTriggerMarkerShortcut = text;
+        _configHandler.Save();
     }
 
     private async void CopyMarker_OnClick(object? sender, RoutedEventArgs e)

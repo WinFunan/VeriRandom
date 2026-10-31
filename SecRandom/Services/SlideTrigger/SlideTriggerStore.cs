@@ -41,6 +41,24 @@ public sealed class SlideTriggerStore(ILogger<SlideTriggerStore> logger)
     /// <summary>The current lesson's session id; markers already fired in it are ignored.</summary>
     public string Session => Catalog.Session;
 
+    /// <summary>
+    ///     The marker a global shortcut copies, or null when none was picked. Kept as an id rather than a copy so a
+    ///     later edit or deletion is reflected without another bookkeeping step.
+    /// </summary>
+    public SlideTriggerDefinition? QuickMarker =>
+        string.IsNullOrWhiteSpace(Catalog.QuickMarkerId) ? null : Find(Catalog.QuickMarkerId);
+
+    /// <summary>Points the shortcut at one marker; an unknown id clears the selection instead of persisting a dead one.</summary>
+    public void SetQuickMarker(string? id)
+    {
+        var resolved = string.IsNullOrWhiteSpace(id) ? null : Find(id)?.Id;
+        if (string.Equals(Catalog.QuickMarkerId, resolved, StringComparison.Ordinal))
+            return;
+
+        Catalog.QuickMarkerId = resolved;
+        Save();
+    }
+
     public SlideTriggerDefinition? Find(string id) =>
         Catalog.Triggers.FirstOrDefault(trigger => string.Equals(trigger.Id, id, StringComparison.Ordinal));
 
@@ -60,6 +78,11 @@ public sealed class SlideTriggerStore(ILogger<SlideTriggerStore> logger)
         };
 
         Catalog.Triggers.Add(definition);
+
+        // A marker is made right before it is used, so the shortcut points at it without a second click. The page still
+        // lets the teacher point it somewhere else.
+        Catalog.QuickMarkerId = definition.Id;
+
         Save();
         return definition;
     }
@@ -101,6 +124,11 @@ public sealed class SlideTriggerStore(ILogger<SlideTriggerStore> logger)
             return;
 
         Catalog.Triggers.Remove(existing);
+
+        // A dangling id would make the shortcut silently do nothing, which is indistinguishable from a broken hotkey.
+        if (string.Equals(Catalog.QuickMarkerId, id, StringComparison.Ordinal))
+            Catalog.QuickMarkerId = null;
+
         Save();
     }
 
@@ -192,6 +220,9 @@ public sealed class SlideTriggerStore(ILogger<SlideTriggerStore> logger)
 internal sealed class SlideTriggerCatalog
 {
     public string Session { get; set; } = string.Empty;
+
+    /// <summary>Id of the marker the global shortcut copies; null when none was picked.</summary>
+    public string? QuickMarkerId { get; set; }
 
     public List<SlideTriggerDefinition> Triggers { get; set; } = [];
 }

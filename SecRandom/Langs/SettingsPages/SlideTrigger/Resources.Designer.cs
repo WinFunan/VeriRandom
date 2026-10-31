@@ -91,4 +91,11 @@ public class Resources
     public static string M_EditCanceled => ResourceManager.GetString(nameof(M_EditCanceled), resourceCulture)!;
     public static string M_UnsupportedParamsBadge => ResourceManager.GetString(nameof(M_UnsupportedParamsBadge), resourceCulture)!;
     public static string M_UnsupportedParamsHint => ResourceManager.GetString(nameof(M_UnsupportedParamsHint), resourceCulture)!;
+    public static string C_QuickCopyShortcut => ResourceManager.GetString(nameof(C_QuickCopyShortcut), resourceCulture)!;
+    public static string C_ShortcutWatermark => ResourceManager.GetString(nameof(C_ShortcutWatermark), resourceCulture)!;
+    public static string C_UseAsQuickCopy => ResourceManager.GetString(nameof(C_UseAsQuickCopy), resourceCulture)!;
+    public static string M_QuickCopyHint => ResourceManager.GetString(nameof(M_QuickCopyHint), resourceCulture)!;
+    public static string M_QuickCopyTargetFormat => ResourceManager.GetString(nameof(M_QuickCopyTargetFormat), resourceCulture)!;
+    public static string M_QuickCopyTargetNone => ResourceManager.GetString(nameof(M_QuickCopyTargetNone), resourceCulture)!;
+    public static string M_QuickCopyTargetSetFormat => ResourceManager.GetString(nameof(M_QuickCopyTargetSetFormat), resourceCulture)!;
 }

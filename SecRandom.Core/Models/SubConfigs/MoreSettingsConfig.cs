@@ -62,6 +62,12 @@ public partial class MoreSettingsConfig : ObservableObject
     [ObservableProperty] private string _startRollCallShortcut = string.Empty;
     [ObservableProperty] private string _startLotteryShortcut = string.Empty;
 
+    /// <summary>
+    ///     Window-global key that puts the quick courseware marker on the clipboard, so a deck can be prepared without
+    ///     opening this application. Empty means the key is not registered at all.
+    /// </summary>
+    [ObservableProperty] private string _copySlideTriggerMarkerShortcut = string.Empty;
+
     // Raw-number page state. The bounds are remembered between sessions because a classroom reuses the same range
     // (a dice roll, a seat number) far more often than it changes it. Whether the range and source choice may be
     // changed is NOT stored here: locking them is a protection, so it lives in the encrypted security settings as

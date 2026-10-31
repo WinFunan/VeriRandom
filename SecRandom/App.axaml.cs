@@ -1208,6 +1208,8 @@ public partial class App : Application
                     services.AddSingleton<SlideTriggerScreenDecoder>();
                     services.AddSingleton<SlideTriggerWatcher>();
                     services.AddSingleton<SlideTriggerExecutor>();
+                    // 快捷键复制标记：课堂上按一下键就把图片放进剪贴板，不弹窗也不抢放映画面焦点
+                    services.AddSingleton<SlideTriggerQuickCopyService>();
                     services.AddHostedService<SlideTriggerWatcherHostedService>();
                     // 课件标记页也注册在这个桌面分支：它依赖上面两个服务，而手机宿主没有它们，也没有可抓拍的放映画面
                     services.AddSettingsPage<Views.SettingsPages.SlideTrigger.SlideTriggerSettingsPage>(

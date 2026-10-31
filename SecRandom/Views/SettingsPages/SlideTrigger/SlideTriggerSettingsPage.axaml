@@ -102,6 +102,18 @@
                         <TextBlock x:Name="SessionText" VerticalAlignment="Center" FontSize="12" Opacity="0.75" />
                     </StackPanel>
 
+                    <!-- 快捷键复制：课上按一下就进剪贴板，不需要打开任何窗口 -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{x:Static langs:Resources.C_QuickCopyShortcut}" FontSize="12" Opacity="0.7"
+                                   VerticalAlignment="Center" />
+                        <TextBox x:Name="QuickShortcutBox" Width="150"
+                                 Watermark="{x:Static langs:Resources.C_ShortcutWatermark}"
+                                 LostFocus="QuickShortcut_OnLostFocus" />
+                        <TextBlock x:Name="QuickMarkerText" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{x:Static langs:Resources.M_QuickCopyHint}" FontSize="12" Opacity="0.7"
+                               TextWrapping="Wrap" />
+
                     <!--
                         自动识别默认关闭：它会读取投放画面，必须是用户明确打开的行为，而不是新装即生效
                     -->

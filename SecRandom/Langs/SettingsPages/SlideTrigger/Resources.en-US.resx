@@ -64,4 +64,11 @@
   <data name="M_EditCanceled" xml:space="preserve"><value>Edit cancelled, no marker was changed</value></data>
   <data name="M_UnsupportedParamsBadge" xml:space="preserve"><value>carries unsupported parameters, will not fire</value></data>
   <data name="M_UnsupportedParamsHint" xml:space="preserve"><value>"Allow repeats" and "ignore history weights" cannot be expressed through a courseware marker yet, so they are not offered here; an older marker that carries either one is refused when it fires</value></data>
+  <data name="C_QuickCopyShortcut" xml:space="preserve"><value>Shortcut</value></data>
+  <data name="C_ShortcutWatermark" xml:space="preserve"><value>e.g. Ctrl+Alt+M</value></data>
+  <data name="C_UseAsQuickCopy" xml:space="preserve"><value>Use for shortcut</value></data>
+  <data name="M_QuickCopyHint" xml:space="preserve"><value>The global-shortcut master switch in More settings must be on first; pressing the key puts the shortcut marker's image on the clipboard without opening a window or interrupting the slideshow</value></data>
+  <data name="M_QuickCopyTargetFormat" xml:space="preserve"><value>Shortcut copies: {0}</value></data>
+  <data name="M_QuickCopyTargetNone" xml:space="preserve"><value>Shortcut copies: nothing yet</value></data>
+  <data name="M_QuickCopyTargetSetFormat" xml:space="preserve"><value>Shortcut now copies: {0}</value></data>
 </root>

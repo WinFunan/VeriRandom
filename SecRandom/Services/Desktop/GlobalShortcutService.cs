@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services;
+using SecRandom.Services.SlideTrigger;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.Views;
 
@@ -246,6 +248,13 @@ public sealed class GlobalShortcutService : IHostedService
             case ShortcutAction.StartLottery:
                 ObserveActionAsync(_lottery.ToggleDrawFromShortcutAsync(), "抽奖快捷键执行失败。");
                 break;
+            case ShortcutAction.CopySlideTriggerMarker:
+                // The marker service is resolved at the point of use rather than injected: the slide-trigger feature is
+                // a desktop-only group, and a missing registration must degrade to "nothing happened" instead of
+                // taking the whole shortcut host down.
+                if (IAppHost.TryGetService<SlideTriggerQuickCopyService>() is { } quickCopy)
+                    ObserveActionAsync(quickCopy.CopyQuickMarkerAsync(), "快捷复制课件标记失败。");
+                break;
         }
     }
 
@@ -272,7 +281,8 @@ public sealed class GlobalShortcutService : IHostedService
             new(ShortcutAction.QuickDraw, _settings.QuickDrawShortcut),
             new(ShortcutAction.IncreaseRollCallCount, _settings.IncreaseRollCallCountShortcut),
             new(ShortcutAction.DecreaseRollCallCount, _settings.DecreaseRollCallCountShortcut),
-            new(ShortcutAction.StartRollCall, _settings.StartRollCallShortcut)
+            new(ShortcutAction.StartRollCall, _settings.StartRollCallShortcut),
+            new(ShortcutAction.CopySlideTriggerMarker, _settings.CopySlideTriggerMarkerShortcut)
         };
         if (_featureAvailability.IsLotteryEnabled)
         {
@@ -353,7 +363,8 @@ public sealed class GlobalShortcutService : IHostedService
         IncreaseLotteryCount,
         DecreaseLotteryCount,
         StartRollCall,
-        StartLottery
+        StartLottery,
+        CopySlideTriggerMarker
     }
 
     [StructLayout(LayoutKind.Sequential)]
