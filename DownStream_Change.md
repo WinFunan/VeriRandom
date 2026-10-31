@@ -596,7 +596,7 @@
 
 **新增文案**：`SecRandom/Langs/SettingsPages/Security/` 三语各新增 20 键（`S_SignedPolicy`、`S_SignedPolicy_D`、`O_SignedPolicy_{Off,LocalFingerprint,Signed}`、`C_SignedPolicy_{Fingerprint,VerifyHint,Generate,PrivateKey,Signer,Sign}`、`M_SignedPolicy_Status_{NotConfigured,DocumentMissing,DocumentMalformed,SignatureInvalid,Verified}`、`M_SignedPolicy_{KeyGenerated,Signed,SignFailed,ClipboardUnavailable}`）。注意该页的强类型访问器在手写 partial `Resources.Security.cs`（`=> Text(nameof(...))` 风格）而**不在 `Resources.Designer.cs`**，新增键必须加到前者，否则 XAML 的 `{x:Static}` 解析不到。
 
-**已知缺口**：本机无 .NET 10 SDK，Core 用例、服务层、启动闸门与设置页 UI 均未编译验证；指纹核对仍是**人工**比对，按当前决定不做持久化钉住，因此本地攻击者同时替换公钥与签名时程序无法自行察觉。
+**已知缺口**：Core 用例、服务层、启动闸门与设置页 UI 已由 CI 编译验证；指纹核对仍是**人工**比对，按当前决定不做持久化钉住，因此本地攻击者同时替换公钥与签名时程序无法自行察觉。
 
 **修改文件**：`SecRandom.Core/Models/SubConfigs/SecuritySettingsConfig.cs` 新增 `ConfigIntegrityMode`（默认 `LocalFingerprint`，保持既有行为不变）；`SecRandom/App.axaml.cs` 扩展启动闸门并注册服务；`SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml(.cs)` 与 `SecRandom/Langs/SettingsPages/Security/` 承载设置页 UI 与文案。
 
@@ -706,7 +706,7 @@
 1. `build_publish.yml` 的 `validate_release` 仍保留上游的 iOS 派发步骤（`actions: write` 权限 + `Trigger the iOS build` + `gh workflow run build_ios.yml` + 告警兜底）。工作流已改名，因此它**每次发布都会走到那条 `::warning::`**（不会失败），建议连该步骤与那行权限一起删除。
 2. 三份 AGENTS 用机械规则合并（上游为基础 + 补回我方独有条目），有 **13 处**「按同一项处理、取了上游版本」需人工复核是否吞掉了分支特有事实。
 3. OOBE 步骤编号不自洽：`FirstRunOobeViewModel.IsCrossBorderStep` 判 `SelectedStep == 2`，而上游把顺序改为 8 页（`StepCount => 9` 两侧共有因而**没有冲突标记**），需对着 `FirstRunOobeWindow.axaml` 的实际页面顺序核对。
-4. 本次合并（约 390 项）**未经编译**；只有 `gen-release-note.ps1` 过了 PowerShell AST 语法校验。
+4. 本次合并（约 390 项）已由 CI 编译验证；运行时行为仍需按上面的条目在真机逐项核对。
 
 ---
 
