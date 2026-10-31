@@ -58,6 +58,5 @@
   <data name="M_CountFormat" xml:space="preserve"><value>{0} 人</value></data>
   <data name="M_ProbeFoundFormat" xml:space="preserve"><value>检测到标记：{0}</value></data>
   <data name="M_ProbeNotFound" xml:space="preserve"><value>画面上没有找到课件标记</value></data>
-  <data name="M_ProbeNotPresentation" xml:space="preserve"><value>当前前台不是全屏放映画面，不会去读屏</value></data>
   <data name="M_ProbeUnsupported" xml:space="preserve"><value>当前平台不支持画面检测</value></data>
 </root>

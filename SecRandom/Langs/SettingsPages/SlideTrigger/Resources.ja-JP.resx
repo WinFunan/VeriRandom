@@ -58,6 +58,5 @@
   <data name="M_CountFormat" xml:space="preserve"><value>{0} 人</value></data>
   <data name="M_ProbeFoundFormat" xml:space="preserve"><value>マーカーを検出：{0}</value></data>
   <data name="M_ProbeNotFound" xml:space="preserve"><value>画面に教材マーカーが見つかりません</value></data>
-  <data name="M_ProbeNotPresentation" xml:space="preserve"><value>前面に全画面のスライド表示がないため、画面を読みません</value></data>
   <data name="M_ProbeUnsupported" xml:space="preserve"><value>この環境では画面検出を使えません</value></data>
 </root>

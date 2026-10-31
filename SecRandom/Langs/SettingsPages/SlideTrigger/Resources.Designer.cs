@@ -68,7 +68,6 @@ public class Resources
     public static string M_CountFormat => ResourceManager.GetString(nameof(M_CountFormat), resourceCulture)!;
     public static string M_ProbeFoundFormat => ResourceManager.GetString(nameof(M_ProbeFoundFormat), resourceCulture)!;
     public static string M_ProbeNotFound => ResourceManager.GetString(nameof(M_ProbeNotFound), resourceCulture)!;
-    public static string M_ProbeNotPresentation => ResourceManager.GetString(nameof(M_ProbeNotPresentation), resourceCulture)!;
     public static string M_ProbeUnsupported => ResourceManager.GetString(nameof(M_ProbeUnsupported), resourceCulture)!;
     public static string M_NoMarkers => ResourceManager.GetString(nameof(M_NoMarkers), resourceCulture)!;
     public static string M_GenerateFailedFormat => ResourceManager.GetString(nameof(M_GenerateFailedFormat), resourceCulture)!;

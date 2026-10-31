@@ -58,6 +58,5 @@
   <data name="M_CountFormat" xml:space="preserve"><value>{0} person(s)</value></data>
   <data name="M_ProbeFoundFormat" xml:space="preserve"><value>Marker found: {0}</value></data>
   <data name="M_ProbeNotFound" xml:space="preserve"><value>No courseware marker was found on screen</value></data>
-  <data name="M_ProbeNotPresentation" xml:space="preserve"><value>No full-screen presentation is in front, so nothing is read</value></data>
   <data name="M_ProbeUnsupported" xml:space="preserve"><value>Screen detection is not available on this platform</value></data>
 </root>

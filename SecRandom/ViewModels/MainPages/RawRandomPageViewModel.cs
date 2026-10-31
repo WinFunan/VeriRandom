@@ -463,28 +463,6 @@ public partial class RawRandomPageViewModel : ViewModelBase
     }
 
     /// <summary>
-    ///     Parses the candidate set. Duplicates collapse into a set on purpose: repeating a value in the list would
-    ///     otherwise silently weight it, which is not what "5 and 10" means.
-    /// </summary>
-    private static IReadOnlyList<long> ParseValues(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return [];
-
-        var values = new SortedSet<long>();
-
-        foreach (var part in text.Split(
-                     [',', '，', ';', '；', ' ', '\t', '\r', '\n'],
-                     StringSplitOptions.RemoveEmptyEntries))
-        {
-            if (long.TryParse(part.Trim(), out var value))
-                values.Add(value);
-        }
-
-        return [.. values];
-    }
-
-    /// <summary>
     ///     The security settings live in the encrypted store, which is <c>internal</c> to this assembly — so it is
     ///     resolved here rather than injected: exposing it in a public constructor makes this view model's
     ///     accessibility inconsistent (CS0051), and the store cannot be widened just for this page.

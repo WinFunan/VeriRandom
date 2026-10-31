@@ -34,7 +34,6 @@ public class Resources
     public static string C_AdvancedOptions => ResourceManager.GetString(nameof(C_AdvancedOptions), resourceCulture)!;
     public static string C_RawEntropy => ResourceManager.GetString(nameof(C_RawEntropy), resourceCulture)!;
     public static string C_BitCount => ResourceManager.GetString(nameof(C_BitCount), resourceCulture)!;
-    public static string C_AsciiOutput => ResourceManager.GetString(nameof(C_AsciiOutput), resourceCulture)!;
     public static string M_AdvancedHint => ResourceManager.GetString(nameof(M_AdvancedHint), resourceCulture)!;
     public static string M_EntropyFormat => ResourceManager.GetString(nameof(M_EntropyFormat), resourceCulture)!;
     public static string C_ExclusionsWatermark => ResourceManager.GetString(nameof(C_ExclusionsWatermark), resourceCulture)!;
@@ -88,5 +87,4 @@ public class Resources
     public static string M_Ready => ResourceManager.GetString(nameof(M_Ready), resourceCulture)!;
     public static string M_ResultFormat => ResourceManager.GetString(nameof(M_ResultFormat), resourceCulture)!;
     public static string M_VerifiableNotice => ResourceManager.GetString(nameof(M_VerifiableNotice), resourceCulture)!;
-    public static string M_ValuesInvalid => ResourceManager.GetString(nameof(M_ValuesInvalid), resourceCulture)!;
 }

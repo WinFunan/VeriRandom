@@ -34,12 +34,10 @@
   <data name="M_Unlocked" xml:space="preserve"><value>已解锁，范围与熵源可以修改</value></data>
   <data name="C_UseValues" xml:space="preserve"><value>使用指定集合</value></data>
   <data name="C_ValuesWatermark" xml:space="preserve"><value>只从这些值里抽，例如 5,10（逗号或空格分隔）</value></data>
-  <data name="M_ValuesInvalid" xml:space="preserve"><value>集合无效：请至少填一个整数</value></data>
   <data name="C_BatchCount" xml:space="preserve"><value>生成个数</value></data>
   <data name="C_AdvancedOptions" xml:space="preserve"><value>高级选项</value></data>
   <data name="C_RawEntropy" xml:space="preserve"><value>输出原始熵（不按范围取值）</value></data>
   <data name="C_BitCount" xml:space="preserve"><value>取多少位</value></data>
-  <data name="C_AsciiOutput" xml:space="preserve"><value>用可打印 ASCII 显示</value></data>
   <data name="M_AdvancedHint" xml:space="preserve"><value>位数越宽不等于熵越多：输出全部由种子确定性展开，可用熵不会超过熵源本身</value></data>
   <data name="M_EntropyFormat" xml:space="preserve"><value>符号 {0} 个 · 每符号 {1:F2} bit · 合计 {2:F0} bit · 熵源上限 {3} bit</value></data>
   <data name="C_ExclusionsWatermark" xml:space="preserve"><value>从候选中排除，例如 7,8 或 13-15（可留空）</value></data>
