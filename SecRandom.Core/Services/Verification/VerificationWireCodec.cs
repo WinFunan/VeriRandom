@@ -234,6 +234,128 @@ public static class VerificationWireCodec
         return bytes.ToArray();
     }
 
+    /// <summary>
+    ///     Decodes what <see cref="EncodeProofPayload" /> wrote: the recorded input and seed (request frame) plus
+    ///     the recorded winners (response frame behind it). Returns false when the payload is not a proof payload
+    ///     this build understands, so a caller can report "cannot replay" instead of throwing at a user.
+    /// </summary>
+    /// <remarks>
+    ///     The seed is only the entropy of an <c>OfflineReproducible</c> proof. An <c>OnlineWitnessed</c> proof
+    ///     carries 32 zero bytes here because its entropy comes from the server-signed lock receipt, which is not
+    ///     part of this frame — callers must decide replayability from the proof's mode, not from the bytes alone.
+    /// </remarks>
+    public static bool TryDecodeProofPayload(
+        ReadOnlySpan<byte> payload,
+        out VerificationDrawInput input,
+        out byte[] seed,
+        out VerificationKernelResult recorded)
+    {
+        input = null!;
+        seed = [];
+        recorded = new VerificationKernelResult();
+
+        if (!TryDecodeDrawRequest(payload, out var decodedInput, out var decodedSeed, out var requestLength))
+            return false;
+
+        try
+        {
+            recorded = DecodeDrawResponse(payload[requestLength..]);
+        }
+        catch (InvalidDataException)
+        {
+            return false;
+        }
+
+        input = decodedInput;
+        seed = decodedSeed;
+        return true;
+    }
+
+    /// <summary>
+    ///     Decodes the request frame alone. <paramref name="requestLength" /> is returned so the caller can find the
+    ///     response frame that <see cref="EncodeProofPayload" /> appended behind it.
+    /// </summary>
+    public static bool TryDecodeDrawRequest(
+        ReadOnlySpan<byte> request,
+        out VerificationDrawInput input,
+        out byte[] seed,
+        out int requestLength)
+    {
+        input = null!;
+        seed = [];
+        requestLength = 0;
+
+        try
+        {
+            var offset = 0;
+            EnsureMagic(request, ref offset, RequestMagic);
+            if (ReadUInt16(request, ref offset) != RequestFormatVersion)
+                return false;
+
+            var kind = ReadByte(request, ref offset);
+            var samplingMode = ReadByte(request, ref offset);
+            var algorithmProfile = ReadByte(request, ref offset);
+            var count = ReadUInt32(request, ref offset);
+            var candidateCount = ReadUInt32(request, ref offset);
+            if (count > int.MaxValue || candidateCount > int.MaxValue)
+                return false;
+
+            if (!Enum.IsDefined((VerificationDrawKind)kind)
+                || !Enum.IsDefined((VerificationSamplingMode)samplingMode)
+                || !Enum.IsDefined((VerificationAlgorithmProfile)algorithmProfile))
+                return false;
+
+            var expectedLength = checked(offset + 32 + (int)candidateCount * 45);
+            if (request.Length < expectedLength)
+                return false;
+
+            var decodedSeed = request.Slice(offset, 32).ToArray();
+            offset += 32;
+
+            var candidates = new VerificationCandidate[(int)candidateCount];
+            for (var index = 0; index < candidates.Length; index++)
+            {
+                var recordId = ReadGuid(request, ref offset);
+                var occurrenceIndex = ReadUInt32(request, ref offset);
+                var isGuaranteed = ReadByte(request, ref offset) != 0;
+                var weightMicros = ReadInt64(request, ref offset);
+                candidates[index] = new VerificationCandidate(recordId, occurrenceIndex, weightMicros, isGuaranteed);
+            }
+
+            seed = decodedSeed;
+            requestLength = expectedLength;
+            input = new VerificationDrawInput
+            {
+                Kind = (VerificationDrawKind)kind,
+                SamplingMode = (VerificationSamplingMode)samplingMode,
+                AlgorithmProfile = (VerificationAlgorithmProfile)algorithmProfile,
+                Count = (int)count,
+                Candidates = candidates
+            };
+            return true;
+        }
+        catch (Exception exception) when (exception is InvalidDataException or OverflowException or ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    private static byte ReadByte(ReadOnlySpan<byte> source, ref int offset)
+    {
+        if (offset >= source.Length)
+            throw new InvalidDataException("Verification frame ended while reading a byte.");
+        return source[offset++];
+    }
+
+    private static long ReadInt64(ReadOnlySpan<byte> source, ref int offset)
+    {
+        if (offset > source.Length - 8)
+            throw new InvalidDataException("Verification frame ended while reading an integer.");
+        var result = BinaryPrimitives.ReadInt64LittleEndian(source.Slice(offset, 8));
+        offset += 8;
+        return result;
+    }
+
     public static IReadOnlyList<VerificationCandidate> CanonicalizeCandidates(VerificationDrawInput input)
     {
         if (input.Count <= 0)

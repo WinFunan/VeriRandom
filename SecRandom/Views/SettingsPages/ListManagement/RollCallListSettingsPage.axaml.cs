@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
@@ -293,6 +294,62 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             SelectedStudentList.Students.ToList()));
         _logger.LogInformation("打开点名名单导出面板：名单={ListName}，成员数={Count}。", SelectedStudentListName,
             SelectedStudentList.Students.Count);
+    }
+
+    /// <summary>
+    ///     Writes the roster as the JSON reference file the proof replay window reads.
+    /// </summary>
+    /// <remarks>
+    ///     This is deliberately separate from 导出名单: that one is a transfer format meant for people (Excel/CSV/QR),
+    ///     and none of those can stand in as a reference, because the replay needs the hidden record ids that they
+    ///     never carry. Keeping the two actions apart is what stops a CSV from later being expected to work.
+    /// </remarks>
+    private async void ExportProofReferenceButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedStudentList is null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        if (TopLevel.GetTopLevel(this) is not { } topLevel)
+            return;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = LR.C_ExportProofReference,
+            SuggestedFileName = $"{SelectedStudentListName}-proof-reference.json",
+            DefaultExtension = "json",
+            FileTypeChoices = [new FilePickerFileType("JSON") { Patterns = ["*.json"] }]
+        });
+        if (file is null)
+            return;
+
+        try
+        {
+            var bytes = SecRandom.Services.Verification.ProofRosterReferenceExporter
+                .CreateStudentReference(SelectedStudentList);
+
+            if (file.TryGetLocalPath() is { } localPath)
+            {
+                await File.WriteAllBytesAsync(localPath, bytes);
+            }
+            else
+            {
+                // 手机等平台拿不到本地路径，只能写回存储提供者给出的流。
+                await using var destination = await file.OpenWriteAsync();
+                await destination.WriteAsync(bytes);
+            }
+
+            this.ShowSuccessToast(string.Format(LR.M_ProofReferenceSaved, SelectedStudentList.Students.Count));
+            _logger.LogInformation("已导出点名名单的证明参考文件：名单={ListName}，成员数={Count}。",
+                SelectedStudentListName, SelectedStudentList.Students.Count);
+        }
+        catch (Exception ex)
+        {
+            this.ShowErrorToast(string.Format(LR.M_ProofReferenceFailed, ex.Message));
+            _logger.LogWarning(ex, "导出点名名单的证明参考文件失败：名单={ListName}。", SelectedStudentListName);
+        }
     }
 
     private async void AddMemberButton_OnClick(object? sender, RoutedEventArgs e)

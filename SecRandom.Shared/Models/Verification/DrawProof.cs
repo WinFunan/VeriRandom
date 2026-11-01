@@ -98,6 +98,23 @@ public sealed class DrawProofBeacon
     [JsonPropertyName("certificateId")]
     public string CertificateId { get; init; } = string.Empty;
 
+    /// <summary>
+    ///     The authority's cipher suite for the recorded pulse. The canonical byte layout its signature was
+    ///     computed over depends on this value, so a verifier must refuse an unknown suite rather than assume
+    ///     one; -1 means the node was written before this field existed.
+    /// </summary>
+    [JsonPropertyName("cipherSuite")]
+    public int CipherSuite { get; init; } = -1;
+
+    /// <summary>
+    ///     Which beacon source(s) contributed to this seed, as stable source identifiers. A single-source draw
+    ///     has exactly one entry; the planned beacon-mixing capability appends further sources without
+    ///     changing this shape, so a verifier can always tell whose pulse it has to check a signature against
+    ///     instead of assuming the NIST beacon.
+    /// </summary>
+    [JsonPropertyName("beaconSources")]
+    public List<string> BeaconSources { get; init; } = [];
+
     // Zero-based, gapless, monotonic counter scoped to one pulse. It must never restart below its stored
     // value for the same pulse, otherwise a draw could reuse a previously used seed.
     [JsonPropertyName("sequence")]
@@ -105,6 +122,22 @@ public sealed class DrawProofBeacon
 
     [JsonPropertyName("derivation")]
     public string Derivation { get; init; } = string.Empty;
+
+    /// <summary>
+    ///     The raw response body a signature covers, recorded only for sources that sign their output (random.org's
+    ///     signed endpoint). Absent on every other source and on nodes written before this field existed, so readers
+    ///     must treat it as optional. It is never part of the attested proof hash, which covers a fixed field list the
+    ///     attestation service also knows; adding it there would make every submission mismatch.
+    /// </summary>
+    [JsonPropertyName("signaturePayload")]
+    public string? SignaturePayload { get; init; }
+
+    /// <summary>
+    ///     The verdict reached when the payload was fetched. It is a claim, not evidence: a verifier must re-check
+    ///     <see cref="SignaturePayload" /> against the authority's key rather than trust this flag.
+    /// </summary>
+    [JsonPropertyName("signatureVerified")]
+    public bool? SignatureVerified { get; init; }
 }
 
 /// <summary>

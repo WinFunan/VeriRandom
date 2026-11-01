@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -34,7 +33,13 @@ namespace SecRandom.Views.SettingsPages.About;
 [PageInfo("settings.about", FluentIcons.InfoFilled, location: PageLocation.Bottom, hidePageTitle: true)]
 public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 {
-    private const string ContributorsEndpoint = "https://api.github.com/repos/SECTL/SecRandom/contributors?per_page=30";
+    // 贡献者视图合并本仓库与上游：README 的贡献者段落同时列出两个仓库，因此这里也一并展示，
+    // 按 GitHub 登录名去重并把提交数相加
+    private static readonly string[] ContributorsEndpoints =
+    [
+        "https://api.github.com/repos/WinFunan/VeriRandom/contributors?per_page=30",
+        "https://api.github.com/repos/SECTL/SecRandom/contributors?per_page=30"
+    ];
     private const int InternalSettingsActivationClickCount = 20;
     private static readonly TimeSpan InternalSettingsActivationClickInterval = TimeSpan.FromMilliseconds(200);
     private bool _isRefreshingContributors;
@@ -45,7 +50,11 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         .GetServices<IHostedService>().OfType<OnlineStatusService>().First();
     private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     public int OnlineUsersCount => OnlineStatusService.CachedOnlineCount;
-    public Bitmap BannerSource { get; } = LoadBanner();
+    /// <summary>
+    ///     This fork's own banner, or null while the asset has not been supplied yet — the view then shows a
+    ///     labelled placeholder. The fork must not present upstream SecRandom's banner artwork as its own.
+    /// </summary>
+    public Bitmap? BannerSource { get; } = LoadBanner();
     public ObservableCollection<GitHubContributor> Contributors { get; } = [];
 
     public bool IsRefreshingContributors
@@ -78,16 +87,35 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         InitializeComponent();
     }
 
-    private static Bitmap LoadBanner()
+    /// <summary>
+    ///     Loads this fork's own banner. Until those assets exist the About page shows a placeholder instead,
+    ///     and a partially supplied set falls back to the English banner so one file is enough to start.
+    /// </summary>
+    private static Bitmap? LoadBanner()
     {
-        var fileName = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch
+        var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        var candidates = culture switch
         {
-            "zh" => "secrandom-banner-cn.png",
-            "ja" => "secrandom-banner-ja.png",
-            _ => "secrandom-banner-en.png"
+            "zh" => new[] { "verirandom-banner-cn.png", "verirandom-banner-en.png" },
+            "ja" => new[] { "verirandom-banner-ja.png", "verirandom-banner-en.png" },
+            _ => new[] { "verirandom-banner-en.png" }
         };
 
-        return new Bitmap(AssetLoader.Open(new Uri($"avares://SecRandom/Assets/Banners/{fileName}")));
+        foreach (var fileName in candidates)
+        {
+            try
+            {
+                var uri = new Uri($"avares://SecRandom/Assets/Banners/{fileName}");
+                if (AssetLoader.Exists(uri))
+                    return new Bitmap(AssetLoader.Open(uri));
+            }
+            catch (Exception)
+            {
+                // A missing or unreadable banner must never block the About page.
+            }
+        }
+
+        return null;
     }
 
     private void OrganizationIcon_OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -167,37 +195,43 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.UserAgent.ParseAdd($"SecRandom/{GlobalConstants.Version}");
 
-            GitHubContributorResponse[] response;
-            try
+            // Both repositories are merged into one list, and one repository failing to answer must not hide
+            // the other's contributors. Identities are GitHub logins; contributions are summed.
+            var merged = new Dictionary<string, (string ProfileUrl, int Contributions)>(StringComparer.OrdinalIgnoreCase);
+            Exception? lastFailure = null;
+            foreach (var endpoint in ContributorsEndpoints)
             {
-                response = await client.GetFromJsonAsync<GitHubContributorResponse[]>(ContributorsEndpoint) ?? [];
+                try
+                {
+                    foreach (var contributor in await GetContributorsAsync(client, endpoint))
+                    {
+                        if (string.IsNullOrWhiteSpace(contributor.Login) ||
+                            string.IsNullOrWhiteSpace(contributor.HtmlUrl) ||
+                            !string.Equals(contributor.Type, "User", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        merged[contributor.Login] = merged.TryGetValue(contributor.Login, out var existing)
+                            ? (existing.ProfileUrl, existing.Contributions + contributor.Contributions)
+                            : (contributor.HtmlUrl, contributor.Contributions);
+                    }
+                }
+                catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+                {
+                    lastFailure = exception;
+                }
             }
-            catch (HttpRequestException)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(2));
-                response = await client.GetFromJsonAsync<GitHubContributorResponse[]>(ContributorsEndpoint) ?? [];
-            }
-            catch (TaskCanceledException)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(2));
-                response = await client.GetFromJsonAsync<GitHubContributorResponse[]>(ContributorsEndpoint) ?? [];
-            }
-            var contributors = response
-                .Where(contributor => !string.IsNullOrWhiteSpace(contributor.Login) &&
-                                      !string.IsNullOrWhiteSpace(contributor.HtmlUrl) &&
-                                      string.Equals(contributor.Type, "User", StringComparison.OrdinalIgnoreCase))
-                .Select(contributor => new GitHubContributor(
-                    contributor.Login!,
-                    contributor.HtmlUrl!,
-                    contributor.AvatarUrl,
-                    contributor.Contributions))
+
+            if (merged.Count == 0 && lastFailure is not null)
+                throw lastFailure;
+
+            var contributors = merged
+                .OrderByDescending(entry => entry.Value.Contributions)
+                .Select(entry => new GitHubContributor(entry.Key, entry.Value.ProfileUrl, entry.Value.Contributions))
                 .ToList();
 
             Contributors.Clear();
             foreach (var contributor in contributors)
                 Contributors.Add(contributor);
-
-            await Task.WhenAll(contributors.Select(contributor => contributor.LoadAvatarAsync(client)));
         }
         catch (Exception exception)
         {
@@ -206,6 +240,20 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         finally
         {
             IsRefreshingContributors = false;
+        }
+    }
+
+    /// <summary>Reads one repository's contributor list, retrying once on a transient network failure.</summary>
+    private static async Task<GitHubContributorResponse[]> GetContributorsAsync(HttpClient client, string endpoint)
+    {
+        try
+        {
+            return await client.GetFromJsonAsync<GitHubContributorResponse[]>(endpoint) ?? [];
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            return await client.GetFromJsonAsync<GitHubContributorResponse[]>(endpoint) ?? [];
         }
     }
 
@@ -218,50 +266,12 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 public sealed class GitHubContributor(
     string login,
     string profileUrl,
-    string? avatarUrl,
-    int contributions) : INotifyPropertyChanged
+    int contributions)
 {
-    private Bitmap? _avatar;
-
     public string Login { get; } = login;
     public string ProfileUrl { get; } = profileUrl;
-    public string? AvatarUrl { get; } = avatarUrl;
     public int Contributions { get; } = contributions;
     public string ContributionText => string.Format(LR.S_Ack_Contributors_ContributionCount, Contributions);
-
-    public Bitmap? Avatar
-    {
-        get => _avatar;
-        private set
-        {
-            if (ReferenceEquals(_avatar, value))
-                return;
-
-            _avatar?.Dispose();
-            _avatar = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Avatar)));
-        }
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    public async Task LoadAvatarAsync(HttpClient client)
-    {
-        if (string.IsNullOrWhiteSpace(AvatarUrl))
-            return;
-
-        try
-        {
-            await using var stream = await client.GetStreamAsync(AvatarUrl);
-            using var buffer = new MemoryStream();
-            await stream.CopyToAsync(buffer);
-            buffer.Position = 0;
-            Avatar = new Bitmap(buffer);
-        }
-        catch (Exception)
-        {
-        }
-    }
 }
 
 public sealed class GitHubContributorResponse
@@ -271,9 +281,6 @@ public sealed class GitHubContributorResponse
 
     [JsonPropertyName("html_url")]
     public string? HtmlUrl { get; init; }
-
-    [JsonPropertyName("avatar_url")]
-    public string? AvatarUrl { get; init; }
 
     [JsonPropertyName("contributions")]
     public int Contributions { get; init; }

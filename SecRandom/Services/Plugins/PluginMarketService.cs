@@ -209,6 +209,8 @@ public sealed class PluginMarketService(
             ? new Uri(resource)
             : new Uri($"https://github.com/{resource}");
         var mirror = new Uri($"{GitHubMirrorPrefix}{direct.AbsoluteUri}");
+        if (SecRandom.Services.Consent.SectlTrafficPolicy.IsEgressSwitchOff())
+            return await SecRandom.Services.Updates.BoundedContentReader.GetAsync(httpClient, direct, maxBytes, cancellationToken).ConfigureAwait(false);
         try
         {
             return await SecRandom.Services.Updates.BoundedContentReader.GetAsync(httpClient, mirror, maxBytes, cancellationToken).ConfigureAwait(false);

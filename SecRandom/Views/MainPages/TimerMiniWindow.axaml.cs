@@ -12,32 +12,30 @@ namespace SecRandom.Views.MainPages;
 public sealed partial class TimerMiniWindow : Window
 {
     private readonly Action _restore;
+    private readonly TimerViewModel _viewModel;
     private bool _allowClose;
 
     public TimerMiniWindow(TimerViewModel viewModel, Action restore)
     {
         _restore = restore;
+        _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
-        if (App.IsMicaSupported)
-        {
-            TransparencyLevelHint = [WindowTransparencyLevel.Mica];
-            Background = Brushes.Transparent;
-        }
-        else
-        {
-            TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
-        }
+        
+        TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
 
         Loaded += OnLoaded;
         Closing += OnClosing;
+        Opened += (_, _) => _viewModel.AttachRefresh();
+        Closed += (_, _) => _viewModel.DetachRefresh();
     }
 
     internal void AllowClose() => _allowClose = true;
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        Width = 220;
+        Width = 256;
+        DisplayTime.FontFeatures = [FontFeature.Parse("+tnum")];
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
@@ -71,6 +69,4 @@ public sealed partial class TimerMiniWindow : Window
 
         return false;
     }
-
-    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

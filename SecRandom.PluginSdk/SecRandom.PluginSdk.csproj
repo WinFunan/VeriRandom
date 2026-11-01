@@ -7,7 +7,7 @@
         <Title>SecRandom Plugin SDK</Title>
         <Description>SDK for developing SecRandom plugins. The SDK version tracks the main application release; plugins declare the targeted host API version in manifest.yml (see PluginApiVersions).</Description>
         <Authors>SECTL</Authors>
-        <Company>SECTL</Company>
+        <Company>WinFunan</Company>
         <RepositoryUrl>https://github.com/SECTL/SecRandom</RepositoryUrl>
         <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
         <PackageTags>secrandom;plugin;addin;srpx</PackageTags>

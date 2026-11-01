@@ -10,7 +10,10 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction;
+using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Verification;
+using SecRandom.Services.Consent;
 using SecRandom.Services.Config;
 using SecRandom.Shared.Models.Verification;
 
@@ -62,6 +65,13 @@ public sealed class WitnessClient(
         FormalNotarizationRequest request,
         CancellationToken cancellationToken)
     {
+        // Formal notarization has no fallback, so a device-level refusal must be reported here rather than left to
+        // each caller: the mode can be turned on once and the switch turned on later, and the draw must then fail
+        // instead of quietly posting a locked request.
+        if (IAppHost.TryGetService<MainConfigHandler>() is { } configHandler
+            && !SectlTrafficPolicy.IsEgressAllowed(configHandler))
+            throw new InvalidOperationException("SECTL 联网已被禁用，正式公证暂时不可用");
+
         var lockedRequest = FromBase64Url(request.ZeroSeedRequest);
         if (lockedRequest.Length >= 17 && lockedRequest.AsSpan(0, 4).SequenceEqual("SRDQ"u8))
         {
@@ -168,6 +178,40 @@ public sealed class WitnessClient(
 
         return JsonSerializer.Deserialize<T>(payload, JsonOptions)
             ?? throw new InvalidDataException("Witness token payload is invalid.");
+    }
+
+    /// <summary>
+    ///     Re-validates the receipt already stored inside a proof. <see cref="AttestAsync" /> runs these checks
+    ///     when a receipt first arrives, but any later reader has to repeat them: a token's signature alone
+    ///     only proves the service issued *some* attestation, so without the binding comparison an unrelated
+    ///     (yet perfectly valid) receipt would pass as evidence for this proof.
+    /// </summary>
+    internal static bool TryValidateStoredReceipt(DrawProof proof, out WitnessReceipt? receipt)
+    {
+        ArgumentNullException.ThrowIfNull(proof);
+        receipt = null;
+
+        if (string.IsNullOrWhiteSpace(proof.Witness?.Receipt))
+            return false;
+
+        try
+        {
+            var parsed = VerifyToken<WitnessReceipt>(proof.Witness!.Receipt!);
+            if (parsed.ProofId != proof.ProofId || parsed.InputHash != proof.InputHash ||
+                parsed.PayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.Payload))) ||
+                parsed.AuditPayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.AuditPayload))) ||
+                parsed.ProofHash != ComputeAttestedProofHash(proof) ||
+                parsed.Mode != proof.Mode)
+                return false;
+
+            receipt = parsed;
+            return true;
+        }
+        catch (Exception exception) when (exception is InvalidDataException or CryptographicException
+                                              or FormatException or JsonException or ArgumentException)
+        {
+            return false;
+        }
     }
 
     internal static string ToBase64Url(ReadOnlySpan<byte> bytes) => Convert.ToBase64String(bytes)

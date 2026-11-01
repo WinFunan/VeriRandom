@@ -41,15 +41,19 @@ public static class BeaconSeedDerivation
     }
 
     /// <summary>
-    ///     Decodes a NIST Beacon output value. The v2 pulse publishes 512 bits as 128 lowercase hex
-    ///     characters; anything shorter is rejected instead of being padded or truncated into a seed.
+    ///     Decodes a source's published output value. The NIST v2 pulse publishes 512 bits as 128 hex characters;
+    ///     a drand round publishes 256 bits as 64, and random.org's 32 fetched bytes have that same width.
+    ///     Both widths are accepted because the derivation hashes whatever width the authority published — the
+    ///     material buffer is sized from it — so accepting the narrower one changes no NIST-derived seed. Any other
+    ///     length, or a non-hex value, is rejected instead of being padded or truncated into a seed.
     /// </summary>
     public static byte[] DecodeOutputValue(string outputValue)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(outputValue);
         var trimmed = outputValue.Trim();
-        if (trimmed.Length != 128 || !IsHex(trimmed))
-            throw new FormatException("Beacon output value must be 128 hexadecimal characters.");
+        if (trimmed.Length is not (64 or 128) || !IsHex(trimmed))
+            throw new FormatException(
+                "Beacon output value must be 64 (256-bit) or 128 (512-bit) hexadecimal characters.");
 
         return Convert.FromHexString(trimmed);
     }

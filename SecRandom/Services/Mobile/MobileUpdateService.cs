@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Net.Http;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -9,6 +8,7 @@ using System.Text.Json.Serialization;
 using Avalonia.Platform;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
+using SecRandom.Core;
 using SecRandom.Shared.Updates;
 using YamlDotNet.Serialization;
 using SecRandom.Mobile;
@@ -19,14 +19,14 @@ namespace SecRandom.Services.Mobile;
 
 public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInstaller installer) : INotifyPropertyChanged
 {
-    private const string Repository = "SECTL/SecRandom";
-    private const string ManifestFileName = "SecRandom-update-manifest.json";
-    private const string SignatureFileName = "SecRandom-update-manifest.sig";
+    private const string Repository = "WinFunan/VeriRandom";
+    private const string ManifestFileName = "VeriRandom-update-manifest.json";
+    private const string SignatureFileName = "VeriRandom-update-manifest.sig";
     private const int MaxMetadataBytes = 256 * 1024;
     private const int MaxManifestBytes = 4 * 1024 * 1024;
     private const int MaxSignatureBytes = 64;
     private const int MaxArtifactBytes = 512 * 1024 * 1024;
-    private static readonly Uri MetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
+    private static readonly Uri MetadataUri = new("https://raw.githubusercontent.com/WinFunan/VeriRandom/master/metadata.yaml");
     private static readonly Uri MirrorPrefix = new("https://ghproxy.sectl.cn/");
     private readonly IDeserializer _yaml = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private UpdateArtifact? _artifact;
@@ -69,7 +69,7 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
                 string.Equals(artifact.Os, "android", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(artifact.Arch, "arm64", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(artifact.Kind, "android-apk", StringComparison.OrdinalIgnoreCase));
-            if (artifact is null || !IsNewerVersion(manifest.Version, GetCurrentVersion()))
+            if (artifact is null || !UpdateVersionComparer.IsNewer(manifest.Version, GlobalConstants.Version))
             {
                 _artifact = null;
                 AvailableVersion = string.Empty;
@@ -167,7 +167,11 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
         throw new InvalidOperationException(LR.M_PackageUnavailable);
     }
 
-    private static IEnumerable<UpdateSource> GetSources() => [UpdateSource.GitHubMirror, UpdateSource.GitHub];
+    private static IEnumerable<UpdateSource> GetSources() =>
+        // Same rule as the desktop update path: no SECTL-hosted mirror once the device refuses SECTL connections.
+        SecRandom.Services.Consent.SectlTrafficPolicy.IsEgressSwitchOff()
+            ? [UpdateSource.GitHub]
+            : [UpdateSource.GitHubMirror, UpdateSource.GitHub];
 
     private static Uri GetMetadataUri(UpdateSource source) => source == UpdateSource.GitHub
         ? MetadataUri
@@ -209,16 +213,8 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
         return Convert.FromBase64String(reader.ReadToEnd().Trim());
     }
 
-    // The GitInfo version attributes live on the Android/iOS head assemblies, not on this shared library.
-    private static string GetCurrentVersion() => (Assembly.GetEntryAssembly() ?? typeof(MobileUpdateService).Assembly)
-        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0]
-        ?? "0.0.0";
-
-    private static bool IsNewerVersion(string candidate, string current) =>
-        Version.TryParse(candidate.TrimStart('v', 'V'), out var candidateVersion)
-        && Version.TryParse(current.TrimStart('v', 'V'), out var currentVersion)
-        && candidateVersion > currentVersion;
-
+    // The installed version comes from the shared resolver: the GitInfo attributes live on the Android/iOS head
+    // assemblies, and Android has no entry assembly for a local lookup.
     private void SetField<T>(ref T field, T value, [System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))

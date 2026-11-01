@@ -20,6 +20,8 @@
         <AvaloniaResource Include="Assets\**" Condition="'$(SecRandomBundleAssetsInAssembly)' == 'true'" />
         <AvaloniaResource Include="Assets\Updates\release-public-key.txt"
                           Condition="'$(SecRandomBundleAssetsInAssembly)' != 'true'" />
+        <AvaloniaResource Include="Assets\Plugins\plugin-market-public-key.txt"
+                          Condition="'$(SecRandomBundleAssetsInAssembly)' != 'true'" />
         <None Update="Assets\**" Condition="'$(SecRandomBundleAssetsInAssembly)' != 'true'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>Always</CopyToPublishDirectory>
@@ -38,7 +40,29 @@
 
     <ItemGroup>
         <!-- RFC 3161 time-stamp tokens are not part of the shared framework; the package is fully managed. -->
+        <PackageReference Include="Avalonia.Markup.Xaml.Loader" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="HotAvalonia" Version="3.1.4" />
+        <PackageReference Include="HotAvalonia.Core" Version="3.1.4" />
+        <PackageReference Include="Sentry" Version="6.8.0" />
+        <PackageReference Include="Sentry.Extensions.Logging" Version="6.8.0" />
+        <PackageReference Include="QRCoder" Version="1.8.0" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+        <PackageReference Include="CameraView.Avalonia" Version="1.0.18" />
+        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
+        <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260302" />
+        <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260627" />
+        <PackageReference Include="OpenCvSharp4.runtime.osx.10.15-x64" Version="4.6.0.20230105"
+                          Condition="'$(RuntimeIdentifier)' == 'osx-x64'" />
+        <PackageReference Include="OpenCvSharp4.runtime.osx_arm64" Version="4.8.1-rc"
+                          Condition="'$(RuntimeIdentifier)' == 'osx-arm64'" />
+        <PackageReference Include="SoundFlow" Version="[1.2.1.3]" />
         <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.0" />
+        <PackageReference Include="ClassIsland.Shared.IPC" Version="2.1.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
+        <PackageReference Include="YamlDotNet" Version="18.1.0" />
+        <PackageReference Include="Zeronia.Diagnostics" Version="12.1.0" />
+        <PackageReference Include="ZXing.Net" Version="0.16.9" />
+        <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
     </ItemGroup>
     
     <ItemGroup>
@@ -63,6 +87,16 @@
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\MainPages\QuickDraw\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
+        <EmbeddedResource Update="Langs\MainPages\RawRandom\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
+        <EmbeddedResource Update="Langs\SettingsPages\SlideTrigger\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
@@ -97,6 +131,11 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
+        <EmbeddedResource Update="Langs\SettingsPages\General\Control\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
         <EmbeddedResource Update="Langs\SettingsPages\General\Verification\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -118,6 +157,11 @@
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\SettingsPages\Personalized\Music\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
+        <EmbeddedResource Update="Langs\SettingsPages\Personalized\Timer\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
@@ -249,6 +293,18 @@
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
+        <Compile Update="Langs\MainPages\RawRandom\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\SettingsPages\SlideTrigger\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
         <Compile Update="Langs\MainPages\Lottery\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
@@ -268,6 +324,12 @@
         </Compile>
 
         <Compile Update="Langs\SettingsPages\General\Privacy\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\SettingsPages\General\Control\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
@@ -298,6 +360,12 @@
         </Compile>
 
         <Compile Update="Langs\SettingsPages\Personalized\Music\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\SettingsPages\Personalized\Timer\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
@@ -462,31 +530,6 @@
           <DependentUpon>MusicSettingsPage.axaml</DependentUpon>
           <SubType>Code</SubType>
         </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Avalonia.Markup.Xaml.Loader" Version="$(AvaloniaVersion)" />
-        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
-        <PackageReference Include="HotAvalonia" Version="3.1.4" />
-        <PackageReference Include="HotAvalonia.Core" Version="3.1.4" />
-        <PackageReference Include="Sentry" Version="6.8.0" />
-        <PackageReference Include="Sentry.Extensions.Logging" Version="6.8.0" />
-        <PackageReference Include="QRCoder" Version="1.8.0" />
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
-        <PackageReference Include="CameraView.Avalonia" Version="1.0.18" />
-        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
-        <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260302" />
-        <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260627" />
-        <PackageReference Include="OpenCvSharp4.runtime.osx.10.15-x64" Version="4.6.0.20230105"
-                          Condition="'$(RuntimeIdentifier)' == 'osx-x64'" />
-        <PackageReference Include="OpenCvSharp4.runtime.osx_arm64" Version="4.8.1-rc"
-                          Condition="'$(RuntimeIdentifier)' == 'osx-arm64'" />
-        <PackageReference Include="SoundFlow" Version="[1.2.1.3]" />
-        <PackageReference Include="ClassIsland.Shared.IPC" Version="2.1.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
-        <PackageReference Include="YamlDotNet" Version="18.1.0" />
-        <PackageReference Include="ZXing.Net" Version="0.16.9" />
-        <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
     </ItemGroup>
 
     <ItemGroup>

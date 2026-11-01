@@ -1,19 +1,22 @@
-# Contributing to SecRandom
+# Contributing to VeriRandom
 
-Thank you for reporting issues, suggesting improvements, improving documentation, or contributing code to SecRandom.
+Thank you for reporting issues, suggesting improvements, improving documentation, or contributing code to VeriRandom.
+
+> [!IMPORTANT]
+> This product is an open-source fork of SecRandom and must not be regarded as SecRandom itself. The repository, issue tracker, and release flow described here all belong to this fork (VeriRandom). To report an upstream problem to the original project, use [SECTL/SecRandom](https://github.com/SECTL/SecRandom).
 
 **Language** [ [简体中文](../CONTRIBUTING.md) | **English** | [日本語](CONTRIBUTING_JA.md) ]
 
 ## Opening an issue
 
-- Use [GitHub Issues](https://github.com/SECTL/SecRandom/issues) to report bugs or request features.
-- For a bug, include reproduction steps, expected and actual behavior, your SecRandom version, system environment, and relevant logs or screenshots.
+- Use [GitHub Issues](https://github.com/WinFunan/VeriRandom/issues) to report bugs or request features for this fork.
+- For a bug, include reproduction steps, expected and actual behavior, your VeriRandom version, system environment, and relevant logs or screenshots.
 - For a feature request, explain the use case, expected behavior, and why the current product does not meet the need.
 - Do not place passwords, TOTP secrets, USB-binding tokens, or other sensitive data in public issues, logs, or screenshots.
 
 ## Development environment
 
-SecRandom v3 is a .NET desktop application:
+VeriRandom v3 is a .NET desktop application:
 
 | Category | Technology | Purpose |
 | --- | --- | --- |
@@ -32,8 +35,8 @@ SecRandom v3 is a .NET desktop application:
 ### Get and run the project
 
 ```bash
-git clone https://github.com/<your-account>/SecRandom.git
-cd SecRandom
+git clone https://github.com/WinFunan/VeriRandom.git
+cd VeriRandom
 git remote add upstream https://github.com/SECTL/SecRandom.git
 
 dotnet restore SecRandom.sln
@@ -69,6 +72,16 @@ Read the root [AGENTS.md](../AGENTS.md) and [project rules](../docs/project_rule
 - Do not commit generated `bin/`, `obj/`, `artifacts/`, `publish/`, or packaging output.
 - When documentation changes, keep factual content, links, and structure aligned across the Simplified Chinese, English, and Japanese README/contribution-guide set.
 
+## Contributor License Agreement (CLA)
+
+Before your first pull request, read and sign the [CLA](CLA_EN.md); the Simplified Chinese [CLA.md](../CLA.md) is the authoritative version. You sign by replying in the pull request with:
+
+> I have read the CLA Document and I hereby sign the CLA
+>
+> 我已阅读 CLA 文件并在此签署本协议
+
+The CLA grants the maintainer the right to license and relicense your contribution, and requires at least 30 days' public notice before the outbound license changes. This repository is an open-source fork of SecRandom; the CLA **cannot** change the license of upstream GPLv3 code.
+
 ## Commits and pull requests
 
 - Create a topic branch from the relevant current branch and sync with upstream before starting work.
@@ -82,6 +95,7 @@ Read the root [AGENTS.md](../AGENTS.md) and [project rules](../docs/project_rule
 The repository uses GitHub Actions:
 
 - `.github/workflows/build_publish.yml` handles multi-platform builds, packaging, signed-manifest generation, and manual release flow.
+- `.github/workflows/build_ios.yml` builds iOS separately: after the other platforms are published, it attaches the IPA, a re-signed update manifest, and a refreshed release note to the matching release.
 - `.github/workflows/codeQL.yml` runs CodeQL security analysis.
 
 Normal contributions do not trigger releases through commit-message keywords. Maintainers publish from the manually dispatched GitHub Actions workflow with an explicit release tag.

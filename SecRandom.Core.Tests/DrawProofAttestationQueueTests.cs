@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Verification;
@@ -219,8 +220,17 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.None));
         services.AddCoreRuntimeServices();
         services.AddSingleton<ProofChainStore>();
+        services.AddSingleton<OwnProofChainStore>();
+        services.AddSingleton<OwnProofExportService>();
+        services.AddSingleton<GateEvidenceExportService>();
         services.AddSingleton<DrawProofExportService>();
-        return services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
+        // The fork gates SECTL submissions on the cross-border consent plus an explicit attestation choice,
+        // and these tests exercise the enabled behaviour.
+        var configHandler = provider.GetRequiredService<MainConfigHandler>();
+        configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
+        configHandler.Data.General.Verification.AttestationUpload = AttestationUploadMode.Enabled;
+        return provider;
     }
 
     private static DrawProofAttestationService CreateService(
@@ -231,6 +241,7 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
         return new DrawProofAttestationService(
             provider.GetRequiredService<MainConfigHandler>(),
             provider.GetRequiredService<DrawProofExportService>(),
+            provider.GetRequiredService<OwnProofExportService>(),
             witness,
             timestampClient ?? new DisabledTimestampAuthorityClient(),
             NullLogger<DrawProofAttestationService>.Instance);

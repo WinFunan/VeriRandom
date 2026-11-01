@@ -67,6 +67,10 @@
                     <Button Content="{x:Static langs:Resources.C_ShowRemainingList}"
                             IsVisible="{Binding MoreSettings.RollCallRemainingButton}"
                             Click="RemainingListButton_OnClick" />
+                    <!-- 结果浮窗：桌面专有（手机/平板把结果留在主界面里显示），因此只在桌面可见 -->
+                    <Button Content="{x:Static langs:Resources.C_ResultWindow}"
+                            IsVisible="{Binding SupportsResultWindow}"
+                            Click="ResultWindowButton_OnClick" />
                     <Viewbox HorizontalAlignment="Stretch" StretchDirection="DownOnly">
                         <TextBlock Text="{Binding CountSummary}" IsVisible="{Binding MoreSettings.RollCallQuantityLabel}"
                                    HorizontalAlignment="Center" TextAlignment="Center" />
@@ -81,6 +85,16 @@
             <ContentControl Content="{Binding}" ContentTemplate="{StaticResource RollCallControlPanelTemplate}" />
         </Border>
         <local:RollCallResultPresenter Grid.Column="1" DataContext="{Binding}" />
+        <!-- 分离签名生效时的指纹徽标。指纹是逐字核对签名者身份的唯一手段，所以它必须落在日常抽签的人
+             眼前，而不只是设置页里；未启用签名（或验签未通过）时整块隐藏。不放进控制面板模板：那个面板
+             会随设置左右换边，里面每个控件还有各自的显隐开关。 -->
+        <StackPanel Grid.Column="1" Margin="12" HorizontalAlignment="Left" VerticalAlignment="Top"
+                    Orientation="Horizontal" Spacing="6" Opacity="0.7"
+                    IsVisible="{Binding HasSignedPolicyBadge}"
+                    ToolTip.Tip="{Binding SignedPolicyTooltip}">
+            <sr:FluentIcon Glyph="{sr:Fi LockShieldFilled}" FontSize="13" />
+            <TextBlock Text="{Binding SignedPolicyBadgeText}" FontSize="13" />
+        </StackPanel>
         <Border Grid.Column="2" Margin="0,0,24,24" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                 IsVisible="{Binding IsControlPanelOnRight}">
             <ContentControl Content="{Binding}" ContentTemplate="{StaticResource RollCallControlPanelTemplate}" />

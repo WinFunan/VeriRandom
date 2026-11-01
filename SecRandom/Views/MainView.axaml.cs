@@ -21,18 +21,23 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.UI;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Views;
+using SecRandom.Helpers;
 using SecRandom.Mobile;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Services;
 using SecRandom.Services.Mobile;
 using SecRandom.ViewModels;
+using SecRandom.Views.Mobile;
 
 namespace SecRandom.Views;
 
 public partial class MainView : ViewBase, IFANavigationPageFactory
 {
     private const string DefaultMainPageId = "main.rollCall";
+    private const string LotteryPageId = "main.lottery";
+    private const string RemoteDrawPageId = MobilePageIds.RemoteDraw;
 
     private readonly FAFrame? _navigationFrame;
     private readonly FANavigationView? _navigationView;
@@ -40,7 +45,27 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
     private bool _isFeatureAvailabilitySubscribed;
+    private bool _isNodeStateSubscribed;
+    private IControlNodeStateStore? _nodeStateStore;
+    private bool _isNodeStateStoreResolved;
     private readonly IFeatureAvailabilityService _featureAvailability = IAppHost.GetService<IFeatureAvailabilityService>();
+
+    /// <summary>
+    ///     本机集控状态存储。手机没有集控节点，因此这里**允许为 null**（解析一次后缓存）。
+    /// </summary>
+    private IControlNodeStateStore? NodeStateStore
+    {
+        get
+        {
+            if (!_isNodeStateStoreResolved)
+            {
+                _nodeStateStore = IAppHost.TryGetService<IControlNodeStateStore>();
+                _isNodeStateStoreResolved = true;
+            }
+
+            return _nodeStateStore;
+        }
+    }
 
     public MainView()
     {
@@ -60,9 +85,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
                 Current = null;
         };
 
-        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
-        RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
-        RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
+        UiRenderQuality.Apply(this);
     }
 
     public static MainView? Current { get; private set; }
@@ -119,6 +142,8 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
             _isFeatureAvailabilitySubscribed = true;
         }
 
+        SubscribeNodeStateStore();
+
         if (ViewModel.SelectedPageInfo is null) SelectNavigationItemById(DefaultMainPageId);
 
         if (Content is not Control element || _isAdornerAdded) return;
@@ -145,6 +170,25 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
             _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
             _isFeatureAvailabilitySubscribed = false;
         }
+
+        if (_isNodeStateSubscribed)
+        {
+            NodeStateStore?.Changed -= NodeStateOnChanged;
+            _isNodeStateSubscribed = false;
+        }
+    }
+
+    /// <summary>
+    ///     订阅本机集控状态：用户在设置页拨动"远程抽取"开关后，侧栏项要**立刻**显隐，不需要重启。
+    /// </summary>
+    private void SubscribeNodeStateStore()
+    {
+        var store = NodeStateStore;
+        if (store is null || _isNodeStateSubscribed)
+            return;
+
+        store.Changed += NodeStateOnChanged;
+        _isNodeStateSubscribed = true;
     }
 
     private void BuildNavigationMenuItems()
@@ -153,10 +197,13 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         
         ViewModel.NavigationViewItems.Clear();
         ViewModel.NavigationViewFooterItems.Clear();
+        ViewModel.FlattenNavigationItems.Clear();
 
+        // 运行时能力开关不得增删导航项：FluentAvalonia 在 FooterMenuItemsSource 集合变化时会重建
+        // 内部选择源，从而丢弃页脚选中项并以 null 触发 ItemInvoked，最终在 RaiseItemInvoked 抛
+        // NullReferenceException。因此抽奖入口始终存在，只由 ApplyFeatureAvailability 控制显隐。
         ViewModel.NavigationViewItems
             .AddRange(PagesRegistryService.MainItems
-                .Where(IsPageAvailable)
                 .Where(info => info.Location == PageLocation.Top)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
@@ -171,7 +218,6 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
         ViewModel.NavigationViewFooterItems
             .AddRange(PagesRegistryService.MainItems
-                .Where(IsPageAvailable)
                 .Where(info => info.Location == PageLocation.Bottom)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
@@ -184,17 +230,15 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
                     return x;
                 }));
 
-        var settingsPageInfo = new PageInfo(@"settings", FluentIcons.SettingsFilled, null, PageLocation.Bottom)
-        {
-            Name = Langs.Common.Resources.Feat_Settings
-        };
-        var settingsItem = settingsPageInfo.ToNavigationViewItemBase();
+        var settingsItem = CreateSettingsNavigationItem();
         if (applySampleNav)
         {
             settingsItem.Classes.Add(@"SampleAppNav");
         }
         
         ViewModel.NavigationViewFooterItems.Add(settingsItem);
+
+        ApplyFeatureAvailability();
         
         if (applySampleNav)
         {
@@ -207,6 +251,68 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         }
     }
 
+    /// <summary>
+    /// 应用运行时功能可用性。抽奖入口与"远程抽取"入口都保留在导航集合中，仅切换可见性，
+    /// 避免改动集合导致导航选中态丢失。
+    /// </summary>
+    private void ApplyFeatureAvailability()
+    {
+        var isLotteryAvailable = _featureAvailability.IsLotteryEnabled;
+        var isRemoteDrawVisible = IsRemoteDrawEntryVisible();
+
+        foreach (var item in ViewModel.NavigationViewItems.Concat(ViewModel.NavigationViewFooterItems))
+        {
+            SetPageItemVisibility(item, LotteryPageId, isLotteryAvailable);
+            SetPageItemVisibility(item, RemoteDrawPageId, isRemoteDrawVisible);
+        }
+    }
+
+    /// <summary>
+    ///     "远程抽取"入口此刻该不该显示。
+    /// </summary>
+    /// <remarks>
+    ///     规则本体在 <see cref="AppHostShape.IsRemoteDrawEntryVisible(bool, bool)" />（可单测的纯函数）：
+    ///     只有桌面受集控页的开关约束并**默认隐藏**，平板与手机维持原样。桌面拿不到状态存储时按"隐藏"处理——
+    ///     少显示一个入口是保守方向，反过来会让一个本该默认关着的入口冒出来。
+    /// </remarks>
+    private bool IsRemoteDrawEntryVisible()
+    {
+        if (!App.IsDesktop)
+            return true;
+
+        return AppHostShape.IsRemoteDrawEntryVisible(isDesktop: true, NodeStateStore?.Current.RemoteDrawPageEnabled == true);
+    }
+
+    private static void SetPageItemVisibility(object item, string pageId, bool isVisible)
+    {
+        if (item is not FANavigationViewItem navigationItem)
+            return;
+
+        if (navigationItem.Tag is PageInfo info && info.Id == pageId)
+            navigationItem.IsVisible = isVisible;
+
+        foreach (var child in navigationItem.MenuItems)
+            SetPageItemVisibility(child, pageId, isVisible);
+    }
+
+    /// <summary>
+    /// 构建设置入口。该入口打开独立设置窗口（桌面）或独立移动端设置视图，而不是本框架内的页面，
+    /// 因此它不能参与导航选中，否则左侧高亮会离开仍然可见的当前页面。
+    /// </summary>
+    public static FANavigationViewItemBase CreateSettingsNavigationItem()
+    {
+        var settingsPageInfo = new PageInfo(@"settings", FluentIcons.SettingsFilled, null, PageLocation.Bottom)
+        {
+            Name = Langs.Common.Resources.Feat_Settings
+        };
+
+        var settingsItem = settingsPageInfo.ToNavigationViewItemBase();
+        if (settingsItem is FANavigationViewItem navigationItem)
+            navigationItem.SelectsOnInvoked = false;
+
+        return settingsItem;
+    }
+
     public void SelectNavigationItemById(string id)
     {
         var info = PagesRegistryService.MainItems.FirstOrDefault(info => info.Id == id);
@@ -216,15 +322,34 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     private bool IsPageAvailable(PageInfo info)
     {
-        return info.Id != "main.lottery" || _featureAvailability.IsLotteryEnabled;
+        if (info.Id == RemoteDrawPageId && !IsRemoteDrawEntryVisible())
+            return false;
+
+        return info.Id != LotteryPageId || _featureAvailability.IsLotteryEnabled;
     }
 
     private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
     {
         Dispatcher.UIThread.Post(() =>
         {
-            BuildNavigationMenuItems();
-            if (ViewModel.SelectedPageInfo?.Id == "main.lottery" && !_featureAvailability.IsLotteryEnabled)
+            ApplyFeatureAvailability();
+            if (ViewModel.SelectedPageInfo?.Id == LotteryPageId && !_featureAvailability.IsLotteryEnabled)
+                SelectNavigationItemById(DefaultMainPageId);
+        });
+    }
+
+    /// <summary>
+    ///     本机集控状态变化（用户拨了"远程抽取"开关）：立刻重算侧栏显隐，不需要重启。
+    /// </summary>
+    private void NodeStateOnChanged(object? sender, ControlNodeState state)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            ApplyFeatureAvailability();
+
+            // 关掉开关时如果正停在这一页上，就退回主页面：留着一条"看不见却还显示着"的页面
+            // 会让人以为关不掉（与抽奖入口被关掉时的处理保持一致）。
+            if (ViewModel.SelectedPageInfo?.Id == RemoteDrawPageId && !IsRemoteDrawEntryVisible())
                 SelectNavigationItemById(DefaultMainPageId);
         });
     }
@@ -232,7 +357,11 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
     private void SelectNavigationItem(PageInfo info)
     {
         var item = ViewModel.FlattenNavigationItems.FirstOrDefault(item => Equals(item.Tag, info));
-        ViewModel.SelectedNavigationViewItem = item;
+
+        // 不向 FANavigationView 写入 null 选中项：该过渡在 FluentAvalonia 的待触发标志仍置位时会以
+        // null 触发 ItemInvoked 并抛 NullReferenceException。找不到入口时保留原高亮。
+        if (item is not null)
+            ViewModel.SelectedNavigationViewItem = item;
     }
 
     public void OpenDrawer(object content)
@@ -260,7 +389,8 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         ViewModel.FrameContent = null;
         SelectNavigationItem(info);
         ViewModel.SelectedPageInfo = info;
-        _navigationFrame?.NavigateFromObject(info);
+        if (_navigationFrame is not null)
+            UiMotion.NavigateFromObject(_navigationFrame, info);
         CloseDrawer();
     }
 

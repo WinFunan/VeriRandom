@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title" xml:space="preserve"><value>Courseware markers</value></data>
+  <data name="S_Intro" xml:space="preserve"><value>Courseware markers</value></data>
+  <data name="S_Generate" xml:space="preserve"><value>Create a marker</value></data>
+  <data name="S_Generate_D" xml:space="preserve"><value>Turns the settings on this page into a QR image; paste it onto that slide and the draw starts by itself when the slide is shown</value></data>
+  <data name="S_Markers" xml:space="preserve"><value>Markers you created</value></data>
+  <data name="S_Markers_D" xml:space="preserve"><value>A new session starts for each lesson, and one marker fires only once per session</value></data>
+  <data name="S_ExportPicker" xml:space="preserve"><value>Save courseware marker</value></data>
+  <data name="C_NameWatermark" xml:space="preserve"><value>Marker name (shown on this machine only)</value></data>
+  <data name="C_ListName" xml:space="preserve"><value>Student list</value></data>
+  <data name="C_ListNameWatermark" xml:space="preserve"><value>Leave empty to use the active list</value></data>
+  <data name="C_Count" xml:space="preserve"><value>How many</value></data>
+  <data name="C_ExpiresDays" xml:space="preserve"><value>Valid for (days, 0 means never)</value></data>
+  <data name="C_ShowAnimation" xml:space="preserve"><value>Show the draw animation</value></data>
+  <data name="C_Voice" xml:space="preserve"><value>Speak the result</value></data>
+  <data name="C_Timing" xml:space="preserve"><value>When it fires</value></data>
+  <data name="O_TimingDelay" xml:space="preserve"><value>After a delay once detected</value></data>
+  <data name="O_TimingInputs" xml:space="preserve"><value>On the next button press</value></data>
+  <data name="C_Delay" xml:space="preserve"><value>Delay (seconds)</value></data>
+  <data name="C_Inputs" xml:space="preserve"><value>Presses to wait for</value></data>
+  <data name="C_Timeout" xml:space="preserve"><value>Wait limit (seconds)</value></data>
+  <data name="C_Gender" xml:space="preserve"><value>Gender (empty means any)</value></data>
+  <data name="C_Group" xml:space="preserve"><value>Group (empty means any)</value></data>
+  <data name="C_GenerateAndCopy" xml:space="preserve"><value>Create and copy</value></data>
+  <data name="C_GenerateAndSave" xml:space="preserve"><value>Create and save as PNG</value></data>
+  <data name="C_NewSession" xml:space="preserve"><value>Start a new lesson</value></data>
+  <data name="C_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="C_SaveAs" xml:space="preserve"><value>Save as</value></data>
+  <data name="C_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="C_PngFileType" xml:space="preserve"><value>PNG image</value></data>
+  <data name="M_NoMarkers" xml:space="preserve"><value>No markers have been created yet</value></data>
+  <data name="M_GenerateFailedFormat" xml:space="preserve"><value>Could not create the marker: {0}</value></data>
+  <data name="M_ExportCancelled" xml:space="preserve"><value>Saving was cancelled</value></data>
+  <data name="M_SavedFormat" xml:space="preserve"><value>Saved: {0}</value></data>
+  <data name="M_CopiedFormat" xml:space="preserve"><value>Copied to the clipboard: {0} — switch to your deck and paste it</value></data>
+  <data name="M_ClipboardUnavailable" xml:space="preserve"><value>The clipboard is unavailable here; use "Save as PNG" instead</value></data>
+  <data name="M_SessionFormat" xml:space="preserve"><value>Current session: {0}</value></data>
+  <data name="M_SessionRolled" xml:space="preserve"><value>A new lesson has started; every marker can fire again</value></data>
+  <data name="M_UsedThisSession" xml:space="preserve"><value>Fired this lesson</value></data>
+  <data name="M_NotUsed" xml:space="preserve"><value>Not fired this lesson</value></data>
+  <data name="M_DeletedFormat" xml:space="preserve"><value>Deleted: {0}</value></data>
+  <data name="M_ActiveList" xml:space="preserve"><value>Active list</value></data>
+  <data name="M_TimingInputsFormat" xml:space="preserve"><value>after {0} press(es)</value></data>
+  <data name="M_TimingDelayFormat" xml:space="preserve"><value>after {0} s</value></data>
+  <data name="M_AllowRepeatBadge" xml:space="preserve"><value>repeat allowed</value></data>
+  <data name="M_IgnoreWeightsBadge" xml:space="preserve"><value>unweighted</value></data>
+  <data name="M_ExpiresFormat" xml:space="preserve"><value>expires {0}</value></data>
+  <data name="C_ProbeNow" xml:space="preserve"><value>Check current screen</value></data>
+  <data name="C_Watcher" xml:space="preserve"><value>Detect courseware markers automatically (experimental)</value></data>
+  <data name="M_WatcherHint" xml:space="preserve"><value>Reads the projected screen once after a key press and never while idle; no frame or text leaves this machine</value></data>
+  <data name="M_CountFormat" xml:space="preserve"><value>{0} person(s)</value></data>
+  <data name="M_ProbeFoundFormat" xml:space="preserve"><value>Marker found: {0}</value></data>
+  <data name="M_ProbeNotFound" xml:space="preserve"><value>No courseware marker was found on screen</value></data>
+  <data name="M_ProbeUnsupported" xml:space="preserve"><value>Screen detection is not available on this platform</value></data>
+  <data name="C_Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="C_CancelEdit" xml:space="preserve"><value>Cancel edit</value></data>
+  <data name="M_EditModeFormat" xml:space="preserve"><value>Editing: {0} — the parameters live inside the marker image, so saving produces a new image that replaces the old one in the deck; the old image still fires with the old parameters</value></data>
+  <data name="M_EditedFormat" xml:space="preserve"><value>Updated "{0}": {1} — the new marker image is on the clipboard, replace the old one in the deck</value></data>
+  <data name="M_EditCanceled" xml:space="preserve"><value>Edit cancelled, no marker was changed</value></data>
+  <data name="M_UnsupportedParamsBadge" xml:space="preserve"><value>carries unsupported parameters, will not fire</value></data>
+  <data name="M_UnsupportedParamsHint" xml:space="preserve"><value>"Allow repeats" and "ignore history weights" cannot be expressed through a courseware marker yet, so they are not offered here; an older marker that carries either one is refused when it fires</value></data>
+  <data name="C_QuickCopyShortcut" xml:space="preserve"><value>Shortcut</value></data>
+  <data name="C_ShortcutWatermark" xml:space="preserve"><value>e.g. Ctrl+Alt+M</value></data>
+  <data name="C_UseAsQuickCopy" xml:space="preserve"><value>Use for shortcut</value></data>
+  <data name="M_QuickCopyHint" xml:space="preserve"><value>The global-shortcut master switch in More settings must be on first; pressing the key puts the shortcut marker's image on the clipboard without opening a window or interrupting the slideshow</value></data>
+  <data name="M_QuickCopyTargetFormat" xml:space="preserve"><value>Shortcut copies: {0}</value></data>
+  <data name="M_QuickCopyTargetNone" xml:space="preserve"><value>Shortcut copies: nothing yet</value></data>
+  <data name="M_QuickCopyTargetSetFormat" xml:space="preserve"><value>Shortcut now copies: {0}</value></data>
+  <data name="C_ClassSession" xml:space="preserve"><value>Start a new session when class begins</value></data>
+  <data name="M_ClassSessionHint" xml:space="preserve"><value>Uses course linkage (ClassIsland or CSES) to notice a lesson start and begins a new session then, so every marker becomes usable again. Does nothing while course linkage is off. It only affects when markers may fire again; draws and detection are untouched</value></data>
+</root>

@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json;
 
-const string packageRootEnvironmentVariable = "SECRANDOM_PACKAGE_ROOT";
+const string packageRootEnvironmentVariable = "VERIRANDOM_PACKAGE_ROOT";
 var root = Path.GetFullPath(AppContext.BaseDirectory);
-var executableName = OperatingSystem.IsWindows() ? "SecRandom.Desktop.exe" : "SecRandom.Desktop";
+var executableName = OperatingSystem.IsWindows() ? "VeriRandom.Desktop.exe" : "VeriRandom.Desktop";
 
 var installation = Directory.EnumerateDirectories(root, "app-*")
     .Where(path => IsValidInstallation(path, executableName))
@@ -14,7 +14,7 @@ var installation = Directory.EnumerateDirectories(root, "app-*")
 
 if (installation is null)
 {
-    Console.Error.WriteLine("找不到可启动的 SecRandom 版本。请重新下载完整安装包。");
+    Console.Error.WriteLine("找不到可启动的 VeriRandom 版本。请重新下载完整安装包。");
     return 1;
 }
 
@@ -44,7 +44,7 @@ static bool IsValidInstallation(string path, string executableName)
     if (File.Exists(Path.Combine(path, ".partial")) || !File.Exists(Path.Combine(path, executableName)))
         return false;
 
-    var markerPath = Path.Combine(path, "SecRandom.package.json");
+    var markerPath = Path.Combine(path, "VeriRandom.package.json");
     if (!File.Exists(markerPath))
         return false;
 
@@ -53,7 +53,7 @@ static bool IsValidInstallation(string path, string executableName)
         using var marker = JsonDocument.Parse(File.ReadAllText(markerPath));
         var root = marker.RootElement;
         return root.TryGetProperty("product", out var product)
-               && string.Equals(product.GetString(), "SecRandom", StringComparison.Ordinal)
+               && string.Equals(product.GetString(), "VeriRandom", StringComparison.Ordinal)
                && root.TryGetProperty("schemaVersion", out var schemaVersion)
                && schemaVersion.GetInt32() == 1
                && root.TryGetProperty("packageKind", out var packageKind)
@@ -65,21 +65,36 @@ static bool IsValidInstallation(string path, string executableName)
     }
 }
 
-static Version ParseVersion(string path)
+// The tuple's second half is the downstream "Mu" ordinal. Ordering by it is what keeps two payloads of the same
+// upstream version distinguishable; the rule mirrors SecRandom.Core/Helpers/ReleaseVersion.cs, which this
+// standalone launcher cannot reference.
+static (Version Core, int Mu) ParseVersion(string path)
 {
     var directoryName = Path.GetFileName(path);
     if (!directoryName.StartsWith("app-v", StringComparison.Ordinal))
-        return new Version();
+        return (new Version(), 0);
 
     var versionText = directoryName[5..];
     var separatorIndex = versionText.LastIndexOf('-');
     if (separatorIndex >= 0 && int.TryParse(versionText[(separatorIndex + 1)..], out _))
         versionText = versionText[..separatorIndex];
 
-    var prereleaseIndex = versionText.IndexOf('-');
-    if (prereleaseIndex >= 0)
-        versionText = versionText[..prereleaseIndex];
-    return Version.TryParse(versionText, out var version) ? version : new Version();
+    var mu = 0;
+    var muMatch = System.Text.RegularExpressions.Regex.Match(
+        versionText, @"(?i)(?:^|[\s\-_+])(?:mu)[\s.\-_]?(?<n>\d+)$");
+    if (muMatch.Success && int.TryParse(muMatch.Groups["n"].Value, out var ordinal))
+    {
+        mu = ordinal;
+        versionText = versionText[..muMatch.Index].TrimEnd(' ', '\t', '-', '_', '+', '.');
+    }
+    else
+    {
+        var prereleaseIndex = versionText.IndexOf('-');
+        if (prereleaseIndex >= 0)
+            versionText = versionText[..prereleaseIndex];
+    }
+
+    return (Version.TryParse(versionText, out var version) ? version : new Version(), mu);
 }
 
 static int ParseBuildNumber(string path)

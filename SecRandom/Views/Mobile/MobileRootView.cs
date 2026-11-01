@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Views;
+using SecRandom.Helpers;
 using SecRandom.Services.Mobile;
 using LR = SecRandom.Langs.Mobile.Resources;
 
@@ -107,6 +108,7 @@ public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
             MobileDestination.Draw => LR.P_Draw,
             MobileDestination.History => LR.P_History,
             MobileDestination.Overview => LR.P_Overview,
+            MobileDestination.RemoteDraw => LR.P_RemoteDraw,
             _ => LR.P_Draw
         };
     }
@@ -135,10 +137,11 @@ public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
             0 => MobileDestination.Draw,
             1 => MobileDestination.History,
             2 => MobileDestination.Overview,
-            3 => MobileDestination.Settings,
+            3 => MobileDestination.RemoteDraw,
+            4 => MobileDestination.Settings,
             _ => default
         };
-        return selectedIndex is >= 0 and <= 3;
+        return selectedIndex is >= 0 and <= 4;
     }
 
     private static int GetDestinationIndex(MobileDestination destination) => destination switch
@@ -146,6 +149,7 @@ public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
         MobileDestination.Draw => 0,
         MobileDestination.History => 1,
         MobileDestination.Overview => 2,
+        MobileDestination.RemoteDraw => 3,
         MobileDestination.Settings => 0,
         _ => throw new ArgumentOutOfRangeException(nameof(destination))
     };
@@ -156,7 +160,7 @@ public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
             return false;
 
         _destination = destination;
-        _pageOutlet.NavigateFromObject(GetRootPageId(destination));
+        UiMotion.NavigateFromObject(_pageOutlet, GetRootPageId(destination));
         UpdateDestinationChrome();
         return true;
     }
@@ -166,6 +170,7 @@ public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
         MobileDestination.Draw => MobilePageIds.Draw,
         MobileDestination.History => MobilePageIds.History,
         MobileDestination.Overview => MobilePageIds.Overview,
+        MobileDestination.RemoteDraw => MobilePageIds.RemoteDraw,
         _ => throw new ArgumentOutOfRangeException(nameof(destination))
     };
 

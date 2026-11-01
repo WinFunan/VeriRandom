@@ -38,7 +38,7 @@
   <data name="O_IntegrityAction_Confirm" xml:space="preserve"><value>Require the security password before continuing</value></data>
   <data name="O_IntegrityAction_AutoRestore" xml:space="preserve"><value>Automatically restore the latest backup</value></data>
   <data name="S_IntegrityRestoreSource" xml:space="preserve"><value>Restore Source</value></data>
-  <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>Backup sources tried in order during automatic restore; cloud backups need a signed-in account</value></data>
+  <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>Backup sources tried in order during automatic restore; cloud backups need a signed-in account</value></data><data name="S_SignedPolicy" xml:space="preserve"><value>Detached signature (strengthened integrity)</value></data><data name="S_SignedPolicy_D" xml:space="preserve"><value>The private key stays on your own trusted device; the draw machine carries only the public key, so it can verify a policy but never author one. The signature covers security, verification, linkage, privacy and fair-draw policy settings, not runtime state such as window sizes or recent lists</value></data><data name="O_SignedPolicy_Off" xml:space="preserve"><value>Off</value></data><data name="O_SignedPolicy_LocalFingerprint" xml:space="preserve"><value>Local fingerprint only (existing behaviour)</value></data><data name="O_SignedPolicy_Signed" xml:space="preserve"><value>Detached signature</value></data><data name="C_SignedPolicy_Fingerprint" xml:space="preserve"><value>Public key fingerprint</value></data><data name="C_SignedPolicy_VerifyHint" xml:space="preserve"><value>Compare this with the fingerprint shown on your trusted device, character by character. Nothing is pinned persistently, so if the public key and the signature are replaced together this program cannot notice</value></data><data name="C_SignedPolicy_Generate" xml:space="preserve"><value>Generate a new key pair</value></data><data name="C_SignedPolicy_PrivateKey" xml:space="preserve"><value>Private key (PKCS#8, for the trusted device only)</value></data><data name="C_SignedPolicy_Signer" xml:space="preserve"><value>Signer label</value></data><data name="C_SignedPolicy_Sign" xml:space="preserve"><value>Sign the current configuration</value></data><data name="M_SignedPolicy_Status_NotConfigured" xml:space="preserve"><value>Detached signing is not enabled</value></data><data name="M_SignedPolicy_Status_DocumentMissing" xml:space="preserve"><value>No signature document found; deploy the config-policy.json signed on your trusted device into data/config/</value></data><data name="M_SignedPolicy_Status_DocumentMalformed" xml:space="preserve"><value>The signature document is unusable (format, scope or version does not match this build)</value></data><data name="M_SignedPolicy_Status_SignatureInvalid" xml:space="preserve"><value>The signature does not match this configuration: it was changed after signing</value></data><data name="M_SignedPolicy_Status_Verified" xml:space="preserve"><value>Signature is valid; signer: {0}; signed at: {1}</value></data><data name="M_SignedPolicy_KeyGenerated" xml:space="preserve"><value>Key pair generated. Save the private key to your trusted device now — this machine does not keep it</value></data><data name="M_SignedPolicy_ClipboardUnavailable" xml:space="preserve"><value>The clipboard is unavailable, so key generation was abandoned rather than risk losing the private key</value></data><data name="M_SignedPolicy_Signed" xml:space="preserve"><value>Signature document written: {0}</value></data><data name="M_SignedPolicy_SignFailed" xml:space="preserve"><value>Signing failed: {0}</value></data>
   <data name="O_IntegrityRestoreSource_Local" xml:space="preserve"><value>Local backups only</value></data>
   <data name="O_IntegrityRestoreSource_LocalThenCloud" xml:space="preserve"><value>Local first, cloud when missing</value></data>
   <data name="O_IntegrityRestoreSource_CloudThenLocal" xml:space="preserve"><value>Cloud first, local when that fails</value></data>
@@ -117,7 +117,7 @@
   <data name="C_Copy" xml:space="preserve"><value>Copy</value></data>
   <data name="M_Copied" xml:space="preserve"><value>Copied.</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>Manage USB Binding</value></data>
-  <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select a removable USB drive from the list. SecRandom.safety.key will be created there.</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select a removable USB drive from the list. VeriRandom.safety.key will be created there.</value></data>
   <data name="M_UsbShortDescription" xml:space="preserve"><value>Select the USB drive used for verification.</value></data>
   <data name="M_NoBindableUsb" xml:space="preserve"><value>No unbound removable USB drives are available</value></data>
   <data name="M_NoBoundUsb" xml:space="preserve"><value>No USB drives are currently bound</value></data>
@@ -141,4 +141,25 @@
   <data name="M_TotpSaveFailed" xml:space="preserve"><value>Invalid code. TOTP settings were not saved.</value></data>
   <data name="M_UsbUpdated" xml:space="preserve"><value>USB binding updated.</value></data>
   <data name="M_UsbUpdateFailed" xml:space="preserve"><value>Unable to update USB binding. Confirm that the drive is connected and writable.</value></data>
+  <data name="S_SudoModeDuration" xml:space="preserve"><value>Sudo Duration</value></data>
+  <data name="S_SudoModeDuration_D" xml:space="preserve"><value>How long sudo mode remains active after a successful verification; the settings page does not follow this duration and expires when closed</value></data>
+  <data name="S_SudoModeDurationUnit" xml:space="preserve"><value>seconds</value></data>
+  <data name="Menu_ExitSudoMode" xml:space="preserve"><value>Exit Sudo Mode</value></data>
+  <data name="M_SudoModeExited" xml:space="preserve"><value>Sudo mode deactivated</value></data>
+  <data name="C_RemoveTotp" xml:space="preserve"><value>Remove TOTP</value></data>
+  <data name="C_SudoMode_CredentialScope" xml:space="preserve"><value>Never affected: setting up or removing TOTP, changing or removing the password and binding a USB device always ask again</value></data>
+  <data name="C_SudoMode_OperationScope" xml:space="preserve"><value>Operations: draws, resets, window toggles, exiting the app, shortcuts and IPC commands</value></data>
+  <data name="C_SudoMode_SettingsScope" xml:space="preserve"><value>Settings window: after opening settings with verification, changes in this window are covered too, while closing the window ends it immediately; changes that loosen protection, such as turning security off, clearing a factor, disabling the settings-integrity check or lengthening this duration, always ask for the security password again</value></data>
+  <data name="C_SudoModeDurationUnit" xml:space="preserve"><value>seconds</value></data>
+  <data name="M_TotpRemoved" xml:space="preserve"><value>TOTP removed</value></data>
+  <data name="M_TotpRemoveFailed" xml:space="preserve"><value>Unable to remove TOTP; confirm the current password and try again</value></data>
+  <data name="S_SudoMode" xml:space="preserve"><value>Sudo Mode</value></data>
+  <data name="S_SudoMode_D" xml:space="preserve"><value>Verify once and skip repeated verification for a while; operations and the settings window keep independent timers</value></data>
+  <data name="S_SudoMode_Duration" xml:space="preserve"><value>Sudo Duration</value></data>
+  <data name="S_SudoMode_Duration_D" xml:space="preserve"><value>How long verification is skipped after a successful one</value></data>
+  <data name="S_SudoMode_Enabled" xml:space="preserve"><value>Enable Sudo Mode</value></data>
+  <data name="S_SudoMode_Enabled_D" xml:space="preserve"><value>When off, every protected action asks for verification again</value></data>
+  <data name="S_RawRandomOperations" xml:space="preserve"><value>Random numbers</value></data>
+  <data name="S_RawRandomOperations_D" xml:space="preserve"><value>Lock the range and entropy-source choice on the main-window random-number page; clearing this needs the security password again</value></data>
+  <data name="C_RawRandomSettings" xml:space="preserve"><value>Lock range and entropy sources</value></data>
 </root>

@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MiniExcelLibs;
 using QRCoder;
+using SecRandom.Core.Services.Config;
+using SecRandom.Services.Consent;
 
 namespace SecRandom.Services.RosterTransfer;
 
@@ -31,7 +33,7 @@ public sealed record RosterSyncImportResult(RosterTransferDocument Document, str
 /// <summary>
 /// Encrypts device-transfer archives locally and uploads only the encrypted archive to SecRandom Sync.
 /// </summary>
-public sealed class RosterSyncTransferService(HttpClient httpClient)
+public sealed class RosterSyncTransferService(HttpClient httpClient, MainConfigHandler configHandler)
 {
     public const string PublicUrl = "https://secrandom-sync.sectl.cn";
     private const int SessionCodeLength = 12;
@@ -50,6 +52,8 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
         ArgumentNullException.ThrowIfNull(fileRows);
         if (mode == RosterCloudTransferMode.OfflineQr)
             throw new ArgumentException("Offline QR transfer is local to the desktop client", nameof(mode));
+
+        EnsureEgressAllowed();
 
         if (contentType != SyncTransferContentType.Roster)
             throw new ArgumentOutOfRangeException(nameof(contentType), "Roster exports must use the roster content type.");
@@ -72,6 +76,8 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
             throw new ArgumentOutOfRangeException(nameof(package), "Roster transfers use the legacy roster export path.");
         if (mode == RosterCloudTransferMode.OfflineQr)
             throw new ArgumentException("Offline QR transfer is local to the desktop client", nameof(mode));
+
+        EnsureEgressAllowed();
 
         SyncTransferLimits.EnsurePayloadSize(package.Content.LongLength, "source file");
         var archive = await Task.Run(() => CreateFileArchive(package), cancellationToken);
@@ -164,6 +170,9 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
     {
         if (string.IsNullOrWhiteSpace(transfer.TransferId) || string.IsNullOrWhiteSpace(transfer.UploadToken))
             return;
+        // Cleanup must never open a connection the user forbade; the short-lived transfer simply expires.
+        if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
+            return;
         using var request = new HttpRequestMessage(HttpMethod.Delete, $"v1/transfers/{Uri.EscapeDataString(transfer.TransferId)}");
         request.Headers.Add("X-SecRandom-Upload-Token", transfer.UploadToken);
         using var response = await httpClient.SendAsync(request, cancellationToken);
@@ -171,8 +180,19 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
             await EnsureSuccessAsync(response, cancellationToken);
     }
 
+    /// <summary>
+    ///     SecRandom Sync is one of the SECTL-hosted channels, so it obeys the same device refusal as every other
+    ///     one. Offline QR stays available because it never leaves the room.
+    /// </summary>
+    private void EnsureEgressAllowed()
+    {
+        if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
+            throw new InvalidOperationException("SECTL 联网已被禁用，SecRandom Sync 云端传输不可用");
+    }
+
     public async Task<RosterSyncImportResult> ImportQuickAsync(string pairingUrl, CancellationToken cancellationToken = default)
     {
+        EnsureEgressAllowed();
         if (!TryParseQuickPairing(pairingUrl, out var transferId, out var key))
             throw new InvalidDataException("The QR code is not a SecRandom quick-transfer pairing code.");
 
@@ -181,6 +201,7 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
 
     public async Task<RosterSyncImportResult> ImportSessionAsync(string sessionCode, CancellationToken cancellationToken = default)
     {
+        EnsureEgressAllowed();
         var normalizedCode = NormalizeSessionCode(sessionCode);
         if (normalizedCode.Length != SessionCodeLength)
             throw new InvalidDataException("The session code must contain 12 letters or digits.");
@@ -195,6 +216,7 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
     public async Task<SyncTransferImportResult> ImportQuickPackageAsync(string pairingUrl,
         CancellationToken cancellationToken = default)
     {
+        EnsureEgressAllowed();
         if (!TryParseQuickPairing(pairingUrl, out var transferId, out var key))
             throw new InvalidDataException("The QR code is not a SecRandom quick-transfer pairing code.");
 
@@ -204,6 +226,7 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
     public async Task<SyncTransferImportResult> ImportSessionPackageAsync(string sessionCode,
         CancellationToken cancellationToken = default)
     {
+        EnsureEgressAllowed();
         var normalizedCode = NormalizeSessionCode(sessionCode);
         if (normalizedCode.Length != SessionCodeLength)
             throw new InvalidDataException("The session code must contain 12 letters or digits.");

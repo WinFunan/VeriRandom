@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Platform;
 using SecRandom;
+using SecRandom.Core;
 using SecRandom.Extensions;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
@@ -30,6 +32,8 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // 版本元数据由头程序集承载；显式发布可让桌面端与移动头共用同一条解析路径
+        GlobalConstants.SetVersionAssembly(typeof(Program).Assembly);
         // UiAccess startup reads the persisted topmost setting, so data-root selection must precede it.
         Utils.PrepareDesktopDataRoot();
         if (!UiAccessStartup.ShouldContinue(args))
@@ -43,6 +47,8 @@ internal sealed class Program
         ProtocolActivation.SetStartupArguments(args);
         CrashRecoveryRuntime.SetStartupArguments(args);
         PluginManager.SetStartupArguments(args);
+        // Fork opt-in for TOTP-only verification; debug builds already allow it (GlobalConstants).
+        GlobalConstants.EnableStandaloneTotpVerificationIfRequested(args);
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
         try
@@ -103,6 +109,18 @@ internal sealed class Program
         var assetRoot = Path.Combine(
             string.IsNullOrEmpty(assemblyDirectory) ? AppContext.BaseDirectory : assemblyDirectory,
             "Assets");
+
+        // The desktop head deliberately does not embed its assets, so a missing physical root means every
+        // overlay lookup falls through to the embedded loader and fails. Say so here: otherwise the only
+        // symptom is a cryptic "Could not create glyphTypeface" while a window is being measured.
+        if (!Directory.Exists(Path.Combine(assetRoot, "Fonts")))
+        {
+            var message = $"[VeriRandom] Physical asset root is incomplete: '{assetRoot}' has no Fonts directory. "
+                          + "Fonts and images will fail to load; this usually means the process was started from "
+                          + "a directory that does not contain the application's Assets folder.";
+            Trace.TraceWarning(message);
+            Console.Error.WriteLine(message);
+        }
 
         var assetLoader = new OverlayAssetLoader(
             new StandardAssetLoader(appAssembly),

@@ -123,6 +123,15 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Interaction_RestoreFocusAfterQuickDraw"
+                                   Header="{x:Static lsp:Resources.S_Interaction_RestoreFocusAfterQuickDraw}"
+                                   Description="{x:Static lsp:Resources.S_Interaction_RestoreFocusAfterQuickDraw_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.RestoreFocusAfterQuickDraw}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_Interaction_StickToEdge"
                                    Header="{x:Static lsp:Resources.S_Interaction_StickToEdge}"
                                    Description="{x:Static lsp:Resources.S_Interaction_StickToEdge_D}"

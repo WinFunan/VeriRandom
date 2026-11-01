@@ -8,15 +8,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
-using SecRandom.Core.Services.Config;
 using SecRandom.Platforms.Abstractions;
+using IntegrityAction = SecRandom.Core.Enums.Configs.SettingsIntegrityAction;
 
 namespace SecRandom.Services.Security;
 
 internal sealed class SecurityService(
-    MainConfigHandler configHandler,
+    SecuritySettingsStore settingsStore,
     SecurityCredentialStore credentialStore,
     ISecurityVerificationPrompt prompt,
     IUsbDeviceCatalog usbDeviceCatalog,
@@ -33,8 +34,22 @@ internal sealed class SecurityService(
     private readonly SemaphoreSlim _authorizationGate = new(1, 1);
     private string? _pendingTotpSecret;
     private SecurityCredentialContext? _pendingTotpContext;
+    private DateTimeOffset? _sudoModeExpirationUtc;
+    private DateTimeOffset? _settingsSudoExpirationUtc;
 
-    private SecuritySettingsConfig Settings => configHandler.Data.SecuritySettings;
+    // 放宽防护的改动不接受「打开设置」时那一次验证，必须有一次专门为它发生的密码验证；
+    // 该验证之后同样按 SudoModeDurationSeconds 计时，避免连续调整时反复弹窗
+    private DateTimeOffset? _protectionDowngradeAuthorizationUtc;
+
+    public event Action? SudoModeChanged;
+
+    private SecuritySettingsConfig Settings => settingsStore.Data;
+
+    /// <summary>
+    ///     安全验证对话框的宿主根窗口。宿主尚未建立时（单元测试直接驱动本服务）
+    ///     没有可用的 <see cref="App" /> 实例，此时返回 null 而不是抛出异常。
+    /// </summary>
+    private static TopLevel VerificationRootWindow => App.Current?.GetRootWindow()!;
 
     public SecuritySettingsUiState GetUiState()
     {
@@ -61,6 +76,26 @@ internal sealed class SecurityService(
     {
         if (!Settings.SecurityEnabled)
             return false;
+
+        // 这两项不接受任何免验证状态：放宽安全设置本身要重新验证，
+        // 「上课时间禁止抽取」的例外验证也不能被一段 Sudo 窗口覆盖
+        if (operation is SecurityOperation.ChangeSecuritySettings or SecurityOperation.BypassClassTimeRestriction)
+            return true;
+
+        // Check the appropriate sudo mode based on operation
+        if (operation == SecurityOperation.OpenSettings)
+        {
+            if (IsSettingsSudoModeActive())
+                return false;
+        }
+        else
+        {
+            // 这里刻意不调用 IsGlobalSudoModeActive：它会触发 SudoModeChanged，
+            // 而本方法可能从非 UI 线程被调用，托盘菜单项的刷新必须留在 UI 线程
+            if (Settings.SudoModeEnabled &&
+                _sudoModeExpirationUtc is { } expiration && _timeProvider.GetUtcNow() < expiration)
+                return false;
+        }
 
         var metadata = credentialStore.LoadMetadata();
         if (!metadata.IsReadable)
@@ -122,12 +157,14 @@ internal sealed class SecurityService(
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(metadata.LockedUntilUtc),
                 TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null);
-            var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
+            var result = await prompt.RequestAsync(VerificationRootWindow, request, VerifyAsync, cancellationToken);
             if (!result.IsAuthorized)
             {
                 logger.LogInformation("Security authorization rejected for {Operations}: {Failure}", string.Join(',', operations), result.Failure);
                 return false;
             }
+
+            ActivateGlobalSudoMode();
 
             await action();
             return true;
@@ -185,7 +222,7 @@ internal sealed class SecurityService(
                 GetLockoutRemaining(metadata.LockedUntilUtc),
                 Settings.AllowSettingsPreview,
                 TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null);
-            var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
+            var result = await prompt.RequestAsync(VerificationRootWindow, request, VerifyAsync, cancellationToken);
             if (result.Failure == SecurityVerificationFailure.PreviewRequested && request.AllowPreview)
             {
                 await previewAction();
@@ -196,6 +233,8 @@ internal sealed class SecurityService(
                 logger.LogInformation("Security settings authorization rejected: {Failure}", result.Failure);
                 return new SecurityAuthorizationResult(false);
             }
+
+            ActivateSettingsSudoMode();
 
             await action();
             return new SecurityAuthorizationResult(true);
@@ -211,10 +250,30 @@ internal sealed class SecurityService(
         Action update,
         CancellationToken cancellationToken = default)
     {
+        lock (_gate)
+        {
+            if (IsSettingsSudoModeActive())
+            {
+                var snapshot = SecuritySettingsSnapshot.Capture(Settings);
+                update();
+                NormalizeSettings(credentialStore.LoadMetadata());
+                if (!snapshot.IsProtectionDowngrade(SecuritySettingsSnapshot.Capture(Settings)) ||
+                    IsProtectionDowngradeAuthorized())
+                {
+                    settingsStore.Save();
+                    return Task.FromResult(true);
+                }
+
+                // 放宽防护的改动不能靠设置页 sudo 免验证：先撤回这次试改，再走密码验证
+                snapshot.Restore(Settings);
+            }
+        }
+
         return AuthorizePasswordCoreAsync(xamlRoot, context =>
         {
             lock (_gate)
             {
+                var snapshot = SecuritySettingsSnapshot.Capture(Settings);
                 var requireAllBefore = Settings.RequireAllSelectedFactors;
                 update();
                 NormalizeSettings(context.Credentials);
@@ -225,9 +284,13 @@ internal sealed class SecurityService(
                     Settings.RequireAllSelectedFactors = requireAllBefore;
                 }
 
-                configHandler.Save();
+                if (snapshot.IsProtectionDowngrade(SecuritySettingsSnapshot.Capture(Settings)))
+                    _protectionDowngradeAuthorizationUtc = _timeProvider.GetUtcNow();
+
+                settingsStore.Save();
             }
 
+            ActivateSettingsSudoMode();
             return Task.FromResult(false);
         }, cancellationToken);
     }
@@ -255,11 +318,15 @@ internal sealed class SecurityService(
             var usbPassed = factors.Contains(SecurityFactor.Usb) &&
                             response.UsbPresent &&
                             metadata.UsbBindings.Any(IsBindingPresent);
-            // 「任意已选验证方式」模式下 TOTP 也能单独通过：该模式会用凭据文件旁的
-            // 免密副本校验验证码，因此不需要先解开信封
-            var totpPassed = factors.Contains(SecurityFactor.Totp) &&
-                             credentialStore.LoadStandaloneTotp() is { } standaloneTotp &&
-                             TotpService.Verify(standaloneTotp, response.TotpCode, _timeProvider.GetUtcNow());
+            // 「任意已选验证方式」模式下 TOTP 能单独通过，靠的是凭据文件旁的免密副本；本分支默认
+            // 不保留那份可读种子，因此该路径在未显式允许时整体不可用
+            var totpPassed = false;
+            if (GlobalConstants.AllowStandaloneTotpVerification
+                && factors.Contains(SecurityFactor.Totp)
+                && credentialStore.LoadStandaloneTotp() is { } standaloneTotp)
+            {
+                totpPassed = TotpService.Verify(standaloneTotp, response.TotpCode, _timeProvider.GetUtcNow());
+            }
             if (!Settings.RequireAllSelectedFactors && (usbPassed || totpPassed))
             {
                 metadata.FailedAttempts = 0;
@@ -434,7 +501,7 @@ internal sealed class SecurityService(
             _pendingTotpContext?.Dispose();
             _pendingTotpContext = null;
             _pendingTotpSecret = null;
-            configHandler.Save();
+            settingsStore.Save();
             return Task.FromResult(true);
         }
     }
@@ -491,14 +558,14 @@ internal sealed class SecurityService(
             Settings.TotpEnabled = false;
             Settings.UsbBindingEnabled = false;
             DisableOperationProtections();
-            configHandler.Save();
+            settingsStore.Save();
             return Task.FromResult(true);
         }
     }
 
     public Task<string?> BeginTotpSetupAsync(CancellationToken cancellationToken = default)
     {
-        return BeginTotpSetupAsync(App.Current.GetRootWindow(), cancellationToken);
+        return BeginTotpSetupAsync(VerificationRootWindow, cancellationToken);
     }
 
     public async Task<string?> BeginTotpSetupAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default)
@@ -563,6 +630,57 @@ internal sealed class SecurityService(
         }
     }
 
+    public async Task<bool> RemoveTotpAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            // 没有配置 TOTP 就不用弹密码，也不该白扣一次锁定计数
+            if (!credentialStore.LoadMetadata().HasTotp)
+                return false;
+        }
+
+        var removed = false;
+        await AuthorizePasswordCoreAsync(xamlRoot, context =>
+        {
+            lock (_gate)
+                removed = RemoveTotpCore(context);
+            return Task.FromResult(false);
+        }, cancellationToken);
+        return removed;
+    }
+
+    private bool RemoveTotpCore(SecurityCredentialContext context)
+    {
+        lock (_gate)
+        {
+            var credentials = context.Credentials;
+            if (string.IsNullOrWhiteSpace(credentials.TotpSecret))
+                return false;
+
+            var previousSecret = credentials.TotpSecret;
+            credentials.TotpSecret = null;
+            // TrySaveCredentials 在种子为空时同步删除免密 TOTP 副本，失败时连副本一起清掉
+            if (!TrySaveCredentials(context))
+            {
+                credentials.TotpSecret = previousSecret;
+                return false;
+            }
+
+            // 移除后任何尚未确认的待定设置都不该再被确认，否则会立刻把 TOTP 重新装回去
+            _pendingTotpSecret = null;
+            if (!ReferenceEquals(_pendingTotpContext, context))
+            {
+                _pendingTotpContext?.Dispose();
+                _pendingTotpContext = null;
+            }
+
+            Settings.TotpEnabled = false;
+            NormalizeSettings(credentials);
+            settingsStore.Save();
+            return true;
+        }
+    }
+
     public Task<IReadOnlyList<UsbBindingInfo>> GetUsbBindingsAsync(CancellationToken cancellationToken = default)
     {
         lock (_gate)
@@ -616,7 +734,7 @@ internal sealed class SecurityService(
 
     public Task<bool> BindUsbAsync(string deviceId, CancellationToken cancellationToken = default)
     {
-        return BindUsbAsync(App.Current.GetRootWindow(), deviceId, cancellationToken);
+        return BindUsbAsync(VerificationRootWindow, deviceId, cancellationToken);
     }
 
     public async Task<bool> BindUsbAsync(TopLevel xamlRoot, string deviceId, CancellationToken cancellationToken = default)
@@ -683,7 +801,7 @@ internal sealed class SecurityService(
 
     public Task<bool> UnbindUsbAsync(string bindingId, CancellationToken cancellationToken = default)
     {
-        return UnbindUsbAsync(App.Current.GetRootWindow(), bindingId, cancellationToken);
+        return UnbindUsbAsync(VerificationRootWindow, bindingId, cancellationToken);
     }
 
     public async Task<bool> UnbindUsbAsync(TopLevel xamlRoot, string bindingId, CancellationToken cancellationToken = default)
@@ -728,7 +846,7 @@ internal sealed class SecurityService(
             if (!HasActiveUsbBindings(credentials.UsbBindings))
                 Settings.UsbBindingEnabled = false;
             NormalizeSettings(credentials);
-            configHandler.Save();
+            settingsStore.Save();
             return true;
         }
     }
@@ -752,7 +870,7 @@ internal sealed class SecurityService(
                 }
 
                 NormalizeSettings(metadata);
-                configHandler.Save();
+                settingsStore.Save();
                 return true;
             }
             catch
@@ -761,6 +879,28 @@ internal sealed class SecurityService(
                 throw;
             }
         }
+    }
+
+    /// <summary>
+    ///     导入/恢复前的一次新鲜验证。安全设置已经不随归档走了，但"导入一份备份"仍然是能重写这台
+    ///     机器配置的操作，所以保护开着时它照样要过一次验证。这里刻意不看任何 Sudo 状态：一次导入
+    ///     就是一次整体替换，值得为此单独确认一次。调用方必须已经处于能弹出验证对话框的线程上，
+    ///     宿主由 <c>SecurityArchivePreImportGuard</c> 负责把归档线程切回 UI 线程。
+    /// </summary>
+    public async Task<bool> AuthorizeArchiveImportAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            if (!Settings.SecurityEnabled)
+                return true;
+
+            var metadata = credentialStore.LoadMetadata();
+            if (!metadata.IsReadable || GetRequiredFactors(metadata).Count == 0)
+                return true;
+        }
+
+        // 调用方负责已经处于能弹出验证对话框的线程上（见 SecurityArchivePreImportGuard）
+        return await AuthorizePasswordAsync(VerificationRootWindow, () => Task.CompletedTask, cancellationToken);
     }
 
     private List<SecurityFactor> GetRequiredFactors(SecurityCredentialMetadata metadata)
@@ -846,13 +986,17 @@ internal sealed class SecurityService(
             return false;
         }
 
-        // 信封先落盘，再同步免密 TOTP 副本，避免出现「新种子 / 旧信封」的错配
+        // 信封先落盘，再同步免密 TOTP 副本，避免出现「新种子 / 旧信封」的错配。
+        // 未允许「仅 TOTP」验证时一律删除副本：升级后遗留的明文种子会在下一次保存时被清掉
+        var totpSecret = context.Credentials.TotpSecret;
         try
         {
-            if (Settings.RequireAllSelectedFactors || string.IsNullOrWhiteSpace(context.Credentials.TotpSecret))
+            if (!GlobalConstants.AllowStandaloneTotpVerification
+                || Settings.RequireAllSelectedFactors
+                || string.IsNullOrWhiteSpace(totpSecret))
                 credentialStore.DeleteStandaloneTotp();
             else
-                credentialStore.SaveStandaloneTotp(context.Credentials.TotpSecret);
+                credentialStore.SaveStandaloneTotp(totpSecret);
             return true;
         }
         catch (CryptographicException exception)
@@ -965,9 +1109,12 @@ internal sealed class SecurityService(
         bool ProtectLotteryStart,
         bool ProtectLotteryReset,
         bool ProtectLinkage,
+        bool ProtectRawRandomSettings,
         bool SettingsIntegrityCheckEnabled,
         SettingsIntegrityAction SettingsIntegrityAction,
-        SettingsIntegrityRestoreSource SettingsIntegrityRestoreSource)
+        SettingsIntegrityRestoreSource SettingsIntegrityRestoreSource,
+        int SudoModeDurationSeconds,
+        bool SudoModeEnabled)
     {
         public static SecuritySettingsSnapshot Capture(SecuritySettingsConfig settings) => new(
             settings.SecurityEnabled,
@@ -988,9 +1135,12 @@ internal sealed class SecurityService(
             settings.ProtectLotteryStart,
             settings.ProtectLotteryReset,
             settings.ProtectLinkage,
+            settings.ProtectRawRandomSettings,
             settings.SettingsIntegrityCheckEnabled,
             settings.SettingsIntegrityAction,
-            settings.SettingsIntegrityRestoreSource);
+            settings.SettingsIntegrityRestoreSource,
+            settings.SudoModeDurationSeconds,
+            settings.SudoModeEnabled);
         public void Restore(SecuritySettingsConfig settings)
         {
             settings.SecurityEnabled = SecurityEnabled;
@@ -1011,10 +1161,46 @@ internal sealed class SecurityService(
             settings.ProtectLotteryStart = ProtectLotteryStart;
             settings.ProtectLotteryReset = ProtectLotteryReset;
             settings.ProtectLinkage = ProtectLinkage;
+            settings.ProtectRawRandomSettings = ProtectRawRandomSettings;
             settings.SettingsIntegrityCheckEnabled = SettingsIntegrityCheckEnabled;
             settings.SettingsIntegrityAction = SettingsIntegrityAction;
             settings.SettingsIntegrityRestoreSource = SettingsIntegrityRestoreSource;
+            settings.SudoModeDurationSeconds = SudoModeDurationSeconds;
+            settings.SudoModeEnabled = SudoModeEnabled;
         }
+
+        /// <summary>
+        ///     判断这次改动是否放宽了防护。放宽防护的动作不接受任何既有的免验证状态，
+        ///     否则一次授权就能把整套防护拆掉。
+        /// </summary>
+        public bool IsProtectionDowngrade(SecuritySettingsSnapshot after) =>
+            Removed(SecurityEnabled, after.SecurityEnabled)
+            || Removed(PasswordEnabled, after.PasswordEnabled)
+            || Removed(TotpEnabled, after.TotpEnabled)
+            || Removed(UsbBindingEnabled, after.UsbBindingEnabled)
+            || Removed(RequireAllSelectedFactors, after.RequireAllSelectedFactors)
+            || Added(AllowSettingsPreview, after.AllowSettingsPreview)
+            || Removed(SettingsIntegrityCheckEnabled, after.SettingsIntegrityCheckEnabled)
+            || (SettingsIntegrityAction == IntegrityAction.Confirm &&
+                after.SettingsIntegrityAction == IntegrityAction.AutoRestore)
+            || Removed(ProtectOpenSettings, after.ProtectOpenSettings)
+            || Removed(ProtectToggleMainWindow, after.ProtectToggleMainWindow)
+            || Removed(ProtectToggleFloatingWindow, after.ProtectToggleFloatingWindow)
+            || Removed(ProtectRestart, after.ProtectRestart)
+            || Removed(ProtectExit, after.ProtectExit)
+            || Removed(ProtectRollCallStart, after.ProtectRollCallStart)
+            || Removed(ProtectRollCallReset, after.ProtectRollCallReset)
+            || Removed(ProtectQuickDrawStart, after.ProtectQuickDrawStart)
+            || Removed(ProtectQuickDrawReset, after.ProtectQuickDrawReset)
+            || Removed(ProtectLotteryStart, after.ProtectLotteryStart)
+            || Removed(ProtectLotteryReset, after.ProtectLotteryReset)
+            || Removed(ProtectLinkage, after.ProtectLinkage)
+            || Removed(ProtectRawRandomSettings, after.ProtectRawRandomSettings)
+            || after.SudoModeDurationSeconds > SudoModeDurationSeconds;
+
+        private static bool Removed(bool before, bool after) => before && !after;
+
+        private static bool Added(bool before, bool after) => !before && after;
     }
 
     private void NormalizeSettings(SecurityCredentials credentials)
@@ -1062,6 +1248,115 @@ internal sealed class SecurityService(
         Settings.ProtectLotteryStart = false;
         Settings.ProtectLotteryReset = false;
         Settings.ProtectLinkage = false;
+        Settings.ProtectRawRandomSettings = false;
+    }
+
+    public bool IsSudoModeActive()
+    {
+        if (IsSettingsSudoModeActive())
+            return true;
+
+        return IsGlobalSudoModeActive();
+    }
+
+    public bool IsGlobalSudoModeActive()
+    {
+        if (!Settings.SudoModeEnabled)
+        {
+            _sudoModeExpirationUtc = null;
+            return false;
+        }
+
+        if (_sudoModeExpirationUtc is { } expiration)
+        {
+            var now = _timeProvider.GetUtcNow();
+            if (now >= expiration)
+            {
+                _sudoModeExpirationUtc = null;
+                SudoModeChanged?.Invoke();
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public void DeactivateGlobalSudoMode()
+    {
+        _sudoModeExpirationUtc = null;
+        SudoModeChanged?.Invoke();
+    }
+
+    public void DeactivateSudoMode()
+    {
+        _settingsSudoExpirationUtc = null;
+        _protectionDowngradeAuthorizationUtc = null;
+        _sudoModeExpirationUtc = null;
+        SudoModeChanged?.Invoke();
+    }
+
+    public void DeactivateSettingsSudoMode()
+    {
+        _settingsSudoExpirationUtc = null;
+        _protectionDowngradeAuthorizationUtc = null;
+    }
+
+    private bool IsSettingsSudoModeActive()
+    {
+        if (!Settings.SudoModeEnabled)
+        {
+            _settingsSudoExpirationUtc = null;
+            return false;
+        }
+
+        if (_settingsSudoExpirationUtc is not { } expiration)
+            return false;
+
+        var now = _timeProvider.GetUtcNow();
+        if (now < expiration)
+            return true;
+
+        _settingsSudoExpirationUtc = null;
+        return false;
+    }
+
+    /// <summary>
+    ///     放宽防护的改动必须有一次专门为它发生的密码验证；这次验证同样按时长过期，
+    ///     否则每调一个开关就要重新输一次密码。
+    /// </summary>
+    private bool IsProtectionDowngradeAuthorized()
+    {
+        if (!Settings.SudoModeEnabled)
+        {
+            _protectionDowngradeAuthorizationUtc = null;
+            return false;
+        }
+
+        if (_protectionDowngradeAuthorizationUtc is not { } authorizedAt)
+            return false;
+
+        if (_timeProvider.GetUtcNow() < authorizedAt.AddSeconds(Settings.SudoModeDurationSeconds))
+            return true;
+
+        _protectionDowngradeAuthorizationUtc = null;
+        return false;
+    }
+
+    private void ActivateSettingsSudoMode()
+    {
+        if (!Settings.SudoModeEnabled)
+            return;
+
+        _settingsSudoExpirationUtc = _timeProvider.GetUtcNow().AddSeconds(Settings.SudoModeDurationSeconds);
+    }
+
+    private void ActivateGlobalSudoMode()
+    {
+        if (!Settings.SudoModeEnabled)
+            return;
+
+        _sudoModeExpirationUtc = _timeProvider.GetUtcNow().AddSeconds(Settings.SudoModeDurationSeconds);
+        SudoModeChanged?.Invoke();
     }
 
     private UsbDriveInfo? FindDevice(string deviceId)

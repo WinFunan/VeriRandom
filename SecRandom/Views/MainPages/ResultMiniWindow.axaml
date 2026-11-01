@@ -1,0 +1,95 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:SecRandom.Views.MainPages"
+        xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+        xmlns:langs="using:SecRandom.Langs.MainPages.RollCall"
+        xmlns:vm="using:SecRandom.ViewModels.MainPages"
+        x:Class="SecRandom.Views.MainPages.ResultMiniWindow"
+        x:DataType="vm:RollCallPageViewModel"
+        Width="360" Height="320"
+        MinWidth="240" MinHeight="220"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        ShowInTaskbar="False"
+        CanResize="True"
+        Topmost="True"
+        Background="Transparent">
+
+    <Window.Styles>
+        <!--
+            缩放手势区：整块透明但可命中。无边框窗口没有系统边框可抓，这八块就是唯一的抓取点，
+            因此尺寸按手指而不是按鼠标给（边 22，角 48）——大屏触控时 10px 的握把基本抓不住
+        -->
+        <Style Selector="Border.resize-grip">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Border Background="{DynamicResource SolidBackgroundFillColorQuarternaryBrush}"
+                Opacity="0.92"
+                BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                BorderThickness="2"
+                CornerRadius="10"
+                ClipToBounds="True" />
+
+        <!-- 结果本身仍是主界面那个 presenter、同一份 ViewModel：浮窗只是换个容器显示，不复制任何结果状态 -->
+        <Grid Margin="10" RowDefinitions="*,Auto" Background="Transparent"
+              PointerPressed="OnPointerPressed">
+            <Viewbox Grid.Row="0" Stretch="Uniform" StretchDirection="DownOnly" Margin="0 0 0 6">
+                <local:RollCallResultPresenter Width="620" Height="420" />
+            </Viewbox>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
+                <!-- 40 而不是 32：大屏上手指按 32px 的圆钮经常按偏 -->
+                <Button Width="40" Height="40" CornerRadius="20" Padding="0"
+                        ToolTip.Tip="{x:Static langs:Resources.M_ResultWindowRestore}"
+                        Click="Restore">
+                    <sr:FluentIcon Glyph="{sr:Fi FullScreenMaximizeFilled}" FontSize="18"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- 缩放热区画在内容之上，命中优先级天然高于"整块拖动" -->
+        <Grid x:Name="ResizeGrips">
+
+            <Border Classes="resize-grip" Tag="North"
+                    Height="22" VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                    PointerPressed="ResizeGrip_OnPointerPressed" />
+            <Border Classes="resize-grip" Tag="South"
+                    Height="22" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
+                    PointerPressed="ResizeGrip_OnPointerPressed" />
+            <Border Classes="resize-grip" Tag="West"
+                    Width="22" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                    PointerPressed="ResizeGrip_OnPointerPressed" />
+            <Border Classes="resize-grip" Tag="East"
+                    Width="22" HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                    PointerPressed="ResizeGrip_OnPointerPressed" />
+
+            <Border Classes="resize-grip" Tag="NorthWest"
+                    Width="48" Height="48" HorizontalAlignment="Left" VerticalAlignment="Top"
+                    PointerPressed="ResizeGrip_OnPointerPressed" />
+            <Border Classes="resize-grip" Tag="NorthEast"
+                    Width="48" Height="48" HorizontalAlignment="Right" VerticalAlignment="Top"
+                    PointerPressed="ResizeGrip_OnPointerPressed" />
+            <Border Classes="resize-grip" Tag="SouthWest"
+                    Width="48" Height="48" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                    PointerPressed="ResizeGrip_OnPointerPressed" />
+
+            <!-- 右下角顺带画出可抓的痕迹：没有任何提示的话，没人会知道这块能缩放 -->
+            <Border Classes="resize-grip" Tag="SouthEast"
+                    Width="48" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    PointerPressed="ResizeGrip_OnPointerPressed">
+                <Path Data="M 2,14 L 14,2 M 2,8 L 8,2"
+                      Stroke="{DynamicResource TextFillColorSecondaryBrush}"
+                      StrokeThickness="2"
+                      Opacity="0.5"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Bottom"
+                      Margin="0,0,6,6"
+                      IsHitTestVisible="False" />
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

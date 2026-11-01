@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
@@ -294,6 +295,61 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             SelectedPrizeList.Prizes.ToList()));
         _logger.LogInformation("打开奖品池导出面板：奖品池={ListName}，奖品数={Count}。", SelectedPrizeListName,
             SelectedPrizeList.Prizes.Count);
+    }
+
+    /// <summary>
+    ///     Writes the prize pool as the JSON reference file the proof replay window reads.
+    /// </summary>
+    /// <remarks>
+    ///     Separate from 导出奖池 on purpose: that one is a transfer format meant for people, and none of those can
+    ///     serve as a reference, because the replay needs the hidden record ids they never carry.
+    /// </remarks>
+    private async void ExportProofReferenceButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedPrizeList is null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        if (TopLevel.GetTopLevel(this) is not { } topLevel)
+            return;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = LR.C_ExportProofReference,
+            SuggestedFileName = $"{SelectedPrizeListName}-proof-reference.json",
+            DefaultExtension = "json",
+            FileTypeChoices = [new FilePickerFileType("JSON") { Patterns = ["*.json"] }]
+        });
+        if (file is null)
+            return;
+
+        try
+        {
+            var bytes = SecRandom.Services.Verification.ProofRosterReferenceExporter
+                .CreatePrizeReference(SelectedPrizeList);
+
+            if (file.TryGetLocalPath() is { } localPath)
+            {
+                await File.WriteAllBytesAsync(localPath, bytes);
+            }
+            else
+            {
+                // 手机等平台拿不到本地路径，只能写回存储提供者给出的流。
+                await using var destination = await file.OpenWriteAsync();
+                await destination.WriteAsync(bytes);
+            }
+
+            this.ShowSuccessToast(string.Format(LR.M_ProofReferenceSaved, SelectedPrizeList.Prizes.Count));
+            _logger.LogInformation("已导出奖品池的证明参考文件：奖品池={ListName}，奖品数={Count}。",
+                SelectedPrizeListName, SelectedPrizeList.Prizes.Count);
+        }
+        catch (Exception ex)
+        {
+            this.ShowErrorToast(string.Format(LR.M_ProofReferenceFailed, ex.Message));
+            _logger.LogWarning(ex, "导出奖品池的证明参考文件失败：奖品池={ListName}。", SelectedPrizeListName);
+        }
     }
 
     private async void AddPrizeButton_OnClick(object? sender, RoutedEventArgs e)

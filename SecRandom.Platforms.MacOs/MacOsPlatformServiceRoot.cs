@@ -26,6 +26,10 @@ public sealed class MacOsPlatformServiceRoot : IPlatformServiceRoot
 
     public IRemovableStorageCatalog RemovableStorage { get; } = new MacOsRemovableStorageCatalog();
 
+    public IForegroundWindowService ForegroundWindow => SecRandom.Platforms.UnsupportedForegroundWindowService.Instance;
+
+    public ISlideTriggerScreenProbe ScreenProbe => SecRandom.Platforms.UnsupportedSlideTriggerScreenProbe.Instance;
+
     public IRemovableStorageBindingMarker RemovableStorageBindingMarker { get; } =
         new MacOsRemovableStorageBindingMarker();
 

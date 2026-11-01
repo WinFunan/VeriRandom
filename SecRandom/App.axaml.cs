@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Styling;
@@ -24,7 +25,9 @@ using SecRandom.Controls.AttachedSettings;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Abstraction.Services.Views;
+using SecRandom.Core.Behaviors;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
@@ -33,21 +36,46 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.Presentation;
+using SecRandom.Core.Services.Views;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
+using SecRandom.Core.Abstraction.Services.Capabilities;
+using SecRandom.Core.Abstraction.Services.Data;
+using SecRandom.Core.Abstraction.Services.Diagnostics;
+using SecRandom.Core.Abstraction.Services.Localization;
+using SecRandom.Core.Abstraction.Services.Messaging;
+using SecRandom.Core.Abstraction.Services.Notifications;
+using SecRandom.Core.Abstraction.Services.Pipeline;
+using SecRandom.Core.Abstraction.Services.Storage;
+using SecRandom.Core.Abstraction.Services.Theming;
+using SecRandom.Core.Abstraction.Services.Threading;
+using SecRandom.Core.Services.Data;
+using SecRandom.Core.Services.Messaging;
+using SecRandom.Core.Services.Notifications;
+using SecRandom.Core.Services.Pipeline;
+using SecRandom.Core.Services.Storage;
+using SecRandom.Core.Services.Theming;
+using SecRandom.Core.Services.Threading;
 using SecRandom.Core.Views;
 using SecRandom.Shared.Models.Ipc;
 using SecRandom.Shared;
 using SecRandom.Dialogs;
+using SecRandom.Helpers;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
+using PerformanceSettingsConfig = SecRandom.Core.Models.SubConfigs.General.PerformanceSettingsConfig;
 using SecRandom.Services;
 using SecRandom.Services.Config;
 using SecRandom.Services.Auth;
+using SecRandom.Services.ControlNode;
+using SecRandom.Services.ControlPlane;
 using SecRandom.Services.Announcements;
+using SecRandom.Services.Consent;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
@@ -67,6 +95,7 @@ using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
 using SecRandom.Services.Updates;
 using SecRandom.Services.ViewEngine;
+using SecRandom.Services.SlideTrigger;
 using SecRandom.Services.Plugins;
 using SecRandom.PluginSdk;
 using SecRandom.Mobile;
@@ -78,10 +107,12 @@ using SecRandom.Platforms.Abstractions;
 using MobileResources = SecRandom.Langs.Mobile.Resources;
 using SecRandom.ViewModels;
 using SecRandom.ViewModels.MainPages;
+using SecRandom.ViewModels.Mobile;
 using SecRandom.ViewModels.SettingsPages;
 using SecRandom.ViewModels.SettingsPages.History;
 using SecRandom.Views;
 using SecRandom.Views.MainPages;
+using SecRandom.Views.Verification;
 using SecRandom.Views.SettingsPages;
 using SecRandom.Views.SettingsPages.About;
 using SecRandom.Views.SettingsPages.Announcements;
@@ -116,6 +147,9 @@ public partial class App : Application
     private static MainWindow? _settingsWindow;
     private static Task? _runtimeServicesStartupTask;
     private NativeMenuItem? _floatingWindowMenuItem;
+    private NativeMenuItem? _exitSudoModeMenuItem;
+    private NativeMenuItem? _exitSudoModeSeparator;
+    private Timer? _sudoModeRefreshTimer;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private IHost? _mobileHost;
     private ISingleViewApplicationLifetime? _singleViewLifetime;
@@ -128,6 +162,7 @@ public partial class App : Application
     private bool _isOobeActive;
     private bool _settingsIntegrityConfirmationPending;
     private SettingsIntegrityService? _settingsIntegrity;
+    private StyleInclude? _reducedMotionStyles;
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
     public static bool IsDesktop;
@@ -187,6 +222,9 @@ public partial class App : Application
         // 在 XAML 资源加载完成后立即应用外观设置（早于 BuildHost，确保重复实例对话框也能跟随主题）
         ApplyStartupAppearance(settings.Appearance);
 
+        // 低配模式必须早于任何视图创建：入场动画策略要在面板首次附加到可视树之前生效
+        ApplyPerformanceSettings(settings.General.PerformanceSettings);
+
         if (!Design.IsDesignMode && !OperatingSystem.IsMacOS() && !OperatingSystem.IsAndroid() &&
             !OperatingSystem.IsIOS())
         {
@@ -195,7 +233,7 @@ public partial class App : Application
 
 #if DEBUG
         // 附加开发者工具
-        this.AttachDeveloperTools();
+        this.AttachDevTools();
 #endif
     }
 
@@ -258,6 +296,10 @@ public partial class App : Application
                 throw;
             }
 
+            // 安全设置住在自己的加密文件里：先把它读起来（含旧版明文设置的一次性迁移），
+            // 后面的启动流程才有可信的防护开关可用。
+            _ = IAppHost.GetService<SecuritySettingsStore>();
+
             if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
                 ShowFirstRunOobe(desktop, startupProtocolUri);
@@ -267,18 +309,34 @@ public partial class App : Application
 
             // 防篡改校验是设置文件的启动闸门：记录不符时按配置自动恢复，或先用安全密码确认当前内容
             _settingsIntegrity = IAppHost.GetService<SettingsIntegrityService>();
-            if (_settingsIntegrity.GetPendingMismatch() is { } settingsMismatch)
+            var settingsMismatch = _settingsIntegrity.GetPendingMismatch();
+            if (settingsMismatch is null)
             {
-                if (IAppHost.GetService<MainConfigHandler>().Data.SecuritySettings.SettingsIntegrityAction
+                // 分离签名：策略由另一台设备签发，本机只持有公钥。校验失败时复用同一个闸门，
+                // 因为「按配置自动恢复」与「用安全密码确认」对两种机制是同一种处理。
+                var verification = IAppHost.GetService<ConfigPolicySignatureService>().Verify();
+                if (verification.IsConfigured && !verification.IsVerified)
+                {
+                    WriteDesktopStartupDiagnostic($"Signed policy verification failed: {verification.Status}.");
+                    settingsMismatch = new SettingsIntegrityMismatch(
+                        verification.SignedAtUtc ?? DateTimeOffset.UtcNow,
+                        verification.SignerLabel ?? verification.Status.ToString(),
+                        null);
+                }
+            }
+
+            if (settingsMismatch is { } mismatch)
+            {
+                if (IAppHost.GetService<SecuritySettingsStore>().Data.SettingsIntegrityAction
                     == SettingsIntegrityAction.AutoRestore)
                 {
                     WriteDesktopStartupDiagnostic("Settings integrity check is attempting automatic recovery.");
-                    ShowSettingsIntegrityRecovery(desktop, startupProtocolUri, settingsMismatch);
+                    ShowSettingsIntegrityRecovery(desktop, startupProtocolUri, mismatch);
                 }
                 else
                 {
                     WriteDesktopStartupDiagnostic("Settings integrity check requires confirmation.");
-                    ShowSettingsIntegrityGate(desktop, startupProtocolUri, settingsMismatch);
+                    ShowSettingsIntegrityGate(desktop, startupProtocolUri, mismatch);
                 }
 
                 base.OnFrameworkInitializationCompleted();
@@ -322,6 +380,8 @@ public partial class App : Application
                 controlled.Exit += (_, _) => _ = StopMobileHostAsync();
 
             ObserveTask(StartMobileHostAsync(_mobileHost), "Mobile runtime service startup failed.");
+            // 相机后端的拍照文件落在应用数据目录之外：启动时后台回收一次，升级后不必再等下一次扫码。
+            _ = ClearMobileCameraCaptureCacheAsync(_mobileHost);
         }
         catch (Exception exception)
         {
@@ -334,6 +394,25 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    ///     回收相机后端写在应用数据目录之外的拍照文件。启动阶段没有任何扫码会话，因此不看宽限时间。
+    /// </summary>
+    private static async Task ClearMobileCameraCaptureCacheAsync(IHost host)
+    {
+        try
+        {
+            await host.Services.GetRequiredService<IMobileCameraCaptureStore>()
+                .ClearLeftoversAsync(TimeSpan.Zero)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            // 回收失败只是少清一次缓存，绝不能连累启动。
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogWarning(exception, "Unable to reclaim leftover camera capture files.");
+        }
+    }
+
     private async Task StartMobileHostAsync(IHost host)
     {
         try
@@ -342,6 +421,16 @@ public partial class App : Application
             _ = host.Services.GetRequiredService<IDrawTemporaryRecordService>();
             _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
             _ = host.Services.GetRequiredService<DrawEngine>();
+            if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
+                return;
+
+            // 登录态必须在这里从磁盘装回来（与桌面 StartRuntimeServicesAsync 的顺序一致：Host 启动前）。
+            // 漏掉这一步的症状是"App 重启后账号就退出了"：token 文件一直好好地躺在
+            // data/config/sectl-auth.json 里，但进程内会话是空的，于是控制面/云备份全都表现为"未登录"，
+            // 而手机端设置页与集控页又会把它显示成"没有组/没有设备"，看起来像账号本身出了问题。
+            // InitializeAsync 只读本地、不联网，因此放在 Host 启动前不会拖慢启动。
+            if (host.Services.GetService<SectlAuthService>() is { } auth)
+                await auth.InitializeAsync().ConfigureAwait(false);
             if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
                 return;
 
@@ -510,13 +599,8 @@ public partial class App : Application
         _floatingWindow = new FloatingWindow();
         _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
         _floatingWindow.Closed += (_, _) => _floatingWindow = null;
-        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
-        {
-            _floatingWindow.Hide();
-            _floatingWindow.SetUserVisibilityIntent(false);
-        }
-
         desktop.MainWindow = _floatingWindow;
+        ApplyFloatingWindowStartupVisibility();
 
         WriteDesktopStartupDiagnostic("Initializing desktop application chrome.");
         InitializeApp();
@@ -525,6 +609,55 @@ public partial class App : Application
             Dispatcher.UIThread.Post(() => HandleProtocolUri(startupProtocolUri), DispatcherPriority.Render);
 
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
+    }
+
+    /// <summary>
+    ///     按"启动时显示悬浮窗"设置收口悬浮窗的初始可见性。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         这件事必须在这里收口，否则两条启动路径拿不到同一个结果。生命周期在
+    ///         <c>ClassicDesktopStyleApplicationLifetime.StartCore</c> 里**无条件**显示一次
+    ///         <c>MainWindow</c>（<c>ShowMainWindow()</c> 只被 StartCore 调用一次，且不做可见性判断）：
+    ///     </para>
+    ///     <list type="bullet">
+    ///         <item><description>正常启动：本方法跑在 Start **之前**，那次显示替我们把悬浮窗打开；</description></item>
+    ///         <item><description>
+    ///             引导（OOBE）与设置防篡改闸门之后的重启：Start 早就跑过了，**不会再有人**显示这个新赋值的
+    ///             <c>MainWindow</c> —— "OOBE 结束后悬浮窗不出现"就是这条路径。
+    ///         </description></item>
+    ///     </list>
+    ///     <para>
+    ///         关闭时也不能就地 <c>Hide()</c>：此时窗口还没被显示过，而 <c>Window.Hide()</c> 对
+    ///         <c>_shown == false</c> 的窗口直接返回（连可见性都不改），StartCore 随后的显示照样会发生。
+    ///         所以把收口动作排到 Start 那一轮之后再执行；并以"用户是否想看"为闸 —— 期间用户若从托盘
+    ///         重新打开悬浮窗，这里就不再关它。课程联动已经把它藏起来时同理不恢复。
+    ///     </para>
+    /// </remarks>
+    private void ApplyFloatingWindowStartupVisibility()
+    {
+        if (_floatingWindow is not { } window)
+            return;
+
+        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+            window.SetUserVisibilityIntent(false);
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (_floatingWindow is not { } current)
+                    return;
+
+                if (!current.UserWantsVisible)
+                {
+                    current.Hide();
+                    return;
+                }
+
+                if (!current.IsHiddenByCourseLinkage)
+                    RestoreWithoutActivating(current);
+            },
+            DispatcherPriority.Loaded);
     }
 
     private void ShowFirstRunOobe(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
@@ -914,7 +1047,10 @@ public partial class App : Application
         if (IAppHost.Host is not null) return;
         var mobilePlatform = platform as MobilePlatformServiceRoot;
         var isMobile = mobilePlatform is not null;
-        var useMobileUI = isMobile && !mobilePlatform!.UsesDesktopMainView;
+        // 宿主形态只在这里判一次：平板同时是控制端（远程抽取页）与被控端（集控节点），
+        // 手机只是控制端。所有分支都读这一份结果，免得下次加平台时漏掉某个 if。
+        var hostShape = AppHostShape.Resolve(isMobile, mobilePlatform?.UsesDesktopMainView == true);
+        var useMobileUI = hostShape.UsesMobileShell;
 
         IAppHost.Host = Host
             .CreateDefaultBuilder()
@@ -924,6 +1060,14 @@ public partial class App : Application
                 if (isMobile)
                 {
                     services.AddPlatformServices(platform);
+                    // 手机端 OAuth 回调经自定义 scheme 回到应用：平台 head 把深链交给该路由器，
+                    // 由移动 broker 完成授权码交换；桌面端仍走本机 loopback 监听。
+                    services.AddSingleton<MobileAuthCallbackRouter>();
+                    services.AddSingleton<IAuthRedirectBrokerFactory, MobileAuthRedirectBrokerFactory>();
+                    // iOS 用 ASWebAuthenticationSession 自己截获回调，其余移动端仍用系统浏览器 + 深链。
+                    services.AddSingleton<IAuthBrowser>(serviceProvider =>
+                        mobilePlatform!.AuthBrowser ?? new ExternalLauncherAuthBrowser(
+                            serviceProvider.GetRequiredService<IExternalLauncher>()));
                     services.AddSingleton<SingleViewHostProvider>();
                     services.AddSingleton<IViewHostProvider>(provider =>
                         provider.GetRequiredService<SingleViewHostProvider>());
@@ -931,12 +1075,19 @@ public partial class App : Application
                         .AddView<MobileRootView>(MobilePageIds.Root)
                         .AddView<MainView>(DesktopViewIds.Main)
                         .AddView<SettingsView>(MobilePageIds.Settings)
-                        .AddView<RemainingListView>(RemainingListViewService.ViewId);
+                        .AddView<RemainingListView>(RemainingListViewService.ViewId)
+                        .AddView<ProofReplayView>(ProofReplayViewService.ViewId);
                     services.AddTransient<MobileViewHost>();
                 }
                 else
                 {
                     services.AddPlatformServices(platform);
+                    services.AddSingleton<IAuthRedirectBrokerFactory, LoopbackAuthRedirectBrokerFactory>();
+                    // 桌面端的 QR 取景由 OpenCV 在内存中完成，没有相机后端文件需要回收。
+                    services.AddSingleton<IMobileCameraCaptureStore>(UnsupportedMobileCameraCaptureStore.Instance);
+                    services.AddSingleton<IAuthBrowser>(serviceProvider =>
+                        new ExternalLauncherAuthBrowser(
+                            serviceProvider.GetRequiredService<IExternalLauncher>()));
                     services.AddSingleton<DesktopViewHostProvider>();
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<DesktopViewHostProvider>());
@@ -944,7 +1095,8 @@ public partial class App : Application
                         .AddView<MainView>(DesktopViewIds.Main)
                         .AddView<SettingsView>(DesktopViewIds.Settings)
                         .AddView<RemainingListView>(RemainingListViewService.ViewId, ViewPresentation.Modal)
-                        .AddView<TimerView>(TimerViewService.ViewId, ViewPresentation.Modal);
+                        .AddView<TimerView>(TimerViewService.ViewId, ViewPresentation.Modal)
+                        .AddView<ProofReplayView>(ProofReplayViewService.ViewId, ViewPresentation.Modal);
                 }
 
                 // 日志
@@ -990,29 +1142,36 @@ public partial class App : Application
                     client.Timeout = TimeSpan.FromSeconds(15);
                 });
                 services.AddSingleton<AnnouncementService>();
-                if (!isMobile)
+                // 联网总开关：设备本地的一票否决，存在 data/config/privacy，绝不进 settings.json，
+                // 所以导入设置无法重新打开用户已经关掉的 SECTL 联网
+                services.AddSingleton<SectlEgressSwitch>();
+                // SECTL 账号与云备份在桌面和移动端都注册：移动端用自定义 scheme + 系统浏览器完成
+                // 授权（见 MobileAuthRedirectBroker），云备份的归档引擎本来就是平台中立的。
+                services.AddSingleton<SectlTokenStore>();
+                services.AddSingleton<SectlAuthService>();
+                services.AddSingleton<SectlHeartbeatService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<SectlHeartbeatService>());
+                services.AddHttpClient("sectl-cloud", client =>
                 {
-                    services.AddSingleton<SectlAuthService>();
-                    services.AddSingleton<SectlHeartbeatService>();
-                    services.AddHostedService(serviceProvider =>
-                        serviceProvider.GetRequiredService<SectlHeartbeatService>());
-                    services.AddHttpClient("sectl-cloud", client =>
-                    {
-                        client.BaseAddress = new Uri("https://appwrite.sectl.cn/");
-                        client.Timeout = TimeSpan.FromSeconds(60);
-                    });
-                    services.AddSingleton<SectlCloudStorageClient>();
-                    services.AddSingleton<CloudBackupService>();
-                    services.AddSingleton<CloudAutomaticBackupService>();
-                    services.AddHostedService(serviceProvider =>
-                        serviceProvider.GetRequiredService<CloudAutomaticBackupService>());
-                }
+                    client.BaseAddress = new Uri("https://appwrite.sectl.cn/");
+                    client.Timeout = TimeSpan.FromSeconds(60);
+                });
+                services.AddSingleton<SectlCloudStorageClient>();
+                services.AddSingleton<CloudBackupService>();
+                services.AddSingleton<CloudAutomaticBackupService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<CloudAutomaticBackupService>());
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
                 services.AddSingleton<PlatformUsageReportService>();
                 services.AddHostedService(serviceProvider =>
                     serviceProvider.GetRequiredService<PlatformUsageReportService>());
+                // 版本使用人数上报：只上报版本号与设备标识，每次启动上报一次
+                services.AddSingleton<PlatformVersionReportService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<PlatformVersionReportService>());
 
                 // 服务
                 services.AddTransient<RollCallDrawService>();
@@ -1027,6 +1186,9 @@ public partial class App : Application
                 if (isMobile)
                 {
                     MobilePlatformServiceRoot currentMobilePlatform = mobilePlatform!;
+                    // CameraView 的 Android 拍照后端会把每次快门写成一张原图并留在应用外部目录里，
+                    // 平台 head 提供回收实现，QR 扫码会话与启动清理都走这条中立接缝。
+                    services.AddSingleton<IMobileCameraCaptureStore>(currentMobilePlatform.CameraCaptureStore);
                     services.AddSingleton<MobileMediaLibraryService>();
                     services.AddSingleton<IMobileMediaPlayer>(currentMobilePlatform.MediaPlayer);
                     if (currentMobilePlatform.KeyboardOcclusionSource is { } keyboardOcclusionSource)
@@ -1043,8 +1205,26 @@ public partial class App : Application
                 {
                     services.AddSingleton<TimerViewModel>();
                     services.AddSingleton<TimerViewService>();
+                    // 结果浮窗同样是桌面窗口：它和主窗口互斥显示，手机/平板不注册（按钮本身也不显示）。
+                    services.AddSingleton<ResultMiniWindowService>();
+                    services.AddSingleton<SlideTriggerStore>();
+                    services.AddSingleton<SlideTriggerMarkerImageService>();
+                    services.AddSingleton<SlideTriggerScreenDecoder>();
+                    services.AddSingleton<SlideTriggerWatcher>();
+                    services.AddSingleton<SlideTriggerExecutor>();
+                    // 快捷键复制标记：课堂上按一下键就把图片放进剪贴板，不弹窗也不抢放映画面焦点
+                    services.AddSingleton<SlideTriggerQuickCopyService>();
+                    services.AddHostedService<SlideTriggerWatcherHostedService>();
+                    // 上课自动开始新一节：挂在课程联动上，只有真的有课表时才会触发
+                    services.AddHostedService<SlideTriggerClassSessionService>();
+                    // 课件标记页也注册在这个桌面分支：它依赖上面两个服务，而手机宿主没有它们，也没有可抓拍的放映画面
+                    services.AddSettingsPage<Views.SettingsPages.SlideTrigger.SlideTriggerSettingsPage>(
+                        Langs.SettingsPages.SlideTrigger.Resources.Page_Title);
                 }
                 services.AddSingleton<ProofChainStore>();
+                services.AddSingleton<OwnProofChainStore>();
+                services.AddSingleton<OwnProofExportService>();
+                services.AddSingleton<GateEvidenceExportService>();
                 services.AddSingleton<DrawProofExportService>();
                 services.AddSingleton<ProofIntegrityVerifier>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
@@ -1054,15 +1234,28 @@ public partial class App : Application
                     client.Timeout = TimeSpan.FromSeconds(10));
                 services.AddHttpClient<INistBeaconClient, NistBeaconClient>(client =>
                     client.Timeout = TimeSpan.FromSeconds(5));
-                services.AddSingleton<BeaconEntropyProvider>();
-                services.AddSingleton<DrawProofAttestationService>();
+                services.AddSingleton<ExternalEntropySourceClient>();
+                services.AddSingleton<RawNumberProofService>();
+                // random.org 的密钥是凭据：只进 data/config/randomorg/key.json，不进 settings.json 与任何备份。
+                services.AddSingleton<RandomOrgCredentialStore>();
+                services.AddSingleton<RandomOrgApiClient>();
+                services.AddSingleton<RandomOrgSignatureVerifier>();
+                services.AddSingleton<BeaconEntropyProvider>();                services.AddSingleton<DrawProofAttestationService>();
                 services.AddHostedService(serviceProvider =>
                     serviceProvider.GetRequiredService<DrawProofAttestationService>());
+                // 后台每分钟自动预取：定时预取只取脉冲、不占序号，所以就算一整天没人抽签也不会消耗序号、
+                // 也不会在证明链上留下缺口；脉冲超过一个周期会在取用时被丢弃（见 BeaconEntropyProvider）。
+                services.AddHostedService<BeaconPrefetchScheduler>();
                 services.AddTransient<VerificationDrawCoordinator>();
                 services.AddSingleton<SettingsSearchService>();
                 services.AddSingleton<FirstRunOobeService>();
                 services.AddSingleton<OobeDataSetupService>();
-                services.AddSingleton<IArchivePostImportHooks, DesktopArchivePostImportHooks>();
+                // 导入后的平台跟进：桌面会重新同步开机启动/URL 协议注册，移动端没有这些集成。
+                if (isMobile)
+                    services.AddSingleton<IArchivePostImportHooks, MobileArchivePostImportHooks>();
+                else
+                    services.AddSingleton<IArchivePostImportHooks, DesktopArchivePostImportHooks>();
+                services.AddSingleton<IArchivePreImportGuard, SecurityArchivePreImportGuard>();
                 services.AddSingleton<IImportExportService, ImportExportService>();
                 services.AddSingleton<ISentryFeedbackClient, SentryFeedbackClient>();
                 services.AddSingleton<IUserFeedbackService, UserFeedbackService>();
@@ -1114,18 +1307,113 @@ public partial class App : Application
                 services.AddSingleton<CourseLinkageService>();
                 services.AddSingleton<LinkageDrawCoordinator>();
                 services.AddHostedService<CourseLinkageHostedService>();
+
+                // 集控节点（control-v1，见 docs/client-protocol.md）：出站长连接 + 本机开关 + 远程抽取。
+                // **桌面与平板**都是被控端（平板用的是桌面主界面，教室里同样需要被控制）；
+                // 手机端只是控制台侧（往节点下发 draw.trigger），本机没有节点，因此只注册一个永不开锁的闸门
+                // ——LinkageDrawCoordinator 桌面与手机共用，少了这条注册整台 Host 都起不来
+                // （Host.StartAsync 构造 GlobalShortcutService 时会拉到它）。
+                if (hostShape.RunsControlNode)
+                {
+                    services.AddSingleton(new ControlNodeClientOptions
+                    {
+                        Platform = ResolveControlPlatformName(),
+                        Version = GlobalConstants.Version,
+                        // 主机名在移动平台上是没有意义的（Android/iOS 都报 localhost）：平板既然是被控端，
+                        // 控制台里就不能每台都叫 localhost。平台 head 提供的设备名（Build.Model / UIDevice.Model）优先，
+                        // 用户自己在集控设置页填的显示名仍然覆盖它（见 ControlNodeDisplayName.Resolve）。
+                        HostName = string.IsNullOrWhiteSpace(mobilePlatform?.DeviceName)
+                            ? Environment.MachineName
+                            : mobilePlatform!.DeviceName!
+                    });
+                    services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();
+                    services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
+                    services.AddSingleton<IControlNodeCredentialProvider>(provider => new ControlNodeCredentialProvider(
+                        provider.GetRequiredService<SectlAuthService>(),
+                        provider.GetRequiredService<INodeEnrollmentStore>()));
+                    services.AddSingleton<IControlNodeTransportFactory, WebSocketControlNodeTransportFactory>();
+                    // 三个能力执行器各自独立：它们依赖的界面/配置/名单服务互不相同，
+                    // 拆开才能在测试里单独替换，也避免分发器变成一个巨大的文件。
+                    services.AddSingleton<ControlMediaPlayHandler>();
+                    services.AddSingleton<ControlSettingsPatchHandler>();
+                    services.AddSingleton<ControlRosterPushHandler>();
+                    services.AddSingleton<ControlRosterReadHandler>();
+                    services.AddSingleton<ControlSettingsReadHandler>();
+                    // 远程抽取：解析/闸门/回执在 ControlDrawTriggerHandler 里（可脱离界面单测），
+                    // 真正动手的那一步在 ControlPageDrawExecutor 里（要回到 UI 线程）。
+                    services.AddSingleton<IControlDrawExecutor, ControlPageDrawExecutor>();
+                    services.AddSingleton<ControlDrawTriggerHandler>();
+                    // 远程重置：只清临时记录（抽取进度），不碰历史；展示态复用各页面本地重置路径。
+                    services.AddSingleton<IControlDrawResetPresenter, ControlPageDrawResetPresenter>();
+                    services.AddSingleton<ControlDrawResetHandler>();
+                    services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
+                    services.AddSingleton(provider => new ControlNodeClient(
+                        provider.GetRequiredService<IControlNodeTransportFactory>(),
+                        provider.GetRequiredService<IControlNodeCredentialProvider>(),
+                        provider.GetRequiredService<IControlNodeStateStore>(),
+                        provider.GetRequiredService<IControlCommandDispatcher>(),
+                        provider.GetRequiredService<ControlNodeClientOptions>(),
+                        provider.GetRequiredService<ILogger<ControlNodeClient>>(),
+                        provider.GetRequiredService<ILogger<ControlNodeSession>>(),
+                        provider.GetRequiredService<INodeEnrollmentStore>()));
+                    // 显式泛型注册：构造函数里的 SectlAuthService / INodeEnrollmentStore 是可选参数，
+                    // 容器两者都能解析，所以这里不需要（也不该）写工厂——守卫测试会盯住这一行。
+                    services.AddHostedService<ControlNodeHostedService>();
+                    // 单例：这个 ViewModel 订阅了节点状态与连接状态，每次打开设置页都新建一个会累积订阅。
+                    services.AddSingleton<ControlSettingsPageViewModel>();
+                }
+                else if (hostShape.UsesUnlockedDrawGate)
+                {
+                    // 手机端没有本地集控节点，但 LinkageDrawCoordinator 仍然要求这个闸门可解析。
+                    services.AddSingleton<IControlDrawGate, UnlockedControlDrawGate>();
+                }
+                // 证明重放：文件访问留在应用层（ProofReplayFileService），真正的重放是无文件 I/O 的 Core
+                // ProofReplayService。手机与平板同样会打开这个窗口，所以注册在共享分支。
+                services.AddSingleton<ProofReplayFileService>();
+                services.AddSingleton<ProofReplayViewService>();
+                services.AddSingleton<SecuritySettingsStore>();
                 services.AddSingleton<SecurityCredentialStore>();
                 services.AddSingleton<IUsbDeviceCatalog, UsbDeviceCatalog>();
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
                 services.AddSingleton<ISecurityService, SecurityService>();
                 services.AddSingleton(serviceProvider => new SettingsIntegrityService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<SecuritySettingsStore>(),
                     serviceProvider.GetRequiredService<SecurityCredentialStore>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityService>>()));
                 services.AddSingleton(serviceProvider => new SettingsIntegrityRecoveryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<SecuritySettingsStore>(),
                     serviceProvider.GetRequiredService<IImportExportService>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityRecoveryService>>()));
+                services.AddSingleton<ConfigPolicySignatureService>();
+
+                // 接入令牌：自建集控的节点凭据，独立加密存放（data/config/security/control-node.json）。
+                // 注册在**共享分支**里：手机端虽然不跑节点，但远程抽取页同样要在"未登录 SECTL"时可用，
+                // 靠的就是这份接入记录；放在 RunsControlNode 分支里会让手机端永远接入不了。
+                services.AddSingleton<INodeEnrollmentStore>(provider => new FileNodeEnrollmentStore(
+                    provider.GetRequiredService<ILogger<FileNodeEnrollmentStore>>()));
+                services.AddSingleton(provider => new NodeEnrollmentClient(
+                    provider.GetRequiredService<IHttpClientFactory>(),
+                    provider.GetRequiredService<IControlPlaneEndpointStore>()));
+
+                // 控制面（集控 REST）客户端：桌面与手机共用同一份实现与同一条 Bearer 边界。
+                // 装饰顺序：未接入时 EnrolledAuthorizedApiSender 原样转交 SectlAuthorizedApiSender（今天的
+                // 行为一字不变），已接入时改出示节点令牌——**绝不再经过账号刷新逻辑**。
+                services.AddSingleton<SectlAuthorizedApiSender>();
+                services.AddSingleton<IAuthorizedApiSender>(provider => new EnrolledAuthorizedApiSender(
+                    provider.GetRequiredService<SectlAuthorizedApiSender>(),
+                    provider.GetRequiredService<INodeEnrollmentStore>(),
+                    provider.GetRequiredService<IHttpClientFactory>()));
+                services.AddSingleton<IControlPlaneDevicePreferenceStore, FileControlPlaneDevicePreferenceStore>();
+                // 控制面基址是可配置的（自建/私有部署），但它**不进 settings.json**：这个地址每次请求都会
+                // 收到本账号的令牌，一次设置导入不该能把令牌指到别的服务器上。见 IControlPlaneEndpointStore。
+                services.AddSingleton<IControlPlaneEndpointStore>(provider => new FileControlPlaneEndpointStore(
+                    provider.GetRequiredService<ILogger<FileControlPlaneEndpointStore>>()));
+                services.AddSingleton<IControlPlaneClient>(provider => new ControlPlaneClient(
+                    provider.GetRequiredService<IAuthorizedApiSender>(),
+                    provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
+                    endpointStore: provider.GetRequiredService<IControlPlaneEndpointStore>()));
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
@@ -1148,6 +1436,28 @@ public partial class App : Application
                 services.AddSingleton<LotteryPageViewModel>();
                 services.AddTransient<RollCallHistoryViewModel>();
                 services.AddTransient<HomeSettingsPageViewModel>();
+                // "远程抽取"页的 ViewModel：**桌面/平板/手机三个宿主共用同一份**。它只跟协议有关，
+                // 与谁是控制端/被控端无关，因此注册在共享分支；页面每次进入都重建（FAFrame 不快取），
+                // 它自己会记住上次选中的设备，不需要做成单例。
+                // 用显式工厂而不是纯约定注册：本机节点身份只有桌面/平板有（手机没有本地节点），
+                // 传 null = 设备列表里一台都不标"本机"，而不是让容器去猜一个可选参数。
+                // 后四个参数是给手机端的**内联接入卡片**用的：手机上没有「设置 → 集控」那一页，
+                // 未接入/令牌失效时就地填接入码（复用设置页那套 NodeEnrollmentClient + 接入记录存储）。
+                // 平台名必须报真实系统（手机是 android/ios，平板与桌面也是被控端），
+                // 设备名取平台根给的显示名，取不到时 VM 回落到主机名。
+                services.AddTransient(provider => new MobileRemoteDrawViewModel(
+                    provider.GetRequiredService<MainConfigHandler>(),
+                    provider.GetRequiredService<IControlPlaneClient>(),
+                    provider.GetRequiredService<IControlPlaneDevicePreferenceStore>(),
+                    provider.GetRequiredService<SectlAuthService>(),
+                    provider.GetRequiredService<ILogger<MobileRemoteDrawViewModel>>(),
+                    provider.GetService<IControlNodeStateStore>(),
+                    // 同上：手机很可能"没登录 SECTL、但接入了自建集控"，这份记录决定本页能不能直接用。
+                    provider.GetService<INodeEnrollmentStore>(),
+                    provider.GetService<NodeEnrollmentClient>(),
+                    provider.GetService<IControlPlaneEndpointStore>(),
+                    ResolveControlPlatformName(),
+                    mobilePlatform?.DeviceName));
                 services.AddTransient<LotteryHistoryViewModel>();
 
                 // 杂项 Views
@@ -1160,6 +1470,8 @@ public partial class App : Application
                     services.AddSingleton<CrashRecoveryViewState>();
                     services.AddTransient<CrashRecoveryView>();
                     services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery");
+                    // 设置页顶部的账号区：页面每次进入重建，订阅在页面离树时释放。
+                    services.AddTransient<MobileAccountSectionViewModel>();
                 }
                 else
                 {
@@ -1172,12 +1484,29 @@ public partial class App : Application
                     services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
                     services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
                     services.AddKeyedTransient<UserControl, MobileOverviewPage>(MobilePageIds.Overview);
+                    services.AddKeyedTransient<UserControl, MobileRemoteDrawPage>(MobilePageIds.RemoteDraw);
                 }
                 else
                 {
                     services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
                     services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
+
+                    // 桌面/平板：远程抽取排在**抽奖下面**——侧栏顺序由注册顺序 + 同一个 PageLocation 决定，
+                    // 因此这一条必须紧跟在抽奖注册之后，并和抽奖页一样是 Bottom（主界面侧栏的页脚组，
+                    // 桌面三个主页都在这组里；Top 组在这个应用里是空的）。手机走底部第 5 档，不受影响。
+                    //
+                    // 桌面**默认隐藏**这一项（用户在 设置→通用→集控 里打开）：真正"谁看得见"由 MainView
+                    // 按 AppHostShape 的规则切换 IsVisible——注册永远都在，因为运行时增删侧栏项会让
+                    // FluentAvalonia 丢选中态并以 null 触发 ItemInvoked。
+                    if (hostShape.UsesRemoteDrawSidebarPage)
+                        services.AddMainPage<RemoteDrawPage>(MobileResources.P_RemoteDraw);
+
                     services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
+
+                    // 「随机数」排在历史之后：远程抽取必须紧跟在抽奖之后（见上），因此新页不插进那两条之间。
+                    // ViewModel 也注册在这个桌面分支里：它依赖安全设置存储与控制面网关，两者都只在桌面宿主存在。
+                    services.AddMainPage<RawRandomPage>(Langs.MainPages.RawRandom.Resources.C_PageTitle);
+                    services.AddSingleton<RawRandomPageViewModel>();
                 }
 
                 // 设置界面 Views
@@ -1207,6 +1536,12 @@ public partial class App : Application
                 services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification
                     .Resources.Page_Title);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
+                if (hostShape.RunsControlNode)
+                {
+                    // 集控节点与集控设置页成对出现：跑节点的宿主（桌面/平板）才该看到这个页面。
+                    services.AddSettingsPage<ControlSettingsPage>(
+                        Langs.SettingsPages.General.Control.Resources.Page_Title);
+                }
 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Personalized, "settings.personalized",
@@ -1217,6 +1552,9 @@ public partial class App : Application
                     // 手机没有浮窗
                     services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources
                         .Settings_FloatingWindow);
+                    // 计时器页紧随浮窗页：计时器的入口就在浮窗上，且两者都只有桌面端有
+                    services.AddSettingsPage<TimerSettingsPage>(Langs.SettingsPages.Personalized.Timer
+                        .Resources.Page_Title);
                 }
                 services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
                     .Page_Title);
@@ -1296,6 +1634,30 @@ public partial class App : Application
                     services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
                     services.AddSingleton<IPluginDrawService, PluginDrawService>();
                     services.AddSingleton<IFloatingWindowButtonRegistry, FloatingWindowButtonRegistry>();
+
+                    // 插件扩展点：结果呈现 / 叠加层 / 界面插槽 / 界面样式
+                    services.AddSingleton<IResultPresentationService, ResultPresentationService>();
+                    services.AddSingleton<IOverlayHostService, OverlayHostAdapter>();
+                    services.AddSingleton<IUiContributionService, UiContributionService>();
+                    services.AddSingleton<IUiStyleService, UiStyleService>();
+
+                    // 插件扩展点（第二批）：事件总线 / UI 线程 / 私有存储 / 名单查询 / 忙碌指示 /
+                    // 抽签流水线 / 主题色板 / 通知与对话框 / 窗口 / 弹层 / 本地化 / 能力与权限 / 诊断
+                    services.AddSingleton<IPluginEventBus, PluginEventBus>();
+                    services.AddSingleton<IUiScheduler, UiScheduler>();
+                    services.AddSingleton<IPluginStorageFactory>(_ =>
+                        new PluginStorageFactory(PluginManager.PluginConfigsDirectory));
+                    services.AddSingleton<IThemeTokenService, ThemeTokenService>();
+                    services.AddSingleton<IListQueryService, ListQueryService>();
+                    services.AddSingleton<IBusyIndicator, BusyIndicator>();
+                    services.AddSingleton<IDrawPipelineService, DrawPipelineService>();
+                    services.AddSingleton<INotificationService, PluginNotificationService>();
+                    services.AddSingleton<IWindowService, PluginWindowService>();
+                    services.AddSingleton<IPopupService, PopupService>();
+                    services.AddSingleton<ILocalizationService, PluginLocalizationService>();
+                    services.AddSingleton<ICapabilityService, PluginCapabilityService>();
+                    services.AddSingleton<IPluginDiagnosticsService, PluginDiagnosticsService>();
+
                     services.AddHostedService<PluginLifecycleBridge>();
                     services.AddHttpClient("plugin-market", client => client.Timeout = TimeSpan.FromSeconds(30));
                     services.AddSingleton<PluginMarketService>(provider => new PluginMarketService(
@@ -1316,6 +1678,10 @@ public partial class App : Application
 
         // 刷新个性化设置
         RefreshPersonalizedSettings();
+
+        // 插件被卸载/禁用后，"动画样式"里指向它的那个选择就成了死值：既没有插件接管，
+        // 宿主也不会播自己的动画。这里按"贡献项是否还在"把死值退回内置动画。
+        ResetMissingPluginAnimationSelections();
 
         IAppHost.GetService<IProfileService>();
 
@@ -1342,14 +1708,60 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    ///     插件被卸载/禁用后，配置里指向它的设置项就没了，这时应当恢复成默认设置：
+    ///     把四份抽取设置里失效的 <see cref="DrawSettingsConfigBase.PluginAnimationId" /> 退回宿主内置动画。
+    ///     不清理的话，用户会看到一个空白的"动画样式"，而且抽签时既没有插件演出、宿主的动画也不会播。
+    /// </summary>
+    private static void ResetMissingPluginAnimationSelections()
+    {
+        try
+        {
+            var configHandler = IAppHost.TryGetService<MainConfigHandler>();
+            if (configHandler is null)
+                return;
+
+            var logger = IAppHost.TryGetService<ILogger<App>>();
+            var contributions = IAppHost.TryGetService<IEnumerable<IDrawAnimationContribution>>();
+
+            var reset = AnimationSelectionFallback.Apply(configHandler.Data, contributions, logger);
+            if (reset <= 0)
+                return;
+
+            // 嵌套属性不冒泡到 ConfigHandlerBase 的自动保存，必须显式落盘。
+            configHandler.Save();
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?.LogWarning(ex, "清理失效的插件动画选择时出错，已忽略。");
+        }
+    }
+
     public void InitializeApp()
     {
         var taskBarIconService = IAppHost.Host!.Services
             .GetServices<IHostedService>().OfType<TaskBarIconService>().First();
         var menu = this.FindResource(@"AppMenu") as NativeMenu;
         taskBarIconService.MainTaskBarIcon.Menu = menu;
-        _floatingWindowMenuItem = menu?.Items.ElementAtOrDefault(3) as NativeMenuItem;
+        _floatingWindowMenuItem = FindTrayMenuItem(menu, SecRandom.Langs.Common.Resources.Menu_ShowFloatingWindow)
+                                  ?? menu?.Items.ElementAtOrDefault(3) as NativeMenuItem;
+        _exitSudoModeMenuItem = FindTrayMenuItem(menu, SecRandom.Langs.Common.Resources.Menu_ExitSudoMode)
+                                ?? menu?.Items.ElementAtOrDefault(9) as NativeMenuItem;
+        if (menu is not null && _exitSudoModeMenuItem is not null)
+        {
+            // 托盘菜单里的分隔线即使菜单项隐藏也仍然占位，因此按菜单项的实际位置取它，
+            // 而不是写死索引：新增或删除任意一项都不应该让这条分隔线错位
+            var exitSudoModeIndex = menu.Items.IndexOf(_exitSudoModeMenuItem);
+            _exitSudoModeSeparator = exitSudoModeIndex > 0
+                ? menu.Items[exitSudoModeIndex - 1] as NativeMenuItemSeparator
+                : null;
+        }
         RefreshTrayWindowMenuItems();
+        RefreshSudoMenuItem();
+        
+        IAppHost.GetService<ISecurityService>().SudoModeChanged += RefreshSudoMenuItem;
+        
+        _sudoModeRefreshTimer = new Timer(_ => Dispatcher.UIThread.Post(RefreshSudoMenuItem), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
         taskBarIconService.MainTaskBarIcon.IsVisible = true;
         taskBarIconService.MainTaskBarIcon.Clicked += MainTaskBarIconOnClicked;
         IAppHost.GetService<DesktopIntegrationService>().EnsureConfiguredIntegrations();
@@ -1372,6 +1784,11 @@ public partial class App : Application
 
     private async Task StopAsync(bool requestLifetimeShutdown)
     {
+        // Host 可能已在停机流程中释放，TryGetService 会返回 null
+        IAppHost.TryGetService<ISecurityService>()?.SudoModeChanged -= RefreshSudoMenuItem;
+        _sudoModeRefreshTimer?.Dispose();
+        _sudoModeRefreshTimer = null;
+
         lock (_shutdownGate)
         {
             if (_isStopping)
@@ -1398,6 +1815,33 @@ public partial class App : Application
             {
                 IAppHost.TryGetService<ILogger<App>>()?
                     .LogError(exception, "Application stopping notification failed.");
+            }
+
+            try
+            {
+                //  插件注册的退出收尾（落盘、断连）：按 Priority 升序，整体限时，单个失败不影响其它人。
+                var participants = IAppHost.TryGetService<IEnumerable<IAppShutdownParticipant>>();
+                if (participants is not null)
+                {
+                    using var shutdownBudget = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    foreach (var participant in participants.OrderBy(static item => item.Priority))
+                    {
+                        try
+                        {
+                            await participant.OnShuttingDownAsync(shutdownBudget.Token).ConfigureAwait(false);
+                        }
+                        catch (Exception exception)
+                        {
+                            IAppHost.TryGetService<ILogger<App>>()?
+                                .LogError(exception, "Shutdown participant {ParticipantId} failed.", participant.Id);
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                IAppHost.TryGetService<ILogger<App>>()?
+                    .LogError(exception, "Application shutdown participants failed.");
             }
 
             try
@@ -1488,7 +1932,7 @@ public partial class App : Application
 
     public async Task RestartThroughLauncherAsync()
     {
-        var launcherName = OperatingSystem.IsWindows() ? "SecRandomLauncher.exe" : "SecRandomLauncher";
+        var launcherName = OperatingSystem.IsWindows() ? "VeriRandomLauncher.exe" : "VeriRandomLauncher";
         var launcherPath = Path.Combine(Utils.PackageRoot, launcherName);
         if (!File.Exists(launcherPath))
             throw new FileNotFoundException("便携版 Launcher 不存在。", launcherPath);
@@ -1724,6 +2168,11 @@ public partial class App : Application
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
         Langs.FirstRunOobe.Resources.Culture = cultureInfo;
         Langs.MainPages.QuickDraw.Resources.Culture = cultureInfo;
+
+        // 插件本地化服务会缓存当前语言与词条，切换语言后通知它刷新。
+        // 宿主起来之前（首次启动流程）调用时 TryGetService 返回 null，这里的判空即为降级。
+        if (IAppHost.TryGetService<ILocalizationService>() is PluginLocalizationService pluginLocalization)
+            pluginLocalization.NotifyCultureChanged();
     }
 
     /// <summary>
@@ -1764,6 +2213,43 @@ public partial class App : Application
             Resources[@"CodeInlineColor"] = this.FindResource(@"SystemAccentColorDark2");
             Resources[@"QuoteBorderColor"] = this.FindResource(@"SystemAccentColor");
         });
+    }
+
+    /// <summary>
+    ///     低配模式：关闭入场/弹出动画，把位图缩放质量从 HighQuality 降到 LowQuality。
+    ///     <para>
+    ///         启动时必须在任何视图创建之前调用，因为 <see cref="IntroAnimationPolicy" /> 只在
+    ///         「是否给子元素打动画标记」这一点上拦截；视图建好之后再关会让已打标记的元素停住。
+    ///     </para>
+    /// </summary>
+    private void ApplyPerformanceSettings(PerformanceSettingsConfig settings)
+    {
+        IntroAnimationPolicy.IsEnabled = !settings.LowSpecMode;
+
+        if (settings.LowSpecMode)
+        {
+            _reducedMotionStyles ??= new StyleInclude(new Uri(@"avares://SecRandom/"))
+            {
+                Source = new Uri(@"avares://SecRandom/Styles/ReducedMotion.axaml")
+            };
+
+            if (!Styles.Contains(_reducedMotionStyles))
+                Styles.Add(_reducedMotionStyles);
+        }
+        else if (_reducedMotionStyles is not null && Styles.Contains(_reducedMotionStyles))
+        {
+            Styles.Remove(_reducedMotionStyles);
+        }
+
+        UiRenderQuality.ApplyAll();
+    }
+
+    /// <summary>
+    ///     设置页修改低配模式后重新应用；已打开的页面不追溯入场动画，动画只影响之后创建的视图。
+    /// </summary>
+    public void RefreshPerformanceSettings()
+    {
+        ApplyPerformanceSettings(IAppHost.GetService<MainConfigHandler>().Data.General.PerformanceSettings);
     }
 
     private void ApplyThemeSettings(AppearanceSettingsConfig settings)
@@ -1807,11 +2293,79 @@ public partial class App : Application
 
     #region Windows
 
+    /// <summary>集控协议里的平台标识：<c>windows</c> / <c>linux</c> / <c>macos</c> / <c>android</c> / <c>ios</c>。</summary>
+    /// <remarks>
+    ///     平板也是被控端，所以移动平台必须报出自己的真实平台名：一律回落成 <c>unknown</c> 的话，
+    ///     控制台的节点列表里每一台平板都看不出是 iPad 还是 Android 平板。
+    /// </remarks>
+    private static string ResolveControlPlatformName() =>
+        OperatingSystem.IsWindows() ? "windows"
+        : OperatingSystem.IsMacOS() ? "macos"
+        : OperatingSystem.IsAndroid() ? "android"
+        : OperatingSystem.IsIOS() ? "ios"
+        : OperatingSystem.IsLinux() ? "linux"
+        : "unknown";
+
     public static void ShowMainWindow() => ShowMainWindow(null);
 
     public static void ShowMainWindow(string? pageId)
     {
         ObserveTask(ShowMainWindowCoreAsync(pageId), "Failed to show main window.");
+    }
+
+    /// <summary>
+    ///     远程抽取结果的展示路径：显示主界面、切到指定页，并把它**还原 + 激活到前台**。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         与 <see cref="ShowMainWindow(string?)" /> 的唯一区别就是"置前"：那条路径只保证窗口被显示，
+    ///         已经打开的窗口会留在后台。远程点名是"必须让教室看见"的行为——老师按下按钮，
+    ///         屏幕上就该出现抽到了谁；只在后台刷新一下，课堂里没人知道发生了什么。
+    ///     </para>
+    ///     <para>
+    ///         <b>为什么可以在这里破例抢前台</b>：这是一条用户明确按下"抽取"才触发的展示路径，
+    ///         不是后台弹窗；普通显示、浮窗与通知渠道仍遵守用户的"不抢焦点/置顶模式"设置。
+    ///         这里只做还原/显示/激活，**不**去拨 Topmost（理由见 <see cref="RemoteDrawWindowPlan" />）。
+    ///     </para>
+    ///     <para>
+    ///         <b>平板（单窗口宿主）走的是同一条路，但"置前"落在别的动作上</b>：那里没有 <c>MainWindow</c>，
+    ///         主界面就是宿主里的当前页，因此能做的只有"把目标页切到主界面里 + 激活视图会话"；
+    ///         把整个应用从后台提到前台是 Android/iPadOS 不允许的（见 <see cref="RemoteDrawFocusPlan" />）。
+    ///     </para>
+    /// </remarks>
+    public static Task ShowMainWindowForRemoteDrawAsync(string? pageId = null) =>
+        ShowMainWindowForRemoteDrawCoreAsync(pageId);
+
+    private static async Task ShowMainWindowForRemoteDrawCoreAsync(string? pageId)
+    {
+        await ShowMainWindowCoreAsync(pageId).ConfigureAwait(true);
+
+        var window = _mainWindow;
+        var plan = RemoteDrawFocusPlan.Resolve(
+            App.IsDesktop,
+            isWindowVisible: window?.IsVisible ?? false,
+            isWindowMinimized: window?.WindowState == WindowState.Minimized);
+
+        // 单窗口宿主（平板）：没有窗口可还原/显示/激活——目标页已经在 ShowMainWindowCoreAsync 里切好了，
+        // 主界面又是宿主里的当前页，因此这里**什么都不做**才是正确行为，而不是悄悄去建一个桌面窗口。
+        if (plan.Surface == RemoteDrawSurface.SingleViewHost || window is null)
+            return;
+
+        void BringToFront()
+        {
+            // 顺序不能反：最小化的窗口要先还原，否则激活只会得到一个仍然最小化的窗口。
+            if (plan.Restore)
+                window.WindowState = WindowState.Normal;
+            if (plan.Show)
+                window.Show();
+            if (plan.Activate)
+                window.Activate();
+        }
+
+        if (Dispatcher.UIThread.CheckAccess())
+            BringToFront();
+        else
+            await Dispatcher.UIThread.InvokeAsync(BringToFront).GetTask().ConfigureAwait(false);
     }
 
     private static async Task ShowMainWindowCoreAsync(string? pageId = null)
@@ -1822,7 +2376,11 @@ public partial class App : Application
         try
         {
             WriteDesktopStartupDiagnostic("Showing main window.");
-            if (_mainWindow is null)
+
+            // 桌面：主界面在一个独立窗口里，没有就建一个。
+            // 单窗口宿主（平板/手机）：没有 Window 这个概念，主界面是宿主里的视图（平板是 MainView，手机是根视图），
+            // 因此这里**只**激活那份视图会话，绝不构造桌面窗口——在平板上建一个 Window 只会得到一个没人能看到的窗口。
+            if (_mainWindow is null && App.IsDesktop)
             {
                 WriteDesktopStartupDiagnostic("Creating main window and view host.");
                 var mainWindow = _mainWindow = new MainWindow(MainWindowSettingsScope.Primary)
@@ -1838,9 +2396,10 @@ public partial class App : Application
                 };
             }
 
+            // ReuseExistingView（默认 true）：已经显示过的主界面会被**激活**而不是重复压一层。
             await IAppHost.GetService<IViewEngine>().ShowAsync(
-                DesktopViewIds.Main,
-                new ViewShowOptions { HostId = DesktopViewIds.Main }).ConfigureAwait(true);
+                App.IsDesktop ? DesktopViewIds.Main : GetMobileInitialViewId(),
+                new ViewShowOptions { HostId = App.IsDesktop ? DesktopViewIds.Main : null }).ConfigureAwait(true);
             WriteDesktopStartupDiagnostic("Main window view displayed.");
             if (!string.IsNullOrWhiteSpace(pageId))
                 MainView.Current?.SelectNavigationItemById(pageId);
@@ -2125,6 +2684,38 @@ public partial class App : Application
             DispatcherPriority.Render);
     }
 
+    /// <summary>
+    ///     Foreground window of whoever invoked this quick draw, so it can be handed back when the draw window
+    ///     closes. Static because the invocation and the window's close handler are both static; it is cleared
+    ///     on every path that does not end with a window being closed.
+    /// </summary>
+    private static PlatformWindowHandle? _quickDrawForegroundTarget;
+
+    /// <summary>
+    ///     Starts the beacon fetch before anything else can delay the draw, so the HTTP round trip runs behind
+    ///     the rolling animation instead of in front of it. Only the pulse is fetched — the per-pulse sequence
+    ///     is still reserved at draw time, so an unused prefetch costs nothing.
+    /// </summary>
+    private static void QuickDrawBeaconPrefetch()
+    {
+        if (!IAppHost.GetService<MainConfigHandler>().Data.General.Verification.BeaconPrefetchEnabled)
+            return;
+
+        IAppHost.TryGetService<BeaconEntropyProvider>()?.Prefetch();
+    }
+
+    /// <summary>
+    ///     Records the window that owns the foreground, unless the option is off or the platform has no
+    ///     implementation — in which case there is deliberately nothing to hand back.
+    /// </summary>
+    private static PlatformWindowHandle? CaptureQuickDrawForegroundTarget()
+    {
+        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.RestoreFocusAfterQuickDraw)
+            return null;
+
+        return IAppHost.TryGetService<IForegroundWindowService>()?.Capture();
+    }
+
     private static async Task ShowQuickDrawWindowAsync()
     {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
@@ -2135,8 +2726,16 @@ public partial class App : Application
             _quickDrawNotificationSettings = null;
             var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
             quickDraw.ClearNotificationPresentation();
+
+            // Both of these must run before anything of ours can take the foreground: the authorization prompt
+            // below may activate our floating window (App.GetRootWindow falls back to it), so a capture taken
+            // after it would record our own window instead of the classroom's.
+            QuickDrawBeaconPrefetch();
+            _quickDrawForegroundTarget = CaptureQuickDrawForegroundTarget();
+
             if (!quickDraw.IsDrawing && !await quickDraw.AuthorizeTriggeredDrawAsync())
             {
+                _quickDrawForegroundTarget = null;
                 transaction?.Finish(SpanStatus.PermissionDenied);
                 return;
             }
@@ -2145,6 +2744,9 @@ public partial class App : Application
                 .UsesBuiltInNotificationService(NotificationSettingsType.QuickDraw);
             if (!showBuiltInNotificationAnimation)
             {
+                // External-only delivery draws with no window of ours, so there is no window to hand the
+                // foreground back from.
+                _quickDrawForegroundTarget = null;
                 HideQuickDrawNotificationWindow();
                 if (!quickDraw.IsDrawing)
                     await quickDraw.StartAuthorizedTriggeredDrawAsync();
@@ -2208,6 +2810,16 @@ public partial class App : Application
         {
             _quickDrawWindow = null;
             _quickDrawNotificationSettings = null;
+
+            // Handed back here, while this window still owns the foreground: SetForegroundWindow is refused
+            // once the caller no longer owns it, and a shutting-down app must not touch another
+            // application's windows.
+            if (_quickDrawForegroundTarget is { } target)
+            {
+                _quickDrawForegroundTarget = null;
+                if (Current is { } app && !app.IsStopping)
+                    IAppHost.TryGetService<IForegroundWindowService>()?.TryRestore(target);
+            }
         };
         return _quickDrawWindow;
     }
@@ -2318,6 +2930,8 @@ public partial class App : Application
             return;
         }
 
+        RefreshSudoMenuItem();
+
         var taskBarIconService = IAppHost.Host!.Services
             .GetServices<IHostedService>().OfType<TaskBarIconService>().First();
 
@@ -2381,9 +2995,49 @@ public partial class App : Application
                 : SecRandom.Langs.Common.Resources.Menu_ShowFloatingWindow;
     }
 
+    private static NativeMenuItem? FindTrayMenuItem(NativeMenu? menu, string header) =>
+        menu?.Items
+            .OfType<NativeMenuItem>()
+            .FirstOrDefault(item => string.Equals(item.Header?.ToString(), header, StringComparison.Ordinal));
+
+    private void RefreshSudoMenuItem()
+    {
+        if (_exitSudoModeMenuItem is not null)
+        {
+            var securityService = IAppHost.GetService<ISecurityService>();
+            var isVisible = securityService.IsSudoModeActive();
+            _exitSudoModeMenuItem.IsVisible = isVisible;
+            
+            if (_exitSudoModeSeparator is not null)
+            {
+                var menu = this.FindResource(@"AppMenu") as NativeMenu;
+                if (menu is not null)
+                {
+                    if (isVisible && !menu.Items.Contains(_exitSudoModeSeparator))
+                    {
+                        // Insert separator before Exit Sudo Mode item
+                        var index = menu.Items.IndexOf(_exitSudoModeMenuItem);
+                        if (index >= 0)
+                            menu.Items.Insert(index, _exitSudoModeSeparator);
+                    }
+                    else if (!isVisible && menu.Items.Contains(_exitSudoModeSeparator))
+                    {
+                        menu.Items.Remove(_exitSudoModeSeparator);
+                    }
+                }
+            }
+        }
+    }
+
     private void MenuItemOpenSettings_OnClick(object? sender, EventArgs e)
     {
         ShowSettingsWindow();
+    }
+
+    private void MenuItemExitSudoMode_OnClick(object? sender, EventArgs e)
+    {
+        // 「退出 Sudo 模式」应当结束所有免验证状态：全局计时器与设置窗口的授权都不能留下
+        IAppHost.GetService<ISecurityService>().DeactivateSudoMode();
     }
 
     private void MenuItemRestartProgram_OnClick(object? sender, EventArgs e)

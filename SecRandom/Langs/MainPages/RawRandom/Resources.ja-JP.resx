@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="C_EntropySources" xml:space="preserve"><value>エントロピー源</value></data>
+  <data name="C_Generate" xml:space="preserve"><value>生成</value></data>
+  <data name="C_LocalCsprng" xml:space="preserve"><value>ローカル CSPRNG</value></data>
+  <data name="C_LowerBound" xml:space="preserve"><value>下限</value></data>
+  <data name="C_LockSettings" xml:space="preserve"><value>範囲とエントロピー源をロック</value></data>
+  <data name="C_PageTitle" xml:space="preserve"><value>乱数</value></data>
+  <data name="C_Range" xml:space="preserve"><value>範囲</value></data>
+  <data name="C_SourceDrand" xml:space="preserve"><value>drand ネットワーク</value></data>
+  <data name="C_SourceNist" xml:space="preserve"><value>NIST ビーコン</value></data>
+  <data name="C_SourceRandomOrg" xml:space="preserve"><value>random.org</value></data>
+  <data name="C_UpperBound" xml:space="preserve"><value>上限</value></data>
+  <data name="M_GeneratedNotVerifiable" xml:space="preserve"><value>生成しましたが、検証できないエントロピー源が混ざっているため、この結果は再現可能な証拠になりません</value></data>
+  <data name="M_GeneratedVerifiable" xml:space="preserve"><value>単一の検証可能な源から生成しました。その源が公開したパルスから同じ数を再計算できます</value></data>
+  <data name="M_GenerateFailedFormat" xml:space="preserve"><value>生成に失敗しました：{0}</value></data>
+  <data name="M_Generating" xml:space="preserve"><value>生成中</value></data>
+  <data name="M_LockedHint" xml:space="preserve"><value>範囲とエントロピー源はロックされています。下のスイッチを解除すると変更できます</value></data>
+  <data name="M_NoEntropySource" xml:space="preserve"><value>エントロピー源を 1 つ以上選択してください</value></data>
+  <data name="M_NotVerifiableNotice" xml:space="preserve"><value>random.org またはローカル CSPRNG が選択されています：再現性が損なわれ、この結果は入力がこの数を出したことしか示さず、公平性の証拠にはなりません</value></data>
+  <data name="M_PageDescription" xml:space="preserve"><value>指定した範囲で生の乱数を 1 つ生成します（重複や復元は考慮しません）。検証可能な源を 1 つだけ選んだ場合、その源が公開したパルスから後で同じ数を再計算できます</value></data>
+  <data name="M_RangeInvalid" xml:space="preserve"><value>範囲が無効です：下限は上限を超えられず、どちらも整数である必要があります</value></data>
+  <data name="M_Ready" xml:space="preserve"><value>範囲とエントロピー源を設定して生成してください</value></data>
+  <data name="M_ResultFormat" xml:space="preserve"><value>結果：{0}</value></data>
+  <data name="M_VerifiableNotice" xml:space="preserve"><value>検証可能な源を 1 つだけ選択しています：その源が公開したパルスから後で同じ数を再計算できます</value></data>
+  <data name="M_Locked" xml:space="preserve"><value>ロック中：範囲とエントロピー源は変更できません</value></data>
+  <data name="M_ProofSavedFormat" xml:space="preserve"><value>証明を {0} に書き込みました。ローカルでの再計算チェックに合格しています</value></data>
+  <data name="M_ProofVerifyFailed" xml:space="preserve"><value>乱数は生成されましたが証明の自己チェックに失敗しました。この記録は使わず、ログとともに報告してください</value></data>
+  <data name="M_UnlockCancelled" xml:space="preserve"><value>検証が完了しなかったため、ロックは維持されます</value></data>
+  <data name="M_Unlocked" xml:space="preserve"><value>ロックを解除しました。範囲とエントロピー源を変更できます</value></data>
+  <data name="C_UseValues" xml:space="preserve"><value>指定した集合から抽選</value></data>
+  <data name="C_ValuesWatermark" xml:space="preserve"><value>この値だけから抽選します。例：5,10（カンマまたは空白区切り）</value></data>
+  <data name="C_BatchCount" xml:space="preserve"><value>生成する個数</value></data>
+  <data name="C_AdvancedOptions" xml:space="preserve"><value>詳細オプション</value></data>
+  <data name="C_RawEntropy" xml:space="preserve"><value>範囲の値ではなく生のエントロピーを出力</value></data>
+  <data name="C_BitCount" xml:space="preserve"><value>ビット数</value></data>
+  <data name="M_AdvancedHint" xml:space="preserve"><value>ビット数を増やしてもエントロピーは増えません。出力はシードから決定的に展開されるため、使えるエントロピーは情報源を超えません</value></data>
+  <data name="M_EntropyFormat" xml:space="preserve"><value>記号 {0} 個 · 1 記号あたり {1:F2} bit · 合計 {2:F0} bit · 情報源の上限 {3} bit</value></data>
+  <data name="C_ExclusionsWatermark" xml:space="preserve"><value>候補から除外します。例：7,8 または 13-15（空欄可）</value></data>
+  <data name="C_Generator" xml:space="preserve"><value>列挙ジェネレーター</value></data>
+  <data name="C_GeneratorFrom" xml:space="preserve"><value>X の開始</value></data>
+  <data name="C_GeneratorTo" xml:space="preserve"><value>X の終了</value></data>
+  <data name="C_PredicateWatermark" xml:space="preserve"><value>条件。例：X%2==0（空欄ならすべて）</value></data>
+  <data name="M_PredicateHint" xml:space="preserve"><value>条件の変数は X だけで、+ - * / % と比較・論理演算に対応します。代入やループはありません</value></data>
+  <data name="M_CandidatesFormat" xml:space="preserve"><value>候補 {0} 件</value></data>
+  <data name="M_ValuesInvalidFormat" xml:space="preserve"><value>絞り込み条件が無効です：{0}</value></data>
+  <data name="C_CopyResult" xml:space="preserve"><value>結果をコピー</value></data>
+  <data name="M_CopiedResultFormat" xml:space="preserve"><value>{0} 文字をコピーしました</value></data>
+  <data name="M_NothingToCopy" xml:space="preserve"><value>コピーできる結果がまだありません</value></data>
+  <data name="M_ClipboardUnavailable" xml:space="preserve"><value>クリップボードを利用できないためコピーできません</value></data>
+  <data name="C_OutputFormat" xml:space="preserve"><value>表示形式</value></data>
+  <data name="O_FormatDecimal" xml:space="preserve"><value>10 進数</value></data>
+  <data name="O_FormatHex" xml:space="preserve"><value>16 進数</value></data>
+  <data name="O_FormatAscii" xml:space="preserve"><value>印刷可能な ASCII</value></data>
+  <data name="C_AsciiCharCount" xml:space="preserve"><value>文字数</value></data>
+  <data name="C_AllowConcat" xml:space="preserve"><value>複数回のサンプルを連結して広い出力を埋める</value></data>
+  <data name="M_ConcatHint" xml:space="preserve"><value>取得のたびに新しいエントロピーが得られるのはローカル CSPRNG と random.org だけです。同じビーコンのパルス内では増えないため、出力は広くなっても実測エントロピーは変わりません</value></data>
+  <data name="M_GeneratorHelp" xml:space="preserve"><value>書式：変数は X のみ&#10;X%2==0 → 偶数&#10;X%3!=0 → 3 の倍数以外&#10;X&gt;=10 &amp;&amp; X&lt;=20 → 10〜20 のみ&#10;+ - * / %、比較、&amp;&amp; || !、括弧に対応</value></data>
+  <data name="M_ExclusionsIneffective" xml:space="preserve"><value>除外指定はどの候補値にも一致しません</value></data>
+  <data name="M_ConcatNoGain" xml:space="preserve"><value>（連結しても新しいエントロピーは増えていません）</value></data>
+  <data name="C_ConfidentialMode" xml:space="preserve"><value>機密モード（記録を残さない）</value></data>
+  <data name="C_RevealResult" xml:space="preserve"><value>結果を表示</value></data>
+  <data name="C_HideResult" xml:space="preserve"><value>結果を隠す</value></data>
+  <data name="M_ConfidentialMasked" xml:space="preserve"><value>結果は伏せ字です</value></data>
+  <data name="M_ConfidentialGenerated" xml:space="preserve"><value>生成しました（機密モード：記録を残していないため、後から照合できません）</value></data>
+  <data name="M_ConfidentialNotice" xml:space="preserve"><value>機密モード：記録を残さないため、照合はできません</value></data>
+  <data name="M_ConfidentialHint" xml:space="preserve"><value>オンの間はこの生成で一切の記録を残しません。シードと結果はメモリ上にだけ存在します。結果は * で伏せて表示され、必要に応じて表示・コピーできます。コピーすると内容はシステムのクリップボード（履歴を含む）に入ります。この操作はご自身の判断で行ってください。アプリを閉じると復元できません</value></data>
+  <data name="M_CopiedConfidentialFormat" xml:space="preserve"><value>{0} 文字をコピーしました（機密モード：内容はクリップボードにあります）</value></data>
+</root>

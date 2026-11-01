@@ -213,4 +213,10 @@
   <data name="O_StickDisplay_Arrow" xml:space="preserve">
     <value>箭头</value>
   </data>
+  <data name="S_Interaction_RestoreFocusAfterQuickDraw" xml:space="preserve">
+    <value>闪抽结束后归还焦点</value>
+  </data>
+  <data name="S_Interaction_RestoreFocusAfterQuickDraw_D" xml:space="preserve">
+    <value>闪抽前记录当时的前台窗口，闪抽窗口关闭后把焦点还给它（目前仅 Windows 支持，其它平台该开关不生效）</value>
+  </data>
 </root>

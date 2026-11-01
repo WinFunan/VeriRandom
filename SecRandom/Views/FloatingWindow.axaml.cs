@@ -20,6 +20,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Helpers;
 using SecRandom.Services.Linkage;
 using SecRandom.Services;
 using SecRandom.Services.Platform;
@@ -64,9 +65,7 @@ public partial class FloatingWindow : Window
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
         this.ApplyPlatformFeatures(WindowFeatures.ToolWindow, enabled: true);
 
-        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
-        RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
-        RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
+        UiRenderQuality.Apply(this);
 
         Closing += OnClosing;
         AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
@@ -112,6 +111,7 @@ public partial class FloatingWindow : Window
                 "quick_draw" => GetQuickDrawButton(settings),
                 "lottery" => GetLotteryButton(settings),
                 "timer" => GetTimerButton(settings),
+                "raw_random" => GetRawRandomButton(settings),
                 _ => null
             };
 
@@ -191,6 +191,7 @@ public partial class FloatingWindow : Window
         if (settings.ShowQuickDrawButton) yield return "quick_draw";
         if (settings.ShowLotteryButton && isLotteryEnabled) yield return "lottery";
         if (settings.ShowTimerButton) yield return "timer";
+        if (settings.ShowRawRandomButton) yield return "raw_random";
     }
 
     private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
@@ -262,6 +263,18 @@ public partial class FloatingWindow : Window
         b.Click += (sender, args) =>
         {
             App.ShowQuickDrawWindow();
+        };
+
+        return b;
+    }
+
+    private static Button GetRawRandomButton(FloatingWindowSettingsConfig settings)
+    {
+        var b = CreateButton(FluentIcons.NumberSymbolFilled, Langs.MainPages.RawRandom.Resources.C_PageTitle, settings);
+
+        b.Click += (sender, args) =>
+        {
+            App.ToggleMainWindow("main.rawRandom");
         };
 
         return b;

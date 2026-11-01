@@ -7,6 +7,9 @@
         <Nullable>enable</Nullable>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
+        <!-- The project keeps its SecRandom.Desktop folder/file name (an internal identifier); only the
+             produced executable is renamed, and the packaging scripts expect VeriRandom.Desktop. -->
+        <AssemblyName>VeriRandom.Desktop</AssemblyName>
         <ApplicationIcon>..\SecRandom\Assets\AppLogo.ico</ApplicationIcon>
         <CetCompat>false</CetCompat>
     </PropertyGroup>

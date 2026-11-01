@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
+using SecRandom.Core;
 using SecRandom.Shared;
 
 namespace SecRandom.Services.Security;
@@ -30,6 +31,7 @@ internal sealed class SecurityCredentialStore
     private readonly CredentialKdfParameters _defaultKdfParameters;
     private readonly Action? _beforeWrite;
     private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
+    private bool _directoryProtected;
 
     public SecurityCredentialStore()
         : this(Utils.GetFilePath("config", "security", "credentials.json"), CredentialKdfParameters.Default)
@@ -44,6 +46,8 @@ internal sealed class SecurityCredentialStore
         _path = path;
         _defaultKdfParameters = defaultKdfParameters ?? CredentialKdfParameters.Default;
         _beforeWrite = beforeWrite;
+        // 已经存在的安装也要在下一次启动时收紧目录权限，而不是等到下次保存凭据
+        EnsureDirectoryProtection();
     }
 
     private string StandaloneTotpPath =>
@@ -230,6 +234,11 @@ internal sealed class SecurityCredentialStore
     /// </summary>
     public string? LoadStandaloneTotp()
     {
+        // The plaintext seed copy is only ever honoured when TOTP-only verification is allowed; outside a
+        // debug build or an explicit startup opt-in this returns null so a leftover file cannot be used.
+        if (!GlobalConstants.AllowStandaloneTotpVerification)
+            return null;
+
         try
         {
             var path = StandaloneTotpPath;
@@ -264,6 +273,7 @@ internal sealed class SecurityCredentialStore
 
         var path = StandaloneTotpPath;
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? throw new InvalidOperationException("The standalone TOTP path has no directory."));
+        EnsureDirectoryProtection();
         _beforeWrite?.Invoke();
         var temporaryPath = path + ".tmp";
         File.WriteAllText(
@@ -272,7 +282,7 @@ internal sealed class SecurityCredentialStore
                 new StandaloneTotpSecret { FormatVersion = StandaloneTotpFormatVersion, Secret = secret },
                 _jsonOptions),
             Encoding.UTF8);
-        TryRestrictToOwner(temporaryPath);
+        SecurityPathProtection.RestrictFileToOwner(temporaryPath);
         File.Move(temporaryPath, path, true);
     }
 
@@ -286,19 +296,22 @@ internal sealed class SecurityCredentialStore
         File.Delete(path);
     }
 
-    private static void TryRestrictToOwner(string path)
+    /// <summary>
+    ///     凭据目录只允许当前用户访问。目录里的 <c>credentials.json</c> 是加密的，但同目录还放着
+    ///     「任意已选验证方式」模式下的免密 TOTP 副本，因此目录权限是唯一能挡住「同机其他账户读取」
+    ///     与「整份数据被拷贝后仍可读」这类本地读取的边界。加固失败不影响凭据读写。
+    /// </summary>
+    private void EnsureDirectoryProtection()
     {
-        if (OperatingSystem.IsWindows())
+        if (_directoryProtected)
             return;
 
-        try
-        {
-            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
-        }
-        catch (Exception)
-        {
-            // 收紧文件权限是尽力而为的加固，失败不影响免密种子的读写
-        }
+        var directory = Path.GetDirectoryName(_path);
+        if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+            return;
+
+        _directoryProtected = true;
+        SecurityPathProtection.RestrictDirectoryToOwner(directory);
     }
 
     private SecurityCredentials DecryptCredentials(SecurityCredentialMetadata metadata, byte[] encryptionKey)
@@ -384,10 +397,13 @@ internal sealed class SecurityCredentialStore
 
     private void WriteEnvelope(SecurityCredentialEnvelope envelope)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(_path) ?? throw new InvalidOperationException("The credential path has no directory."));
+        var directory = Path.GetDirectoryName(_path) ?? throw new InvalidOperationException("The credential path has no directory.");
+        Directory.CreateDirectory(directory);
+        EnsureDirectoryProtection();
         _beforeWrite?.Invoke();
         var temporaryPath = _path + ".tmp";
         File.WriteAllText(temporaryPath, JsonSerializer.Serialize(envelope, _jsonOptions), Encoding.UTF8);
+        SecurityPathProtection.RestrictFileToOwner(temporaryPath);
         File.Move(temporaryPath, _path, true);
     }
 

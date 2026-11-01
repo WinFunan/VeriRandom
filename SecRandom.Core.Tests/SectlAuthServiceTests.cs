@@ -1,5 +1,7 @@
 using System.Net;
 using System.Reflection;
+using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models;
@@ -11,83 +13,358 @@ namespace SecRandom.Core.Tests;
 
 public sealed class SectlAuthServiceTests
 {
+    private const string RefreshedTokenJson =
+        "{\"access_token\":\"refreshed-access-token\",\"refresh_token\":\"refreshed-refresh-token\",\"user_id\":\"user-1\",\"expires_in\":3600}";
+
     [Fact]
     public async Task SendHeartbeatAsync_UsesOAuthHeartbeatEndpointAndBearerToken()
     {
-        HttpRequestMessage? capturedRequest = null;
-        var client = new HttpClient(new StubHttpMessageHandler(request =>
-        {
-            capturedRequest = request;
-            return new HttpResponseMessage(HttpStatusCode.NoContent);
-        }));
-        var service = CreateService(client);
+        var handler = new RecordingHandler((_, _) => new HttpResponseMessage(HttpStatusCode.NoContent));
+        var (service, _) = CreateService(handler);
         SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
 
         bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
 
         Assert.True(sent);
-        Assert.NotNull(capturedRequest);
-        Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
-        Assert.Equal("https://appwrite.sectl.cn/api/oauth/heartbeat", capturedRequest.RequestUri!.ToString());
-        Assert.Equal("Bearer access-token", capturedRequest.Headers.Authorization?.ToString());
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Post, request.Method);
+        Assert.Equal("https://appwrite.sectl.cn/api/oauth/heartbeat", request.Uri.ToString());
+        Assert.Equal("Bearer access-token", request.Authorization);
     }
 
     [Fact]
     public async Task SendHeartbeatAsync_WhenSignedOut_DoesNotSendARequest()
     {
-        var client = new HttpClient(new StubHttpMessageHandler(_ =>
-            throw new Xunit.Sdk.XunitException("A signed-out account must not send a heartbeat.")));
-        var service = CreateService(client);
+        var handler = new RecordingHandler((_, _) =>
+            throw new Xunit.Sdk.XunitException("A signed-out account must not send a heartbeat."));
+        var (service, _) = CreateService(handler);
 
         bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
 
         Assert.False(sent);
+        Assert.Empty(handler.Requests);
     }
 
     [Fact]
     public async Task SendHeartbeatAsync_WhenAccessTokenIsRejected_RefreshesAndRetriesOnce()
     {
         var heartbeatTokens = new List<string?>();
-        var heartbeatAttempts = 0;
-        var client = new HttpClient(new StubHttpMessageHandler(request =>
+        var handler = new RecordingHandler((request, _) =>
         {
             string path = request.RequestUri!.AbsolutePath;
             if (path == "/api/oauth/heartbeat")
             {
                 heartbeatTokens.Add(request.Headers.Authorization?.Parameter);
-                heartbeatAttempts++;
-                return new HttpResponseMessage(
-                    heartbeatAttempts == 1 ? HttpStatusCode.Unauthorized : HttpStatusCode.NoContent);
-            }
-
-            if (request.RequestUri.Host == "uapis.cn" && path == "/api/v1/network/myip")
-            {
-                return new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent("{\"ip\":\"203.0.113.10\"}", System.Text.Encoding.UTF8, "application/json")
-                };
+                return heartbeatTokens.Count == 1
+                    ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
+                    : new HttpResponseMessage(HttpStatusCode.NoContent);
             }
 
             if (path == "/api/oauth/refresh")
-            {
-                return new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(
-                        "{\"access_token\":\"refreshed-access-token\",\"refresh_token\":\"refreshed-refresh-token\",\"user_id\":\"user-1\",\"expires_in\":3600}",
-                        System.Text.Encoding.UTF8,
-                        "application/json")
-                };
-            }
+                return Json(RefreshedTokenJson);
 
             throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
-        }));
-        var service = CreateService(client);
+        });
+        var (service, _) = CreateService(handler);
         SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
 
         bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
 
         Assert.True(sent);
         Assert.Equal(["access-token", "refreshed-access-token"], heartbeatTokens);
+    }
+
+    [Fact]
+    public async Task Refresh_RotationIsPersistedBeforeTheNewAccessTokenIsUsed()
+    {
+        var handler = CreateRotationHandler();
+        var (service, store) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(sent);
+        var stored = ReadStoredToken(store);
+        Assert.NotNull(stored);
+        Assert.Equal("refreshed-access-token", stored!.AccessToken);
+        Assert.Equal("refreshed-refresh-token", stored.RefreshToken);
+        Assert.NotNull(stored.AccessTokenExpiresAt);
+        Assert.True(stored.AccessTokenExpiresAt > DateTimeOffset.UtcNow.AddMinutes(50));
+        // The in-memory session matches exactly what a restart would read back.
+        Assert.Equal(stored.RefreshToken, service.Token?.RefreshToken);
+        // The atomic replace leaves no temporary file behind.
+        Assert.Empty(Directory.GetFiles(Path.GetDirectoryName(store.Path)!, "*.tmp"));
+    }
+
+    [Fact]
+    public async Task ConcurrentRejectedRequests_TriggerExactlyOneRotation()
+    {
+        var handler = new RecordingHandler((request, _) =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+                return request.Headers.Authorization?.Parameter == "access-token"
+                    ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
+                    : new HttpResponseMessage(HttpStatusCode.NoContent);
+
+            if (path == "/api/oauth/refresh")
+                return Json(RefreshedTokenJson);
+
+            throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
+        });
+        var (service, _) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+
+        var results = await Task.WhenAll(Enumerable.Range(0, 8)
+            .Select(_ => service.SendHeartbeatAsync(TestContext.Current.CancellationToken)));
+
+        Assert.All(results, Assert.True);
+        // Eight callers share one single-use rotation instead of eight racing rotations.
+        Assert.Equal(1, handler.Count("/api/oauth/refresh"));
+    }
+
+    [Fact]
+    public async Task Refresh_WhenRefreshTokenIsRejectedWithInvalidGrant_EndsTheSessionWithoutRetrying()
+    {
+        var handler = new RecordingHandler((request, _) =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+                return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+            if (path == "/api/oauth/refresh")
+                return Json("{\"error\":\"invalid_grant\",\"error_description\":\"Refresh token reused\"}",
+                    HttpStatusCode.BadRequest);
+
+            throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
+        });
+        var (service, store) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+        var stateChanges = 0;
+        service.StateChanged += (_, _) => stateChanges++;
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(sent);
+        // A terminal rejection is never retried with the same dead refresh token.
+        Assert.Equal(1, handler.Count("/api/oauth/refresh"));
+        Assert.False(service.IsSignedIn);
+        Assert.True(service.RequiresReauthorization);
+        Assert.False(File.Exists(store.Path));
+        Assert.True(stateChanges > 0);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenRateLimited_RetriesTheSameRefreshAfterRetryAfter()
+    {
+        var refreshAttempts = 0;
+        var usedRefreshTokens = new List<string?>();
+        var handler = new RecordingHandler((request, body) =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+                return request.Headers.Authorization?.Parameter == "access-token"
+                    ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
+                    : new HttpResponseMessage(HttpStatusCode.NoContent);
+            if (path == "/api/oauth/refresh")
+            {
+                refreshAttempts++;
+                usedRefreshTokens.Add(JsonField(body, "refresh_token"));
+                return refreshAttempts == 1
+                    ? Json("{\"error\":\"rate_limited\",\"retry_after_ms\":30}", HttpStatusCode.TooManyRequests)
+                    : Json(RefreshedTokenJson);
+            }
+
+            throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
+        });
+        var (service, _) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(sent);
+        Assert.Equal(2, refreshAttempts);
+        // Rate limiting retries the very same refresh, not a second rotation of a token already spent.
+        Assert.All(usedRefreshTokens, token => Assert.Equal("refresh-token", token));
+    }
+
+    [Fact]
+    public async Task Refresh_WhenServiceUnavailable_RetriesWithBackoff()
+    {
+        var refreshAttempts = 0;
+        var handler = new RecordingHandler((request, _) =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+                return request.Headers.Authorization?.Parameter == "access-token"
+                    ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
+                    : new HttpResponseMessage(HttpStatusCode.NoContent);
+            if (path == "/api/oauth/refresh")
+            {
+                refreshAttempts++;
+                return refreshAttempts == 1
+                    ? Json("{\"error\":\"temporarily_unavailable\"}", HttpStatusCode.ServiceUnavailable)
+                    : Json(RefreshedTokenJson);
+            }
+
+            throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
+        });
+        var (service, _) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(sent);
+        Assert.Equal(2, refreshAttempts);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenAccessTokenIsRevoked_DoesNotRotateTheRefreshToken()
+    {
+        var handler = new RecordingHandler((request, _) =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+                return Json(
+                    "{\"error\":\"invalid_token\",\"error_description\":\"Access token has been revoked\"}",
+                    HttpStatusCode.Unauthorized);
+
+            throw new Xunit.Sdk.XunitException($"A revoked access token must not trigger {path}.");
+        });
+        var (service, store) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(sent);
+        Assert.Equal(0, handler.Count("/api/oauth/refresh"));
+        Assert.False(service.IsSignedIn);
+        Assert.True(service.RequiresReauthorization);
+        Assert.False(File.Exists(store.Path));
+    }
+
+    [Fact]
+    public async Task AccessTokenNearExpiry_IsRefreshedBeforeTheRequest()
+    {
+        var handler = new RecordingHandler((request, _) =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+                return new HttpResponseMessage(HttpStatusCode.NoContent);
+            if (path == "/api/oauth/refresh")
+                return Json(RefreshedTokenJson);
+
+            throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
+        });
+        var (service, _) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600)
+        {
+            AccessTokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(1)
+        });
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(sent);
+        Assert.Equal(1, handler.Count("/api/oauth/refresh"));
+        var heartbeat = Assert.Single(handler.Requests, item => item.Path == "/api/oauth/heartbeat");
+        Assert.Equal("Bearer refreshed-access-token", heartbeat.Authorization);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenThe180DayWindowIsOver_RequiresReauthorization()
+    {
+        var handler = new RecordingHandler((request, _) =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+                return new HttpResponseMessage(HttpStatusCode.NoContent);
+
+            throw new Xunit.Sdk.XunitException($"An expired refresh window must not send {path}.");
+        });
+        var (service, store) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600)
+        {
+            AccessTokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(1),
+            RefreshTokenIssuedAt = DateTimeOffset.UtcNow.AddDays(-181)
+        });
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(sent);
+        Assert.Equal(0, handler.Count("/api/oauth/refresh"));
+        Assert.True(service.RequiresReauthorization);
+        Assert.False(File.Exists(store.Path));
+    }
+
+    [Fact]
+    public async Task Refresh_WhenAnotherProcessAlreadyRotated_AdoptsTheStoredPair()
+    {
+        var handler = new RecordingHandler((request, _) =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+                return request.Headers.Authorization?.Parameter == "other-access-token"
+                    ? new HttpResponseMessage(HttpStatusCode.NoContent)
+                    : new HttpResponseMessage(HttpStatusCode.Unauthorized);
+
+            throw new Xunit.Sdk.XunitException($"An adopted rotation must not send {path}.");
+        });
+        var (service, store) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+        await store.SaveAsync(new SectlToken("other-access-token", "other-refresh-token", "user-1", 3600)
+        {
+            AccessTokenExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        }, TestContext.Current.CancellationToken);
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(sent);
+        Assert.Equal(0, handler.Count("/api/oauth/refresh"));
+        Assert.Equal("other-refresh-token", service.Token?.RefreshToken);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenTheNetworkOutcomeIsUnknown_KeepsTheSession()
+    {
+        var handler = new RecordingHandler((request, _) =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+                return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+            if (path == "/api/oauth/refresh")
+                throw new HttpRequestException("connection reset");
+
+            throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
+        });
+        var (service, _) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(sent);
+        // The pair is never discarded on an unknown outcome: the server may not have rotated at all.
+        Assert.Equal(2, handler.Count("/api/oauth/refresh"));
+        Assert.Equal("refresh-token", service.Token?.RefreshToken);
+        Assert.True(service.IsSignedIn);
+        Assert.False(service.RequiresReauthorization);
+    }
+
+    [Fact]
+    public async Task TokenFile_RoundTripsRotationMetadata()
+    {
+        var store = TestTokenStore.Create();
+        var expiresAt = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds());
+        var issuedAt = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds());
+
+        await store.SaveAsync(new SectlToken("access", "refresh", "user-1", 3600)
+        {
+            AccessTokenExpiresAt = expiresAt,
+            RefreshTokenIssuedAt = issuedAt
+        }, TestContext.Current.CancellationToken);
+        var loaded = await store.LoadAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(loaded);
+        Assert.Equal(expiresAt, loaded!.AccessTokenExpiresAt!.Value);
+        Assert.Equal(issuedAt, loaded.RefreshTokenIssuedAt!.Value);
     }
 
     [Theory]
@@ -98,34 +375,68 @@ public sealed class SectlAuthServiceTests
     [InlineData("https://appwrite.sectl.cn.attacker.test/avatar.png", false)]
     public async Task AvatarDownload_OnlyUsesTrustedHttpsOriginWithoutBearer(string url, bool shouldSend)
     {
-        var sent = false;
-        string? authorization = null;
-        var client = new HttpClient(new StubHttpMessageHandler(request =>
+        var handler = new RecordingHandler((_, _) => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            sent = true;
-            authorization = request.Headers.Authorization?.ToString();
-            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3]) };
-        }));
-        var service = CreateService(client);
+            Content = new ByteArrayContent([1, 2, 3])
+        });
+        var (service, _) = CreateService(handler);
         SetToken(service, new SectlToken("dummy-access-token", "dummy-refresh-token", "user-1", 3600));
         var method = typeof(SectlAuthService).GetMethod("GetAvatarBytesAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
         var result = await (Task<byte[]?>)method.Invoke(service, [url, TestContext.Current.CancellationToken])!;
 
-        Assert.Equal(shouldSend, sent);
-        Assert.Null(authorization);
+        Assert.Equal(shouldSend, handler.Requests.Count == 1);
+        Assert.Null(handler.Requests.SingleOrDefault()?.Authorization);
         if (shouldSend)
             Assert.Equal(new byte[] { 1, 2, 3 }, result);
         else
             Assert.Null(result);
     }
 
-    private static SectlAuthService CreateService(HttpClient client)
+    [Fact]
+    public async Task OAuthRequests_CarryNoClientResolvedAddress()
     {
+        var handler = CreateRotationHandler();
+        var (service, _) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(sent);
+        // 地址由服务端从连接来源得出，客户端既不调用第三方 IP 查询服务，也不随请求上传 IP。
+        Assert.All(handler.Requests, request => Assert.Equal("appwrite.sectl.cn", request.Uri.Host));
+        var refresh = Assert.Single(handler.Requests, item => item.Path == "/api/oauth/refresh");
+        Assert.DoesNotContain("ip_address", refresh.Body!, StringComparison.Ordinal);
+        Assert.Contains("device_uuid", refresh.Body!, StringComparison.Ordinal);
+    }
+
+    /// <summary>Heartbeat rejected once, then accepted; refresh rotates.</summary>
+    private static RecordingHandler CreateRotationHandler() => new((request, _) =>
+    {
+        string path = request.RequestUri!.AbsolutePath;
+        if (path == "/api/oauth/heartbeat")
+            return request.Headers.Authorization?.Parameter == "access-token"
+                ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
+                : new HttpResponseMessage(HttpStatusCode.NoContent);
+        if (path == "/api/oauth/refresh")
+            return Json(RefreshedTokenJson);
+
+        throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
+    });
+
+    private static (SectlAuthService Service, SectlTokenStore Store) CreateService(HttpMessageHandler handler,
+        IAuthRedirectBrokerFactory? redirectBrokerFactory = null)
+    {
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri(SectlAuthService.ApiBaseUrl) };
+        var factory = new StubHttpClientFactory(httpClient);
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new TestConfigService(new MainConfigModel()));
+        // The fork's cross-border consent gates every SECTL call; the test exercises the enabled behaviour.
+        configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
-        return new SectlAuthService(new StubHttpClientFactory(client), deviceUuidStore);
+        var store = TestTokenStore.Create();
+        return (new SectlAuthService(store, factory, deviceUuidStore, NullLogger<SectlAuthService>.Instance,
+            configHandler, redirectBrokerFactory ?? new LoopbackAuthRedirectBrokerFactory()), store);
     }
 
     private static void SetToken(SectlAuthService service, SectlToken token)
@@ -135,15 +446,159 @@ public sealed class SectlAuthServiceTests
         field!.SetValue(service, token);
     }
 
+    private static SectlToken? ReadStoredToken(SectlTokenStore store) =>
+        JsonSerializer.Deserialize<SectlToken>(File.ReadAllText(store.Path), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+    private static string? JsonField(string? body, string name)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+            return null;
+        using var document = JsonDocument.Parse(body);
+        return document.RootElement.ValueKind == JsonValueKind.Object
+               && document.RootElement.TryGetProperty(name, out var value)
+               && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+    }
+
+    private static HttpResponseMessage Json(string body, HttpStatusCode status = HttpStatusCode.OK) =>
+        new(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+
+    /// <summary>
+    ///     Phone sign-in callback: the authorization code comes back through the app's custom scheme and
+    ///     may reach a process that was reclaimed while the browser was open, so the recorded attempt is
+    ///     exchanged on the next start instead of asking the user to authorize again.
+    /// </summary>
+    [Fact]
+    public async Task ResumePendingAuthorizationAsync_ExchangesTheRecordedMobileRedirect()
+    {
+        const string verifier = "recorded-code-verifier";
+        const string redirectUri = "cn.sectl.secrandom.mobile://oauth/callback";
+        var handler = new RecordingHandler((request, _) =>
+            request.RequestUri!.AbsolutePath == "/api/oauth/token"
+                ? Json(RefreshedTokenJson)
+                : new HttpResponseMessage(HttpStatusCode.NotFound));
+        var broker = new ScriptedRedirectBroker(new AuthRedirectResult(redirectUri, "recorded-state", verifier,
+            "authorization-code", null));
+        var (service, store) = CreateService(handler, new SingleBrokerFactory(broker));
+
+        await service.ResumePendingAuthorizationAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(service.IsSignedIn);
+        var request = Assert.Single(handler.Requests, item => item.Path == "/api/oauth/token");
+        Assert.Equal("/api/oauth/token", request.Path);
+        Assert.Equal("authorization-code", JsonField(request.Body, "code"));
+        Assert.Equal(verifier, JsonField(request.Body, "code_verifier"));
+        Assert.Equal(redirectUri, JsonField(request.Body, "redirect_uri"));
+        Assert.Equal("refreshed-access-token", ReadStoredToken(store)?.AccessToken);
+    }
+
+    [Fact]
+    public async Task ResumePendingAuthorizationAsync_WithoutARecordedRedirect_SendsNothing()
+    {
+        var handler = new RecordingHandler((_, _) =>
+            throw new Xunit.Sdk.XunitException("Nothing was authorized, so nothing may be exchanged."));
+        var (service, store) = CreateService(handler, new SingleBrokerFactory(new ScriptedRedirectBroker(null)));
+
+        await service.ResumePendingAuthorizationAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(service.IsSignedIn);
+        Assert.Empty(handler.Requests);
+        Assert.Null(await store.LoadAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task ResumePendingAuthorizationAsync_WhenTheExchangeFails_StaysSignedOutWithoutThrowing()
+    {
+        var handler = new RecordingHandler((_, _) => Json("{\"error\":\"invalid_grant\"}", HttpStatusCode.BadRequest));
+        var broker = new ScriptedRedirectBroker(new AuthRedirectResult(
+            "cn.sectl.secrandom.mobile://oauth/callback", "state", "verifier", "stale-code", null));
+        var (service, store) = CreateService(handler, new SingleBrokerFactory(broker));
+
+        // 后台恢复路径：失败只能记日志，不能把异常抛到启动链路。
+        await service.ResumePendingAuthorizationAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(service.IsSignedIn);
+        Assert.Null(await store.LoadAsync(TestContext.Current.CancellationToken));
+    }
+
+    private sealed record RecordedRequest(HttpMethod Method, Uri Uri, string? Authorization, string? Body)
+    {
+        public string Path => Uri.AbsolutePath;
+    }
+
+    private sealed class RecordingHandler(Func<HttpRequestMessage, string?, HttpResponseMessage> send) : HttpMessageHandler
+    {
+        private readonly object _gate = new();
+        private readonly List<RecordedRequest> _requests = [];
+
+        public IReadOnlyList<RecordedRequest> Requests
+        {
+            get
+            {
+                lock (_gate)
+                    return _requests.ToArray();
+            }
+        }
+
+        public int Count(string path)
+        {
+            lock (_gate)
+                return _requests.Count(request => request.Path == path);
+        }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var body = request.Content is null
+                ? null
+                : await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            lock (_gate)
+            {
+                _requests.Add(new RecordedRequest(request.Method, request.RequestUri!,
+                    request.Headers.Authorization?.ToString(), body));
+            }
+
+            return send(request, body);
+        }
+    }
+
     private sealed class StubHttpClientFactory(HttpClient client) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name) => client;
     }
 
-    private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> send) : HttpMessageHandler
+    /// <summary>Hands the service one scripted broker, as the platform registration would.</summary>
+    private sealed class SingleBrokerFactory(IAuthRedirectBroker broker) : IAuthRedirectBrokerFactory
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(send(request));
+        public IAuthRedirectBroker Create() => broker;
+    }
+
+    /// <summary>
+    ///     A broker that already has an answer, which is what a resumed mobile attempt sees: the
+    ///     redirect plus the PKCE verifier recorded before the browser opened.
+    /// </summary>
+    private sealed class ScriptedRedirectBroker(AuthRedirectResult? redirect) : IAuthRedirectBroker
+    {
+        public TimeSpan WaitTimeout => TimeSpan.FromSeconds(5);
+
+        public string CreateRedirectUri() => "cn.sectl.secrandom.mobile://oauth/callback";
+
+        public Task PrepareAsync(AuthRedirectAttempt attempt, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task<AuthRedirectResult> WaitForRedirectAsync(AuthRedirectAttempt attempt,
+            CancellationToken cancellationToken = default) =>
+            redirect is null
+                ? throw new InvalidOperationException("此用例不应等待回调。")
+                : Task.FromResult(redirect);
+
+        public Task<AuthRedirectResult?> TakePendingRedirectAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(redirect);
+
+        public void Dispose()
+        {
+        }
     }
 
     private sealed class TestConfigService(MainConfigModel config) : ConfigServiceBase

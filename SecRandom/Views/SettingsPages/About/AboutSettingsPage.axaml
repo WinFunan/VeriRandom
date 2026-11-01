@@ -52,6 +52,8 @@
                                     CommandParameter="{Binding ProfileUrl}" Click="OpenContributorProfile_OnClick"
                                     ToolTip.Tip="{Binding ProfileUrl}">
                                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                    <!-- 不再从网络预加载头像：整行是跳转到该贡献者 GitHub 主页的链接，
+                                         图片一律用本地图标替代，避免第三方 CDN 图片进入渲染路径 -->
                                     <Border Grid.Column="0"
                                             Width="36" Height="36"
                                             Background="{DynamicResource ControlFillColorSecondaryBrush}"
@@ -59,9 +61,9 @@
                                             BorderThickness="1"
                                             CornerRadius="18"
                                             ClipToBounds="True">
-                                        <Border Width="34" Height="34" CornerRadius="17" ClipToBounds="True">
-                                            <Image Source="{Binding Avatar}" Stretch="UniformToFill" />
-                                        </Border>
+                                        <sr:FluentIcon Glyph="{sr:Fi PeopleFilled}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
                                     </Border>
                                     
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -159,7 +161,15 @@
                             </LinearGradientBrush>
                         </Border.OpacityMask>
 
-                        <Image Source="{Binding BannerSource}" Stretch="Uniform" />
+                        <!-- 横幅是可选的：在 Assets/Banners 下放 verirandom-banner-cn.png / -en.png / -ja.png
+                             （缺 zh/ja 时回退到 -en.png），BannerSource 会自动加载。**没有**独立横幅时这里什么
+                             都不显示——原先那个「横幅占位」框已按要求移除。注意横幅不能拿上游 SecRandom 的
+                             素材顶替（见 AboutSettingsPage.axaml.cs 的 LoadBanner）。 -->
+                        <Panel>
+                            <Image Source="{Binding BannerSource}"
+                                   Stretch="Uniform"
+                                   IsVisible="{Binding BannerSource, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        </Panel>
                     </Border>
                 </Panel>
 
@@ -188,11 +198,19 @@
                 </fa:FASettingsExpander.IconSource>
 
                 <fa:FASettingsExpanderItem x:Name="S_App_License" Description="{x:Static lc:Resources.App_License}">
-                    <TextBlock Background="Transparent">
-                        <Run Text="Copyright (c) 2025-" />
-                        <Run Text="{Binding Year, Source={x:Static system:DateTime.Now}, Mode=OneWay}" />
-                        SECTL
-                    </TextBlock>
+                    <!-- 本分支的版权行在上，上游 SECTL 的版权行保持原样在下 -->
+                    <StackPanel Background="Transparent">
+                        <TextBlock>
+                            <Run Text="Copyright (c) 2025-" />
+                            <Run Text="{Binding Year, Source={x:Static system:DateTime.Now}, Mode=OneWay}" />
+                            WinFunan
+                        </TextBlock>
+                        <TextBlock>
+                            <Run Text="Copyright (c) 2025-" />
+                            <Run Text="{Binding Year, Source={x:Static system:DateTime.Now}, Mode=OneWay}" />
+                            SECTL
+                        </TextBlock>
+                    </StackPanel>
                 </fa:FASettingsExpanderItem>
 
                 <fa:FASettingsExpanderItem x:Name="S_App_ForkNotice"
@@ -224,9 +242,68 @@
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Community"
+                                   Header="{x:Static lsa:Resources.S_Community}"
+                                   Description="{x:Static lsa:Resources.S_Community_D}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpander.IconSource>
+                    <fa:FAImageIconSource Source="/Assets/ForkAvatar.png" />
+                </fa:FASettingsExpander.IconSource>
+                <fa:FASettingsExpanderItem x:Name="S_Community_QQGroup"
+                                           Content="{x:Static lsa:Resources.S_Community_QQGroup}"
+                                           Description="{x:Static lsa:Resources.S_Community_QQGroup_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://qm.qq.com/q/EvhyCJWqCA" />
+
+                <fa:FASettingsExpanderItem x:Name="S_Community_Email"
+                                           Content="{x:Static lsa:Resources.S_Community_Email}"
+                                           Description="{x:Static lsa:Resources.S_Community_Email_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="mailto:love-code-yeyixiao@outlook.com" />
+
+                <fa:FASettingsExpanderItem x:Name="S_Community_Bilibili"
+                                           Content="{x:Static lsa:Resources.S_Community_Bilibili}"
+                                           Description="{x:Static lsa:Resources.S_Community_Bilibili_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://space.bilibili.com/510993086" />
+
+                <fa:FASettingsExpanderItem x:Name="S_Community_Issues"
+                                           Content="{x:Static lsa:Resources.S_Community_Issues}"
+                                           Description="{x:Static lsa:Resources.S_Community_Issues_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://github.com/WinFunan/VeriRandom/issues" />
+
+                <fa:FASettingsExpanderItem x:Name="S_Community_Contributing"
+                                           Content="{x:Static lsa:Resources.S_Community_Contributing}"
+                                           Description="{x:Static lsa:Resources.S_Community_Contributing_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://github.com/WinFunan/VeriRandom/blob/master/CONTRIBUTING.md" />
+
+                <!-- 本分支社区图片：WinFunan.png（200×200 方形，按高度 64 等比缩放）。
+                     这一行曾叫 C_CommunityImagePlaceholder，补上资源后已改名为 C_CommunityImage -->
+                <fa:FASettingsExpanderItem x:Name="C_CommunityImage"
+                                           Content="{x:Static lsa:Resources.C_CommunityImage}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <Image Source="/Assets/WinFunan.png" Height="64" Stretch="Uniform" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_Author"
                                    Header="{x:Static lsa:Resources.S_Author_R}"
-                                   Description="{x:Static lsa:Resources.S_Author_D}" IsExpanded="True">
+                                   Description="{x:Static lsa:Resources.S_Author_D}" IsExpanded="False">
+                <fa:FASettingsExpanderItem x:Name="S_Author_Scope"
+                                           Content="{x:Static lsa:Resources.S_Author_Scope_D}" />
                 <fa:FASettingsExpander.IconSource>
                     <fa:FAImageIconSource Source="/Assets/AuthorAionflux.png" />
                 </fa:FASettingsExpander.IconSource>
@@ -269,6 +346,54 @@
                         </WrapPanel>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_Author_Upstream_QQGroup"
+                                           Content="{x:Static lsa:Resources.S_Author_Upstream_QQGroup}"
+                                           Description="{x:Static lsa:Resources.S_Author_Upstream_QQGroup_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://qm.qq.com/q/iWcfaPHn7W" />
+
+                <fa:FASettingsExpanderItem x:Name="S_Author_Upstream_QQChannel"
+                                           Content="{x:Static lsa:Resources.S_Author_Upstream_QQChannel}"
+                                           Description="{x:Static lsa:Resources.S_Author_Upstream_QQChannel_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://pd.qq.com/s/4x5dafd34?b=9" />
+
+                <fa:FASettingsExpanderItem x:Name="S_Author_Upstream_Email"
+                                           Content="{x:Static lsa:Resources.S_Author_Upstream_Email}"
+                                           Description="{x:Static lsa:Resources.S_Author_Upstream_Email_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="mailto:lzy.12@foxmail.com" />
+
+                <fa:FASettingsExpanderItem x:Name="S_Author_Upstream_Docs"
+                                           Content="{x:Static lsa:Resources.S_Author_Upstream_Docs}"
+                                           Description="{x:Static lsa:Resources.S_Author_Upstream_Docs_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://secrandom.sectl.cn/doc/overview.html" />
+
+                <fa:FASettingsExpanderItem x:Name="S_Author_Upstream_DeepWiki"
+                                           Content="{x:Static lsa:Resources.S_Author_Upstream_DeepWiki}"
+                                           Description="{x:Static lsa:Resources.S_Author_Upstream_DeepWiki_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://deepwiki.com/SECTL/SecRandom" />
+
+                <fa:FASettingsExpanderItem x:Name="S_Author_Upstream_Contributing"
+                                           Content="{x:Static lsa:Resources.S_Author_Upstream_Contributing}"
+                                           Description="{x:Static lsa:Resources.S_Author_Upstream_Contributing_D}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://github.com/SECTL/SecRandom/CONTRIBUTING.md" />
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_Ack"

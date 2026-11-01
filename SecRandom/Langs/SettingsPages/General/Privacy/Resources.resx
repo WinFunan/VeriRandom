@@ -34,7 +34,7 @@
         <value>启用 Sentry 遥测</value>
     </data>
     <data name="S_SentryTelemetry_Enabled_D" xml:space="preserve">
-        <value>开启后上传崩溃、日志、追踪和性能分析数据；不会控制在线状态统计</value>
+        <value>开启后上传崩溃、日志、追踪和性能分析数据；不会控制在线状态统计；开启后，相关数据将被发送给 SecRandom（上游项目与其所属组织 SECTL）；本分支不接收这些数据</value>
     </data>
     <data name="S_OnlineStatus" xml:space="preserve">
         <value>在线状态统计</value>
@@ -43,7 +43,7 @@
         <value>在线状态</value>
     </data>
     <data name="S_OnlineStatus_Mode_D" xml:space="preserve">
-        <value>客户端只上报设备标识与设备类型，位置由服务端按访问地址统计，不再上报 IP 或城市；选择停止则完全不上报在线状态</value>
+        <value>客户端只上报设备标识与设备类型，位置由服务端按访问地址统计，不再上报 IP 或城市；选择停止则完全不上报在线状态；开启后，相关数据同样将被发送给 SecRandom 与 SECTL</value>
     </data>
     <data name="O_OnlineStatusMode_Full" xml:space="preserve">
         <value>正常上报</value>
@@ -53,5 +53,20 @@
     </data>
     <data name="O_OnlineStatusMode_Off" xml:space="preserve">
         <value>停止上报</value>
+    </data>
+    <data name="M_SectlEgressOff" xml:space="preserve">
+        <value>未禁用：按跨境须知与各在线开关执行</value>
+    </data>
+    <data name="M_SectlEgressOn" xml:space="preserve">
+        <value>已禁用：所有 SECTL 联网功能均不可用</value>
+    </data>
+    <data name="S_SectlEgress" xml:space="preserve">
+        <value>联网总开关</value>
+    </data>
+    <data name="S_SectlEgress_Switch" xml:space="preserve">
+        <value>一键禁用所有 SECTL 联网</value>
+    </data>
+    <data name="S_SectlEgress_Switch_D" xml:space="preserve">
+        <value>关闭本软件所有会连接 SecRandom / SECTL 服务器的功能：证明存证、正式公证、公告、在线状态、使用统计、版本上报、账户登录、设备心跳与云备份；开关保存在本机，不受设置导入或恢复影响，开启后跨境数据传输须知与各在线开关都不再生效</value>
     </data>
 </root>

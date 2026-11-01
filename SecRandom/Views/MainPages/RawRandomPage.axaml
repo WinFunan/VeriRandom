@@ -1,0 +1,247 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:SecRandom.Views.MainPages"
+             xmlns:langs="using:SecRandom.Langs.MainPages.RawRandom"
+             xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             x:Class="SecRandom.Views.MainPages.RawRandomPage"
+             x:DataType="local:RawRandomPage">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.section-title">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="15" />
+        </Style>
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.7" />
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.7" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.result">
+            <Setter Property="FontSize" Value="44" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <!-- 可复核性受损不是脚注：混入 random.org 或本地 CSPRNG 后结果不能作为证据，用警示色说清楚 -->
+        <Style Selector="TextBlock.reduced">
+            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16" RowSpacing="12">
+
+        <StackPanel Grid.Row="0" Spacing="4">
+            <TextBlock Classes="section-title" Text="{x:Static langs:Resources.C_PageTitle}" />
+            <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_PageDescription}" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="14">
+
+                <!-- 结果区：只有一个数，不放历史列表 —— 这个页面不做记录，历史在证明（后续）与抽取页里 -->
+                <Border CornerRadius="8" Padding="20"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                    <StackPanel Spacing="8">
+                        <SelectableTextBlock Classes="result"
+                                   Text="{Binding ViewModel.DisplayResult}"
+                                   HorizontalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center"
+                                    IsVisible="{Binding ViewModel.IsConfidentialMasked}">
+                            <Button Content="{Binding ViewModel.RevealButtonText}"
+                                    Command="{Binding ViewModel.ToggleResultVisibilityCommand}" />
+                            <TextBlock Classes="hint" VerticalAlignment="Center"
+                                       Text="{x:Static langs:Resources.M_ConfidentialMasked}" />
+                        </StackPanel>
+                        <TextBlock Classes="hint"
+                                   Text="{Binding ViewModel.StatusText}"
+                                   TextAlignment="Center" />
+                        <ProgressBar IsIndeterminate="True" IsVisible="{Binding ViewModel.IsBusy}" />
+                    </StackPanel>
+                </Border>
+
+                <Border CornerRadius="8" Padding="16"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                    <StackPanel Spacing="12">
+
+                        <TextBlock Classes="section-title" Text="{x:Static langs:Resources.C_Range}" />
+                        <Grid ColumnDefinitions="*,16,*" ColumnSpacing="8">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_LowerBound}" />
+                                <TextBox Text="{Binding ViewModel.LowerBoundText}"
+                                         IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4">
+                                <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_UpperBound}" />
+                                <TextBox Text="{Binding ViewModel.UpperBoundText}"
+                                         IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Classes="hint"
+                                   Text="{x:Static langs:Resources.M_LockedHint}"
+                                   IsVisible="{Binding ViewModel.IsSettingsLocked}" />
+                        <!-- 锁定开关本身永远可点：否则打开锁定等于把自己锁在门外；解锁要过安全密码 -->
+                        <CheckBox Content="{x:Static langs:Resources.C_LockSettings}"
+                                  IsChecked="{Binding ViewModel.IsSettingsLocked, Mode=OneWay}"
+                                  Click="LockSettings_OnClick" />
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_BatchCount}" />
+                            <!-- 个数是"抽几次"的选择，不属于被锁定的"范围与熵源"，所以不受锁定影响 -->
+                            <NumericUpDown Minimum="1" Maximum="50" Value="{Binding ViewModel.Count}" Width="140" />
+                        </StackPanel>
+
+                        <Separator />
+
+                        <!--
+                            候选 / 排除 / 枚举生成器整体受锁定保护：它们改变的是"从哪些值里抽"，正是锁定开关的语义。
+                            整块包起来而不是逐个控件绑 IsEnabled —— 逐个绑必然漏掉某一个（生成器那次就漏了）
+                        -->
+                        <StackPanel Spacing="8" IsEnabled="{Binding !ViewModel.IsSettingsLocked}">
+                            <CheckBox Content="{x:Static langs:Resources.C_UseValues}"
+                                      IsChecked="{Binding ViewModel.UseValues}" />
+                            <!-- 只在候选模式下出现：范围模式下这两个框填了也不生效，摆着只会误导 -->
+                            <StackPanel Spacing="8" IsVisible="{Binding ViewModel.UseValues}">
+                                <TextBox Text="{Binding ViewModel.ValuesText}"
+                                         Watermark="{x:Static langs:Resources.C_ValuesWatermark}" />
+                                <TextBox Text="{Binding ViewModel.ExclusionsText}"
+                                         Watermark="{x:Static langs:Resources.C_ExclusionsWatermark}" />
+                                <TextBlock Text="{Binding ViewModel.CandidatesText}" FontSize="12" Opacity="0.75" />
+                            </StackPanel>
+
+                            <!--
+                                枚举生成器：起止范围 + 一个受限判定式（只有 X 一个变量，没有赋值/循环/IO），
+                                结果并入候选。折叠起来是因为它是"批量造数据"，不是日常操作
+                            -->
+                            <Expander IsExpanded="False"
+                                      IsVisible="{Binding ViewModel.UseValues}">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{x:Static langs:Resources.C_Generator}" VerticalAlignment="Center" />
+                                        <!-- 不起眼的小问号：语法与示例都在悬浮提示里，不占版面 -->
+                                        <TextBlock Text="?" FontSize="11" Opacity="0.55"
+                                                   VerticalAlignment="Center"
+                                                   ToolTip.Tip="{x:Static langs:Resources.M_GeneratorHelp}" />
+                                    </StackPanel>
+                                </Expander.Header>
+                                <StackPanel Spacing="8" Margin="0 8 0 0">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <TextBox Text="{Binding ViewModel.GeneratorFromText}" Width="120"
+                                                 Watermark="{x:Static langs:Resources.C_GeneratorFrom}" />
+                                        <TextBox Text="{Binding ViewModel.GeneratorToText}" Width="120"
+                                                 Watermark="{x:Static langs:Resources.C_GeneratorTo}" />
+                                    </StackPanel>
+                                    <TextBox Text="{Binding ViewModel.PredicateText}"
+                                             Watermark="{x:Static langs:Resources.C_PredicateWatermark}" />
+                                    <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_PredicateHint}" />
+                                </StackPanel>
+                            </Expander>
+                        </StackPanel>
+
+                        <Separator />
+
+                        <TextBlock Classes="section-title" Text="{x:Static langs:Resources.C_EntropySources}" />
+                        <!--
+                            锁定是整段生效的：范围与熵源都由「更多设置」里的开关统一管，IsEnabled 沿视觉树继承下来，
+                            因此不用在每个 CheckBox 上做父级查找（那种绑定在 DataTemplate 里既脆又难读）。
+                        -->
+                        <StackPanel Spacing="8" IsEnabled="{Binding !ViewModel.IsSettingsLocked}">
+                            <ItemsControl ItemsSource="{Binding ViewModel.EntropySources}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:EntropySourceOption">
+                                        <CheckBox Content="{Binding DisplayName}"
+                                                  IsChecked="{Binding IsSelected}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <TextBlock Classes="hint"
+                                   Classes.reduced="{Binding ViewModel.IsVerifiabilityReduced}"
+                                   Text="{Binding ViewModel.VerifiabilityNotice}" />
+                    </StackPanel>
+                </Border>
+
+                <!--
+                    高级选项：默认折叠，且只在本机开启「允许高级选项」后出现。它改变的是"结果到底是什么"，
+                    不是日常操作，所以和普通生成分成两块
+                -->
+                <Expander Header="{x:Static langs:Resources.C_AdvancedOptions}"
+                          IsExpanded="False"
+                          IsVisible="{Binding ViewModel.ShowAdvancedOptions}">
+                    <StackPanel Spacing="10" Margin="0 8 0 0">
+                        <CheckBox Content="{x:Static langs:Resources.C_RawEntropy}"
+                                  IsChecked="{Binding ViewModel.UseRawEntropy}"
+                                  IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_BitCount}" />
+                                <!-- 可手输：常见档位只是快捷按钮，位宽不该被下拉框限制 -->
+                                <NumericUpDown Minimum="8" Maximum="16384" Value="{Binding ViewModel.BitCount}" Width="150" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Bottom">
+                                <Button Content="32" Tag="32" Click="PresetBits_OnClick" />
+                                <Button Content="64" Tag="64" Click="PresetBits_OnClick" />
+                                <Button Content="128" Tag="128" Click="PresetBits_OnClick" />
+                                <Button Content="1280" Tag="1280" Click="PresetBits_OnClick" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_OutputFormat}" />
+                            <ComboBox x:Name="FormatBox" SelectedIndex="{Binding ViewModel.OutputFormat}"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{x:Static langs:Resources.O_FormatDecimal}" />
+                                <ComboBoxItem Content="{x:Static langs:Resources.O_FormatHex}" />
+                                <ComboBoxItem Content="{x:Static langs:Resources.O_FormatAscii}" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4" IsVisible="{Binding ViewModel.IsAsciiFormat}">
+                            <TextBlock Classes="field-label" Text="{x:Static langs:Resources.C_AsciiCharCount}" />
+                            <NumericUpDown Minimum="1" Maximum="4096" Value="{Binding ViewModel.AsciiCharCount}" Width="150" />
+                        </StackPanel>
+
+                        <!-- 拼接熵：只有每次取数都会产生新熵的源才真的变宽，文案把这条边界写明 -->
+                        <CheckBox Content="{x:Static langs:Resources.C_AllowConcat}"
+                                  IsChecked="{Binding ViewModel.AllowEntropyConcat}" />
+                        <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_ConcatHint}" />
+
+                        <Separator />
+
+                        <!--
+                            机密模式：两种生成方式都生效，不只是高级输出。它默认不勾、也不写进设置文件——
+                            勾了就代表这次生成不留任何证据，不该被"上次勾过"悄悄延续
+                        -->
+                        <CheckBox Content="{x:Static langs:Resources.C_ConfidentialMode}"
+                                  IsChecked="{Binding ViewModel.ConfidentialMode}"
+                                  IsEnabled="{Binding !ViewModel.IsSettingsLocked}" />
+                        <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_ConfidentialHint}"
+                                   TextWrapping="Wrap" />
+
+                        <TextBlock Classes="hint" Text="{x:Static langs:Resources.M_AdvancedHint}" />
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Spacing="8">
+            <TextBlock x:Name="EntropyLine" Text="{Binding ViewModel.EntropyText}" FontSize="12"
+                       Opacity="0.75" TextWrapping="Wrap" HorizontalAlignment="Center" />
+            <Button x:Name="GenerateButton"
+                    Content="{x:Static langs:Resources.C_Generate}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Classes="accent"
+                    Command="{Binding ViewModel.GenerateCommand}" />
+            <!-- 长输出（1280 bit 那档是 320 个十六进制字符）必须能一键取走，否则这个功能不可用 -->
+            <Button x:Name="CopyResultButton"
+                    Content="{x:Static langs:Resources.C_CopyResult}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Click="CopyResult_OnClick" />
+        </StackPanel>
+    </Grid>
+</UserControl>

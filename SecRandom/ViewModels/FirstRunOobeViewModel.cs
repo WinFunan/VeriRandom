@@ -5,12 +5,15 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Models.SubConfigs.Personalized;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
+using SecRandom.Services.ControlPlane;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.FirstRun;
 using SecRandom.Services.Voice;
@@ -27,21 +30,37 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     private readonly DesktopIntegrationService _desktopIntegration;
     private readonly IProfileService _profileService;
     private readonly IProfileCatalogManager _catalogManager;
+    private readonly IControlNodeStateStore _controlNodeStateStore;
+    private readonly ControlNodeClientOptions _controlNodeOptions;
+    private readonly IControlPlaneEndpointStore _controlPlaneEndpointStore;
+    private readonly IExternalLauncher _externalLauncher;
     private AppearanceSettingsConfig? _appearanceSettings;
     private BasicSettingsConfig? _basicSettings;
     private PrivacySettingsConfig? _privacySettings;
     private FloatingWindowSettingsConfig? _floatingWindowSettings;
     private MoreSettingsConfig? _moreSettings;
+    private bool _suppressControlPersist;
 
     [ObservableProperty] private int _selectedStep;
     [ObservableProperty] private bool _acceptedVerificationNotice;
     [ObservableProperty] private bool _acceptedPrivacyPolicy;
     [ObservableProperty] private bool _acceptedGpl;
+    [ObservableProperty] private bool _acceptedSecRandomServices;
+    // The cross-border notice is optional during setup: refusing it disables every SECTL-sending feature
+    // (including account sign-in) until the user signs it later at the point of use.
+    [ObservableProperty] private bool _acceptedCrossBorderTransfer;
+    // No default on purpose: the ordinary-draw upload must be actively chosen.
+    [ObservableProperty] private AttestationUploadMode _attestationUpload = AttestationUploadMode.Unset;
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _selectedPrizeListName = string.Empty;
     [ObservableProperty] private bool _autostart;
     [ObservableProperty] private bool _externalIntegration;
     [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private bool _controlRemoteEnabled;
+    [ObservableProperty] private string _controlDisplayName = string.Empty;
+    [ObservableProperty] private string _controlGroupId = string.Empty;
+    [ObservableProperty] private string _controlNodeId = string.Empty;
+    [ObservableProperty] private string _openControlPlaneLabel = string.Empty;
 
     public FirstRunOobeViewModel(
         MainConfigHandler configHandler,
@@ -49,7 +68,11 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         OobeDataSetupService dataSetupService,
         DesktopIntegrationService desktopIntegration,
         IProfileService profileService,
-        IProfileCatalogManager catalogManager) : base(configHandler)
+        IProfileCatalogManager catalogManager,
+        IControlNodeStateStore controlNodeStateStore,
+        ControlNodeClientOptions controlNodeOptions,
+        IControlPlaneEndpointStore controlPlaneEndpointStore,
+        IExternalLauncher externalLauncher) : base(configHandler)
     {
         _configHandler = configHandler;
         _oobeService = oobeService;
@@ -57,6 +80,10 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         _desktopIntegration = desktopIntegration;
         _profileService = profileService;
         _catalogManager = catalogManager;
+        _controlNodeStateStore = controlNodeStateStore;
+        _controlNodeOptions = controlNodeOptions;
+        _controlPlaneEndpointStore = controlPlaneEndpointStore;
+        _externalLauncher = externalLauncher;
         RefreshFromConfig();
         SelectedStep = IsPrivacyPolicyOnly ? 1 : 0;
     }
@@ -66,6 +93,46 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     public PrivacySettingsConfig PrivacySettings => _configHandler.Data.General.PrivacySettings;
     public FloatingWindowSettingsConfig FloatingWindow => _configHandler.Data.FloatingWindowSettings;
     public MoreSettingsConfig MoreSettings => _configHandler.Data.MoreSettings;
+
+    /// <summary>How long local draw proofs are kept. Zero days means "never delete".</summary>
+    public ProofRetentionConfig ProofRetention => _configHandler.Data.General.ProofRetention;
+
+    /// <summary>
+    ///     The first-run choice about evidence retention, deliberately coarser than the settings page: the guide asks
+    ///     the one question that matters ("do you intend to be able to re-check old draws?"), and the page keeps the
+    ///     finer options for later.
+    /// </summary>
+    /// <remarks>
+    ///     Picking any finite window also clears the storage cap. A cap would keep deleting proofs after the age rule
+    ///     had been satisfied, so the two settings have to agree or the user's answer would not be the one applied.
+    /// </remarks>
+    public int SelectedProofRetentionIndex
+    {
+        get => Array.IndexOf(ProofRetentionOptions, ProofRetention.RetentionDays) is var index && index >= 0 ? index : 0;
+        set
+        {
+            if (value < 0 || value >= ProofRetentionOptions.Length)
+                return;
+
+            var days = ProofRetentionOptions[value];
+            if (ProofRetention.RetentionDays == days && ProofRetention.MaximumStorageBytes == 0)
+                return;
+
+            ProofRetention.RetentionDays = days;
+            ProofRetention.MaximumStorageBytes = 0;
+            _configHandler.Save();
+            OnPropertyChanged(nameof(SelectedProofRetentionIndex));
+        }
+    }
+
+    private static readonly int[] ProofRetentionOptions = [0, 365, 90, 30];
+
+    /// <summary>集控节点显示名留空时上报的回落值（主机名），同时作为输入框水印。</summary>
+    public string ControlHostName => _controlNodeOptions.HostName;
+
+    /// <summary>显示名输入框的上限，直接取协议上限，避免这里再写一个字面量。</summary>
+    public int ControlDisplayNameMaxLength => ControlNodeDisplayName.MaxLength;
+
     public ObservableCollection<string> StudentListNames { get; } = [];
     public ObservableCollection<string> PrizeListNames { get; } = [];
     public int SelectedStudentListCount => _profileService.CurrentStudentList?.Students.Count ?? 0;
@@ -74,6 +141,8 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     public bool IsFullSetup => !IsPrivacyPolicyOnly;
     public bool IsVerificationNoticeRequired => !IsPrivacyPolicyOnly ||
                                                 Basic.AcceptedVerificationNoticeVersion < FirstRunOobeService.CurrentVerificationNoticeVersion;
+    public bool IsSecRandomServicesRequired =>
+        Basic.AcceptedSecRandomServicesVersion < FirstRunOobeService.CurrentSecRandomServicesVersion;
     public bool IsWelcomeStep => !IsPrivacyPolicyOnly && SelectedStep == 0;
     public bool HasPrevious => !IsPrivacyPolicyOnly && SelectedStep > 0;
     public bool IsStatusVisible => HasPrevious || IsPrivacyPolicyOnly;
@@ -83,11 +152,26 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     public string StepProgress => IsPrivacyPolicyOnly
         ? LR.C_LegalTitle
         : string.Format(LR.M_StepProgress, SelectedStep, StepCount - 1);
-    public bool CanContinue => !IsPrivacyPolicyStep ||
-                               (AcceptedPrivacyPolicy && AcceptedGpl &&
-                                (!IsVerificationNoticeRequired || AcceptedVerificationNotice));
+    // The SECTL online-services acknowledgement is optional during setup, so it never blocks continuing;
+    // it is demanded later by SecRandomServicesConsent when an online feature is actually used.
+    // The cross-border step differs: its own checkbox is optional too, but the ordinary-draw upload choice
+    // on it has no default and must be made actively, so that step cannot be left unchosen.
+    public bool CanContinue => IsPrivacyPolicyStep
+        ? AcceptedPrivacyPolicy && AcceptedGpl && (!IsVerificationNoticeRequired || AcceptedVerificationNotice)
+        : !IsCrossBorderStep || AttestationUpload != AttestationUploadMode.Unset;
     public bool IsPrivacyPolicyStep => IsPrivacyPolicyOnly || SelectedStep == 1;
-    public int StepCount => 8;
+    public bool IsCrossBorderStep => !IsPrivacyPolicyOnly && SelectedStep == 2;
+
+    /// <summary>
+    ///     轮播的步数（含欢迎页与完成页）。进度分母取 <c>StepCount - 1</c>，因为序号从 0 开始。
+    /// </summary>
+    /// <remarks>
+    ///     顺序固定：欢迎 → 法律 → 名单 → 抽奖 → 外观 → 桌面集成 → 集控 → 隐私 → 完成。
+    ///     集控排在这两页之间是有理由的：它和桌面集成同为"这台机器怎么接入"的本机设置
+    ///     （两者都不写 <c>settings.json</c>），而隐私是"本机往外发什么"，必须留在完成页之前
+    ///     作为最后一项需要用户表态的内容。
+    /// </remarks>
+    public int StepCount => 9;
     public string PageTitle => IsPrivacyPolicyOnly ? LR.C_LegalTitle : LR.C_Title;
     public string IntroText => IsPrivacyPolicyOnly ? LR.C_LegalDescription : LR.C_Intro;
 
@@ -104,7 +188,9 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsPrivacyPolicyOnly));
         OnPropertyChanged(nameof(IsFullSetup));
         OnPropertyChanged(nameof(IsVerificationNoticeRequired));
+        OnPropertyChanged(nameof(IsSecRandomServicesRequired));
         OnPropertyChanged(nameof(IsPrivacyPolicyStep));
+        OnPropertyChanged(nameof(IsCrossBorderStep));
         OnPropertyChanged(nameof(IsStatusVisible));
         OnPropertyChanged(nameof(IsCompletionActionVisible));
         OnPropertyChanged(nameof(PageTitle));
@@ -117,6 +203,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     public void RefreshLocalizedText()
     {
         StatusMessage = string.Empty;
+        RefreshOpenControlPlaneLabel();
         OnPropertyChanged(nameof(PageTitle));
         OnPropertyChanged(nameof(IntroText));
         OnPropertyChanged(nameof(NextButtonText));
@@ -126,6 +213,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     partial void OnSelectedStepChanged(int value)
     {
         OnPropertyChanged(nameof(IsWelcomeStep));
+        OnPropertyChanged(nameof(IsCrossBorderStep));
         OnPropertyChanged(nameof(HasPrevious));
         OnPropertyChanged(nameof(IsFinalStep));
         OnPropertyChanged(nameof(IsStatusVisible));
@@ -138,6 +226,54 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     partial void OnAcceptedPrivacyPolicyChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
     partial void OnAcceptedGplChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
     partial void OnAcceptedVerificationNoticeChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
+    partial void OnAcceptedSecRandomServicesChanged(bool value) => NotifyEgressConsentChanged();
+    partial void OnAcceptedCrossBorderTransferChanged(bool value) => NotifyEgressConsentChanged();
+
+    /// <summary>
+    ///     Both acknowledgements gate SECTL traffic, so the "submit" option is selectable only once the user
+    ///     has accepted upstream's online-services policy and the fork's cross-border notice. The "do not
+    ///     submit" option stays selectable regardless, so the step can always be completed.
+    /// </summary>
+    public bool IsSectlEgressConsented => AcceptedSecRandomServices && AcceptedCrossBorderTransfer;
+
+    private void NotifyEgressConsentChanged()
+    {
+        OnPropertyChanged(nameof(IsSectlEgressConsented));
+        OnPropertyChanged(nameof(CanContinue));
+    }
+
+    partial void OnAttestationUploadChanged(AttestationUploadMode value)
+    {
+        OnPropertyChanged(nameof(AttestationUploadEnabledChoice));
+        OnPropertyChanged(nameof(AttestationUploadDisabledChoice));
+        OnPropertyChanged(nameof(CanContinue));
+    }
+
+    /// <summary>
+    ///     Radio-button projections of <see cref="AttestationUpload" />. The mode itself starts at
+    ///     <see cref="AttestationUploadMode.Unset" />, so neither option is preselected and the user has to
+    ///     choose one actively. The setter deliberately ignores an unchecking write, because a radio group
+    ///     clears its previous selection while moving to the new one.
+    /// </summary>
+    public bool AttestationUploadEnabledChoice
+    {
+        get => AttestationUpload == AttestationUploadMode.Enabled;
+        set
+        {
+            if (value)
+                AttestationUpload = AttestationUploadMode.Enabled;
+        }
+    }
+
+    public bool AttestationUploadDisabledChoice
+    {
+        get => AttestationUpload == AttestationUploadMode.Disabled;
+        set
+        {
+            if (value)
+                AttestationUpload = AttestationUploadMode.Disabled;
+        }
+    }
 
     partial void OnSelectedStudentListNameChanged(string value)
     {
@@ -159,6 +295,54 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         _configHandler.Data.LotterySettings.DefaultPool = value;
         _configHandler.Save();
         OnPropertyChanged(nameof(SelectedPrizeListCount));
+    }
+
+    /// <summary>
+    ///     集控开关与身份**只写本机状态文件**（<c>data/config/control/node-state.json</c>），不碰 settings。
+    /// </summary>
+    /// <remarks>
+    ///     这里是引导流程里唯一一处"改设置"却不经过 <see cref="MainConfigHandler" /> 的地方，而且是刻意的：
+    ///     "这台机器是否允许被远控"要是能被一次设置导入打开，这道闸门就等于不存在。
+    ///     节点此刻还没启连（HostedService 要等引导结束、Host 启动后才跑），所以这里只落盘、不唤醒客户端，
+    ///     连接状态由集控设置页在启动后显示。
+    /// </remarks>
+    partial void OnControlRemoteEnabledChanged(bool value)
+    {
+        if (_suppressControlPersist)
+            return;
+
+        _controlNodeStateStore.Update(state => state with { RemoteControlEnabled = value });
+    }
+
+    /// <summary>
+    ///     显示名保留用户输入的原样（含首尾空白），规范化只发生在落盘与上报两个边界。
+    /// </summary>
+    /// <remarks>每次按键都 Trim 会跟输入光标打架——想在词中间打空格都做不到。</remarks>
+    partial void OnControlDisplayNameChanged(string value)
+    {
+        if (_suppressControlPersist)
+            return;
+
+        _controlNodeStateStore.Update(state => state with { DisplayName = value });
+    }
+
+    /// <summary>组 ID 两端空白一律去掉：它在协议里是精确匹配的键，多一个空格就连不上。</summary>
+    partial void OnControlGroupIdChanged(string value)
+    {
+        if (_suppressControlPersist)
+            return;
+
+        _controlNodeStateStore.Update(state => state with { GroupId = value?.Trim() ?? string.Empty });
+    }
+
+    /// <summary>在浏览器里打开集控平台网页控制台（配了第三方地址就打开那一家）。</summary>
+    [RelayCommand]
+    private void OpenControlPlane()
+    {
+        if (_externalLauncher.TryOpenUri(_controlPlaneEndpointStore.Current))
+            return;
+
+        StatusMessage = LR.M_ControlPlatformOpenFailed;
     }
 
     public void Previous()
@@ -183,7 +367,8 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
 
     public async Task<bool> FinishAsync()
     {
-        if (!AcceptedPrivacyPolicy || !AcceptedGpl || (IsVerificationNoticeRequired && !AcceptedVerificationNotice))
+        if (!AcceptedPrivacyPolicy || !AcceptedGpl ||
+            (IsVerificationNoticeRequired && !AcceptedVerificationNotice))
         {
             if (!IsPrivacyPolicyOnly)
                 SelectedStep = 1;
@@ -191,10 +376,18 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
             return false;
         }
 
+        if (!IsPrivacyPolicyOnly && AttestationUpload == AttestationUploadMode.Unset)
+        {
+            // The ordinary-draw upload has no default, so completion cannot be reached without choosing.
+            SelectedStep = 2;
+            StatusMessage = LR.M_CompletionAgreementRequired;
+            return false;
+        }
+
         if (!IsPrivacyPolicyOnly && !ApplyDesktopIntegration())
             StatusMessage = LR.M_DesktopIntegrationFailed;
 
-        _oobeService.Complete();
+        _oobeService.Complete(AcceptedSecRandomServices, AcceptedCrossBorderTransfer, AttestationUpload);
         await Task.CompletedTask;
         return true;
     }
@@ -235,14 +428,19 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         Autostart = _basicSettings.Autostart;
         ExternalIntegration = _basicSettings.UrlProtocol;
         RefreshListSelectors();
+        RefreshControlNodeState();
         if (IsPrivacyPolicyOnly)
             SelectedStep = 1;
         OnPropertyChanged(nameof(Basic));
         OnPropertyChanged(nameof(PrivacySettings));
+        OnPropertyChanged(nameof(ProofRetention));
+        OnPropertyChanged(nameof(SelectedProofRetentionIndex));
         OnPropertyChanged(nameof(IsPrivacyPolicyOnly));
         OnPropertyChanged(nameof(IsFullSetup));
         OnPropertyChanged(nameof(IsVerificationNoticeRequired));
+        OnPropertyChanged(nameof(IsSecRandomServicesRequired));
         OnPropertyChanged(nameof(IsPrivacyPolicyStep));
+        OnPropertyChanged(nameof(IsCrossBorderStep));
         OnPropertyChanged(nameof(IsStatusVisible));
         OnPropertyChanged(nameof(IsCompletionActionVisible));
         OnPropertyChanged(nameof(PageTitle));
@@ -262,6 +460,38 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     {
         _configHandler.Save();
     }
+
+    /// <summary>把本机集控状态投影到界面（写入过程要被抑制，否则会回环写一遍）。</summary>
+    private void RefreshControlNodeState()
+    {
+        var state = _controlNodeStateStore.Current;
+        _suppressControlPersist = true;
+        try
+        {
+            ControlRemoteEnabled = state.RemoteControlEnabled;
+            ControlDisplayName = state.DisplayName ?? string.Empty;
+            ControlGroupId = state.GroupId;
+            ControlNodeId = state.NodeId;
+        }
+        finally
+        {
+            _suppressControlPersist = false;
+        }
+
+        RefreshOpenControlPlaneLabel();
+    }
+
+    /// <summary>
+    ///     "打开集控平台"按钮文案：配了第三方地址就明说打开的是哪一家。
+    /// </summary>
+    /// <remarks>
+    ///     按钮写着官方却跳到别人的服务器，是页面上最容易被误点的一处；语言切换也要重算一次，
+    ///     因为它是一段在 ViewModel 里定格的本地化文案，不像 <c>x:Static</c> 会随新窗口重新求值。
+    /// </remarks>
+    private void RefreshOpenControlPlaneLabel() =>
+        OpenControlPlaneLabel = _controlPlaneEndpointStore.IsCustom
+            ? LR.C_OpenControlPlane_ThirdParty
+            : LR.C_OpenControlPlane_Official;
 
     public void RefreshListSelectors()
     {

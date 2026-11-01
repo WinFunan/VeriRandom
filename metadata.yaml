@@ -1,10 +1,26 @@
+# VeriRandom 发布频道元数据（本分支自有）
+#
+# 更新客户端用它把「频道」解析成「发布标签」，再据此校验发布清单的标签与频道是否一致。
+# 其中两个字段是**承重**的，改动前务必先看 DownStream_Change.md §19：
+#   - product：必须等于 UpdateCenterService.Product（"VeriRandom"）。不相等时桌面客户端会
+#     直接拒绝整份元数据，因此本仓库的这份文件永远不能写 product: SecRandom。
+#   - channels.<频道>.tag：必须与发布标签完全相等，scripts/validate-release-metadata.ps1
+#     在每次手动发布前做这道闸门。
+#
+# 版本号约定（规则在 SecRandom.Core/Helpers/ReleaseVersion.cs，脚本侧是 scripts/Format-ReleaseVersion.ps1）：
+#   - 默认跟随上游的 SemVer：v3.1.5、v3.0.0-beta.1、v3.0.0-alpha.2
+#   - 需要在**不递增上游 SemVer**的前提下发布下游自有版本时，追加 Mu 序号：v3.1.5 Mu 1、v3.1.5 Mu 2 …
+#     它按（数值核心, Mu 序号）排序，因此 Mu 2 比 Mu 1 新、比 v3.1.6 旧；带 Mu 的标签属于 release 频道，
+#     不是预览版。标签里带空格是可以的（界面上就显示成「v3.1.5 Mu 1」），MSBuild 的 -p:Version 与
+#     NuGet 包版本会被格式化成 3.1.5-mu.1，发布产物文件名则沿用标签原文；想自己写成 v3.1.5-Mu.1 也等价
+# 其余字段为说明性质：客户端下载地址由自身的仓库常量拼出，清单文件名也是硬编码的。
 schema_version: 2
-product: SecRandom
-repository: SECTL/SecRandom
+product: VeriRandom
+repository: WinFunan/VeriRandom
 manifest:
-  file_name: SecRandom-update-manifest.json
-  signature_file_name: SecRandom-update-manifest.sig
-  public_key_id: secrandom-release-2026-01
+  file_name: VeriRandom-update-manifest.json
+  signature_file_name: VeriRandom-update-manifest.sig
+  public_key_id: verirandom-release-2026-01
 runtime:
   lite: net10.0-desktop
 sources:
@@ -18,7 +34,7 @@ sources:
     display_name: GitHub
 channels:
   release:
-    tag: v2.3.100
+    tag: v3.1.6
   beta:
     tag: v3.0.0-beta.1
   alpha:

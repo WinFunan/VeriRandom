@@ -34,8 +34,8 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
         Assert.Equal(newest, result.BackupName);
         Assert.NotNull(result.PreRestorePath);
         Assert.Equal(tampered, File.ReadAllText(result.PreRestorePath!));
-        Assert.Equal(SettingsIntegrityRestoreSource.LocalThenCloud,
-            fixture.Handler.Data.SecuritySettings.SettingsIntegrityRestoreSource);
+        Assert.Equal(BackupMarker(SettingsIntegrityRestoreSource.LocalThenCloud),
+            fixture.Handler.Data.General.Backup.AutoBackupIntervalDays);
     }
 
     [Fact]
@@ -51,8 +51,8 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
 
         Assert.True(result.Succeeded);
         Assert.Equal(usable, result.BackupName);
-        Assert.Equal(SettingsIntegrityRestoreSource.CloudThenLocal,
-            fixture.Handler.Data.SecuritySettings.SettingsIntegrityRestoreSource);
+        Assert.Equal(BackupMarker(SettingsIntegrityRestoreSource.CloudThenLocal),
+            fixture.Handler.Data.General.Backup.AutoBackupIntervalDays);
     }
 
     [Fact]
@@ -68,8 +68,8 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
 
         Assert.True(result.Succeeded);
         Assert.Equal(usable, result.BackupName);
-        Assert.Equal(SettingsIntegrityRestoreSource.CloudThenLocal,
-            fixture.Handler.Data.SecuritySettings.SettingsIntegrityRestoreSource);
+        Assert.Equal(BackupMarker(SettingsIntegrityRestoreSource.CloudThenLocal),
+            fixture.Handler.Data.General.Backup.AutoBackupIntervalDays);
     }
 
     [Fact]
@@ -110,6 +110,70 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
         Assert.Equal(SettingsIntegrityRecoveryStatus.NoBackupAvailable, result.Status);
     }
 
+    [Fact]
+    public void OrderCloudCandidates_UsesOnlyThisDevicesBackupsEvenWhenAnotherDeviceHasANewerOne()
+    {
+        var own = CloudBackup("own", "dev-a", DateTimeOffset.UtcNow.AddDays(-5));
+        var other = CloudBackup("other", "dev-b", DateTimeOffset.UtcNow);
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([other, own], "dev-a");
+
+        // Another machine's settings.json describes that machine, so it is never a restore candidate.
+        Assert.Equal(["own"], ordered.Select(item => item.BackupId));
+    }
+
+    [Fact]
+    public void OrderCloudCandidates_OrdersThisDevicesBackupsNewestFirst()
+    {
+        var ownOlder = CloudBackup("own-old", "dev-a", DateTimeOffset.UtcNow.AddDays(-3));
+        var ownNewer = CloudBackup("own-new", "dev-a", DateTimeOffset.UtcNow.AddDays(-1));
+        var other = CloudBackup("other", "dev-b", DateTimeOffset.UtcNow);
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([ownOlder, other, ownNewer], "dev-a");
+
+        Assert.Equal(["own-new", "own-old"], ordered.Select(item => item.BackupId));
+    }
+
+    [Fact]
+    public void OrderCloudCandidates_WithoutThisDevicesBackups_ReturnsNothing()
+    {
+        var older = CloudBackup("other-old", "dev-b", DateTimeOffset.UtcNow.AddDays(-2));
+        var newer = CloudBackup("other-new", "dev-c", DateTimeOffset.UtcNow);
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([older, newer], "dev-a");
+
+        // No own backup means no recovery from the cloud at all: the local file stays untouched.
+        Assert.Empty(ordered);
+    }
+
+    [Fact]
+    public void OrderCloudCandidates_SkipsIncompleteBackups()
+    {
+        var incomplete = CloudBackup("half", "dev-a", DateTimeOffset.UtcNow, complete: false);
+        var usable = CloudBackup("usable", "dev-a", DateTimeOffset.UtcNow.AddDays(-1));
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([incomplete, usable], "dev-a");
+
+        Assert.Equal(["usable"], ordered.Select(item => item.BackupId));
+    }
+
+    [Fact]
+    public void OrderCloudCandidates_WithoutADeviceTag_ReturnsNothing()
+    {
+        // A host name that yields no ASCII-safe alias means no backup can be attributed to this device.
+        var older = CloudBackup("older", "dev-a", DateTimeOffset.UtcNow.AddDays(-1));
+        var newer = CloudBackup("newer", "dev-b", DateTimeOffset.UtcNow);
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([older, newer], string.Empty);
+
+        Assert.Empty(ordered);
+    }
+
+    private static CloudBackupDescriptor CloudBackup(string backupId, string deviceTag, DateTimeOffset createdAt,
+        bool complete = true) =>
+        new(backupId, $"{backupId} ({deviceTag})", createdAt, 10, 1, complete,
+            complete ? $"manifest-{backupId}" : null, deviceTag);
+
     public void Dispose()
     {
         if (Directory.Exists(_temporaryRoot))
@@ -127,14 +191,21 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
         var handler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new JsonFileConfigService(configPath));
-        handler.Data.SecuritySettings.SettingsIntegrityRestoreSource = source;
+        // 安全设置住在自己的加密文件里，settings.json 的恢复不再碰它
+        var securitySettings = new SecuritySettingsStore(
+            Path.Combine(directory, "security", "settings.json"),
+            handler,
+            credentialStore: null,
+            NullLogger<SecuritySettingsStore>.Instance);
+        securitySettings.Data.SettingsIntegrityRestoreSource = source;
         var service = new SettingsIntegrityRecoveryService(
             handler,
+            securitySettings,
             new StubImportExportService(),
             NullLogger<SettingsIntegrityRecoveryService>.Instance,
             configPath,
             backupDirectory);
-        return new RecoveryFixture(handler, service, configPath, backupDirectory);
+        return new RecoveryFixture(handler, securitySettings, service, configPath, backupDirectory);
     }
 
     private static string WriteCurrentSettings(RecoveryFixture fixture, SettingsIntegrityRestoreSource source)
@@ -178,12 +249,17 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
     private static MainConfigModel CreateSettings(SettingsIntegrityRestoreSource source)
     {
         var settings = new MainConfigModel();
-        settings.SecuritySettings.SettingsIntegrityRestoreSource = source;
+        // 安全设置已经不随备份走，所以这里用一个普通的设置值当"这是哪一份备份"的标记
+        settings.General.Backup.AutoBackupIntervalDays = BackupMarker(source);
         return settings;
     }
 
+    /// <summary>每份备份写一个不同的标记值，恢复后必须等于所选用备份里的那个值。</summary>
+    private static int BackupMarker(SettingsIntegrityRestoreSource source) => (int)source + 1;
+
     private sealed record RecoveryFixture(
         MainConfigHandler Handler,
+        SecuritySettingsStore SecuritySettings,
         SettingsIntegrityRecoveryService Service,
         string ConfigPath,
         string BackupDirectory);

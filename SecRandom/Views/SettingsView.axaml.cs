@@ -29,6 +29,7 @@ using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Views;
+using SecRandom.Helpers;
 using SecRandom.Models;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Auth;
@@ -100,13 +101,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
             RestorePreviewControls();
             if (_isMobile)
                 RefreshMobileDrawSessions();
+            IAppHost.TryGetService<ISecurityService>()?.DeactivateSettingsSudoMode();
             if (ReferenceEquals(Current, this))
                 Current = null;
         };
 
-        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
-        RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
-        RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
+        UiRenderQuality.Apply(this);
     }
 
     public static SettingsView? Current { get; private set; }
@@ -348,9 +348,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
         {
             categoryControl = FindSettingsControl(pageRoot, settings.CategoryControlId);
             _logger?.LogInformation("分类控件: {Control}", categoryControl);
-
-            if (categoryControl is FASettingsExpander settingsExpander) settingsExpander.IsExpanded = true;
         }
+
+        // 子设置可能嵌在折叠的展开卡片里：先展开离目标控件最近的 FASettingsExpander，
+        // 否则 BringIntoView 和高亮都落在不可见的控件上
+        var settingsExpander = FindSettingsExpander(settingsControl) ?? FindSettingsExpander(categoryControl);
+        if (settingsExpander is not null) settingsExpander.IsExpanded = true;
 
         Dispatcher.UIThread.Post(() =>
         {
@@ -370,6 +373,14 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
                ?? pageRoot.GetVisualDescendants().OfType<Control>()
                    .FirstOrDefault(control => control.Name == controlId);
     }
+
+    private static FASettingsExpander? FindSettingsExpander(Control? control) =>
+        control switch
+        {
+            null => null,
+            FASettingsExpander expander => expander,
+            _ => control.GetVisualAncestors().OfType<FASettingsExpander>().FirstOrDefault()
+        };
 
     private void ClearSearch()
     {
@@ -551,6 +562,23 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
     {
         ViewModel.IsRequestedRestart = true;
         _ = ShowRestartDialog();
+    }
+
+    /// <summary>
+    ///     Follow-up an operation that replaced persisted data needs: the desktop restart dialog,
+    ///     because only a desktop head can relaunch its own process, or a mobile view-tree reload,
+    ///     because the mobile host must show the restored configuration without restarting.
+    /// </summary>
+    public void RequestRestartOrMobileReload()
+    {
+        if (App.IsDesktop)
+        {
+            RequestRestartApp();
+            return;
+        }
+
+        if (IAppHost.TryGetService<IMobileRootViewReloader>() is { } reloader)
+            _ = reloader.ReloadAsync();
     }
 
     private async Task ShowRestartDialog()
@@ -1053,12 +1081,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
             if (updateNavigationSelection)
                 ViewModel.SelectedNavigationViewItem = item;
             ViewModel.SelectedPageInfo = info;
-            NavigationFrame.NavigateFromObject(info);
+            UiMotion.NavigateFromObject(NavigationFrame, info);
         }
         catch (Exception e)
         {
             _logger?.LogError(e, "Failed navigating to page {PageId}", info.Id);
-            NavigationFrame.NavigateFromObject(e);
+            UiMotion.NavigateFromObject(NavigationFrame, e);
         }
 
         CloseDrawer();

@@ -44,6 +44,8 @@ namespace SecRandom.Langs.MainPages.RollCall {
         public static string C_Reset => ResourceManager.GetString("C_Reset", resourceCulture);
         public static string C_RollCallSettings => ResourceManager.GetString("C_RollCallSettings", resourceCulture);
         public static string C_ShowRemainingList => ResourceManager.GetString("C_ShowRemainingList", resourceCulture);
+        public static string C_ResultWindow => ResourceManager.GetString("C_ResultWindow", resourceCulture);
+        public static string M_ResultWindowRestore => ResourceManager.GetString("M_ResultWindowRestore", resourceCulture);
         public static string C_Start => ResourceManager.GetString("C_Start", resourceCulture);
         public static string C_Stop => ResourceManager.GetString("C_Stop", resourceCulture);
         public static string M_CountSummaryFormat => ResourceManager.GetString("M_CountSummaryFormat", resourceCulture);
@@ -61,5 +63,9 @@ namespace SecRandom.Langs.MainPages.RollCall {
         public static string M_AutoResetDone => ResourceManager.GetString("M_AutoResetDone", resourceCulture);
         public static string O_AllGenders => ResourceManager.GetString("O_AllGenders", resourceCulture);
         public static string O_AllGroups => ResourceManager.GetString("O_AllGroups", resourceCulture);
+        public static string C_SignedPolicyBadgeFormat => ResourceManager.GetString("C_SignedPolicyBadgeFormat", resourceCulture);
+        public static string C_SettingsDigestBadgeFormat => ResourceManager.GetString("C_SettingsDigestBadgeFormat", resourceCulture);
+        public static string C_SettingsDigestBadgeTipFormat => ResourceManager.GetString("C_SettingsDigestBadgeTipFormat", resourceCulture);
+        public static string C_SignedPolicyBadgeTipFormat => ResourceManager.GetString("C_SignedPolicyBadgeTipFormat", resourceCulture);
     }
 }

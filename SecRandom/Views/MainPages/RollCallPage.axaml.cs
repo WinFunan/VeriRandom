@@ -30,5 +30,11 @@ public sealed partial class RollCallPage : UserControl
             SR.C_RemainingListTitle, ViewModel.RemainingItems, SR.M_NoRemainingStudents);
     }
 
+    /// <summary>
+    ///     把抽取结果缩成置顶浮窗：先开浮窗再收起主窗口（顺序见 <see cref="ResultMiniWindowService" />）。
+    /// </summary>
+    private void ResultWindowButton_OnClick(object? sender, RoutedEventArgs e) =>
+        IAppHost.GetService<ResultMiniWindowService>().Show();
+
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

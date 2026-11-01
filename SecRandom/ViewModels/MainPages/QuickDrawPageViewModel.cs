@@ -18,9 +18,11 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using QuickDrawResources = SecRandom.Langs.MainPages.QuickDraw.Resources;
+using SecRandom.Services.ControlNode;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Notification;
@@ -94,6 +96,16 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     public ObservableCollection<string> StudentListNames { get; } = [];
     public ObservableCollection<QuickDrawResultItem> ResultItems { get; } = [];
+
+    /// <summary>Students of the most recent draw, exposed so plugins can present the result themselves.</summary>
+    public IReadOnlyList<Student> LastResultStudents => LastDrawnStudent is { } student ? [student] : [];
+
+    /// <summary>
+    ///     上一次结果的展示文本（按「显示格式」把编号和名称拼好），暴露给插件，
+    ///     让插件牌面上的字和主程序内置结果卡完全一致。
+    /// </summary>
+    public IReadOnlyList<string> LastResultDisplayTitles =>
+        LastResultStudents.Select(FormatStudent).ToArray();
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
     public string DrawButtonText => IsDrawing ? QuickDrawResources.C_Stop : QuickDrawResources.C_Start;
     public double ResultFontSize
@@ -114,6 +126,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     public FontFamily ResultFontFamily => BuildResultFontFamily();
     public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;
+    public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     public int AnimationDuration => 250;
     public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
         ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)
@@ -245,7 +258,22 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             try
             {
                 var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
-                drawOutcome = await verificationDrawTask.ConfigureAwait(true);
+                var completedOutcome = await verificationDrawTask.ConfigureAwait(true);
+                if (completedOutcome is null)
+                {
+                    // The list still has members but every one of them is temporarily excluded (post-draw
+                    // shield), so this is a state message rather than a failed draw.
+                    StopPreview();
+                    if (showBuiltInNotificationAnimation)
+                        _notificationService?.CancelBuiltInNotificationPresentation(NotificationSettingsType.QuickDraw);
+                    ResultItems.Clear();
+                    LastDrawnStudent = null;
+                    IsResultVisible = false;
+                    StatusText = QuickDrawResources.M_NoMembers;
+                    return;
+                }
+
+                drawOutcome = completedOutcome;
                 drawn = drawOutcome.Winners.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
                     await _drawAudioService.StartAnimationMusicAsync(
@@ -324,6 +352,20 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         ClearHistoryCore();
     }
 
+    /// <summary>远程重置的非交互闸门：需要本机验证时返回拒绝。</summary>
+    public RemoteDrawOutcome? EvaluateRemoteReset() =>
+        ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(SecurityOperation.QuickDrawReset));
+
+    /// <summary>
+    ///     集控远程重置的**展示态**清理：快抽窗回到"还没抽过"的样子，不弹任何验证框。
+    /// </summary>
+    /// <remarks>
+    ///     复用 <see cref="ClearHistoryCore" />（清结果列表、清 <c>LastDrawnStudent</c>、隐藏结果区、
+    ///     恢复提示语），而不是只清临时记录——窗口里留着上一次抽到的人，看起来就是没重置。
+    ///     快抽与点名共用同一份学生临时记录，所以远程重置学生会同时清这两个页面的展示态。
+    /// </remarks>
+    public void ResetRemotePresentation() => ClearHistoryCore();
+
     private void ClearHistoryCore()
     {
         _notificationAutoCloseTime = null;
@@ -365,6 +407,47 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             ClearHistoryCore();
             return Task.CompletedTask;
         });
+
+    /// <summary>
+    ///     集控节点远程触发的一次快抽。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         远程命令**绝不拉起交互式验证**：教室机可能没人，一个等密码输入的对话框会让命令一直挂着。
+    ///         因此先用非交互闸门判定，需要本机输入密码/TOTP/USB 时直接拒绝（控制台看到"设备拒绝"），
+    ///         通过后再走与本地、IPC 完全相同的抽取与事务提交路径。
+    ///     </para>
+    ///     <para>
+    ///         返回值从"成功/失败"升级成带原因与抽中名单的结局，是为了让手机端能显示**抽到了谁**
+    ///         与"为什么没抽成"——旧控制台只按 ok/原因码判读，这一层不影响它们。
+    ///     </para>
+    /// </remarks>
+    public async Task<RemoteDrawOutcome> StartRemoteDrawAsync(CancellationToken cancellationToken = default)
+    {
+        SecurityOperation[] operations = [SecurityOperation.QuickDrawStart, SecurityOperation.LinkageAction];
+        if (ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(operations)) is { } rejection)
+            return rejection;
+
+        if (IsDrawing)
+            return RemoteDrawOutcome.Busy();
+
+        LastDrawnStudent = null;
+        var authorized = await _linkageDrawCoordinator.AuthorizeAsync(
+            operations,
+            StartAuthorizedTriggeredDrawAsync,
+            cancellationToken);
+
+        if (!authorized)
+            return RemoteDrawOutcome.Denied("local_verification_required");
+
+        // 授权通过却没抽到人：名单空、候选池被重复限制掏空等。页面上已经写了原因，
+        // 这里给控制台一个能分辨的细因，而不是笼统的"被拒绝"。
+        return LastDrawnStudent is null
+            ? RemoteDrawOutcome.Denied("no_candidate")
+            : RemoteDrawOutcome.DrawnFrom(
+                [ControlDrawnMembers.FromStudent(LastDrawnStudent)],
+                SelectedStudentListName);
+    }
 
     private void RefreshStudentLists()
     {
@@ -618,7 +701,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             BuildImage(student),
             StudentImageSettings.StudentImage,
             StudentImageSettings.StudentImagePosition,
-            AvatarInitialResolver.Resolve(student.Name, student.Id));
+            AvatarInitialResolver.Resolve(student.Name, student.Id),
+            StudentImageSettings.StudentImageSize);
     }
 
     private QuickDrawResultItem CreateNotificationResultItem(string item)
@@ -637,7 +721,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             null,
             false,
             StudentImagePositionMode.Top,
-            item.Trim()[0].ToString());
+            item.Trim()[0].ToString(),
+            StudentImageSettings.StudentImageSize);
     }
 
     private string FormatStudent(Student student)
@@ -692,8 +777,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (settings is not { IsAttachSettingsEnabled: true } || string.IsNullOrWhiteSpace(settings.ImagePath))
             return null;
 
-        try { return File.Exists(settings.ImagePath) ? new Bitmap(settings.ImagePath) : null; }
-        catch { return null; }
+        return DrawImageCache.Load(settings.ImagePath);
     }
 
     private async void StartCooldown()
@@ -724,10 +808,12 @@ public sealed record QuickDrawResultItem(
     Bitmap? Image,
     bool IsImageEnabled,
     StudentImagePositionMode ImagePosition,
-    string Initial)
+    string Initial,
+    int ImageSize)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public double InitialFontSize => ImageSize * 0.5;
     public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
         ? Orientation.Horizontal
         : Orientation.Vertical;

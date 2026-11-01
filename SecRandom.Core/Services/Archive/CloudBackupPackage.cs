@@ -19,10 +19,21 @@ namespace SecRandom.Core.Services.Archive;
 public static partial class CloudBackupPackage
 {
     public const string Format = "secrandom-cloud-backup";
+
+    /// <summary>The only supported package schema: the parts carry the v3 ZIP archive itself.</summary>
     public const int SchemaVersion = 1;
+
     public const string FilePrefix = "SecRandom-cloud-";
     public const string PartExtension = ".srpart";
     public const string ManifestSuffix = "-manifest.json";
+
+    /// <summary>
+    ///     Marker the removed client-side encryption feature wrote into every file name of a schema-2
+    ///     package. The format no longer produces it, but the listing still recognises it so backups
+    ///     uploaded by an older build stay visible as a separate, unrestorable entry instead of being
+    ///     mis-grouped as a current backup.
+    /// </summary>
+    public const string LegacyEncryptionMarker = "-enc";
 
     /// <summary>
     ///     Longest device alias a backup id carries. The alias is part of every cloud file name, so it
@@ -127,17 +138,22 @@ public static partial class CloudBackupPackage
     /// <summary>
     ///     Parses a cloud file name produced by this package format. Foreign file names return false
     ///     so personal-cloud listings can keep unrelated platform files out of the backup list.
+    ///     <paramref name="isEncrypted" /> reports the removed encryption feature's name marker: such a
+    ///     backup was sealed with a passphrase this build can no longer derive a key for, so the caller
+    ///     keeps it visible but not restorable.
     /// </summary>
-    public static bool TryParseFileName(string? fileName, out string backupId, out int partIndex, out int partCount, out bool isManifest)
+    public static bool TryParseFileName(string? fileName, out string backupId, out int partIndex, out int partCount,
+        out bool isManifest, out bool isEncrypted)
     {
         backupId = string.Empty;
         partIndex = 0;
         partCount = 0;
         isManifest = false;
+        isEncrypted = false;
         if (!IsCloudBackupFileName(fileName))
             return false;
 
-        var remainder = fileName![FilePrefix.Length..];
+        var remainder = StripLegacyEncryptionMarker(fileName![FilePrefix.Length..], out isEncrypted);
         if (remainder.EndsWith(ManifestSuffix, StringComparison.Ordinal))
         {
             backupId = remainder[..^ManifestSuffix.Length];
@@ -157,6 +173,34 @@ public static partial class CloudBackupPackage
                && int.TryParse(match.Groups["index"].Value, out partIndex)
                && int.TryParse(match.Groups["count"].Value, out partCount)
                && partIndex >= 1 && partCount >= 1 && partIndex <= partCount;
+    }
+
+    /// <summary>Parses a cloud file name without reporting its legacy encryption marker.</summary>
+    public static bool TryParseFileName(string? fileName, out string backupId, out int partIndex, out int partCount,
+        out bool isManifest) =>
+        TryParseFileName(fileName, out backupId, out partIndex, out partCount, out isManifest, out _);
+
+    /// <summary>
+    ///     Splits the removed feature's marker off a file name remainder, so a package uploaded by an
+    ///     older build keeps its own backup id and is still recognised (and refused) by name.
+    /// </summary>
+    private static string StripLegacyEncryptionMarker(string remainder, out bool isEncrypted)
+    {
+        isEncrypted = false;
+        var suffixLength = remainder.EndsWith(ManifestSuffix, StringComparison.Ordinal)
+            ? ManifestSuffix.Length
+            : remainder.EndsWith(PartExtension, StringComparison.Ordinal)
+                ? PartExtension.Length
+                : 0;
+        if (suffixLength == 0)
+            return remainder;
+
+        var stem = remainder[..^suffixLength];
+        if (!stem.EndsWith(LegacyEncryptionMarker, StringComparison.Ordinal))
+            return remainder;
+
+        isEncrypted = true;
+        return string.Concat(stem[..^LegacyEncryptionMarker.Length], remainder[^suffixLength..]);
     }
 
     /// <summary>
@@ -189,18 +233,24 @@ public static partial class CloudBackupPackage
         return parts;
     }
 
-    /// <summary>Builds the manifest that describes the already-sliced parts of one backup.</summary>
+    /// <summary>
+    ///     Builds the manifest that describes the already-sliced parts of one backup.
+    ///     <paramref name="payload" /> is the byte sequence the parts were sliced from — the v3 ZIP
+    ///     archive itself. <see cref="CloudBackupManifest.ArchiveBytes" /> and
+    ///     <see cref="CloudBackupManifest.ArchiveSha256" /> always describe that payload, so per-part
+    ///     verification stays a plain SHA-256 check.
+    /// </summary>
     public static CloudBackupManifest BuildManifest(string backupId, IReadOnlyList<byte[]> parts, int partBytes,
-        IReadOnlyList<string> roots, DateTime createdUtc, string producerVersion, byte[] archive)
+        IReadOnlyList<string> roots, DateTime createdUtc, string producerVersion, byte[] payload)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(backupId);
         ArgumentNullException.ThrowIfNull(parts);
-        ArgumentNullException.ThrowIfNull(archive);
+        ArgumentNullException.ThrowIfNull(payload);
         if (parts.Count == 0)
             throw new InvalidDataException("云端备份分片不能为空。");
         if (parts.Count > MaxPartCount)
             throw new InvalidDataException("云端备份分片数量超过限制。");
-        if (partBytes is <= 0 or > DefaultPartBytes || archive.LongLength > MaxArchiveBytes ||
+        if (partBytes is <= 0 or > DefaultPartBytes || payload.LongLength > MaxArchiveBytes ||
             parts.Any(part => part is null || part.LongLength > partBytes))
             throw new InvalidDataException("云端备份分片或归档长度无效。");
 
@@ -211,8 +261,8 @@ public static partial class CloudBackupPackage
             ProducerVersion = producerVersion,
             BackupId = backupId,
             ArchiveName = BuildArchiveName(backupId),
-            ArchiveBytes = archive.LongLength,
-            ArchiveSha256 = Hash(archive),
+            ArchiveBytes = payload.LongLength,
+            ArchiveSha256 = Hash(payload),
             PartBytes = partBytes,
             CreatedUtc = createdUtc,
             Roots = [.. roots],
@@ -235,8 +285,10 @@ public static partial class CloudBackupPackage
     }
 
     /// <summary>
-    ///     Validates a downloaded manifest and rebuilds the archive. Any structural problem,
-    ///     missing/reordered part, or hash mismatch aborts before an import can start.
+    ///     Validates a downloaded manifest and rebuilds the payload the parts describe. Any structural
+    ///     problem, missing/reordered part, or hash mismatch aborts before an import can start. A
+    ///     manifest written by the removed encryption feature (schema 2) is rejected here, because this
+    ///     build holds no way to derive a key for it.
     /// </summary>
     public static byte[] MergeAndVerify(CloudBackupManifest manifest, IReadOnlyList<byte[]> parts)
     {
@@ -244,17 +296,17 @@ public static partial class CloudBackupPackage
         if (parts.Count != manifest.Parts.Count)
             throw new InvalidDataException("云端备份分片数量与清单不一致。");
 
-        using var archive = new MemoryStream((int)manifest.ArchiveBytes);
+        using var payload = new MemoryStream((int)manifest.ArchiveBytes);
         for (var index = 0; index < manifest.Parts.Count; index++)
         {
             var expected = manifest.Parts[index];
             var actual = parts[index];
             if (actual.LongLength != expected.Length || !Hash(actual).Equals(expected.Sha256, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException($"云端备份第 {expected.Index} 个分片校验失败。");
-            archive.Write(actual);
+            payload.Write(actual);
         }
 
-        var merged = archive.ToArray();
+        var merged = payload.ToArray();
         if (merged.LongLength != manifest.ArchiveBytes ||
             !Hash(merged).Equals(manifest.ArchiveSha256, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("云端备份归档校验失败。");
@@ -277,8 +329,10 @@ public static partial class CloudBackupPackage
             var part = manifest.Parts[index];
             if (part is null || part.Index != index + 1 || part.Length < 0 || part.Length > manifest.PartBytes ||
                 !IsSha256(part.Sha256) ||
-                !TryParseFileName(part.Name, out var partBackupId, out var partIndex, out var partCount, out var isManifest) ||
-                isManifest || partBackupId != manifest.BackupId || partIndex != part.Index || partCount != manifest.Parts.Count)
+                !TryParseFileName(part.Name, out var partBackupId, out var partIndex, out var partCount,
+                    out var isManifest, out var isLegacyEncrypted) ||
+                isManifest || isLegacyEncrypted ||
+                partBackupId != manifest.BackupId || partIndex != part.Index || partCount != manifest.Parts.Count)
                 throw new InvalidDataException("云端备份清单的分片描述无效。");
         }
 
@@ -334,11 +388,17 @@ public sealed class CloudBackupManifest
     [JsonPropertyName("producer_version")] public string ProducerVersion { get; set; } = string.Empty;
     [JsonPropertyName("backup_id")] public string BackupId { get; set; } = string.Empty;
     [JsonPropertyName("archive_name")] public string ArchiveName { get; set; } = string.Empty;
+
+    /// <summary>Length of the payload the parts carry: the v3 ZIP archive itself.</summary>
     [JsonPropertyName("archive_bytes")] public long ArchiveBytes { get; set; }
+
+    /// <summary>SHA-256 of the payload the parts carry, so a rebuilt archive is verified before a restore.</summary>
     [JsonPropertyName("archive_sha256")] public string ArchiveSha256 { get; set; } = string.Empty;
+
     [JsonPropertyName("part_bytes")] public int PartBytes { get; set; }
     [JsonPropertyName("created_utc")] public DateTime CreatedUtc { get; set; }
     [JsonPropertyName("roots")] public List<string> Roots { get; set; } = [];
+
     [JsonPropertyName("parts")] public List<CloudBackupPart> Parts { get; set; } = [];
 }
 

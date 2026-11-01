@@ -8,11 +8,18 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
+using SecRandom.Mobile;
+using SecRandom.Platforms.Abstractions;
 using SecRandom.Services.Auth;
 using SecRandom.Shared;
 
 namespace SecRandom.Services.ImportExport;
 
+/// <summary>
+///     One cloud backup as the listing sees it. <paramref name="IsEncrypted" /> marks a package
+///     uploaded by the removed client-side encryption feature: this build cannot derive its key, so it
+///     stays listed but is never offered for restore.
+/// </summary>
 public sealed record CloudBackupDescriptor(
     string BackupId,
     string DisplayName,
@@ -21,9 +28,10 @@ public sealed record CloudBackupDescriptor(
     int PartCount,
     bool IsComplete,
     string? ManifestFileId,
-    string DeviceTag = "")
+    string DeviceTag = "",
+    bool IsEncrypted = false)
 {
-    public bool CanRestore => IsComplete && !string.IsNullOrWhiteSpace(ManifestFileId);
+    public bool CanRestore => IsComplete && !string.IsNullOrWhiteSpace(ManifestFileId) && !IsEncrypted;
 }
 
 public sealed record CloudBackupProgress(string Stage, int Completed, int Total)
@@ -40,15 +48,39 @@ public sealed record CloudBackupProgress(string Stage, int Completed, int Total)
 ///     signed-in devices apart and retention stays per device. The anonymous device-transfer channel
 ///     stays on SecRandom Sync; this service only ever talks to the authenticated SECTL personal
 ///     cloud API.
+///     <para>
+///         The account cloud stores the archive as it was produced: client-side encryption was removed
+///         on purpose, because a passphrase made the cloud copy useless to anyone who lost it. Account
+///         access is now the only key, so any device signed into the same account can list and restore
+///         every backup.
+///     </para>
 /// </summary>
 public sealed class CloudBackupService(
     SectlAuthService authService,
     SectlCloudStorageClient cloudClient,
     MainConfigHandler configHandler,
     IImportExportService importExportService,
-    ILogger<CloudBackupService> logger)
+    ILogger<CloudBackupService> logger,
+    IPlatformServiceRoot? platform = null)
 {
     public bool IsSignedIn => authService.IsSignedIn;
+
+    /// <summary>
+    ///     Alias stamped on this device's uploads, empty when the host name yields no ASCII-safe tag.
+    ///     Exposed because a caller that consumes cloud backups has to be able to tell this device's own
+    ///     backups from another signed-in machine's — the alias is a display label, not an identity.
+    /// </summary>
+    public string DeviceTag => ResolveDeviceTag();
+
+    /// <summary>Whether a listed backup was uploaded by this device.</summary>
+    public bool IsOwnBackup(CloudBackupDescriptor descriptor) => IsOwnBackup(descriptor, DeviceTag);
+
+    internal static bool IsOwnBackup(CloudBackupDescriptor descriptor, string deviceTag)
+    {
+        ArgumentNullException.ThrowIfNull(descriptor);
+        return !string.IsNullOrWhiteSpace(deviceTag) &&
+               string.Equals(descriptor.DeviceTag, deviceTag, StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>
     ///     Raised after an automatic upload lands, so an open backup page can reload the list and the
@@ -85,6 +117,9 @@ public sealed class CloudBackupService(
             var roots = importExportService.GetCloudBackupRoots();
             await importExportService.ExportCloudBackupAsync(archivePath, cancellationToken).ConfigureAwait(false);
             var archive = await File.ReadAllBytesAsync(archivePath, cancellationToken).ConfigureAwait(false);
+
+            // The parts carry exactly what the account cloud stores: the archive itself. Everything the
+            // manifest hashes and every part name refers to that payload.
             var parts = CloudBackupPackage.Slice(archive, CloudBackupPackage.DefaultPartBytes);
             var manifest = CloudBackupPackage.BuildManifest(backupId, parts, CloudBackupPackage.DefaultPartBytes,
                 roots, DateTime.UtcNow, GlobalConstants.Version, archive);
@@ -240,13 +275,12 @@ public sealed class CloudBackupService(
     /// </summary>
     public async Task<DateTimeOffset?> GetLatestOwnBackupTimeAsync(CancellationToken cancellationToken = default)
     {
-        var deviceTag = ResolveDeviceTag();
-        if (deviceTag.Length == 0)
+        if (DeviceTag.Length == 0)
             return null;
 
         var backups = await ListAsync(cancellationToken).ConfigureAwait(false);
         return backups
-            .Where(backup => string.Equals(backup.DeviceTag, deviceTag, StringComparison.OrdinalIgnoreCase))
+            .Where(IsOwnBackup)
             .Select(backup => backup.CreatedAt)
             .Max();
     }
@@ -265,18 +299,11 @@ public sealed class CloudBackupService(
     /// <summary>Keeps at most <paramref name="maximumBackups" /> of this device's own backups.</summary>
     private async Task TrimAsync(int maximumBackups, CancellationToken cancellationToken)
     {
-        if (maximumBackups <= 0)
-            return;
-
-        var deviceTag = ResolveDeviceTag();
-        if (deviceTag.Length == 0)
+        if (maximumBackups <= 0 || DeviceTag.Length == 0)
             return;
 
         var backups = await ListAsync(cancellationToken).ConfigureAwait(false);
-        var own = backups
-            .Where(backup => string.Equals(backup.DeviceTag, deviceTag, StringComparison.OrdinalIgnoreCase))
-            .ToArray();
-        foreach (var expired in own.Skip(maximumBackups))
+        foreach (var expired in backups.Where(IsOwnBackup).Skip(maximumBackups))
         {
             logger.LogInformation("云端备份超过保留上限，删除本设备最早的备份：备份={BackupId}。", expired.BackupId);
             await DeleteAsync(expired, cancellationToken).ConfigureAwait(false);
@@ -329,7 +356,8 @@ public sealed class CloudBackupService(
         var groups = new Dictionary<string, BackupGroup>(StringComparer.Ordinal);
         foreach (var file in files)
         {
-            if (!CloudBackupPackage.TryParseFileName(file.FileName, out var backupId, out var partIndex, out var partCount, out var isManifest))
+            if (!CloudBackupPackage.TryParseFileName(file.FileName, out var backupId, out var partIndex, out var partCount,
+                    out var isManifest, out var isEncrypted))
                 continue;
             if (!groups.TryGetValue(backupId, out var group))
             {
@@ -342,6 +370,7 @@ public sealed class CloudBackupService(
             else
                 group.Parts[partIndex] = file;
             group.DeclaredPartCount = Math.Max(group.DeclaredPartCount, partCount);
+            group.IsEncrypted |= isEncrypted;
         }
 
         return groups.Values
@@ -355,14 +384,20 @@ public sealed class CloudBackupService(
         CloudBackupPackage.TryParseFileName(fileName, out _, out _, out _, out var isManifest) && isManifest;
 
     /// <summary>
-    ///     Alias stamped on this device's uploads: the configured alias when set, otherwise the host
-    ///     name. It is a user-visible display label, not a device identity — the device UUID stays out
-    ///     of every cloud archive and restore.
+    ///     Alias stamped on this device's uploads: the configured alias when set, otherwise the device
+    ///     label the platform head supplies, otherwise the host name. Android and iOS report
+    ///     <c>localhost</c> as their host name, so the head's label is what keeps two phones from
+    ///     sharing one alias — and with it one retention bucket. The alias is a user-visible display
+    ///     label, not a device identity: the device UUID stays out of every cloud archive and restore.
     /// </summary>
     private string ResolveDeviceTag()
     {
         var configured = configHandler.Data.General.Backup.CloudDeviceAlias;
-        var deviceName = string.IsNullOrWhiteSpace(configured) ? Environment.MachineName : configured;
+        var deviceName = !string.IsNullOrWhiteSpace(configured)
+            ? configured
+            : (platform as MobilePlatformServiceRoot)?.DeviceName is { Length: > 0 } platformName
+                ? platformName
+                : Environment.MachineName;
         return CloudBackupPackage.BuildDeviceTag(deviceName);
     }
 
@@ -396,6 +431,12 @@ public sealed class CloudBackupService(
         public SortedDictionary<int, SectlCloudFile> Parts { get; } = new();
         public int DeclaredPartCount { get; set; }
 
+        /// <summary>
+        ///     Taken from the file names, so the listing can flag a package the removed encryption
+        ///     feature uploaded without downloading a manifest per backup.
+        /// </summary>
+        public bool IsEncrypted { get; set; }
+
         public CloudBackupDescriptor ToDescriptor()
         {
             var isComplete = Manifest is not null && Parts.Count > 0 && DeclaredPartCount > 0 &&
@@ -409,7 +450,7 @@ public sealed class CloudBackupService(
                 .FirstOrDefault();
             var deviceTag = CloudBackupPackage.TryGetDeviceTag(BackupId, out var tag) ? tag : string.Empty;
             return new CloudBackupDescriptor(BackupId, BuildDisplayName(BackupId, deviceTag), created,
-                size, Parts.Count, isComplete, Manifest?.FileId, deviceTag);
+                size, Parts.Count, isComplete, Manifest?.FileId, deviceTag, IsEncrypted);
         }
     }
 }

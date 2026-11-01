@@ -28,7 +28,7 @@ public sealed class PortableRemovableStorageBindingMarker : IRemovableStorageBin
     {
     }
 
-    public string FileName => ".SecRandom.safety.key";
+    public string FileName => ".VeriRandom.safety.key";
 
     public bool TryHide(string path)
     {

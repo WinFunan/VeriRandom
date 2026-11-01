@@ -1,19 +1,22 @@
-# SecRandom への貢献
+# VeriRandom への貢献
 
-SecRandom への問題報告、改善提案、ドキュメント改善、コード提供に感謝します。
+VeriRandom への問題報告、改善提案、ドキュメント改善、コード提供に感謝します。
+
+> [!IMPORTANT]
+> 本製品は SecRandom のオープンソースフォークであり、SecRandom 本体とは見なされません。本ガイドに記載するリポジトリ、Issue、リリースフローはすべて本フォーク（VeriRandom）を指します。上流プロジェクトへ問題を報告する場合は [SECTL/SecRandom](https://github.com/SECTL/SecRandom) を使用してください。
 
 **言語** [ [简体中文](../CONTRIBUTING.md) | [English](CONTRIBUTING_EN.md) | **日本語** ]
 
 ## Issue の作成
 
-- 不具合報告や機能要望には [GitHub Issues](https://github.com/SECTL/SecRandom/issues) を使用してください。
-- 不具合には、再現手順、期待する動作、実際の動作、SecRandom のバージョン、システム環境、必要なログまたはスクリーンショットを含めてください。
+- 本フォークの不具合報告や機能要望には [GitHub Issues](https://github.com/WinFunan/VeriRandom/issues) を使用してください。
+- 不具合には、再現手順、期待する動作、実際の動作、VeriRandom のバージョン、システム環境、必要なログまたはスクリーンショットを含めてください。
 - 機能要望には、利用場面、期待する動作、既存機能では満たせない理由を記載してください。
 - パスワード、TOTP シークレット、USB バインディングトークン、その他の機密情報を公開 Issue、ログ、スクリーンショットに含めないでください。
 
 ## 開発環境
 
-SecRandom v3 は .NET デスクトップアプリケーションです。
+VeriRandom v3 は .NET デスクトップアプリケーションです。
 
 | 分類 | 技術 | 用途 |
 | --- | --- | --- |
@@ -32,8 +35,8 @@ SecRandom v3 は .NET デスクトップアプリケーションです。
 ### プロジェクトの取得と実行
 
 ```bash
-git clone https://github.com/<your-account>/SecRandom.git
-cd SecRandom
+git clone https://github.com/WinFunan/VeriRandom.git
+cd VeriRandom
 git remote add upstream https://github.com/SECTL/SecRandom.git
 
 dotnet restore SecRandom.sln
@@ -69,6 +72,16 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 - 生成物の `bin/`、`obj/`、`artifacts/`、`publish/`、パッケージ出力をコミットしないでください。
 - ドキュメントを変更する場合、簡体中国語、英語、日本語の README と貢献ガイドで事実、リンク、構造を一致させてください。
 
+## 貢献者ライセンス契約（CLA）
+
+最初の Pull Request の前に [CLA](CLA_JA.md)（簡体字中国語の [CLA.md](../CLA.md) が正式版）を読み、署名してください。PR で次を返信すると署名とみなされます。
+
+> I have read the CLA Document and I hereby sign the CLA
+>
+> 我已阅读 CLA 文件并在此签署本协议
+
+CLA は、あなたの貢献をライセンスおよび再ライセンスする権利をメンテナーに付与し、出站ライセンスを変更する前に 30 日以上の公示を義務付けます。本リポジトリは SecRandom のオープンソースフォークであり、CLA は上流の GPLv3 コードのライセンスを**変更できません**。
+
 ## コミットと Pull Request
 
 - 対象となる現在のブランチからトピックブランチを作成し、作業開始前に upstream と同期してください。
@@ -82,6 +95,7 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 リポジトリは GitHub Actions を使用しています。
 
 - `.github/workflows/build_publish.yml` はマルチプラットフォームビルド、パッケージ、署名付きマニフェスト生成、手動リリースフローを担当します。
+- `.github/workflows/build_ios.yml` は iOS を個別にビルドします。他プラットフォームの公開後、IPA・再署名した更新マニフェスト・更新したリリースノートを対応する Release に追加します。
 - `.github/workflows/codeQL.yml` は CodeQL セキュリティ分析を実行します。
 
 通常の貢献では、コミットメッセージのキーワードによってリリースを起動しません。メンテナーが明示的なリリースタグを指定して、手動起動の GitHub Actions ワークフローから公開します。

@@ -9,6 +9,7 @@ using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Config;
+using SecRandom.Services.Consent;
 
 namespace SecRandom.Services;
 
@@ -186,7 +187,11 @@ public sealed class OnlineStatusService : BackgroundService
 
     private OnlineStatusPolicy ResolvePolicy()
     {
-        return OnlineStatusPolicy.From(_privacySettings.OnlineStatusMode);
+        // SECTL servers are outside mainland China, so the cross-border egress consent gates this too.
+        return _privacySettings.OnlineStatusMode == OnlineStatusMode.Off
+               || !SectlTrafficPolicy.IsEgressAllowed(_configHandler)
+            ? OnlineStatusPolicy.From(OnlineStatusMode.Off)
+            : OnlineStatusPolicy.From(_privacySettings.OnlineStatusMode);
     }
 
     private async Task LogReportFailureAsync(HttpResponseMessage response, CancellationToken cancellationToken)

@@ -444,6 +444,46 @@ public sealed class CloudBackupServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ListAsync_MarksABackupFromTheRemovedEncryptionFeatureAsUnrestorable()
+    {
+        const string encryptedId = "20260805-120000-eeee0005";
+        var handler = new RecordingHandler(_ => Json(BuildListResponse(
+            ("f-enc-m", $"{CloudBackupPackage.FilePrefix}{encryptedId}{CloudBackupPackage.LegacyEncryptionMarker}{CloudBackupPackage.ManifestSuffix}", 10),
+            ("f-enc-p", $"{CloudBackupPackage.FilePrefix}{encryptedId}-p01of01{CloudBackupPackage.LegacyEncryptionMarker}{CloudBackupPackage.PartExtension}", 10))));
+        var service = CreateService(handler);
+
+        var backups = await service.ListAsync(TestContext.Current.CancellationToken);
+
+        // The package is complete on the wire, but its passphrase key is gone with the feature, so it
+        // stays visible (the user can still delete it) while never being offered as restorable.
+        var legacy = backups.Single();
+        Assert.Equal(encryptedId, legacy.BackupId);
+        Assert.True(legacy.IsComplete);
+        Assert.True(legacy.IsEncrypted);
+        Assert.False(legacy.CanRestore);
+    }
+
+    [Fact]
+    public async Task DownloadAsync_RefusesALegacyEncryptedBackupWithoutAnyRequest()
+    {
+        const string encryptedId = "20260805-120000-eeee0005";
+        var requests = 0;
+        var handler = new RecordingHandler(_ =>
+        {
+            requests++;
+            return Json("{}");
+        });
+        var service = CreateService(handler);
+        var descriptor = new CloudBackupDescriptor(encryptedId, encryptedId, DateTimeOffset.UtcNow, 10, 1, true,
+            "f-enc-m", string.Empty, IsEncrypted: true);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() =>
+            service.DownloadAsync(descriptor, TestContext.Current.CancellationToken));
+
+        Assert.Equal(0, requests);
+    }
+
+    [Fact]
     public async Task GetLatestOwnBackupTimeAsync_CountsOnlyThisDevicesUploads()
     {
         var handler = new RecordingHandler(_ => Json(BuildListResponse(
@@ -497,8 +537,11 @@ public sealed class CloudBackupServiceTests : IDisposable
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new TestConfigService(config));
+        // The fork's cross-border consent gates every SECTL call; the test exercises the enabled behaviour.
+        configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
-        var authService = new SectlAuthService(factory, deviceUuidStore);
+        var authService = new SectlAuthService(TestTokenStore.Create(), factory, deviceUuidStore,
+            NullLogger<SectlAuthService>.Instance, configHandler, new LoopbackAuthRedirectBrokerFactory());
         SetToken(authService, new SectlToken("access-token", "refresh-token", "user-1", 3600));
         var cloudClient = new SectlCloudStorageClient(authService, factory, NullLogger<SectlCloudStorageClient>.Instance);
         return new CloudBackupService(authService, cloudClient, configHandler, new FakeImportExportService(archive ?? []),
@@ -524,6 +567,15 @@ public sealed class CloudBackupServiceTests : IDisposable
     {
         var body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
         return JsonNode.Parse(body)!["file"]!["name"]!.GetValue<string>();
+    }
+
+    /// <summary>Decodes one uploaded part or manifest back to the bytes the cloud would store.</summary>
+    private static byte[] ReadUploadedBytes(HttpRequestMessage request)
+    {
+        var body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+        var data = JsonNode.Parse(body)!["file"]!["data"]!.GetValue<string>();
+        var separator = data.IndexOf("base64,", StringComparison.Ordinal);
+        return Convert.FromBase64String(data[(separator + "base64,".Length)..]);
     }
 
     private static string BuildListResponse(params (string FileId, string FileName, long Size)[] files)

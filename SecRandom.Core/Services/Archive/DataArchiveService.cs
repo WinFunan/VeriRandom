@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Helpers;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
@@ -29,6 +30,7 @@ public sealed class DataArchiveService(
     MainConfigHandler configHandler,
     IProfileService profileService,
     IArchivePostImportHooks postImportHooks,
+    IArchivePreImportGuard preImportGuard,
     ILogger<DataArchiveService> logger)
 {
     /// <summary>
@@ -182,6 +184,8 @@ public sealed class DataArchiveService(
                     var warnings = new List<string>(inspection.Warnings);
                     var candidate = ReadSettingsCandidate(sourceCopy);
                     ValidateSettingsCandidate(candidate);
+                    // 导入会把整份配置换掉，保护开着时必须先过一次新鲜验证
+                    AuthorizeImport();
 
                     SaveCurrentState();
                     var snapshot = CreateArchive(CreateBackupPath("pre_import_settings"), ArchiveKind.PreImportSettings,
@@ -358,14 +362,11 @@ public sealed class DataArchiveService(
 
     private static bool IsSupportedV3ProducerVersion(string producerVersion)
     {
-        // producer_version is the raw GlobalConstants.Version, which keeps SemVer pre-release and
-        // build metadata suffixes (for example v3.0.0-alpha.2). System.Version rejects those, so a
-        // pre-release build would otherwise refuse to restore an archive it produced itself.
-        var normalized = producerVersion.Trim().TrimStart('v', 'V');
-        var metadataIndex = normalized.IndexOfAny(['-', '+']);
-        if (metadataIndex >= 0)
-            normalized = normalized[..metadataIndex];
-        return Version.TryParse(normalized, out var version) && version.Major == 3;
+        // producer_version is the raw GlobalConstants.Version, which keeps SemVer pre-release and build
+        // metadata suffixes (for example v3.0.0-alpha.2) and this fork's downstream ordinal
+        // (v3.1.5 Mu 1). System.Version rejects both, so the suffix handling belongs to ReleaseVersion;
+        // without it a downstream build would refuse to restore an archive it produced itself.
+        return ReleaseVersion.TryParse(producerVersion, out var version) && version.Core.Major == 3;
     }
 
     private static InvalidDataException CreateUnsupportedVersionException(ImportInspection inspection)
@@ -450,7 +451,8 @@ public sealed class DataArchiveService(
         sourceBytes = checked(sourceBytes + fileLength);
         EnsureTransferSize(sourceBytes, "archive export");
         var entry = archive.CreateEntry(entryPath, CompressionLevel.SmallestSize);
-        using var input = File.OpenRead(source);
+        // 日志等应用自己仍在写入的文件必须用宽松共享读取，否则导出的整个归档会因共享冲突失败
+        using var input = SharedFileReader.OpenRead(source);
         using var output = entry.Open();
         var hash = CopyAndHash(input, output, cancellationToken, out var length, MaxTransferBytes);
         files.Add(new ArchiveFileEntry { Path = entryPath, Length = length, Sha256 = hash });
@@ -624,9 +626,14 @@ public sealed class DataArchiveService(
 
     private void ValidateCandidate(string staging)
     {
-        var settings = Path.Combine(staging, "config", "settings.json");
-        if (File.Exists(settings))
-            ValidateSettingsCandidate(DeserializeSettings(File.ReadAllText(settings)));
+        var candidate = ReadCandidateSettings(staging);
+        if (candidate is not null)
+            ValidateSettingsCandidate(candidate);
+
+        // 归档可能带着整份配置，也可能只带名单；无论哪种，导入都是整体替换这台机器上的数据，
+        // 所以保护开着时一律先过一次新鲜验证，而不是只在那份归档里恰好有 settings.json 时才问。
+        AuthorizeImport();
+
         foreach (var path in Directory.Exists(Path.Combine(staging, "list"))
                      ? Directory.EnumerateFiles(Path.Combine(staging, "list"), "*.json", SearchOption.AllDirectories)
                      : [])
@@ -635,6 +642,29 @@ public sealed class DataArchiveService(
                      ? Directory.EnumerateFiles(Path.Combine(staging, "history"), "*.json", SearchOption.AllDirectories)
                      : [])
             using (JsonDocument.Parse(File.ReadAllText(path))) { }
+    }
+
+    /// <summary>
+    ///     归档里可能没有 settings.json（例如只带名单的归档），此时没有可比较的安全设置。
+    /// </summary>
+    private static MainConfigModel? ReadCandidateSettings(string staging)
+    {
+        var settings = Path.Combine(staging, "config", "settings.json");
+        return File.Exists(settings) ? DeserializeSettings(File.ReadAllText(settings)) : null;
+    }
+
+    /// <summary>
+    ///     导入/恢复提交前问一次宿主。安全设置已经不随归档走（它们住在加密的
+    ///     <c>data/config/security/settings.json</c>，任何归档都够不到），所以这里不再比较候选配置，
+    ///     而是把"导入"本身当作需要新鲜验证的操作：否则一份构造出来的备份就能在管理员不知情时
+    ///     换掉这台机器的整套配置。
+    /// </summary>
+    private void AuthorizeImport()
+    {
+        if (preImportGuard.AuthorizeImport())
+            return;
+
+        throw new InvalidOperationException(SecRandom.Core.Langs.Common.Resources.M_ImportSecurityDenied);
     }
 
     private static void ValidateSettingsCandidate(MainConfigModel candidate)

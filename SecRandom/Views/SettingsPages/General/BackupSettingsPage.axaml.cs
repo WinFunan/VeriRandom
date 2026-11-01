@@ -565,6 +565,8 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
             return;
         }
 
+        // The upload is a plain verified upload now: account access is the only key, so nothing here
+        // can block on credentials beyond being signed in.
         _cloudOperation = new CancellationTokenSource();
         SetCloudBusy(true, uploading: true);
         try
@@ -643,7 +645,11 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         CloudBackupDescriptor? descriptor = FindCloudDescriptor(row.BackupId);
         if (descriptor is null || !descriptor.CanRestore)
         {
-            this.ShowWarningToast(LR.M_CloudIncomplete);
+            // A package the removed encryption feature uploaded cannot be opened by this build at all,
+            // so it gets its own message instead of the generic "incomplete backup" one.
+            this.ShowWarningToast(descriptor?.IsEncrypted == true
+                ? LR.M_CloudLegacyEncrypted
+                : LR.M_CloudIncomplete);
             await RefreshCloudAsync();
             return;
         }
@@ -668,7 +674,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
             await _importExportService.ImportCloudBackupAsync(archivePath);
             _logger.LogInformation("已恢复云端备份：备份={BackupId}。", descriptor.BackupId);
             this.ShowSuccessToast(LR.M_CloudRestoreSuccess);
-            SettingsView.Current?.RequestRestartApp();
+            SettingsView.Current?.RequestRestartOrMobileReload();
         }
         catch (OperationCanceledException)
         {
@@ -746,7 +752,14 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         Size = FormatSize(descriptor.TotalBytes),
         IsComplete = descriptor.IsComplete,
         PartCount = descriptor.PartCount,
-        StatusText = descriptor.IsComplete ? string.Empty : LR.C_CloudBackup_Incomplete
+        // A legacy encrypted package is flagged in the file-name cell: it is listed so the user can see
+        // and delete it, but it can never be restored by a build that holds no passphrase key.
+        IsLegacyEncrypted = descriptor.IsEncrypted,
+        StatusText = descriptor.IsEncrypted
+            ? LR.C_CloudBackup_LegacyEncrypted
+            : descriptor.IsComplete
+                ? string.Empty
+                : LR.C_CloudBackup_Incomplete
     };
 
     /// <summary>Maps cloud service error codes onto localized guidance instead of raw API text.</summary>
@@ -883,7 +896,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         {
             await _importExportService.RestoreBackupAsync(backup.FilePath);
             RefreshBackups();
-            SettingsView.Current?.RequestRestartApp();
+            SettingsView.Current?.RequestRestartOrMobileReload();
             _logger.LogInformation("已恢复备份：文件={FileName}。", backup.FileName);
             this.ShowSuccessToast(LR.M_RestoreSuccess);
         }

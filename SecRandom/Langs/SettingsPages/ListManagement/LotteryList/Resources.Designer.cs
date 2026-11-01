@@ -93,6 +93,30 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.LotteryList {
             }
         }
 
+        public static string C_ExportProofReference {
+            get {
+                return ResourceManager.GetString("C_ExportProofReference", resourceCulture);
+            }
+        }
+
+        public static string C_ExportProofReference_D {
+            get {
+                return ResourceManager.GetString("C_ExportProofReference_D", resourceCulture);
+            }
+        }
+
+        public static string M_ProofReferenceSaved {
+            get {
+                return ResourceManager.GetString("M_ProofReferenceSaved", resourceCulture);
+            }
+        }
+
+        public static string M_ProofReferenceFailed {
+            get {
+                return ResourceManager.GetString("M_ProofReferenceFailed", resourceCulture);
+            }
+        }
+
         public static string C_AddPrize {
             get {
                 return ResourceManager.GetString("C_AddPrize", resourceCulture);

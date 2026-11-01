@@ -3,7 +3,7 @@
         <TargetFramework>net10.0-ios</TargetFramework>
         <OutputType>Exe</OutputType>
         <ApplicationTitle>VeriRandom</ApplicationTitle>
-        <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
+        <ApplicationId>com.yeyixiao.verirandom</ApplicationId>
         <AppIcon>AppIcon</AppIcon>
         <IncludeAllAppIcons>true</IncludeAllAppIcons>
         <InfoPlist>Info.plist</InfoPlist>

@@ -1,16 +1,28 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SecRandom.Core.Services.Config;
+using SecRandom.Services.Consent;
 
 namespace SecRandom.Services.Announcements;
 
+/// <summary>
+///     Reads public announcements from the SECTL Appwrite gateway. The request itself is egress to SECTL
+///     infrastructure — it reveals the device address and that this application is running — so it passes
+///     <see cref="SectlTrafficPolicy" /> like every other path that could send data to SECTL.
+/// </summary>
 public sealed class AnnouncementService(
-    IHttpClientFactory httpClientFactory)
+    IHttpClientFactory httpClientFactory,
+    MainConfigHandler configHandler)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<IReadOnlyList<AnnouncementItem>> GetAsync(CancellationToken cancellationToken = default)
     {
+        // 公告是可选内容：未同意跨境须知时静默留空，而不是发一个不该发的请求再报错
+        if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
+            return [];
+
         HttpClient client = httpClientFactory.CreateClient("announcements");
         using var request = new HttpRequestMessage(HttpMethod.Get, "announcements");
 

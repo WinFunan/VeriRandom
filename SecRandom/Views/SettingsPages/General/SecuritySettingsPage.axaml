@@ -51,8 +51,14 @@
                                    Description="{x:Static lsp:Resources.S_Totp_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <Button Content="{Binding TotpButtonText}" IsEnabled="{Binding CanConfigureAdditionalFactors}"
-                            Click="ManageTotp_OnClick" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="{Binding TotpButtonText}" IsEnabled="{Binding CanConfigureAdditionalFactors}"
+                                Click="ManageTotp_OnClick" />
+                        <Button Content="{x:Static lsp:Resources.C_RemoveTotp}"
+                                IsVisible="{Binding HasTotp}"
+                                IsEnabled="{Binding CanConfigureAdditionalFactors}"
+                                Click="RemoveTotp_OnClick" />
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
@@ -94,6 +100,59 @@
 
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Protection" Text="{x:Static lsp:Resources.S_Protection}" Glyph="{sr:Fi LockClosedFilled}" Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_SudoMode"
+                                    Header="{x:Static lsp:Resources.S_SudoMode}"
+                                   Description="{x:Static lsp:Resources.S_SudoMode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ClockFilled}}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <StackPanel Spacing="2">
+                            <TextBlock x:Name="S_SudoMode_Enabled"
+                                       Text="{x:Static lsp:Resources.S_SudoMode_Enabled}" />
+                            <TextBlock Text="{x:Static lsp:Resources.S_SudoMode_Enabled_D}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      VerticalAlignment="Center"
+                                      IsChecked="{Binding Settings.SudoModeEnabled, Mode=OneWay}"
+                                      Tag="SudoModeEnabled"
+                                      IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
+                                      IsEnabled="{Binding CanEditProtectedOperations}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <StackPanel Spacing="2">
+                            <TextBlock x:Name="S_SudoMode_Duration"
+                                       Text="{x:Static lsp:Resources.S_SudoMode_Duration}" />
+                            <TextBlock Text="{x:Static lsp:Resources.S_SudoMode_Duration_D}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="8"
+                                    VerticalAlignment="Center">
+                            <NumericUpDown Minimum="10" Maximum="600" Increment="10"
+                                           Value="{Binding SudoModeDurationValue}"
+                                           FormatString="F0"
+                                           IsEnabled="{Binding CanEditSudoModeDuration}"
+                                           ValueChanged="SudoModeDuration_OnValueChanged" />
+                            <TextBlock Text="{x:Static lsp:Resources.C_SudoModeDurationUnit}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{x:Static lsp:Resources.C_SudoMode_OperationScope}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{x:Static lsp:Resources.C_SudoMode_SettingsScope}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{x:Static lsp:Resources.C_SudoMode_CredentialScope}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_WindowOperations"
                                     Header="{x:Static lsp:Resources.S_WindowOperations}"
@@ -177,6 +236,21 @@
                           IsEnabled="{Binding CanEditProtectedOperations}" />
             </fa:FASettingsExpander>
 
+            <!--
+                「随机数」页的锁定单独成卡：它不是抽取操作，而是"这台机器允许在什么范围、用什么来源产生裸随机数"，
+                关掉它属于放宽防护，因此和上面每一项一样必须重新输密码
+            -->
+            <fa:FASettingsExpander x:Name="S_RawRandomOperations"
+                                   Header="{x:Static lsp:Resources.S_RawRandomOperations}"
+                                   Description="{x:Static lsp:Resources.S_RawRandomOperations_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi NumberSymbolFilled}}">
+                <CheckBox Content="{x:Static lsp:Resources.C_RawRandomSettings}"
+                          IsChecked="{Binding Settings.ProtectRawRandomSettings, Mode=OneWay}"
+                          Tag="ProtectRawRandomSettings"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
+                          IsEnabled="{Binding CanEditProtectedOperations}" />
+            </fa:FASettingsExpander>
+
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_IntegritySection" Text="{x:Static lsp:Resources.S_IntegritySection}" Glyph="{sr:Fi LockShieldFilled}" Margin="0 0 0 4" />
 
@@ -217,6 +291,64 @@
                               SelectionChanged="IntegrityRestoreSource_OnSelectionChanged"
                               IsEnabled="{Binding CanEditProtectedOperations}" />
                 </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_SignedPolicy"
+                                    Header="{x:Static lsp:Resources.S_SignedPolicy}"
+                                    Description="{x:Static lsp:Resources.S_SignedPolicy_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi LockShieldFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox MinWidth="240"
+                              ItemsSource="{Binding SignedPolicyModeOptions}"
+                              SelectedItem="{Binding SelectedSignedPolicyModeOption, Mode=OneWay}"
+                              SelectionChanged="SignedPolicyMode_OnSelectionChanged"
+                              IsEnabled="{Binding CanEditProtectedOperations}" />
+                </fa:FASettingsExpander.Footer>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_SignedPolicy_Fingerprint}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="4" MaxWidth="460">
+                            <!-- 不做持久化钉住时，与可信设备逐字核对是唯一的防替换手段，所以指纹必须显著可见 -->
+                            <SelectableTextBlock Text="{Binding SignedPolicyFingerprint}"
+                                                 FontSize="14"
+                                                 FontWeight="SemiBold"
+                                                 HorizontalAlignment="Right" />
+                            <TextBlock Text="{Binding SignedPolicyStatus}"
+                                       TextWrapping="Wrap"
+                                       HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{x:Static lsp:Resources.C_SignedPolicy_VerifyHint}"
+                                       TextWrapping="Wrap"
+                                       HorizontalAlignment="Right"
+                                       FontWeight="Bold" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_SignedPolicy_Signer}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBox x:Name="SignedPolicySignerBox"
+                                 MinWidth="240"
+                                 Watermark="{x:Static lsp:Resources.C_SignedPolicy_Signer}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_SignedPolicy_PrivateKey}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="6" MinWidth="320">
+                            <TextBox x:Name="SignedPolicyPrivateKeyBox"
+                                     PasswordChar="*"
+                                     Watermark="{x:Static lsp:Resources.C_SignedPolicy_PrivateKey}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="{x:Static lsp:Resources.C_SignedPolicy_Generate}"
+                                        Click="SignedPolicyGenerate_OnClick" />
+                                <Button Classes="accent"
+                                        Content="{x:Static lsp:Resources.C_SignedPolicy_Sign}"
+                                        Click="SignedPolicySign_OnClick" />
+                            </StackPanel>
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
             <TextBlock Text="{Binding LockoutText}"

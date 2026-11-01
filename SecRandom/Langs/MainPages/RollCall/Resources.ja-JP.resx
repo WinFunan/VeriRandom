@@ -7,7 +7,7 @@
   <data name="C_Reset" xml:space="preserve"><value>リセット</value></data>
   <data name="C_Start" xml:space="preserve"><value>開始</value></data>
   <data name="C_Stop" xml:space="preserve"><value>停止</value></data>
-  <data name="C_ShowRemainingList" xml:space="preserve"><value>残りのリストを表示</value></data>
+  <data name="C_ResultWindow" xml:space="preserve"><value>結果ウィンドウ</value></data><data name="M_ResultWindowRestore" xml:space="preserve"><value>メインウィンドウに戻す</value></data><data name="C_ShowRemainingList" xml:space="preserve"><value>残りのリストを表示</value></data>
   <data name="C_RemainingListTitle" xml:space="preserve"><value>残りの名簿</value></data>
   <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
   <data name="C_ListSettings" xml:space="preserve"><value>名簿設定</value></data>
@@ -23,8 +23,18 @@
   <data name="M_CountSummaryFormat" xml:space="preserve"><value>メンバー数: {0} | 残り: {1}</value></data>
   <data name="M_NoCandidates" xml:space="preserve"><value>抽選できるメンバーがいません</value></data>
   <data name="M_NoEligibleCandidates" xml:space="preserve"><value>重み条件を満たすメンバーがいません</value></data>
-  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りのメンバーが不足しています。記録をリセットするか、条件を調整してください。</value></data>
+  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りのメンバーが不足しています。記録をリセットするか、条件を調整してください</value></data>
   <data name="M_InvalidWeight" xml:space="preserve"><value>重みの設定が無効です</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>抽選に失敗しました</value></data>
   <data name="M_ResultSeparator" xml:space="preserve"><value>、</value></data>
+  <data name="C_SignedPolicyBadgeFormat" xml:space="preserve">
+    <value>ロック済み · 指紋 {0}</value>
+  </data>
+  <data name="C_SignedPolicyBadgeTipFormat" xml:space="preserve">
+    <value>この端末の抽選は署名済みポリシーでロックされています；署名者：{0}；署名日時：{1}</value>
+  </data>
+  <data name="C_SettingsDigestBadgeFormat" xml:space="preserve"><value>ダイジェスト {0}</value></data>
+  <data name="C_SettingsDigestBadgeTipFormat" xml:space="preserve"><value>設定ファイルのダイジェスト（SHA-256）：{0}
+ファイル：{1}
+このバッジは「その他の設定」で非表示にできます</value></data>
 </root>

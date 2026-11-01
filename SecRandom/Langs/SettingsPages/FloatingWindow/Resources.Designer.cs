@@ -294,6 +294,24 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 闪抽结束后归还焦点.
+        /// </summary>
+        public static string S_Interaction_RestoreFocusAfterQuickDraw {
+            get {
+                return ResourceManager.GetString("S_Interaction_RestoreFocusAfterQuickDraw", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 闪抽前记录当时的前台窗口.
+        /// </summary>
+        public static string S_Interaction_RestoreFocusAfterQuickDraw_D {
+            get {
+                return ResourceManager.GetString("S_Interaction_RestoreFocusAfterQuickDraw_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 前台窗口匹配时隐藏.
         /// </summary>
         public static string S_Interaction_HideOnForeground {

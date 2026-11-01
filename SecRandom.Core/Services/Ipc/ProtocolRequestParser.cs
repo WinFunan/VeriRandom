@@ -15,6 +15,20 @@ public static class ProtocolRequestParser
     private const int MaxQueryItems = 32;
     private const int MaxQueryValueLength = 1024;
 
+    /// <summary>Primary scheme.</summary>
+    public const string ProtocolScheme = "verirandom";
+
+    /// <summary>
+    ///     Upstream's scheme, still accepted so an already-registered <c>secrandom://</c> handler (or a
+    ///     user who opted into the compatibility registration) keeps working. Accepting it here is free;
+    ///     only the OS-level registration decides which program actually receives the link.
+    /// </summary>
+    public const string LegacyProtocolScheme = "secrandom";
+
+    public static bool IsSupportedScheme(string? scheme) =>
+        string.Equals(scheme, ProtocolScheme, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(scheme, LegacyProtocolScheme, StringComparison.OrdinalIgnoreCase);
+
     public static bool TryParse(string value, bool requireSecRandomScheme, out ParsedProtocolRequest? request,
         out ProtocolParseFailure? failure)
     {
@@ -31,7 +45,7 @@ public static class ProtocolRequestParser
         string pathAndQuery;
         if (isFullUri)
         {
-            if (!string.Equals(uri!.Scheme, "secrandom", StringComparison.OrdinalIgnoreCase)
+            if (!IsSupportedScheme(uri!.Scheme)
                 || string.IsNullOrWhiteSpace(uri.Host)
                 || uri.Port != -1
                 || !string.IsNullOrEmpty(uri.UserInfo)

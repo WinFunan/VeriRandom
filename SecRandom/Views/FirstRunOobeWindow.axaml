@@ -119,6 +119,31 @@
                         </Expander>
                         <CheckBox IsChecked="{Binding ViewModel.AcceptedPrivacyPolicy}"
                                   Content="{x:Static langs:Resources.C_PrivacyPolicyAccept}" />
+
+                        <TextBlock Text="{x:Static langs:Resources.C_TimestampPrivacyNotice}"
+                                   TextWrapping="Wrap"
+                                   FontWeight="Bold" />
+
+                        <Expander Header="{x:Static langs:Resources.C_SecRandomServicesTitle}"
+                                  IsExpanded="False">
+                            <ScrollViewer MinHeight="150" MaxHeight="240">
+                                <StackPanel Spacing="8">
+                                    <SelectableTextBlock Text="{x:Static langs:Resources.C_SecRandomServicesClause}"
+                                                         TextWrapping="Wrap" />
+                                    <SelectableTextBlock Text="{x:Static langs:Resources.C_SecRandomServicesDisclaimer}"
+                                                         TextWrapping="Wrap" />
+                                    <SelectableTextBlock Text="{x:Static langs:Resources.SecRandomPrivacyPolicy}"
+                                                         TextWrapping="Wrap" />
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Expander>
+                        <TextBlock Text="{x:Static langs:Resources.C_SecRandomServicesOptionalNote}"
+                                   TextWrapping="Wrap"
+                                   FontWeight="Bold"
+                                   IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}" />
+                        <CheckBox IsChecked="{Binding ViewModel.AcceptedSecRandomServices}"
+                                  Content="{x:Static langs:Resources.C_SecRandomServicesAcceptOptional}"
+                                  IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}" />
                         
                         <Expander Header="{x:Static langs:Resources.C_GplTitle}" IsExpanded="False">
                             <ScrollViewer MinHeight="150" MaxHeight="240">
@@ -128,6 +153,39 @@
                         </Expander>
                         <CheckBox IsChecked="{Binding ViewModel.AcceptedGpl}"
                                   Content="{x:Static langs:Resources.C_GplAccept}" />
+                    </StackPanel>
+                </ScrollViewer>
+
+                <ScrollViewer IsVisible="{Binding ViewModel.IsFullSetup}">
+                    <StackPanel Margin="32" Spacing="16">
+                        <TextBlock Text="{x:Static langs:Resources.C_CrossBorderTitle}"
+                                   Theme="{StaticResource TitleTextBlockStyle}" />
+                        <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1"
+                                CornerRadius="6" Padding="16">
+                            <SelectableTextBlock Text="{x:Static langs:Resources.C_CrossBorderBody}"
+                                                 TextWrapping="Wrap" />
+                        </Border>
+                        <TextBlock Text="{x:Static langs:Resources.C_CrossBorderOptionalNote}"
+                                   TextWrapping="Wrap"
+                                   FontWeight="Bold" />
+                        <CheckBox IsChecked="{Binding ViewModel.AcceptedCrossBorderTransfer}"
+                                  Content="{x:Static langs:Resources.C_CrossBorderAccept}" />
+
+                        <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1"
+                                CornerRadius="6" Padding="16">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="{x:Static langs:Resources.C_AttestationTitle}" FontWeight="SemiBold" />
+                                <TextBlock Text="{x:Static langs:Resources.C_AttestationBody}" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <RadioButton GroupName="OobeAttestationUpload"
+                                             IsEnabled="{Binding ViewModel.IsSectlEgressConsented}"
+                                             IsChecked="{Binding ViewModel.AttestationUploadEnabledChoice, Mode=TwoWay}"
+                                             Content="{x:Static langs:Resources.O_AttestationOn}" />
+                                <RadioButton GroupName="OobeAttestationUpload"
+                                             IsChecked="{Binding ViewModel.AttestationUploadDisabledChoice, Mode=TwoWay}"
+                                             Content="{x:Static langs:Resources.O_AttestationOff}" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -293,6 +351,68 @@
                     </StackPanel>
                 </ScrollViewer>
 
+                <!-- 集控：插在「桌面集成」与「隐私」之间。它和桌面集成同属"这台机器怎么接入"的本机设置
+                     （都以本机状态/系统状态为准，都不写 settings.json），而隐私是"本机往外发什么"，
+                     必须留在完成页之前作为最后一项需要用户表态的内容。 -->
+                <ScrollViewer IsVisible="{Binding ViewModel.IsFullSetup}">
+                    <StackPanel Margin="32" Spacing="8">
+                        <TextBlock Text="{x:Static langs:Resources.C_ControlTitle}"
+                                   Theme="{StaticResource TitleTextBlockStyle}" />
+                        <TextBlock Text="{x:Static langs:Resources.C_ControlDescription}"
+                                   Margin="0 0 0 8"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <!-- 身份三项（显示名称 / 节点 ID / 所属组 ID）与集控设置页同样**永远可见**：
+                             地址那一组才是"自建部署才需要动"的高级项，引导流程里不出现。 -->
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlRemoteEnabled}"
+                                               Description="{x:Static langs:Resources.C_ControlRemoteEnabledDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi PlugConnectedFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <ToggleSwitch IsChecked="{Binding ViewModel.ControlRemoteEnabled}" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlDisplayName}"
+                                               Description="{x:Static langs:Resources.C_ControlDisplayNameDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <!-- 留空则上报主机名：把回落值直接做成水印，用户一眼能看见"不填会显示成什么"。 -->
+                                <TextBox Text="{Binding ViewModel.ControlDisplayName}"
+                                         MinWidth="260"
+                                         MaxLength="{Binding ViewModel.ControlDisplayNameMaxLength}"
+                                         PlaceholderText="{Binding ViewModel.ControlHostName}" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlNodeId}"
+                                               Description="{x:Static langs:Resources.C_ControlNodeIdDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi TagFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <SelectableTextBlock Text="{Binding ViewModel.ControlNodeId}" FontFamily="Consolas,monospace" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlGroupId}"
+                                               Description="{x:Static langs:Resources.C_ControlGroupIdDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <TextBox Text="{Binding ViewModel.ControlGroupId}" MinWidth="260" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlPlatform}"
+                                               Description="{x:Static langs:Resources.C_ControlPlatformDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <!-- 文案随控制面地址在"官方/第三方"之间切换，绝不让按钮写着官方却跳到第三方。 -->
+                                <Button Content="{Binding ViewModel.OpenControlPlaneLabel}"
+                                        Command="{Binding ViewModel.OpenControlPlaneCommand}" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <!-- 节点此时还没启连（HostedService 要等引导结束、Host 启动后才跑）：
+                             这里必须说清"什么时候连、去哪里看状态"，否则开关像是没生效。 -->
+                        <TextBlock Text="{x:Static langs:Resources.M_ControlConnectAfterSetup}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </ScrollViewer>
+
                 <ScrollViewer IsVisible="{Binding ViewModel.IsFullSetup}">
                     <StackPanel Margin="32" Spacing="8">
                         <TextBlock Text="{x:Static langs:Resources.C_PrivacyTitle}"
@@ -301,7 +421,7 @@
                                    Margin="0 0 0 8"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Text="{x:Static langs:Resources.C_PrivacyEncouragement}"
+                        <TextBlock Text="{x:Static langs:Resources.C_PrivacyDataDestination}"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <fa:FASettingsExpander Header="{x:Static langs:Resources.C_SentryTelemetry}"
@@ -322,6 +442,22 @@
                                 </ComboBox>
                             </fa:FASettingsExpander.Footer>
                         </fa:FASettingsExpander>
+                        <!-- 保留策略放在隐私页而不是新开一页：它决定"旧证明还能不能被复核"，与这一页的其他选择同属"这台机器留下什么" -->
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ProofRetention}"
+                                               Description="{x:Static langs:Resources.C_ProofRetentionDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <ComboBox SelectedIndex="{Binding ViewModel.SelectedProofRetentionIndex}">
+                                    <ComboBoxItem Content="{x:Static langs:Resources.O_ProofRetention_Forever}" />
+                                    <ComboBoxItem Content="{x:Static langs:Resources.O_ProofRetention_365}" />
+                                    <ComboBoxItem Content="{x:Static langs:Resources.O_ProofRetention_90}" />
+                                    <ComboBoxItem Content="{x:Static langs:Resources.O_ProofRetention_30}" />
+                                </ComboBox>
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <TextBlock Text="{x:Static langs:Resources.M_ProofRetentionWarning}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
                 </ScrollViewer>
 
@@ -339,6 +475,7 @@
                                 <TextBlock Text="{x:Static langs:Resources.C_CompletedClass}" />
                                 <TextBlock Text="{x:Static langs:Resources.C_CompletedAppearance}" />
                                 <TextBlock Text="{x:Static langs:Resources.C_CompletedIntegration}" TextWrapping="Wrap" />
+                                <TextBlock Text="{x:Static langs:Resources.C_CompletedControl}" TextWrapping="Wrap" />
                                 <TextBlock Text="{x:Static langs:Resources.C_CompletedPrivacy}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
@@ -351,20 +488,23 @@
                                         <Setter Property="Padding" Value="4" />
                                     </Style>
                                 </WrapPanel.Styles>
-                                <HyperlinkButton CommandParameter="https://sectl.cn/" Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_SectlWebsite}" />
-                                <HyperlinkButton CommandParameter="https://secrandom.sectl.cn/"
+                                <!-- 本分支社区入口，与关于页的 S_Community 分组一致；上游站点、上游作者与赞助链接
+                                     不再出现在此页 -->
+                                <HyperlinkButton CommandParameter="https://qm.qq.com/q/EvhyCJWqCA"
                                                  Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_Documentation}" />
-                                <HyperlinkButton CommandParameter="https://space.bilibili.com/520571577"
+                                                 Content="{x:Static langs:Resources.C_CommunityQQGroup}" />
+                                <HyperlinkButton CommandParameter="mailto:love-code-yeyixiao@outlook.com"
                                                  Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_AuthorBilibili}" />
-                                <HyperlinkButton CommandParameter="https://afdian.com/a/lzy0983"
+                                                 Content="{x:Static langs:Resources.C_CommunityEmail}" />
+                                <HyperlinkButton CommandParameter="https://space.bilibili.com/510993086"
                                                  Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_Sponsor}" />
-                                <HyperlinkButton CommandParameter="https://qm.qq.com/q/k0l04MbSXS"
+                                                 Content="{x:Static langs:Resources.C_CommunityBilibili}" />
+                                <HyperlinkButton CommandParameter="https://github.com/WinFunan/VeriRandom/issues"
                                                  Click="OpenLink_OnClick"
-                                                 Content="{x:Static langs:Resources.C_Community}" />
+                                                 Content="{x:Static langs:Resources.C_CommunityIssues}" />
+                                <HyperlinkButton CommandParameter="https://github.com/WinFunan/VeriRandom/blob/master/CONTRIBUTING.md"
+                                                 Click="OpenLink_OnClick"
+                                                 Content="{x:Static langs:Resources.C_CommunityContributing}" />
                             </WrapPanel>
                             <Border Padding="12,8" BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                                     BorderThickness="1" CornerRadius="6">

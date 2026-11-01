@@ -33,6 +33,12 @@ public partial class LinkageSettingsPage : UserControl
         Settings = ViewModel.Config.LinkageSettings;
         DataContext = this;
         InitializeComponent();
+        // 课程联动设置整体被策略覆盖
+        ConfigPolicyLock.Apply(
+            S_External_InstantDrawDisable, S_External_VerificationRequired, S_External_DataSource,
+            S_Cses, S_ClassTime_HideFloatingWindow, S_ClassTime_PreClassReset,
+            S_ClassTime_PreClassResetTime, S_ClassTime_PreClassEnableTime,
+            S_ClassTime_PostClassDisableDelay, S_SubjectHistory_Filter, S_SubjectHistory_BreakAssignment);
         RefreshCsesSummary();
     }
 

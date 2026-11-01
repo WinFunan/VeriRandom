@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="C_EntropySources" xml:space="preserve"><value>Entropy sources</value></data>
+  <data name="C_Generate" xml:space="preserve"><value>Generate</value></data>
+  <data name="C_LocalCsprng" xml:space="preserve"><value>Local CSPRNG</value></data>
+  <data name="C_LowerBound" xml:space="preserve"><value>Lower bound</value></data>
+  <data name="C_LockSettings" xml:space="preserve"><value>Lock range and entropy sources</value></data>
+  <data name="C_PageTitle" xml:space="preserve"><value>Random number</value></data>
+  <data name="C_Range" xml:space="preserve"><value>Range</value></data>
+  <data name="C_SourceDrand" xml:space="preserve"><value>drand network</value></data>
+  <data name="C_SourceNist" xml:space="preserve"><value>NIST beacon</value></data>
+  <data name="C_SourceRandomOrg" xml:space="preserve"><value>random.org</value></data>
+  <data name="C_UpperBound" xml:space="preserve"><value>Upper bound</value></data>
+  <data name="M_GeneratedNotVerifiable" xml:space="preserve"><value>Generated, but an entropy source that cannot be re-checked was mixed in, so this result is not reproducible evidence</value></data>
+  <data name="M_GeneratedVerifiable" xml:space="preserve"><value>Generated from a single verifiable source; the same number can be recomputed from that source's published pulse</value></data>
+  <data name="M_GenerateFailedFormat" xml:space="preserve"><value>Generation failed: {0}</value></data>
+  <data name="M_Generating" xml:space="preserve"><value>Generating</value></data>
+  <data name="M_LockedHint" xml:space="preserve"><value>The range and entropy sources are locked; clear the lock switch below to change them</value></data>
+  <data name="M_NoEntropySource" xml:space="preserve"><value>Select at least one entropy source</value></data>
+  <data name="M_NotVerifiableNotice" xml:space="preserve"><value>random.org or the local CSPRNG is selected: reproducibility is reduced, so this result only shows that the input produced this number and is not fairness evidence</value></data>
+  <data name="M_PageDescription" xml:space="preserve"><value>Generate one raw random number inside the range (no replacement semantics); with a single verifiable source selected, the number can be recomputed afterwards from that source's published pulse</value></data>
+  <data name="M_RangeInvalid" xml:space="preserve"><value>Invalid range: the lower bound must not exceed the upper bound and both must be whole numbers</value></data>
+  <data name="M_Ready" xml:space="preserve"><value>Set a range and entropy sources, then generate</value></data>
+  <data name="M_ResultFormat" xml:space="preserve"><value>Result: {0}</value></data>
+  <data name="M_VerifiableNotice" xml:space="preserve"><value>One verifiable source is selected: the number can be recomputed afterwards from its published pulse</value></data>
+  <data name="M_Locked" xml:space="preserve"><value>Locked: the range and entropy sources cannot be changed</value></data>
+  <data name="M_ProofSavedFormat" xml:space="preserve"><value>Proof written to {0}; the local recomputation check passed</value></data>
+  <data name="M_ProofVerifyFailed" xml:space="preserve"><value>The number was generated, but the proof failed its own check: do not use this record, and report it together with the log</value></data>
+  <data name="M_UnlockCancelled" xml:space="preserve"><value>Verification was not completed, so the lock stays on</value></data>
+  <data name="M_Unlocked" xml:space="preserve"><value>Unlocked: the range and entropy sources can be changed</value></data>
+  <data name="C_UseValues" xml:space="preserve"><value>Draw from a specific set</value></data>
+  <data name="C_ValuesWatermark" xml:space="preserve"><value>Only these values, e.g. 5,10 (comma or space separated)</value></data>
+  <data name="C_BatchCount" xml:space="preserve"><value>How many values</value></data>
+  <data name="C_AdvancedOptions" xml:space="preserve"><value>Advanced options</value></data>
+  <data name="C_RawEntropy" xml:space="preserve"><value>Output raw entropy instead of an in-range value</value></data>
+  <data name="C_BitCount" xml:space="preserve"><value>Bits</value></data>
+  <data name="M_AdvancedHint" xml:space="preserve"><value>A wider output is not more entropy: everything past the seed is a deterministic expansion, so the usable entropy never exceeds the source's</value></data>
+  <data name="M_EntropyFormat" xml:space="preserve"><value>{0} symbols · {1:F2} bit/symbol · {2:F0} bit total · source cap {3} bit</value></data>
+  <data name="C_ExclusionsWatermark" xml:space="preserve"><value>Excluded from the candidates, e.g. 7,8 or 13-15 (may be empty)</value></data>
+  <data name="C_Generator" xml:space="preserve"><value>Enumeration generator</value></data>
+  <data name="C_GeneratorFrom" xml:space="preserve"><value>X from</value></data>
+  <data name="C_GeneratorTo" xml:space="preserve"><value>X to</value></data>
+  <data name="C_PredicateWatermark" xml:space="preserve"><value>Condition, e.g. X%2==0 (empty keeps everything)</value></data>
+  <data name="M_PredicateHint" xml:space="preserve"><value>The condition has one variable X and supports + - * / %, comparisons and logic; there is no assignment and no loop</value></data>
+  <data name="M_CandidatesFormat" xml:space="preserve"><value>{0} candidates</value></data>
+  <data name="M_ValuesInvalidFormat" xml:space="preserve"><value>Invalid filter: {0}</value></data>
+  <data name="C_CopyResult" xml:space="preserve"><value>Copy result</value></data>
+  <data name="M_CopiedResultFormat" xml:space="preserve"><value>Copied {0} characters</value></data>
+  <data name="M_NothingToCopy" xml:space="preserve"><value>Nothing to copy yet</value></data>
+  <data name="M_ClipboardUnavailable" xml:space="preserve"><value>The clipboard is unavailable, so nothing was copied</value></data>
+  <data name="C_OutputFormat" xml:space="preserve"><value>Representation</value></data>
+  <data name="O_FormatDecimal" xml:space="preserve"><value>Decimal</value></data>
+  <data name="O_FormatHex" xml:space="preserve"><value>Hexadecimal</value></data>
+  <data name="O_FormatAscii" xml:space="preserve"><value>Printable ASCII</value></data>
+  <data name="C_AsciiCharCount" xml:space="preserve"><value>Characters</value></data>
+  <data name="C_AllowConcat" xml:space="preserve"><value>Fill a wider output by concatenating several samples</value></data>
+  <data name="M_ConcatHint" xml:space="preserve"><value>Only the local CSPRNG and random.org bring fresh entropy per fetch; repeating inside one beacon pulse does not, so the output gets wider while the measured entropy stays the same</value></data>
+  <data name="M_GeneratorHelp" xml:space="preserve"><value>Syntax: X is the only variable&#10;X%2==0 → even numbers&#10;X%3!=0 → not a multiple of 3&#10;X&gt;=10 &amp;&amp; X&lt;=20 → only 10 through 20&#10;Supports + - * / %, comparisons, &amp;&amp; || !, brackets</value></data>
+  <data name="M_ExclusionsIneffective" xml:space="preserve"><value>no exclusion matched a candidate</value></data>
+  <data name="M_ConcatNoGain" xml:space="preserve"><value>(concatenation added no new entropy)</value></data>
+  <data name="C_ConfidentialMode" xml:space="preserve"><value>Confidential mode (writes no record)</value></data>
+  <data name="C_RevealResult" xml:space="preserve"><value>Show result</value></data>
+  <data name="C_HideResult" xml:space="preserve"><value>Hide result</value></data>
+  <data name="M_ConfidentialMasked" xml:space="preserve"><value>result is masked</value></data>
+  <data name="M_ConfidentialGenerated" xml:space="preserve"><value>generated (confidential mode: nothing was written, so this result cannot be re-checked later)</value></data>
+  <data name="M_ConfidentialNotice" xml:space="preserve"><value>confidential mode: nothing is recorded, so nothing can be re-checked</value></data>
+  <data name="M_ConfidentialHint" xml:space="preserve"><value>While this is on, the generation writes no record at all: the seed and the result stay in memory only. The result is masked with * and is shown or copied on request. Copying puts it on the system clipboard (and in clipboard history), which is a step only you can take; after the app closes the value cannot be recovered</value></data>
+  <data name="M_CopiedConfidentialFormat" xml:space="preserve"><value>copied {0} characters (confidential mode: it is now on the system clipboard)</value></data>
+</root>

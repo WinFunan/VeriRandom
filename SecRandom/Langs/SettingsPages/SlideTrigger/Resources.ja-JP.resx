@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title" xml:space="preserve"><value>教材マーカー</value></data>
+  <data name="S_Intro" xml:space="preserve"><value>教材マーカー</value></data>
+  <data name="S_Generate" xml:space="preserve"><value>マーカーを作成</value></data>
+  <data name="S_Generate_D" xml:space="preserve"><value>このページの設定を QR 画像にします。そのスライドに貼り付けておくと、表示したときに自動で抽選が始まります</value></data>
+  <data name="S_Markers" xml:space="preserve"><value>作成済みのマーカー</value></data>
+  <data name="S_Markers_D" xml:space="preserve"><value>授業ごとに新しいセッションが始まり、同じマーカーは 1 セッションにつき 1 回だけ動作します</value></data>
+  <data name="S_ExportPicker" xml:space="preserve"><value>教材マーカーを保存</value></data>
+  <data name="C_NameWatermark" xml:space="preserve"><value>マーカー名（この端末のみで表示）</value></data>
+  <data name="C_ListName" xml:space="preserve"><value>抽選するリスト</value></data>
+  <data name="C_ListNameWatermark" xml:space="preserve"><value>空欄なら現在のリストを使用</value></data>
+  <data name="C_Count" xml:space="preserve"><value>人数</value></data>
+  <data name="C_ExpiresDays" xml:space="preserve"><value>有効期間（日、0 は無期限）</value></data>
+  <data name="C_ShowAnimation" xml:space="preserve"><value>抽選アニメーションを表示</value></data>
+  <data name="C_Voice" xml:space="preserve"><value>結果を読み上げる</value></data>
+  <data name="C_Timing" xml:space="preserve"><value>実行のタイミング</value></data>
+  <data name="O_TimingDelay" xml:space="preserve"><value>検出してから遅延して実行</value></data>
+  <data name="O_TimingInputs" xml:space="preserve"><value>次のボタン操作で実行</value></data>
+  <data name="C_Delay" xml:space="preserve"><value>遅延（秒）</value></data>
+  <data name="C_Inputs" xml:space="preserve"><value>待つ操作回数</value></data>
+  <data name="C_Timeout" xml:space="preserve"><value>待機の上限（秒）</value></data>
+  <data name="C_Gender" xml:space="preserve"><value>性別の制限（空欄は指定なし）</value></data>
+  <data name="C_Group" xml:space="preserve"><value>グループの制限（空欄は指定なし）</value></data>
+  <data name="C_GenerateAndCopy" xml:space="preserve"><value>作成してコピー</value></data>
+  <data name="C_GenerateAndSave" xml:space="preserve"><value>作成して PNG で保存</value></data>
+  <data name="C_NewSession" xml:space="preserve"><value>新しい授業を開始</value></data>
+  <data name="C_Copy" xml:space="preserve"><value>コピー</value></data>
+  <data name="C_SaveAs" xml:space="preserve"><value>名前を付けて保存</value></data>
+  <data name="C_Delete" xml:space="preserve"><value>削除</value></data>
+  <data name="C_PngFileType" xml:space="preserve"><value>PNG 画像</value></data>
+  <data name="M_NoMarkers" xml:space="preserve"><value>まだマーカーがありません</value></data>
+  <data name="M_GenerateFailedFormat" xml:space="preserve"><value>マーカーを作成できませんでした：{0}</value></data>
+  <data name="M_ExportCancelled" xml:space="preserve"><value>保存を中止しました</value></data>
+  <data name="M_SavedFormat" xml:space="preserve"><value>保存しました：{0}</value></data>
+  <data name="M_CopiedFormat" xml:space="preserve"><value>クリップボードにコピーしました：{0}。教材に切り替えて貼り付けてください</value></data>
+  <data name="M_ClipboardUnavailable" xml:space="preserve"><value>この環境ではクリップボードを使えないため「PNG で保存」を使ってください</value></data>
+  <data name="M_SessionFormat" xml:space="preserve"><value>現在のセッション：{0}</value></data>
+  <data name="M_SessionRolled" xml:space="preserve"><value>新しい授業を開始しました。すべてのマーカーが再び動作します</value></data>
+  <data name="M_UsedThisSession" xml:space="preserve"><value>この授業で実行済み</value></data>
+  <data name="M_NotUsed" xml:space="preserve"><value>この授業では未実行</value></data>
+  <data name="M_DeletedFormat" xml:space="preserve"><value>削除しました：{0}</value></data>
+  <data name="M_ActiveList" xml:space="preserve"><value>現在のリスト</value></data>
+  <data name="M_TimingInputsFormat" xml:space="preserve"><value>{0} 回の操作後</value></data>
+  <data name="M_TimingDelayFormat" xml:space="preserve"><value>{0} 秒後</value></data>
+  <data name="M_AllowRepeatBadge" xml:space="preserve"><value>重複可</value></data>
+  <data name="M_IgnoreWeightsBadge" xml:space="preserve"><value>重みなし</value></data>
+  <data name="M_ExpiresFormat" xml:space="preserve"><value>{0} に失効</value></data>
+  <data name="C_ProbeNow" xml:space="preserve"><value>現在の画面を確認</value></data>
+  <data name="C_Watcher" xml:space="preserve"><value>教材マーカーを自動認識（試験的）</value></data>
+  <data name="M_WatcherHint" xml:space="preserve"><value>キー操作の後に一度だけ投影中の画面を読み取り、静止中は読みません。画面も文字も本機の外に出ません</value></data>
+  <data name="M_CountFormat" xml:space="preserve"><value>{0} 人</value></data>
+  <data name="M_ProbeFoundFormat" xml:space="preserve"><value>マーカーを検出：{0}</value></data>
+  <data name="M_ProbeNotFound" xml:space="preserve"><value>画面に教材マーカーが見つかりません</value></data>
+  <data name="M_ProbeUnsupported" xml:space="preserve"><value>この環境では画面検出を使えません</value></data>
+  <data name="C_Edit" xml:space="preserve"><value>編集</value></data>
+  <data name="C_CancelEdit" xml:space="preserve"><value>編集をキャンセル</value></data>
+  <data name="M_EditModeFormat" xml:space="preserve"><value>編集中：{0}　パラメータはマーカー画像の中にあります。保存すると新しい画像ができるので、スライドの古い画像と差し替えてください（古い画像は古い設定のまま発動します）</value></data>
+  <data name="M_EditedFormat" xml:space="preserve"><value>「{0}」を更新しました：{1}　新しいマーカー画像をクリップボードにコピーしました。スライドの古い画像と差し替えてください</value></data>
+  <data name="M_EditCanceled" xml:space="preserve"><value>編集をキャンセルしました（マーカーは変更されていません）</value></data>
+  <data name="M_UnsupportedParamsBadge" xml:space="preserve"><value>未対応のパラメータを含むため発動しません</value></data>
+  <data name="M_UnsupportedParamsHint" xml:space="preserve"><value>「重複可」「履歴の重みを無視」は現在マーカーでは表現できないため、ここには用意していません。これらを含む古いマーカーは発動時に拒否されます</value></data>
+  <data name="C_QuickCopyShortcut" xml:space="preserve"><value>ショートカット</value></data>
+  <data name="C_ShortcutWatermark" xml:space="preserve"><value>例 Ctrl+Alt+M</value></data>
+  <data name="C_UseAsQuickCopy" xml:space="preserve"><value>ショートカットに設定</value></data>
+  <data name="M_QuickCopyHint" xml:space="preserve"><value>「その他の設定」でグローバルショートカットを有効にしてください。キーを押すとショートカット用マーカーの画像がクリップボードに入り、ウィンドウは開かずスライドショーも中断しません</value></data>
+  <data name="M_QuickCopyTargetFormat" xml:space="preserve"><value>ショートカットのコピー先：{0}</value></data>
+  <data name="M_QuickCopyTargetNone" xml:space="preserve"><value>ショートカットのコピー先：未設定</value></data>
+  <data name="M_QuickCopyTargetSetFormat" xml:space="preserve"><value>ショートカットのコピー先を変更しました：{0}</value></data>
+  <data name="C_ClassSession" xml:space="preserve"><value>授業開始時に新しいセッションを開始</value></data>
+  <data name="M_ClassSessionHint" xml:space="preserve"><value>授業連携（ClassIsland または CSES）で授業の開始を判定し、新しい授業に入ったときに新しいセッションを開始して、すべてのマーカーを再び使えるようにします。授業連携が無効なときは動作しません。マーカーが再発動できるかどうかだけに関わり、抽選や認識には影響しません</value></data>
+</root>

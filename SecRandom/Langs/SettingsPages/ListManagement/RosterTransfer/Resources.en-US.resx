@@ -15,13 +15,13 @@
   <data name="C_SelectImportSource"><value>Choose import method</value></data>
   <data name="C_SelectExportMode"><value>Choose export method</value></data>
   <data name="C_CopySessionCode"><value>Copy session code</value></data>
-  <data name="C_SessionCodeHint"><value>Enter 12 letters or digits. Verification starts automatically.</value></data>
+  <data name="C_SessionCodeHint"><value>Enter 12 letters or digits. Verification starts automatically</value></data>
   <data name="C_SessionCodeVerifying"><value>Verifying session code</value></data>
-  <data name="C_SessionCodeLoaded"><value>Received {0} list records. Ready to import.</value></data>
+  <data name="C_SessionCodeLoaded"><value>Received {0} list records. Ready to import</value></data>
   <data name="M_SessionCodeInvalid"><value>The session code is invalid or expired: {0}</value></data>
   <data name="M_QuickQrInvalid"><value>Quick QR import failed: {0}</value></data>
   <data name="C_TransferFramesPerSecond"><value>{0:F1} frames/s</value></data>
-  <data name="M_QrLoaded"><value>Received {0} list records. Ready to import.</value></data>
+  <data name="M_QrLoaded"><value>Received {0} list records. Ready to import</value></data>
   <data name="C_ModeQuickQr"><value>Quick QR export to another device</value></data>
   <data name="C_ModeOfflineQr"><value>Offline export to another device</value></data>
   <data name="C_ModeSessionCode"><value>Session code export to another device</value></data>
@@ -33,4 +33,18 @@
 <data name="C_CopySyncPortalAddress"><value>Copy link</value></data>
   <data name="C_CameraOne"><value>Camera 1</value></data>
   <data name="C_CameraTwo"><value>Camera 2</value></data>
+  <data name="C_ImportRegion"><value>Import range</value></data>
+  <data name="C_ImportRegion_D"><value>Pick the worksheet, header row, and data rows; anything outside the range is skipped</value></data>
+  <data name="C_Sheet"><value>Worksheet</value></data>
+  <data name="C_HeaderRow"><value>Header row</value></data>
+  <data name="C_HeaderRowFormat"><value>Row {0}</value></data>
+  <data name="C_HeaderRowNone"><value>No header row (use A, B, C as column names)</value></data>
+  <data name="C_DataRange"><value>Data rows</value></data>
+  <data name="C_DataRangeSeparator"><value>to</value></data>
+  <data name="C_RowFormat"><value>Row {0}</value></data>
+  <data name="C_RegionRawHint"><value>Select a row below to use it as the header row</value></data>
+  <data name="C_RegionRawHint_D"><value>Only the 5 rows around the header row are shown; pick a later row in the Header row list above</value></data>
+  <data name="C_RegionBlankRow"><value>(blank row)</value></data>
+  <data name="M_RegionEmpty"><value>The selected range has no data rows; adjust the import range</value></data>
+  <data name="M_HeaderRowNotDetected"><value>The header row could not be detected; row 1 is used, please confirm manually</value></data>
 </root>

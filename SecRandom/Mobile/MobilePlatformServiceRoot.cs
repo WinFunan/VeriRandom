@@ -34,6 +34,8 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
 
     public PlatformCapabilities Capabilities { get; }
 
+    public ISlideTriggerScreenProbe ScreenProbe => SecRandom.Platforms.UnsupportedSlideTriggerScreenProbe.Instance;
+
     /// <summary>
     /// Platform heads inject their update installer here before PlatformStartupContext.Set runs.
     /// </summary>
@@ -56,6 +58,27 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     public Func<string, bool>? PathLauncher { get; set; }
 
     /// <summary>
+    ///     Platform heads provide the native system-browser opener (Android <c>ACTION_VIEW</c>,
+    ///     iOS <c>UIApplication.OpenUrl</c>). Without it the shared launcher cannot open a link on a
+    ///     mobile platform, which is also what the SECTL sign-in flow needs.
+    /// </summary>
+    public Func<string, bool>? UriLauncher { get; set; }
+
+    /// <summary>
+    ///     User-facing device label the platform head supplies (Android <c>Build.Model</c>, iOS
+    ///     <c>UIDevice.Model</c>). Android and iOS report <c>localhost</c> as their host name, so
+    ///     without this every phone would stamp the same cloud-backup device alias.
+    /// </summary>
+    public string? DeviceName { get; set; }
+
+    /// <summary>
+    ///     Platform heads may replace the authorization browser. iOS does, because
+    ///     ASWebAuthenticationSession captures the custom-scheme redirect itself; every other head
+    ///     keeps the shared launcher that opens the system browser and waits for the deep link.
+    /// </summary>
+    public Services.Auth.IAuthBrowser? AuthBrowser { get; set; }
+
+    /// <summary>
     /// Platform heads may attach a startup error sink (for example Android.Util.Log) for Host-build failures.
     /// </summary>
     public Action<Exception>? StartupErrorLogger { get; set; }
@@ -63,6 +86,8 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     public IWindowFeatureService WindowFeatures => this;
 
     public IRemovableStorageCatalog RemovableStorage => UnsupportedRemovableStorageCatalog.Instance;
+
+    public IForegroundWindowService ForegroundWindow => SecRandom.Platforms.UnsupportedForegroundWindowService.Instance;
 
     public IRemovableStorageBindingMarker RemovableStorageBindingMarker =>
         PortableRemovableStorageBindingMarker.Instance;
@@ -72,6 +97,14 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     /// </summary>
     public IPlatformCameraDeviceCatalog CameraDevices { get; set; } =
         UnsupportedPlatformCameraDeviceCatalog.Instance;
+
+    /// <summary>
+    ///     Platform heads replace this when their camera backend writes capture files outside the application
+    ///     data root. Android does, because CameraView keeps one full-resolution JPEG per shutter release in
+    ///     the app's external files directory; iOS composes every frame in memory and keeps the no-op default.
+    /// </summary>
+    public IMobileCameraCaptureStore CameraCaptureStore { get; set; } =
+        UnsupportedMobileCameraCaptureStore.Instance;
 
     public global::SecRandom.Platforms.Abstractions.WindowFeatures SupportedFeatures =>
         global::SecRandom.Platforms.Abstractions.WindowFeatures.None;

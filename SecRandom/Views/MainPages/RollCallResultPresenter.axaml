@@ -1,12 +1,13 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              x:Class="SecRandom.Views.MainPages.RollCallResultPresenter"
              x:Name="RootControl"
              x:DataType="vm:RollCallPageViewModel">
     <UserControl.Resources>
         <DataTemplate x:Key="RollCallAvatarTemplate" DataType="vm:RollCallResultItem">
-            <Border Width="72" Height="72"
+            <Border Width="{Binding ImageSize}" Height="{Binding ImageSize}"
                     Background="{DynamicResource ControlFillColorSecondaryBrush}"
                     BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1"
@@ -21,7 +22,7 @@
                                IsVisible="{Binding IsPlaceholderVisible}"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
-                               FontSize="36"
+                               FontSize="{Binding InitialFontSize}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 </Grid>
@@ -82,8 +83,9 @@
                                             HorizontalAlignment="Center">
                                     <ContentControl Content="{Binding}"
                                                     ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                    VerticalAlignment="Center"
                                                     IsVisible="{Binding IsImageBeforeText}" />
-                                    <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                    <StackPanel Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding DisplayText}"
                                                    Classes="result-name"
                                                     FontSize="{Binding #RootControl.DataContext.ResultFontSize}"
@@ -96,6 +98,7 @@
                                     </StackPanel>
                                     <ContentControl Content="{Binding}"
                                                     ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                    VerticalAlignment="Center"
                                                     IsVisible="{Binding IsImageAfterText}" />
                                 </StackPanel>
                             </Border>
@@ -104,8 +107,9 @@
                                         Spacing="6" HorizontalAlignment="Center">
                                 <ContentControl Content="{Binding}"
                                                 ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                VerticalAlignment="Center"
                                                 IsVisible="{Binding IsImageBeforeText}" />
-                                <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                <StackPanel Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding DisplayText}" Classes="result-name"
                                                Foreground="{Binding TextBrush}" Opacity="{Binding Opacity}"
                                                 FontSize="{Binding #RootControl.DataContext.ResultFontSize}"
@@ -118,6 +122,7 @@
                                 </StackPanel>
                                 <ContentControl Content="{Binding}"
                                                 ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                VerticalAlignment="Center"
                                                 IsVisible="{Binding IsImageAfterText}" />
                             </StackPanel>
                         </Grid>
@@ -125,5 +130,7 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+        <!-- 插件界面插槽：点名结果区（宿主自身结果仍在下面，插件内容叠加在此） -->
+        <sr:UiSlotHost SlotId="main.rollcall.result.extra" />
     </Grid>
 </UserControl>

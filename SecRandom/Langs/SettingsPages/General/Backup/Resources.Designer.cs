@@ -1183,5 +1183,23 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_CloudBackup_Upload_D", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 旧版加密，无法恢复.
+        /// </summary>
+        public static string C_CloudBackup_LegacyEncrypted {
+            get {
+                return ResourceManager.GetString("C_CloudBackup_LegacyEncrypted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 该备份由旧版本以加密口令上传，当前版本已移除加密功能，无法恢复它.
+        /// </summary>
+        public static string M_CloudLegacyEncrypted {
+            get {
+                return ResourceManager.GetString("M_CloudLegacyEncrypted", resourceCulture);
+            }
+        }
     }
 }

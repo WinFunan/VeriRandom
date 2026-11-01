@@ -1,11 +1,11 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.Json;
 
 namespace SecRandom.Shared;
 
 public static class Utils
 {
-    public const string PackageRootEnvironmentVariable = "SECRANDOM_PACKAGE_ROOT";
+    public const string PackageRootEnvironmentVariable = "VERIRANDOM_PACKAGE_ROOT";
     private const string ConfigDirectoryName = "config";
     private const string UnixHiddenEntriesFileName = ".hidden";
     private static readonly object DataRootGate = new();
@@ -52,7 +52,7 @@ public static class Utils
         if (string.IsNullOrWhiteSpace(localApplicationData))
             throw new InvalidOperationException("The platform does not provide an application-private data directory.");
 
-        return Path.Combine(localApplicationData, "SecRandom", "data");
+        return Path.Combine(localApplicationData, "VeriRandom", "data");
     }
 
     /// <summary>
@@ -238,7 +238,7 @@ public static class Utils
         if (string.IsNullOrWhiteSpace(localApplicationData))
             throw new InvalidOperationException("The platform does not provide a per-user data directory.");
 
-        return Path.Combine(localApplicationData, "SecRandom", "data");
+        return Path.Combine(localApplicationData, "VeriRandom", "data");
     }
 
     private static bool IsPortablePackage(string packageRoot)
@@ -247,7 +247,7 @@ public static class Utils
         if (!IsPortablePackageRoot(packageRoot, appDirectory))
             return false;
 
-        var markerPath = Path.Combine(appDirectory, "SecRandom.package.json");
+        var markerPath = Path.Combine(appDirectory, "VeriRandom.package.json");
         try
         {
             using var marker = JsonDocument.Parse(File.ReadAllText(markerPath));
@@ -266,7 +266,7 @@ public static class Utils
 
     private static bool TryVerifyWritable(string directory, out string? errorMessage)
     {
-        var testFile = Path.Combine(directory, $".secrandom-write-test-{Guid.NewGuid():N}.tmp");
+        var testFile = Path.Combine(directory, $".verirandom-write-test-{Guid.NewGuid():N}.tmp");
         try
         {
             Directory.CreateDirectory(directory);
@@ -317,7 +317,7 @@ public static class Utils
 
         var appDirectoryName = Path.GetFileName(normalizedAppDirectory.TrimEnd(Path.DirectorySeparatorChar));
         return appDirectoryName.StartsWith("app-", StringComparison.Ordinal)
-               && File.Exists(Path.Combine(normalizedAppDirectory, "SecRandom.package.json"));
+               && File.Exists(Path.Combine(normalizedAppDirectory, "VeriRandom.package.json"));
     }
 
     internal static void ResetDataRootForTests()

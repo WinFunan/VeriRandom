@@ -23,6 +23,11 @@ jobs:
     name: Validate_Release_Metadata
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      # Required to start the iOS workflow below: dispatching another workflow through the
+      # GITHUB_TOKEN needs actions: write.
+      actions: write
     steps:
       - name: Checkout release tag
         uses: actions/checkout@v6
@@ -35,6 +40,34 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event.inputs.release_tag }}
         run: ./scripts/validate-release-metadata.ps1
+
+      # The iOS build is the slowest target and cannot hold the release back, so it runs in the
+      # separate "Build iOS" workflow. Starting it here - before the platform builds - lets both run
+      # in parallel; that workflow waits for the release this run creates and then attaches the IPA
+      # together with a refreshed update manifest and release note.
+      - name: Trigger the iOS build
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        run: |
+          set -uo pipefail
+          # Prefer the ref this run was dispatched from, since it carries build_ios.yml; fall back to
+          # the default branch so a tag that predates the workflow file still gets an iOS build.
+          for ref in "${{ github.ref_name }}" "${{ github.event.repository.default_branch }}"; do
+            if [ -z "$ref" ]; then
+              continue
+            fi
+            if gh workflow run build_ios.yml --repo "$GH_REPO" --ref "$ref" -f "release_tag=$RELEASE_TAG"; then
+              echo "Dispatched the iOS build from ref '$ref' for $RELEASE_TAG."
+              exit 0
+            fi
+            echo "Could not dispatch the iOS build from ref '$ref'."
+          done
+          # The release does not depend on iOS: dispatch the workflow by hand and the IPA is still
+          # attached automatically once it finishes.
+          echo "::warning::Could not trigger the iOS build automatically. Run 'gh workflow run build_ios.yml -f release_tag=$RELEASE_TAG' to attach the IPA to the release."
 
   build_desktop:
     name: Build_${{ matrix.os }}_${{ matrix.arch }}
@@ -79,9 +112,27 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' }}
         shell: pwsh
         run: |
-          $latestTag = git describe --tags --abbrev=0
-          echo "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
-          echo "Latest tag: $latestTag"
+          # A fresh fork may have no tags at all. git describe then exits non-zero and, under the
+          # runner's native-command error preference, would abort the whole step. Resolve a tag with a
+          # safe fallback so routine push builds still produce a version for packaging.
+          if (Test-Path variable:PSNativeCommandUseErrorActionPreference) {
+            $PSNativeCommandUseErrorActionPreference = $false
+          }
+          $latestTag = ''
+          try { $latestTag = (git describe --tags --abbrev=0 2>$null) } catch { $latestTag = '' }
+          if ([string]::IsNullOrWhiteSpace($latestTag)) {
+            try { $latestTag = (git tag --sort=-v:refname 2>$null | Select-Object -First 1) } catch { $latestTag = '' }
+          }
+          if ([string]::IsNullOrWhiteSpace($latestTag)) {
+            # A tagless fork still needs a version whose major matches the Plugin SDK API major:
+            # build_pluginsdk enforces that equality and the app/API majors must stay in step.
+            $apiMajor = [regex]::Match((Get-Content 'SecRandom.PluginSdk/PluginApiVersions.cs' -Raw), 'new\((?<major>\d+),\s*\d+').Groups['major'].Value
+            if ([string]::IsNullOrWhiteSpace($apiMajor)) { throw 'Unable to parse PluginApiVersions.Current for the fallback version major.' }
+            $latestTag = "v$apiMajor.0.0-dev"
+            Write-Host "::warning::No git tag found in this repository; using fallback version $latestTag."
+          }
+          "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
+          Write-Host "Latest tag: $latestTag"
 
       - name: Publish Desktop
         shell: pwsh
@@ -137,11 +188,11 @@ jobs:
           WINDOWS_CODESIGN_TIMESTAMP_URL: ${{ secrets.WINDOWS_CODESIGN_TIMESTAMP_URL }}
         run: |
           function Write-Marker([string]$path, [string]$runtimeKind) {
-            @{ schemaVersion = 1; product = 'SecRandom'; rid = $env:RID; packageKind = 'portable-zip'; runtimeKind = $runtimeKind } |
-              ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $path 'SecRandom.package.json') -Encoding utf8NoBOM
+            @{ schemaVersion = 1; product = 'VeriRandom'; rid = $env:RID; packageKind = 'portable-zip'; runtimeKind = $runtimeKind } |
+              ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $path 'VeriRandom.package.json') -Encoding utf8NoBOM
           }
           function Publish-Launcher([string]$path, [bool]$selfContained) {
-            $assemblyVersion = $env:VERSION.TrimStart('v', 'V')
+            $assemblyVersion = & ./scripts/Format-ReleaseVersion.ps1 -Tag $env:VERSION
             $arguments = @('publish', 'SecRandom.Launcher/SecRandom.Launcher.csproj', '-c', 'Release', '-r', $env:RID, '-p:UseAppHost=true', '-p:PublishSingleFile=true', '-p:IncludeNativeLibrariesForSelfExtract=true', '-p:DebugType=None', '-p:DebugSymbols=false', "-p:Version=$assemblyVersion", '--no-restore', '-o', $path)
             if ($selfContained) { $arguments += '--self-contained' } else { $arguments += @('--self-contained', 'false') }
             & dotnet @arguments
@@ -177,10 +228,10 @@ jobs:
               $signTool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
               if ([string]::IsNullOrWhiteSpace($signTool)) { throw 'signtool.exe was not found on the Windows runner.' }
               foreach ($file in @(
-                (Join-Path $fullRoot 'SecRandomLauncher.exe'),
-                (Join-Path $lightRoot 'SecRandomLauncher.exe'),
-                (Join-Path $fullApp 'SecRandom.Desktop.exe'),
-                (Join-Path $lightApp 'SecRandom.Desktop.exe')
+                (Join-Path $fullRoot 'VeriRandomLauncher.exe'),
+                (Join-Path $lightRoot 'VeriRandomLauncher.exe'),
+                (Join-Path $fullApp 'VeriRandom.Desktop.exe'),
+                (Join-Path $lightApp 'VeriRandom.Desktop.exe')
               )) {
                 Sign-File $file $signTool $certificatePath
               }
@@ -192,8 +243,8 @@ jobs:
           else {
             Write-Warning 'Windows code-signing secrets are unavailable; portable executables will be unsigned.'
           }
-          Compress-Archive -Path "$fullRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom-$env:VERSION-$env:RID-portable-full.zip" -Force
-          Compress-Archive -Path "$lightRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom-$env:VERSION-$env:RID-portable-light.zip" -Force
+          Compress-Archive -Path "$fullRoot/*" -DestinationPath "$releaseRoot/dist/VeriRandom-$env:VERSION-$env:RID-portable-full.zip" -Force
+          Compress-Archive -Path "$lightRoot/*" -DestinationPath "$releaseRoot/dist/VeriRandom-$env:VERSION-$env:RID-portable-light.zip" -Force
 
       - name: Pack Portable Zips (Unix)
         if: ${{ matrix.os != 'windows' }}
@@ -214,12 +265,12 @@ jobs:
           assembly_version="${VERSION#v}"
           cp -a "${release_root}/publish/full/${RID}" "$full_app"
           cp -a "${release_root}/publish/light/${RID}" "$light_app"
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"self-contained"}\n' "$RID" > "$full_app/SecRandom.package.json"
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"framework-dependent"}\n' "$RID" > "$light_app/SecRandom.package.json"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"self-contained"}\n' "$RID" > "$full_app/VeriRandom.package.json"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"framework-dependent"}\n' "$RID" > "$light_app/VeriRandom.package.json"
           dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$full_root"
           dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained false -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$light_root"
-          (cd "$full_root" && zip -qr "../../../dist/SecRandom-${VERSION}-${RID}-portable-full.zip" .)
-          (cd "$light_root" && zip -qr "../../../dist/SecRandom-${VERSION}-${RID}-portable-light.zip" .)
+          (cd "$full_root" && zip -qr "../../../dist/VeriRandom-${VERSION}-${RID}-portable-full.zip" .)
+          (cd "$light_root" && zip -qr "../../../dist/VeriRandom-${VERSION}-${RID}-portable-light.zip" .)
 
       - name: Install Inno Setup Languages
         if: ${{ matrix.os == 'windows' }}
@@ -287,10 +338,10 @@ jobs:
               if (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_TIMESTAMP_URL)) {
                 $arguments += @('/tr', $env:WINDOWS_CODESIGN_TIMESTAMP_URL, '/td', 'SHA256')
               }
-              $arguments += "$outDir/SecRandom.Desktop.exe"
+              $arguments += "$outDir/VeriRandom.Desktop.exe"
               & $signTool @arguments
               if ($LASTEXITCODE -ne 0) { throw "signtool failed with exit code $LASTEXITCODE." }
-              & $signTool verify /pa /v "$outDir/SecRandom.Desktop.exe"
+              & $signTool verify /pa /v "$outDir/VeriRandom.Desktop.exe"
               if ($LASTEXITCODE -ne 0) { throw "signtool verification failed with exit code $LASTEXITCODE." }
             }
             finally {
@@ -304,15 +355,15 @@ jobs:
             Write-Warning "Windows code-signing secrets are unavailable; building the installer without the UIAccess manifest."
           }
 
-          @{ schemaVersion = 1; product = 'SecRandom'; rid = $env:RID; packageKind = 'windows-exe'; runtimeKind = 'self-contained' } |
-            ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $outDir 'SecRandom.package.json') -Encoding utf8NoBOM
+          @{ schemaVersion = 1; product = 'VeriRandom'; rid = $env:RID; packageKind = 'windows-exe'; runtimeKind = 'self-contained' } |
+            ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $outDir 'VeriRandom.package.json') -Encoding utf8NoBOM
           $setupOutput = 'artifacts/release/setup'
           New-Item -ItemType Directory -Path $setupOutput -Force | Out-Null
 
           $isccArguments = @(
             "/DMyAppVersion=$env:VERSION"
             "/DMyAppOutDir=$outDir"
-            "/FSecRandom-$env:VERSION-$env:RID-setup"
+            "/FVeriRandom-$env:VERSION-$env:RID-setup"
             "/O$setupOutput"
           )
           if ($uiAccessBuild) { $isccArguments += '/DUiAccessBuild' }
@@ -349,46 +400,46 @@ jobs:
           pkgroot="${work}/package-root"
           rm -rf "$work"
           mkdir -p "$pkgroot/DEBIAN"
-          mkdir -p "$pkgroot/usr/lib/secrandom"
+          mkdir -p "$pkgroot/usr/lib/verirandom"
           mkdir -p "$pkgroot/usr/bin"
           mkdir -p "$pkgroot/usr/share/applications"
           mkdir -p "$pkgroot/usr/share/icons/hicolor/256x256/apps"
 
-          cp -a "${release_root}/publish/full/${RID}/." "$pkgroot/usr/lib/secrandom/"
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"linux-deb","runtimeKind":"self-contained"}\n' "$RID" > "$pkgroot/usr/lib/secrandom/SecRandom.package.json"
-          chmod +x "$pkgroot/usr/lib/secrandom/SecRandom.Desktop" || true
+          cp -a "${release_root}/publish/full/${RID}/." "$pkgroot/usr/lib/verirandom/"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"linux-deb","runtimeKind":"self-contained"}\n' "$RID" > "$pkgroot/usr/lib/verirandom/VeriRandom.package.json"
+          chmod +x "$pkgroot/usr/lib/verirandom/VeriRandom.Desktop" || true
 
-          cat > "$pkgroot/usr/bin/secrandom" << 'EOF'
+          cat > "$pkgroot/usr/bin/verirandom" << 'EOF'
           #!/bin/sh
-          exec /usr/lib/secrandom/SecRandom.Desktop "$@"
+          exec /usr/lib/verirandom/VeriRandom.Desktop "$@"
           EOF
-          chmod +x "$pkgroot/usr/bin/secrandom"
+          chmod +x "$pkgroot/usr/bin/verirandom"
 
-          cat > "$pkgroot/usr/share/applications/secrandom.desktop" << 'EOF'
+          cat > "$pkgroot/usr/share/applications/verirandom.desktop" << 'EOF'
           [Desktop Entry]
           Type=Application
-          Name=SecRandom
-          Exec=secrandom
-          Icon=secrandom
+          Name=VeriRandom
+          Exec=verirandom
+          Icon=verirandom
           Categories=Utility;
           Terminal=false
           EOF
 
           if [ -f "resources/secrandom-icon-paper.png" ]; then
-            cp "resources/secrandom-icon-paper.png" "$pkgroot/usr/share/icons/hicolor/256x256/apps/secrandom.png"
+            cp "resources/secrandom-icon-paper.png" "$pkgroot/usr/share/icons/hicolor/256x256/apps/verirandom.png"
           fi
 
           cat > "$pkgroot/DEBIAN/control" << EOF
-          Package: secrandom
+          Package: verirandom
           Version: ${version_no_v}
           Section: utils
           Priority: optional
           Architecture: ${deb_arch}
           Maintainer: SECTL
-          Description: SecRandom
+          Description: VeriRandom
           EOF
 
-          dpkg-deb --build "$pkgroot" "${release_root}/dist/SecRandom-${VERSION}-${RID}.deb"
+          dpkg-deb --build "$pkgroot" "${release_root}/dist/VeriRandom-${VERSION}-${RID}.deb"
 
       - name: Build macOS pkg
         if: ${{ matrix.os == 'macos' }}
@@ -413,24 +464,24 @@ jobs:
 
           work="$(pwd)/${release_root}/macos/${RID}"
           rm -rf "$work"
-          mkdir -p "$work/bundle/SecRandom.app/Contents/MacOS"
-          mkdir -p "$work/bundle/SecRandom.app/Contents/Resources"
+          mkdir -p "$work/bundle/VeriRandom.app/Contents/MacOS"
+          mkdir -p "$work/bundle/VeriRandom.app/Contents/Resources"
 
-          cp -a "${release_root}/publish/full/${RID}/." "$work/bundle/SecRandom.app/Contents/MacOS/"
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-app","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
-          chmod +x "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.Desktop" || true
+          cp -a "${release_root}/publish/full/${RID}/." "$work/bundle/VeriRandom.app/Contents/MacOS/"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"macos-app","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/VeriRandom.app/Contents/MacOS/VeriRandom.package.json"
+          chmod +x "$work/bundle/VeriRandom.app/Contents/MacOS/VeriRandom.Desktop" || true
 
-          cat > "$work/bundle/SecRandom.app/Contents/Info.plist" << EOF
+          cat > "$work/bundle/VeriRandom.app/Contents/Info.plist" << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>CFBundleName</key><string>VeriRandom</string>
             <key>CFBundleDisplayName</key><string>VeriRandom</string>
-            <key>CFBundleIdentifier</key><string>top.sectl.secrandom</string>
+            <key>CFBundleIdentifier</key><string>com.yeyixiao.verirandom</string>
             <key>CFBundleVersion</key><string>${version_no_v}</string>
             <key>CFBundleShortVersionString</key><string>${version_no_v}</string>
-            <key>CFBundleExecutable</key><string>SecRandom.Desktop</string>
+            <key>CFBundleExecutable</key><string>VeriRandom.Desktop</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>LSMinimumSystemVersion</key><string>11.0</string>
             <key>CFBundleIconFile</key><string>AppIcon</string>
@@ -449,14 +500,14 @@ jobs:
               double=$((size*2))
               sips -z "$double" "$double" "$icon_png" --out "$iconset/icon_${size}x${size}@2x.png" >/dev/null
             done
-            iconutil -c icns "$iconset" -o "$work/bundle/SecRandom.app/Contents/Resources/AppIcon.icns"
+            iconutil -c icns "$iconset" -o "$work/bundle/VeriRandom.app/Contents/Resources/AppIcon.icns"
           fi
 
           if [ -z "$MACOS_SIGNING_P12_BASE64" ] || [ -z "$MACOS_SIGNING_P12_PASSWORD" ] || [ -z "$MACOS_APPLICATION_SIGNING_IDENTITY" ] || [ -z "$MACOS_INSTALLER_SIGNING_IDENTITY" ] || [ -z "$MACOS_NOTARY_APPLE_ID" ] || [ -z "$MACOS_NOTARY_TEAM_ID" ] || [ -z "$MACOS_NOTARY_PASSWORD" ]; then
             echo "macOS signing or notarization credentials are unavailable; keeping unsigned APP and skipping signed PKG."
             ditto -c -k --sequesterRsrc --keepParent \
-              "$work/bundle/SecRandom.app" \
-              "${release_root}/dist/SecRandom-${VERSION}-${RID}.app.zip"
+              "$work/bundle/VeriRandom.app" \
+              "${release_root}/dist/VeriRandom-${VERSION}-${RID}.app.zip"
             exit 0
           fi
 
@@ -471,30 +522,30 @@ jobs:
           security list-keychain -d user -s "$keychain"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_SIGNING_P12_PASSWORD" "$keychain"
 
-          codesign --force --deep --options runtime --sign "$MACOS_APPLICATION_SIGNING_IDENTITY" "$work/bundle/SecRandom.app"
-          codesign --verify --deep --strict "$work/bundle/SecRandom.app"
+          codesign --force --deep --options runtime --sign "$MACOS_APPLICATION_SIGNING_IDENTITY" "$work/bundle/VeriRandom.app"
+          codesign --verify --deep --strict "$work/bundle/VeriRandom.app"
 
           ditto -c -k --sequesterRsrc --keepParent \
-            "$work/bundle/SecRandom.app" \
-            "${release_root}/dist/SecRandom-${VERSION}-${RID}.app.zip"
+            "$work/bundle/VeriRandom.app" \
+            "${release_root}/dist/VeriRandom-${VERSION}-${RID}.app.zip"
 
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-pkg","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
+          printf '{"schemaVersion":1,"product":"VeriRandom","rid":"%s","packageKind":"macos-pkg","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/VeriRandom.app/Contents/MacOS/VeriRandom.package.json"
 
           pkgroot="$work/pkgroot"
           mkdir -p "$pkgroot/Applications"
-          cp -a "$work/bundle/SecRandom.app" "$pkgroot/Applications/"
+          cp -a "$work/bundle/VeriRandom.app" "$pkgroot/Applications/"
 
           pkgbuild \
             --root "$pkgroot" \
-            --identifier "top.sectl.secrandom" \
+            --identifier "com.yeyixiao.verirandom" \
             --version "$version_no_v" \
             --install-location "/" \
             --sign "$MACOS_INSTALLER_SIGNING_IDENTITY" \
-            "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg"
+            "${release_root}/dist/VeriRandom-${VERSION}-${RID}.pkg"
 
-          xcrun notarytool submit "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" --password "$MACOS_NOTARY_PASSWORD" --wait
-          xcrun stapler staple "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg"
-          pkgutil --check-signature "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg"
+          xcrun notarytool submit "${release_root}/dist/VeriRandom-${VERSION}-${RID}.pkg" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" --password "$MACOS_NOTARY_PASSWORD" --wait
+          xcrun stapler staple "${release_root}/dist/VeriRandom-${VERSION}-${RID}.pkg"
+          pkgutil --check-signature "${release_root}/dist/VeriRandom-${VERSION}-${RID}.pkg"
 
       - name: Upload Portable Artifact
         uses: actions/upload-artifact@v7
@@ -549,20 +600,34 @@ jobs:
           RELEASE_TAG: ${{ github.event.inputs.release_tag }}
         run: |
           $semverPattern = '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?$'
+          if (Test-Path variable:PSNativeCommandUseErrorActionPreference) {
+            $PSNativeCommandUseErrorActionPreference = $false
+          }
           if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
-            $version = $env:RELEASE_TAG.TrimStart('v', 'V')
+            # A downstream "v3.1.5 Mu 1" tag is legal, but a NuGet package version cannot carry the space:
+            # Format-ReleaseVersion turns it into "3.1.5-mu.1". The version users see stays the tag itself,
+            # because the app reads it from the generated informational version, not from -p:Version.
+            $version = & ./scripts/Format-ReleaseVersion.ps1 -Tag $env:RELEASE_TAG
             if ($version -notmatch $semverPattern) {
-              throw "Release tag must be a v-prefixed semantic version (vMAJOR.MINOR.PATCH), got '$env:RELEASE_TAG'."
+              throw "Release tag must be a v-prefixed semantic version (vMAJOR.MINOR.PATCH) or a downstream Mu revision, got '$env:RELEASE_TAG'."
             }
           } else {
-            $tag = git describe --tags --abbrev=0 2>$null
-            if ($LASTEXITCODE -eq 0 -and $tag) {
-              $version = $tag.TrimStart('v', 'V')
+            $tag = ''
+            try { $tag = (git describe --tags --abbrev=0 2>$null) } catch { $tag = '' }
+            if ([string]::IsNullOrWhiteSpace($tag)) {
+              try { $tag = (git tag --sort=-v:refname 2>$null | Select-Object -First 1) } catch { $tag = '' }
+            }
+            if (-not [string]::IsNullOrWhiteSpace($tag)) {
+              $version = & ./scripts/Format-ReleaseVersion.ps1 -Tag $tag
               if ($version -notmatch $semverPattern) {
                 Write-Host "WARNING: latest tag '$tag' is not semantic versioning; using it as-is for the routine build artifact."
               }
             } else {
-              $version = '0.0.0-dev'
+              # Keep the fallback major equal to PluginApiVersions.Current; the next step enforces it.
+              $apiMajor = [regex]::Match((Get-Content 'SecRandom.PluginSdk/PluginApiVersions.cs' -Raw), 'new\((?<major>\d+),\s*\d+').Groups['major'].Value
+              if ([string]::IsNullOrWhiteSpace($apiMajor)) { throw 'Unable to parse PluginApiVersions.Current for the fallback version major.' }
+              $version = "$apiMajor.0.0-dev"
+              Write-Host "::warning::No git tag found in this repository; using fallback version $version."
             }
           }
           echo "PKG_VERSION=$version" >> $env:GITHUB_OUTPUT
@@ -635,8 +700,25 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' }}
         shell: pwsh
         run: |
-          $latestTag = git describe --tags --abbrev=0
+          # See the desktop job: a tagless fork must fall back instead of aborting on git describe.
+          if (Test-Path variable:PSNativeCommandUseErrorActionPreference) {
+            $PSNativeCommandUseErrorActionPreference = $false
+          }
+          $latestTag = ''
+          try { $latestTag = (git describe --tags --abbrev=0 2>$null) } catch { $latestTag = '' }
+          if ([string]::IsNullOrWhiteSpace($latestTag)) {
+            try { $latestTag = (git tag --sort=-v:refname 2>$null | Select-Object -First 1) } catch { $latestTag = '' }
+          }
+          if ([string]::IsNullOrWhiteSpace($latestTag)) {
+            # A tagless fork still needs a version whose major matches the Plugin SDK API major:
+            # build_pluginsdk enforces that equality and the app/API majors must stay in step.
+            $apiMajor = [regex]::Match((Get-Content 'SecRandom.PluginSdk/PluginApiVersions.cs' -Raw), 'new\((?<major>\d+),\s*\d+').Groups['major'].Value
+            if ([string]::IsNullOrWhiteSpace($apiMajor)) { throw 'Unable to parse PluginApiVersions.Current for the fallback version major.' }
+            $latestTag = "v$apiMajor.0.0-dev"
+            Write-Host "::warning::No git tag found in this repository; using fallback version $latestTag."
+          }
           "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
+          Write-Host "Latest tag: $latestTag"
 
       - name: Setup JDK 21
         uses: actions/setup-java@v5
@@ -654,6 +736,7 @@ jobs:
         run: dotnet workload install android
 
       - name: Build Android APK
+        id: android_build
         shell: pwsh
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
@@ -662,7 +745,7 @@ jobs:
           ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
-          $version = $env:VERSION.TrimStart('v', 'V')
+          $version = & ./scripts/Format-ReleaseVersion.ps1 -Tag $env:VERSION
           $arguments = @('build', 'SecRandom.Android/SecRandom.Android.csproj', '-c', 'Release', '-r', 'android-${{ matrix.arch }}', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}', '-p:BuildInParallel=false', '-p:UseSharedCompilation=false')
           $signingValues = @{
             ANDROID_SIGNING_KEYSTORE_BASE64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64
@@ -672,34 +755,41 @@ jobs:
           }
           $missingSigningValues = @($signingValues.GetEnumerator() | Where-Object { [string]::IsNullOrWhiteSpace($_.Value) } | Select-Object -ExpandProperty Key)
           if ($missingSigningValues.Count -gt 0) {
-            throw "Android release signing is required for every build; missing secrets: $($missingSigningValues -join ', ')."
+            # The fork has no release keystore yet. Still compile the Android head and produce a
+            # debug-signed, installable APK for testing; it is uploaded as "-unsigned" and is kept
+            # out of the release output and update manifest. Provide the four secrets to get a
+            # release-signed APK with the strict keystore/certificate verification below.
+            Write-Host "::warning::Android release signing secrets are missing ($($missingSigningValues -join ', ')); building a debug-signed APK instead. Add the secrets to produce a release-signed APK."
+            "ANDROID_SIGNED=false" >> $env:GITHUB_OUTPUT
+          } else {
+            "ANDROID_SIGNED=true" >> $env:GITHUB_OUTPUT
+            $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
+            $keystoreBase64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64
+            if ($keystoreBase64.Length -gt 0 -and [int][char]$keystoreBase64[0] -eq 0xFEFF) {
+              $keystoreBase64 = $keystoreBase64.Substring(1)
+            }
+            $keystoreBase64 = $keystoreBase64.Trim()
+            $keystoreBase64 = $keystoreBase64 -replace '-', '+'
+            $keystoreBase64 = $keystoreBase64 -replace '_', '/'
+            $keystoreBytes = $null
+            try {
+              $keystoreBytes = [Convert]::FromBase64String($keystoreBase64)
+            } catch {
+              $firstInvalid = $keystoreBase64.ToCharArray() | Where-Object { [char]::IsWhiteSpace($_) -eq $false -and $_ -notmatch '[A-Za-z0-9+/=]' } | Select-Object -First 1
+              $invalidCodePoint = if ($null -ne $firstInvalid) { [int][char]$firstInvalid } else { -1 }
+              throw "ANDROID_SIGNING_KEYSTORE_BASE64 is not valid base64 even after trimming whitespace and translating URL-safe characters; first invalid character has code point $invalidCodePoint. Re-provision the secret with a clean base64 encoding of the keystore."
+            }
+            if ($keystoreBytes.Length -lt 16) {
+              throw 'The Android release keystore secret decoded to an implausibly small file; re-check ANDROID_SIGNING_KEYSTORE_BASE64.'
+            }
+            [IO.File]::WriteAllBytes($keystorePath, $keystoreBytes)
+            $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
+            $keystoreVerification = & keytool @keytoolArguments 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              throw "Android signing keystore validation failed. $($keystoreVerification -join ' ')"
+            }
+            $arguments += @('-p:AndroidKeyStore=true', "-p:AndroidSigningKeyStore=$keystorePath", "-p:AndroidSigningStorePass=$env:ANDROID_SIGNING_KEYSTORE_PASSWORD", "-p:AndroidSigningKeyAlias=$env:ANDROID_SIGNING_KEY_ALIAS", "-p:AndroidSigningKeyPass=$env:ANDROID_SIGNING_KEY_PASSWORD")
           }
-          $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
-          $keystoreBase64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64
-          if ($keystoreBase64.Length -gt 0 -and [int][char]$keystoreBase64[0] -eq 0xFEFF) {
-            $keystoreBase64 = $keystoreBase64.Substring(1)
-          }
-          $keystoreBase64 = $keystoreBase64.Trim()
-          $keystoreBase64 = $keystoreBase64 -replace '-', '+'
-          $keystoreBase64 = $keystoreBase64 -replace '_', '/'
-          $keystoreBytes = $null
-          try {
-            $keystoreBytes = [Convert]::FromBase64String($keystoreBase64)
-          } catch {
-            $firstInvalid = $keystoreBase64.ToCharArray() | Where-Object { [char]::IsWhiteSpace($_) -eq $false -and $_ -notmatch '[A-Za-z0-9+/=]' } | Select-Object -First 1
-            $invalidCodePoint = if ($null -ne $firstInvalid) { [int][char]$firstInvalid } else { -1 }
-            throw "ANDROID_SIGNING_KEYSTORE_BASE64 is not valid base64 even after trimming whitespace and translating URL-safe characters; first invalid character has code point $invalidCodePoint. Re-provision the secret with a clean base64 encoding of the keystore."
-          }
-          if ($keystoreBytes.Length -lt 16) {
-            throw 'The Android release keystore secret decoded to an implausibly small file; re-check ANDROID_SIGNING_KEYSTORE_BASE64.'
-          }
-          [IO.File]::WriteAllBytes($keystorePath, $keystoreBytes)
-          $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
-          $keystoreVerification = & keytool @keytoolArguments 2>&1
-          if ($LASTEXITCODE -ne 0) {
-            throw "Android signing keystore validation failed. $($keystoreVerification -join ' ')"
-          }
-          $arguments += @('-p:AndroidKeyStore=true', "-p:AndroidSigningKeyStore=$keystorePath", "-p:AndroidSigningStorePass=$env:ANDROID_SIGNING_KEYSTORE_PASSWORD", "-p:AndroidSigningKeyAlias=$env:ANDROID_SIGNING_KEY_ALIAS", "-p:AndroidSigningKeyPass=$env:ANDROID_SIGNING_KEY_PASSWORD")
           & dotnet @arguments
           if ($LASTEXITCODE -ne 0) {
             throw "Android build failed with exit code $LASTEXITCODE."
@@ -709,42 +799,54 @@ jobs:
         shell: pwsh
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
+          ANDROID_SIGNED: ${{ steps.android_build.outputs.ANDROID_SIGNED }}
           ANDROID_SIGNING_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEYSTORE_PASSWORD }}
           ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
         run: |
-          $apk = Get-ChildItem 'SecRandom.Android/bin/Release/net10.0-android36.0/android-${{ matrix.arch }}' -Filter '*-Signed.apk' |
-            Select-Object -First 1 -ExpandProperty FullName
+          $apkDirectory = 'SecRandom.Android/bin/Release/net10.0-android36.0/android-${{ matrix.arch }}'
+          $apk = Get-ChildItem $apkDirectory -Filter '*-Signed.apk' | Select-Object -First 1 -ExpandProperty FullName
           if ([string]::IsNullOrWhiteSpace($apk)) {
-            throw 'The Android build did not produce a signed APK.'
+            $apk = Get-ChildItem $apkDirectory -Filter '*.apk' | Select-Object -First 1 -ExpandProperty FullName
           }
-          $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
-          if (!(Test-Path -LiteralPath $keystorePath)) {
-            throw 'The Android signing keystore is missing after the build.'
+          if ([string]::IsNullOrWhiteSpace($apk)) {
+            throw 'The Android build did not produce an APK.'
           }
-          $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
-          $keystoreCertificate = & keytool @keytoolArguments 2>&1
-          if ($LASTEXITCODE -ne 0) {
-            throw 'Unable to read the Android release certificate from the signing keystore.'
+          $assetName = "VeriRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}.apk"
+          if ($env:ANDROID_SIGNED -ne 'true') {
+            # Debug-signed build: rename so it can never be mistaken for, or matched as, a release
+            # APK. The publish job excludes the "-unsigned" suffix from the release output.
+            Write-Host "::warning::Emitting a debug-signed Android APK; it is not release-signed."
+            $assetName = "VeriRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}-unsigned.apk"
+          } else {
+            $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
+            if (!(Test-Path -LiteralPath $keystorePath)) {
+              throw 'The Android signing keystore is missing after the build.'
+            }
+            $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
+            $keystoreCertificate = & keytool @keytoolArguments 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              throw 'Unable to read the Android release certificate from the signing keystore.'
+            }
+            $expectedFingerprint = [regex]::Match(($keystoreCertificate -join "`n"), '(?im)^\s*SHA256:\s*([0-9A-F:]+)\s*$').Groups[1].Value.Replace(':', '').ToUpperInvariant()
+            if ([string]::IsNullOrWhiteSpace($expectedFingerprint)) {
+              throw 'The Android signing keystore did not expose a SHA-256 certificate fingerprint.'
+            }
+            $apksigner = Get-ChildItem "$env:ANDROID_HOME/build-tools/*/apksigner" -File | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+            if ([string]::IsNullOrWhiteSpace($apksigner)) {
+              throw 'apksigner was not found on the Android runner.'
+            }
+            $verification = & $apksigner verify --verbose --print-certs $apk 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              throw 'The Android APK signature verification failed.'
+            }
+            $actualFingerprint = [regex]::Match(($verification -join "`n"), '(?im)certificate SHA-256 digest:\s*([0-9A-F:]+)').Groups[1].Value.Replace(':', '').ToUpperInvariant()
+            if ([string]::IsNullOrWhiteSpace($actualFingerprint) -or $actualFingerprint -cne $expectedFingerprint) {
+              throw "The Android APK certificate fingerprint does not match the release keystore. Expected $expectedFingerprint, got $actualFingerprint."
+            }
+            Write-Host "Verified Android release certificate SHA-256: $actualFingerprint"
           }
-          $expectedFingerprint = [regex]::Match(($keystoreCertificate -join "`n"), '(?im)^\s*SHA256:\s*([0-9A-F:]+)\s*$').Groups[1].Value.Replace(':', '').ToUpperInvariant()
-          if ([string]::IsNullOrWhiteSpace($expectedFingerprint)) {
-            throw 'The Android signing keystore did not expose a SHA-256 certificate fingerprint.'
-          }
-          $apksigner = Get-ChildItem "$env:ANDROID_HOME/build-tools/*/apksigner" -File | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
-          if ([string]::IsNullOrWhiteSpace($apksigner)) {
-            throw 'apksigner was not found on the Android runner.'
-          }
-          $verification = & $apksigner verify --verbose --print-certs $apk 2>&1
-          if ($LASTEXITCODE -ne 0) {
-            throw 'The Android APK signature verification failed.'
-          }
-          $actualFingerprint = [regex]::Match(($verification -join "`n"), '(?im)certificate SHA-256 digest:\s*([0-9A-F:]+)').Groups[1].Value.Replace(':', '').ToUpperInvariant()
-          if ([string]::IsNullOrWhiteSpace($actualFingerprint) -or $actualFingerprint -cne $expectedFingerprint) {
-            throw "The Android APK certificate fingerprint does not match the release keystore. Expected $expectedFingerprint, got $actualFingerprint."
-          }
-          Write-Host "Verified Android release certificate SHA-256: $actualFingerprint"
           New-Item -ItemType Directory -Path 'artifacts/mobile' -Force | Out-Null
-          Copy-Item $apk "artifacts/mobile/SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}.apk"
+          Copy-Item $apk "artifacts/mobile/$assetName"
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v7
@@ -754,102 +856,16 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-  build_ios:
-    name: Build_iOS
-    needs: validate_release
-    if: ${{ always() && !cancelled() && (needs.validate_release.result == 'success' || needs.validate_release.result == 'skipped') }}
-    runs-on: macos-26
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          persist-credentials: false
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
-
-      - name: Set up Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '26.6'
-
-      # Keep the SDK and workload set paired with the selected Xcode version.
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.401
-
-      - name: Get Latest Tag
-        id: get_tag
-        if: ${{ github.event_name != 'workflow_dispatch' }}
-        shell: bash
-        run: echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
-
-      - name: Verify iOS toolchain
-        shell: bash
-        run: |
-          test "$(uname -m)" = arm64
-          xcode-select -p
-          xcodebuild -version
-          xcrun --find strip
-          dotnet --version
-
-      - name: Install iOS workload
-        shell: bash
-        run: |
-          dotnet workload install ios --version 10.0.401
-          dotnet workload --info
-
-      - name: Publish unsigned iOS arm64 IPA
-        shell: bash
-        env:
-          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
-        run: |
-          set -euo pipefail
-          version="${VERSION#v}"
-          version="${version#V}"
-          output="artifacts/mobile/SecRandom-v${version}-ios-arm64-unsigned.ipa"
-          mkdir -p artifacts/mobile
-          # The AOT step dominates this job. The iOS SDK parallelizes it to
-          # Environment.ProcessorCount / 2, which is integer 1 on the 3 vCPU macOS runner and
-          # therefore compiles the assemblies strictly serially; two workers use the machine
-          # without exhausting the runner's 7 GB when LLVM AOT is in flight.
-          dotnet publish SecRandom.iOS/SecRandom.iOS.csproj \
-            -c Release \
-            -f net10.0-ios \
-            -r ios-arm64 \
-            -p:Version="$version" \
-            -p:ApplicationVersion=${{ github.run_number }} \
-            -p:EnableCodeSigning=false \
-            -p:CodesignRequireProvisioningProfile=false \
-            -p:BuildIpa=true \
-            -p:ArchiveOnBuild=false \
-            -p:BuildInParallel=false \
-            -p:UseSharedCompilation=false \
-            -p:AotCompileMaxDegreeOfParallelism=2 \
-            -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
-          test -s "$output"
-          unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
-          unzip -p "$output" 'Payload/*.app/Info.plist' > "$RUNNER_TEMP/SecRandom-iOS-Info.plist"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'VeriRandom'
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'AppIcon'
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "$version"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "${{ github.run_number }}"
-
-      - name: Upload unsigned iOS IPA
-        uses: actions/upload-artifact@v7
-        with:
-          name: ios-arm64_unsigned_ipa
-          path: artifacts/mobile/*.ipa
-          retention-days: 14
-          if-no-files-found: error
-
   publish:
     name: Publish_Release
     runs-on: windows-2022
-    needs: [build_desktop, build_android, build_ios, build_pluginsdk]
-    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_ios') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    # Fork policy: iOS builds are disabled in this fork, so nothing here waits for an IPA and no iOS
+    # artifact is expected in `output/`. Upstream instead builds the IPA in parallel in build_ios.yml and
+    # attaches it (plus a refreshed update manifest and release note) to the release this job creates; that
+    # workflow is present but inert here, so the platform set is desktop + Android only.
+
+    needs: [build_desktop, build_android, build_pluginsdk]
+    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
     permissions:
       contents: write
       id-token: write
@@ -880,19 +896,29 @@ jobs:
         run: |
           $releaseOutput = './artifacts/release/output'
           New-Item -ItemType Directory -Path $releaseOutput -Force | Out-Null
-          Get-ChildItem ./artifacts/release/downloaded -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg,*.apk,*.ipa | ForEach-Object {
-            Copy-Item $_.FullName $releaseOutput -Force
-          }
+          # Debug-signed Android APKs are CI test artifacts only; keep them out of the release.
+          Get-ChildItem ./artifacts/release/downloaded -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg,*.apk,*.ipa |
+            Where-Object { $_.Name -notmatch '-android-(arm64|x64)-unsigned\.apk$' } |
+            ForEach-Object {
+              Copy-Item $_.FullName $releaseOutput -Force
+            }
           Write-Host "Combined files:"
           Get-ChildItem $releaseOutput -File | Select-Object Name, Length
 
+      # Fork policy: publishing the Plugin SDK to nuget.org is disabled — this fork has neither a package
+      # identity nor a Trusted Publishing setup there yet. The packing job still runs and uploads the
+      # `pluginsdk` artifact on every CI run, and this job still downloads it into
+      # artifacts/release/downloaded/pluginsdk, so the packages remain available from the workflow run.
+      # To re-enable, delete both `if: ${{ false }}` guards below.
       - name: NuGet login (OIDC → temp API key)
-        uses: NuGet/login@v1
+        if: ${{ false }}
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
         id: login
         with:
           user: ${{ secrets.NUGET_USER }}
 
       - name: NuGet push
+        if: ${{ false }}
         shell: pwsh
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
@@ -905,6 +931,7 @@ jobs:
           }
 
       - name: Generate signed update manifest
+        if: ${{ false }}
         shell: pwsh
         env:
           RELEASE_TAG: ${{ github.event.inputs.release_tag }}
@@ -931,20 +958,20 @@ jobs:
             $releaseOutput = './artifacts/release/output'
             $artifacts = Get-ChildItem $releaseOutput -File | ForEach-Object {
               $name = $_.Name
-              $kind, $runtimeKind, $os, $arch = if ($name -match '^SecRandom-v.+-(?<rid>(?<os>win|linux|osx)-(?<arch>x64|x86|arm64))-portable-(?<runtime>full|light)\.zip$') {
+              $kind, $runtimeKind, $os, $arch = if ($name -match '^VeriRandom-v.+-(?<rid>(?<os>win|linux|osx)-(?<arch>x64|x86|arm64))-portable-(?<runtime>full|light)\.zip$') {
                 $platform = switch ($Matches.os) { 'win' { 'windows' } 'linux' { 'linux' } 'osx' { 'macos' } }
                 @('portable-zip', $(if ($Matches.runtime -eq 'full') { 'self-contained' } else { 'framework-dependent' }), $platform, $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-(?<rid>win-(?<arch>x64|x86|arm64))-setup\.exe$') {
+              } elseif ($name -match '^VeriRandom-v.+-(?<rid>win-(?<arch>x64|x86|arm64))-setup\.exe$') {
                 @('windows-exe', 'self-contained', 'windows', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-(?<rid>linux-(?<arch>x64|arm64))\.deb$') {
+              } elseif ($name -match '^VeriRandom-v.+-(?<rid>linux-(?<arch>x64|arm64))\.deb$') {
                 @('linux-deb', 'self-contained', 'linux', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.pkg$') {
+              } elseif ($name -match '^VeriRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.pkg$') {
                 @('macos-pkg', 'self-contained', 'macos', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.app\.zip$') {
+              } elseif ($name -match '^VeriRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.app\.zip$') {
                 @('macos-app', 'self-contained', 'macos', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-Android-(?<arch>arm64|x64)\.apk$') {
+              } elseif ($name -match '^VeriRandom-v.+-Android-(?<arch>arm64|x64)\.apk$') {
                 @('android-apk', 'self-contained', 'android', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-iOS-(?<arch>arm64)-unsigned\.ipa$') {
+              } elseif ($name -match '^VeriRandom-v.+-iOS-(?<arch>arm64)-unsigned\.ipa$') {
                 @('ios-ipa', 'self-contained', 'ios', $Matches.arch)
               } else {
                 throw "Unrecognized release artifact name: $name"
@@ -962,15 +989,15 @@ jobs:
             }
             $manifest = [ordered]@{
               schemaVersion = 1
-              product = 'SecRandom'
+              product = 'VeriRandom'
               channel = $channel
               tag = $releaseTag
               version = $releaseTag.TrimStart('v')
               publishedAt = [DateTimeOffset]::UtcNow.ToString('O')
               artifacts = @($artifacts)
             }
-            $manifestPath = "$releaseOutput/SecRandom-update-manifest.json"
-            $signaturePath = "$releaseOutput/SecRandom-update-manifest.sig"
+            $manifestPath = "$releaseOutput/VeriRandom-update-manifest.json"
+            $signaturePath = "$releaseOutput/VeriRandom-update-manifest.sig"
             $manifest | ConvertTo-Json -Depth 5 -Compress | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM -NoNewline
             & openssl pkeyutl -sign -rawin -inkey $privateKeyPath -in $manifestPath -out $signaturePath
             if ($LASTEXITCODE -ne 0) { throw "OpenSSL Ed25519 signing failed with exit code $LASTEXITCODE." }
@@ -987,12 +1014,14 @@ jobs:
         run: pwsh -ep bypass ./scripts/gen-release-note.ps1
 
       - name: Upload APP to release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
         with:
-          name: SecRandom ${{ github.event.inputs.release_tag }}
-          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/SecRandom-update-manifest.json,./artifacts/release/output/SecRandom-update-manifest.sig"
+          name: VeriRandom ${{ github.event.inputs.release_tag }}
+          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/VeriRandom-update-manifest.json,./artifacts/release/output/VeriRandom-update-manifest.sig"
           draft: true
-          prerelease: ${{ contains(github.event.inputs.release_tag, '-') }}
+          # Only the upstream preview trains are pre-releases. A downstream "v3.1.5 Mu 1" (or the tag-safe
+          # "v3.1.5-Mu.1") is a finished build of this fork, so it publishes as a normal release.
+          prerelease: ${{ contains(github.event.inputs.release_tag, '-alpha') || contains(github.event.inputs.release_tag, '-beta') || contains(github.event.inputs.release_tag, '-rc') }}
           bodyFile: ./release-note.md
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.release_tag }}

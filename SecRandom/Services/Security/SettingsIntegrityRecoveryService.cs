@@ -43,6 +43,10 @@ internal sealed record SettingsIntegrityRecoveryResult(
 ///     <c>config/settings.json</c> 的备份，先把当前文件另存为「恢复前」副本，再用备份内容
 ///     原子替换，最后重载配置以刷新指纹记录。只处理设置文件本身，名单、历史等其他数据不变；
 ///     任何一步失败都保留原文件，让启动流程回退到安全密码确认闸门。
+///     <para>
+///         恢复只使用本机自己的备份：本地 <c>data/backup</c> 归档，以及本机上传到账号云端的备份。
+///         另一台设备上传的云端备份描述的是那台机器的配置，永远不会被用来自动恢复本机设置文件。
+///     </para>
 /// </summary>
 internal sealed class SettingsIntegrityRecoveryService
 {
@@ -50,6 +54,7 @@ internal sealed class SettingsIntegrityRecoveryService
     private const string PreRestoreDirectoryName = "integrity";
 
     private readonly MainConfigHandler _configHandler;
+    private readonly SecuritySettingsStore _securitySettings;
     private readonly IImportExportService _importExportService;
     private readonly ILogger<SettingsIntegrityRecoveryService> _logger;
     private readonly string? _configFilePath;
@@ -57,12 +62,14 @@ internal sealed class SettingsIntegrityRecoveryService
 
     public SettingsIntegrityRecoveryService(
         MainConfigHandler configHandler,
+        SecuritySettingsStore securitySettings,
         IImportExportService importExportService,
         ILogger<SettingsIntegrityRecoveryService> logger,
         string? configFilePath = null,
         string? backupDirectory = null)
     {
         _configHandler = configHandler;
+        _securitySettings = securitySettings;
         _importExportService = importExportService;
         _logger = logger;
         _configFilePath = configFilePath;
@@ -74,7 +81,7 @@ internal sealed class SettingsIntegrityRecoveryService
 
     public async Task<SettingsIntegrityRecoveryResult> TryRecoverAsync(CancellationToken cancellationToken = default)
     {
-        var source = _configHandler.Data.SecuritySettings.SettingsIntegrityRestoreSource;
+        var source = _securitySettings.Data.SettingsIntegrityRestoreSource;
         var cloudPreferred = source == SettingsIntegrityRestoreSource.CloudThenLocal;
         SettingsIntegrityRecoveryResult? failure = null;
 
@@ -118,6 +125,19 @@ internal sealed class SettingsIntegrityRecoveryService
             SettingsIntegrityRestoreSource.CloudThenLocal => [RecoverySourceKind.Cloud, RecoverySourceKind.Local],
             _ => [RecoverySourceKind.Local]
         };
+
+    /// <summary>
+    ///     云端候选只保留本机上传的备份，组内按上传时间从新到旧。设置文件描述的是它所在的那台机器，
+    ///     另一台设备的备份既不是本机的配置，也不能当作本机备份的兜底，所以它永远不会成为候选：
+    ///     本机没有自己的可用备份时宁可不恢复，退回本地备份或安全密码闸门。
+    ///     设备别名为空（主机名无法生成安全别名）时没有本机组，因此没有任何云端候选。
+    /// </summary>
+    internal static IReadOnlyList<CloudBackupDescriptor> OrderCloudCandidates(
+        IEnumerable<CloudBackupDescriptor> backups, string? deviceTag) =>
+        backups.Where(item => item.CanRestore)
+            .Where(item => CloudBackupService.IsOwnBackup(item, deviceTag ?? string.Empty))
+            .OrderByDescending(item => item.CreatedAt ?? DateTimeOffset.MinValue)
+            .ToArray();
 
     /// <summary>
     ///     失败信息展示最有用的那条：真实的文件/恢复错误优先于「没有可用备份」，而「未登录账号」
@@ -205,9 +225,17 @@ internal sealed class SettingsIntegrityRecoveryService
             return Failed(true, Describe(exception));
         }
 
+        // 只认本机上传的备份：其他设备的备份是那台机器的配置，本机没有自己的可用备份时宁可不恢复，
+        // 也不能拿别的设备的设置来覆盖本机。
+        var candidates = OrderCloudCandidates(backups, cloud.DeviceTag);
+        if (candidates.Count == 0 && backups.Any(item => item.CanRestore))
+        {
+            _logger.LogWarning("云端没有本机上传的可用备份，其他设备的备份不用于设置文件恢复：云端可用备份={Count}。",
+                backups.Count(item => item.CanRestore));
+        }
+
         string? lastDetail = null;
-        foreach (var descriptor in backups.Where(item => item.CanRestore)
-                     .OrderByDescending(item => item.CreatedAt ?? DateTimeOffset.MinValue))
+        foreach (var descriptor in candidates)
         {
             cancellationToken.ThrowIfCancellationRequested();
             string archivePath;

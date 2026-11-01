@@ -399,4 +399,10 @@
     <data name="M_CloudStoragePageFailed" xml:space="preserve">
         <value>无法打开云储存页面</value>
     </data>
+    <data name="C_CloudBackup_LegacyEncrypted" xml:space="preserve">
+        <value>旧版加密，无法恢复</value>
+    </data>
+    <data name="M_CloudLegacyEncrypted" xml:space="preserve">
+        <value>该备份由旧版本以加密口令上传，当前版本已移除加密功能，无法恢复它</value>
+    </data>
 </root>

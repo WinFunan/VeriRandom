@@ -6,14 +6,13 @@
 
 **授業やチームで使える、設定可能な抽選フロー、履歴管理、検証可能な抽選記録を備えたランダム抽選ツール。**
 
-[![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=Issues)](https://github.com/SECTL/SecRandom/issues)
-[![Latest Release](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Latest%20Release)](https://github.com/SECTL/SecRandom/releases/latest)
-[![Pre-release](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=for-the-badge&label=Pre-release)](https://github.com/SECTL/SecRandom/releases)
-[![Last Update](https://img.shields.io/github/last-commit/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Last%20Update)](https://github.com/SECTL/SecRandom/commits/master)
-[![Downloads](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=Downloads)](https://github.com/SECTL/SecRandom/releases)
+[![GitHub Issues](https://img.shields.io/github/issues-search/WinFunan/VeriRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=Issues)](https://github.com/WinFunan/VeriRandom/issues)
+[![Latest Release](https://img.shields.io/github/v/release/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=Latest%20Release)](https://github.com/WinFunan/VeriRandom/releases/latest)
+[![Pre-release](https://img.shields.io/github/v/release/WinFunan/VeriRandom?include_prereleases&style=for-the-badge&label=Pre-release)](https://github.com/WinFunan/VeriRandom/releases)
+[![Last Update](https://img.shields.io/github/last-commit/WinFunan/VeriRandom?style=for-the-badge&color=00b4ab&label=Last%20Update)](https://github.com/WinFunan/VeriRandom/commits/master)
+[![Downloads](https://img.shields.io/github/downloads/WinFunan/VeriRandom/total?style=for-the-badge&color=00b4ab&label=Downloads)](https://github.com/WinFunan/VeriRandom/releases)
 
-[![QQ Group](https://img.shields.io/badge/-QQ%20Group%20%7C%20833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/iWcfaPHn7W)
-[![Bilibili](https://img.shields.io/badge/-Bilibili%20%7C%20%E9%BB%8E%E6%B3%BD%E6%87%BF-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
+[![QQ Group](https://img.shields.io/badge/-QQ%20Group%20%7C%20768421833-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/EvhyCJWqCA)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](../LICENSE)
 
 **言語** [ [简体中文](../README.md) | [English](README_EN.md) | **日本語** ]
@@ -30,6 +29,25 @@
 
 VeriRandom は、授業、チーム、イベント、意思決定などの場面で公平な抽選を行うためのアプリケーションです。
 
+## 本ブランチ独自の機能
+
+以下は、上流の SecRandom に対して本ブランチが追加した機能です。これ以降の節は両プロジェクト共通の動作を説明します。
+
+1. **NIST Beacon の外部エントロピー源と Up/Own 二重チェーン証明** — 権威ある外部ビーコンを抽選の種にでき、進行役が独自のエントロピーを注入できません。Up チェーンのノードは上流へ移行した後も読み取り可能です。
+2. **証明の信頼度評価** — チェーンの整合性、タイムスタンプ、サーバー受領証、人的な時刻の裏付けのうち、利用者が信頼する情報源を選ぶと、説明可能なレポートを生成します。
+3. **TSA タイムスタンプを個別に無効化できる** — 無効にするとビーコン周期のアンカーへの影響を説明するダイアログが出ます。プライバシーページでは、タイムスタンプ要求が匿名化された情報を WoTrus に送ることを明示しています。
+4. **越境データ移転のゲート、既定では何も送信しない** — SECTL へ送信し得る経路はすべて一つのゲートを通り、抽選結果を上流の立会いサービスへ送るかどうかは既定で無効です。
+5. **より保守的なプライバシー既定値** — 新規インストールではテレメトリとオンラインステータスの両方が無効です。
+6. **分離署名による設定の改ざん防止** — 秘密鍵は進行役の信頼できる端末に残り、抽選機は公開鍵だけを持ちます。改ざんされたポリシーは起動時に拒否され、公開鍵の指紋を照合できます。
+7. **TOTP 単独の検証を禁止** — TOTP だけを唯一の要素にはできず、パスワードか USB キーとの併用が必要です。アップグレード時に残存する単独のシードは削除されます。
+8. **独立した製品アイデンティティ** — 独自のプログラム名、インストール先、`verirandom://` スキーム、単一インスタンス名、インストーラー ID を持ち、同一端末で SecRandom と共存できます。旧 `secrandom://` スキームは任意で有効化します。
+9. **クイック抽選の 2 つの改善** — クイック抽選を閉じた後に直前のウィンドウへフォーカスを戻し、ビーコンのパルスを事前取得して待ち時間をなくせます。
+10. **証明の再現** — 証明を手元の名簿と突き合わせてローカルで再現し、再計算した氏名を表示結果と比較します。上流の検証では行われない確認です。
+11. **乱数ページ** — 指定した範囲で生の乱数を生成し、その場で独自の証明記録を書き出します。後から検証できない情報源（random.org、ローカル CSPRNG）が混ざった場合はその場で警告します。
+12. **教材マーカー** — 本アプリが生成した QR コードをスライドに貼っておくと、そのスライドを表示したときに QR に書かれた設定で自動的に抽選が始まります。プレゼンターはページを送るだけです。
+13. **証明の詳細** — サーバー側の検証ページと同じ公開パラメーターを表示します。これはファイル自身の主張であり、ローカルで確認した結論ではないことを明記しています。
+14. **サイズ変更できる結果カード** — 浮動する結果カードは四辺・四隅からドラッグしてサイズを変更でき、サイズを記憶し、タッチにも対応します。
+
 ## 機能
 
 ### 抽選ワークフロー
@@ -38,6 +56,8 @@ VeriRandom は、授業、チーム、イベント、意思決定などの場面
 - **クイック抽選**: 独立したフローティングウィンドウから、生徒をすばやく抽選します。
 - **抽選会**: 賞品ルーレットと在庫抽選に対応し、生徒と賞品を個別に管理します。
 - **豊かな演出**: アニメーション、結果、音声、音楽、通知を統一設定で管理し、通知失敗時のフォールバックに対応します。
+- **教材マーカー**: 本アプリが生成した QR コードをスライドに貼っておくと、そのスライドを表示したときに QR に書かれた設定で自動的に抽選が始まります。プレゼンターはページを送るだけで、ボタンを押す必要はありません。リスト、人数、タイミング（遅延、または次のボタン操作待ち）、アニメーションと読み上げの設定がすべてコードに入っているため、同じ教材を別のパソコンでも使えます。授業ごとに「新しい授業を開始」を一度押せば再び有効になり、同じスライドは 1 授業につき 1 回だけ動作します。画面の読み取りはキー操作の後に一度だけで、静止中は読み取らず、フレームは保存も送信もされません。
+- **サイズ変更できる結果カード**: 結果カードは四辺・四隅からドラッグしてサイズを変更でき、変更したサイズは記憶されます。ドラッグとサイズ変更はマウスとタッチの両方に対応します。
 
 ### 公平性とリスト管理
 
@@ -49,6 +69,8 @@ VeriRandom は、授業、チーム、イベント、意思決定などの場面
 ### 抽選結果の再確認
 
 - 抽選ごとに証明記録ファイルを自動保存します。
+- 乱数ページでは指定した範囲で生の乱数を生成し、その場で独自の証明記録を書き出します。記録された原データから後で同じ値を再計算できます。
+- 再現ウィンドウで証明を選ぶと、サーバー側の検証ページと同じ公開パラメーターを表示できます。入力コミットメント、監査コミットメント、乱数材料、候補プールの規則、抽出方式、平均間隔の保護、share-debt のパラメーターなどです。ダイアログの冒頭に、これらは証明ファイル自身の主張であり、信頼性は評価と再現結果と併せて判断すべきであることを明記しています。
 - サーバーを抽選に参加させ、立ち会わせるかどうかを選択できます。
 - 公式チャンネルを通じて抽選結果を再確認できます。
 
@@ -80,10 +102,14 @@ VeriRandom は、授業、チーム、イベント、意思決定などの場面
 | v2 | Python + PySide6 + qfluentwidgets | Qt スタックの進化 |
 | **v3** | **C# + Avalonia + FluentAvalonia** | 抽選、検証、デスクトップ連携を継続的に発展させる .NET デスクトップ再構築 |
 
-## ダウンロードと更新
+## 本リポジトリのダウンロードと更新
 
-- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) でリリースパッケージと変更履歴を提供しています。
-- [公式ダウンロードページ](https://stk.sectl.cn/SecRandom) から最新版のダウンロード入口を利用できます。
+- [GitHub Releases](https://github.com/WinFunan/VeriRandom/releases) で本フォークのリリースパッケージと変更履歴を提供しています。
+
+## 上流のダウンロードと更新
+
+- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) で上流のリリースパッケージと変更履歴を提供しています。
+- [上流の公式ダウンロードページ](https://stk.sectl.cn/SecRandom) から上流の最新版ダウンロード入口を利用できます。
 - 自動更新では、配置前に署名付きリリースマニフェストと成果物の長さ・ハッシュを検証します。インストールの詳細は各リリースに含まれるパッケージと説明を参照してください。
 
 ## ライセンスと第三者通知
@@ -94,15 +120,27 @@ VeriRandom は、授業、チーム、イベント、意思決定などの場面
 
 ## 貢献者と特別な謝辞
 
+<a href="https://github.com/WinFunan/VeriRandom/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=WinFunan/VeriRandom" alt="VeriRandom contributors" />
+</a>
+
 <a href="https://github.com/SECTL/SecRandom/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=SECTL/SecRandom" alt="SecRandom contributors" />
 </a>
 
-コードの提供、問題報告、ドキュメント改善、フィードバックを寄せてくださるすべての貢献者に感謝します。アバターは GitHub の貢献者データから動的に生成され、クリックすると完全な統計を [GitHub の貢献者ページ](https://github.com/SECTL/SecRandom/graphs/contributors) で確認できます。
+VeriRandom と SecRandom にコードの提供、問題報告、ドキュメント改善、フィードバックを寄せてくださるすべての貢献者に感謝します。アバターは GitHub の貢献者データから動的に生成され、クリックすると完全な統計を[本リポジトリの GitHub 貢献者ページ](https://github.com/WinFunan/VeriRandom/graphs/contributors)または[上流の GitHub 貢献者ページ](https://github.com/SECTL/SecRandom/graphs/contributors)で確認できます。
 
-## サポートとコミュニティ
+## 本リポジトリのサポートとコミュニティ
 
-- [Afdian で支援する](https://afdian.com/a/lzy0983)
+- [QQ グループ 768421833](https://qm.qq.com/q/EvhyCJWqCA)
+- [メール](mailto:love-code-yeyixiao@outlook.com)
+- [Bilibili](https://space.bilibili.com/510993086)
+- [問題を報告する](https://github.com/WinFunan/VeriRandom/issues)
+- [日本語の貢献ガイド](CONTRIBUTING_JA.md)
+
+## 上流リポジトリのサポートとコミュニティ
+
+- [Afdian で上流を支援する](https://afdian.com/a/lzy0983)
 - [メール](mailto:lzy.12@foxmail.com)
 - [QQ グループ 833875216](https://qm.qq.com/q/iWcfaPHn7W)
 - [QQ チャンネル](https://pd.qq.com/s/4x5dafd34?b=9)
@@ -110,16 +148,9 @@ VeriRandom は、授業、チーム、イベント、意思決定などの場面
 - [問題を報告する](https://github.com/SECTL/SecRandom/issues)
 - [SecRandom 公式ドキュメント](https://secrandom.sectl.cn/doc/overview.html)
 - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
-- [日本語の貢献ガイド](CONTRIBUTING_JA.md)
+- [簡体字中国語の貢献ガイド](https://github.com/SECTL/SecRandom/CONTRIBUTING.md)
 
-## Star History
 
-<a href="https://www.star-history.com/?repos=SECTL%2FSecRandom&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&theme=dark&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
- </picture>
-</a>
+**Copyright © 2025-2026 WinFunan**
 
 **Copyright © 2025-2026 SECTL**

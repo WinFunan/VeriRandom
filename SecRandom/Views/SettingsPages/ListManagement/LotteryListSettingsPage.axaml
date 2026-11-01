@@ -67,6 +67,11 @@
                     <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi ArrowDownloadFilled}}"
                                            Label="{Binding ExportListLabel}"
                                            Click="ExportButton_OnClick" />
+
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi DocumentCheckmarkFilled}}"
+                                           Label="{x:Static lr:Resources.C_ExportProofReference}"
+                                           ToolTip.Tip="{x:Static lr:Resources.C_ExportProofReference_D}"
+                                           Click="ExportProofReferenceButton_OnClick" />
                 </fa:FACommandBar.PrimaryCommands>
             </fa:FACommandBar>
         </Border>

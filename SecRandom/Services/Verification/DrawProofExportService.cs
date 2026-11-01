@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Shared;
@@ -16,6 +17,8 @@ namespace SecRandom.Services.Verification;
 public sealed class DrawProofExportService(
     MainConfigHandler configHandler,
     ProofChainStore chainStore,
+    OwnProofExportService ownProofExporter,
+    GateEvidenceExportService gateEvidenceExporter,
     ILogger<DrawProofExportService> logger)
 {
     private const int MaximumFileNameLength = 240;
@@ -29,10 +32,19 @@ public sealed class DrawProofExportService(
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.KebabCaseLower) }
     };
 
-    public DrawProofExportResult Save(DrawProof proof, DrawProofExportContext context)
+    /// <summary>
+    ///     Writes the Up proof, the gate evidence when the average-gap gate removed somebody, and — when the draw took
+    ///     its seed from a beacon pulse — the reference proof that sits beside it. The Up proof never carries the beacon:
+    ///     the reference node is the only place the pulse and the seed's increment factor are recorded.
+    /// </summary>
+    public DrawProofExportResult Save(
+        DrawProof proof,
+        DrawProofExportContext context,
+        DrawProofBeacon? beacon = null,
+        GateEvidenceSnapshot? gateEvidence = null)
     {
         RemoveExpiredProofs(configHandler.Data.General.ProofRetention.RetentionDays);
-        var chained = proof with { Chain = chainStore.NextChain(proof) };
+        var chained = proof with { Chain = chainStore.NextChain(proof), Beacon = null };
         var timestamp = TimeZoneInfo.ConvertTime(chained.CreatedAtUtc, ChinaStandardTime);
         var path = Utils.GetFilePath(
             "proofs",
@@ -40,11 +52,42 @@ public sealed class DrawProofExportService(
             timestamp.ToString("yyyy-MM-dd"),
             CreateFileName(chained, context));
         SaveAtPath(path, chained);
-        RemoveProofsOverStorageLimit(configHandler.Data.General.ProofRetention.MaximumStorageBytes);
+        string? ownPath = null;
+        if (beacon is not null)
+        {
+            try
+            {
+                ownPath = ownProofExporter.Save(path, ownProofExporter.Create(chained, beacon));
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or NotSupportedException or InvalidOperationException)
+            {
+                // The reference declaration is supplementary: losing it must never invalidate a completed draw.
+                logger.LogWarning(exception, "自有参考证明导出失败，上游证明不受影响。ProofId={ProofId}", chained.ProofId);
+            }
+        }
+
+        // Written after the Up file and before any cleanup: nothing can delete the pair in between, so an evidence file
+        // can never end up describing a proof that does not exist.
+        string? gatePath = null;
+        if (gateEvidence is not null)
+        {
+            try
+            {
+                gatePath = gateEvidenceExporter.Save(path, gateEvidenceExporter.Create(chained, gateEvidence));
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or NotSupportedException or InvalidOperationException)
+            {
+                // Same rule as the reference node: the draw already succeeded, so its evidence missing must not fail it.
+                logger.LogWarning(exception, "门槛证据导出失败，上游证明不受影响。ProofId={ProofId}", chained.ProofId);
+            }
+        }
+
+        // Upstream now protects the file this save just wrote from the storage-limit cleanup.
+        RemoveProofsOverStorageLimit(configHandler.Data.General.ProofRetention.MaximumStorageBytes, path);
         logger.LogInformation(
             "已导出抽取证明：ProofId={ProofId}，模式={Mode}，链序={ChainIndex}，路径={Path}。",
             chained.ProofId, chained.Mode, chained.Chain?.Index, path);
-        return new DrawProofExportResult(path, chained);
+        return new DrawProofExportResult(path, chained, ownPath, gatePath);
     }
 
     public void SaveAtPath(string path, DrawProof proof)
@@ -127,6 +170,7 @@ public sealed class DrawProofExportService(
                     if (TryReadChainIndex(path, out var chainIndex))
                         removed.Add(chainIndex);
                     File.Delete(path);
+                    DeleteSiblings(path);
                 }
             }
             catch (IOException exception)
@@ -142,7 +186,7 @@ public sealed class DrawProofExportService(
         chainStore.RecordRemovedIndices(removed, ProofChainEvent.RetentionCleanup);
     }
 
-    private void RemoveProofsOverStorageLimit(long maximumStorageBytes)
+    private void RemoveProofsOverStorageLimit(long maximumStorageBytes, string protectedPath)
     {
         if (maximumStorageBytes <= 0)
             return;
@@ -154,6 +198,7 @@ public sealed class DrawProofExportService(
         var files = Directory.EnumerateFiles(root, "*.srproof.json", SearchOption.AllDirectories)
             .Select(path => new FileInfo(path))
             .OrderBy(file => file.LastWriteTimeUtc)
+            .ThenBy(file => file.FullName, StringComparer.Ordinal)
             .ToList();
         var totalBytes = files.Sum(file => file.Length);
         List<long> removed = [];
@@ -162,12 +207,19 @@ public sealed class DrawProofExportService(
             if (totalBytes <= maximumStorageBytes)
                 break;
 
+            // The proof saved by this very call must survive its own cleanup: deleting it would leave the
+            // chain head pointing at a file that never landed (a self-inflicted missing tail) and hand the
+            // attestation queue a path that no longer exists.
+            if (string.Equals(file.FullName, protectedPath, StringComparison.Ordinal))
+                continue;
+
             try
             {
                 var length = file.Length;
                 if (TryReadChainIndex(file.FullName, out var chainIndex))
                     removed.Add(chainIndex);
                 file.Delete();
+                DeleteSiblings(file.FullName);
                 totalBytes -= length;
             }
             catch (IOException exception)
@@ -191,6 +243,45 @@ public sealed class DrawProofExportService(
 
         chainIndex = proof.Chain.Index;
         return true;
+    }
+
+    /// <summary>
+    ///     Removes every sibling a proof owns, from both cleanup paths. Kept as one call so a future sibling cannot be
+    ///     forgotten in one of the two sites; the Own reference already had a single home and each new sibling adds a
+    ///     second delete that is easy to miss.
+    /// </summary>
+    private void DeleteSiblings(string upPath)
+    {
+        DeleteOwnSibling(upPath);
+        DeleteGateEvidenceSibling(upPath);
+    }
+
+    private void DeleteGateEvidenceSibling(string upPath)
+    {
+        try
+        {
+            File.Delete(GateEvidencePaths.FromUpPath(upPath));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // The gate evidence has no chain of its own, so nothing has to be recorded when it disappears.
+            logger.LogDebug(exception, "跳过正在使用的门槛证据文件：{Path}。", upPath);
+        }
+    }
+
+    private void DeleteOwnSibling(string upPath)
+    {
+        try
+        {
+            var ownPath = OwnProofPaths.FromUpPath(upPath);
+            if (File.Exists(ownPath) && ownProofExporter.TryRead(ownPath, out var own) && own is not null)
+                ownProofExporter.RecordRemoved(own.Chain.Index);
+            File.Delete(ownPath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            logger.LogDebug(exception, "跳过正在使用的自有参考证明文件：{Path}。", upPath);
+        }
     }
 
     private static TimeZoneInfo GetChinaStandardTime()
@@ -233,7 +324,11 @@ public sealed class DrawProofExportService(
 
 }
 
-public sealed record DrawProofExportResult(string Path, DrawProof Proof);
+public sealed record DrawProofExportResult(
+    string Path,
+    DrawProof Proof,
+    string? OwnPath = null,
+    string? GateEvidencePath = null);
 
 public sealed record DrawProofExportContext(string ListName, IReadOnlyList<string> FilterLabels)
 {

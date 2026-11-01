@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Enums.Configs;
 using System;
 using System.Text.Json.Serialization;
@@ -25,6 +26,13 @@ public partial class DrawSettingsConfigBase : ObservableObject
     [ObservableProperty] private int _autoplayCount = 5;
     [ObservableProperty] private DrawAnimationStyleMode _animationStyle = DrawAnimationStyleMode.DirectRotate;
 
+    /// <summary>
+    ///     "动画样式"下拉里选中的项：<see cref="DrawAnimationSelection.Host" /> 表示宿主内置动画，
+    ///     其他值是插件贡献的动画 id（等于对应 <c>IDrawResultPresenter.Id</c>）。
+    ///     旧配置文件没有这个字段时按内置动画处理。
+    /// </summary>
+    [ObservableProperty] private string _pluginAnimationId = DrawAnimationSelection.Host;
+
     [JsonPropertyName("result_flow_animation_mode")]
     public DrawAnimationStyleMode LegacyResultFlowAnimationMode
     {
@@ -43,6 +51,29 @@ public partial class DrawSettingsConfigBase : ObservableObject
 
     [ObservableProperty] private bool _studentImage = false;
     [ObservableProperty] private StudentImagePositionMode _studentImagePosition = StudentImagePositionMode.Left;
+    [ObservableProperty] private int _studentImageSize = DefaultImageSize;
+
+    /// <summary>结果图片的边长下限（像素）：再小就看不清是谁。</summary>
+    public const int MinImageSize = 24;
+
+    /// <summary>结果图片的边长上限（像素）：再大一条结果就占满整屏。</summary>
+    public const int MaxImageSize = 200;
+
+    /// <summary>结果图片的默认边长（像素），与旧版写死的头像尺寸一致。</summary>
+    public const int DefaultImageSize = 72;
+
+    /// <summary>
+    ///     图片大小可能来自手改的配置文件或旧版本导入，越界值一律夹回范围内，
+    ///     否则结果区会被一个荒唐的尺寸顶穿。
+    /// </summary>
+    public static int ClampImageSize(int value) => Math.Clamp(value, MinImageSize, MaxImageSize);
+
+    partial void OnStudentImageSizeChanged(int value)
+    {
+        var clamped = ClampImageSize(value);
+        if (clamped != value)
+            StudentImageSize = clamped;
+    }
 
     // music settings below
 

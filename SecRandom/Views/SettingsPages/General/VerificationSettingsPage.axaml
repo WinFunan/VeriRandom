@@ -5,6 +5,7 @@
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
               xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
               xmlns:lv="clr-namespace:SecRandom.Langs.SettingsPages.General.Verification"
+             xmlns:oobe="clr-namespace:SecRandom.Langs.FirstRunOobe"
               xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
               x:Class="SecRandom.Views.SettingsPages.General.VerificationSettingsPage"
               x:DataType="local:VerificationSettingsPage"
@@ -37,6 +38,55 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_BeaconPrefetch"
+                                    Header="{x:Static lv:Resources.S_BeaconPrefetch}"
+                                    Description="{x:Static lv:Resources.S_BeaconPrefetch_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi PulseFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding BeaconPrefetchEnabled, Mode=TwoWay}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_BeaconAutoPrefetch"
+                                    Header="{x:Static lv:Resources.S_BeaconAutoPrefetch}"
+                                    Description="{x:Static lv:Resources.S_BeaconAutoPrefetch_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi PulseFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding BeaconAutoPrefetchEnabled, Mode=TwoWay}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_TimestampAuthority"
+                                    Header="{x:Static lv:Resources.S_TimestampAuthority}"
+                                    Description="{x:Static lv:Resources.S_TimestampAuthority_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ClockFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch x:Name="TimestampAuthorityToggle" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_BeaconSource"
+                                    Header="{x:Static lv:Resources.S_BeaconSource}"
+                                    Description="{x:Static lv:Resources.S_BeaconSource_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="BeaconSourceCombo"
+                                  MinWidth="240"
+                                  SelectedIndex="{Binding SelectedBeaconSourceIndex, Mode=OneWay}"
+                                  SelectionChanged="BeaconSource_OnSelectionChanged">
+                            <ComboBoxItem Content="{x:Static lv:Resources.O_BeaconSource_Nist}" />
+                            <ComboBoxItem Content="{x:Static lv:Resources.O_BeaconSource_Drand}" />
+                            <ComboBoxItem Content="{x:Static lv:Resources.O_BeaconSource_RandomOrg}" />
+                        </ComboBox>
+                        <Button x:Name="RandomOrgSetupButton"
+                                Content="{x:Static lv:Resources.C_RandomOrgSetup}"
+                                IsVisible="False"
+                                Click="ConfigureRandomOrgSigning_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_BeaconEndpoint"
                                     Header="{x:Static lv:Resources.S_BeaconEndpoint}"
                                     Description="{x:Static lv:Resources.S_BeaconEndpoint_D}"
@@ -57,6 +107,37 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_AttestationUpload"
+                                    Header="{x:Static lv:Resources.S_AttestationUpload}"
+                                    Description="{x:Static lv:Resources.S_AttestationUpload_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi DocumentCheckmarkFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="6">
+                        <StackPanel x:Name="AttestationUploadGroup" Spacing="4">
+                            <RadioButton x:Name="AttestationUploadOnRadio"
+                                         GroupName="SettingsAttestationUpload"
+                                         Click="AttestationUpload_OnClick"
+                                         Content="{x:Static oobe:Resources.O_AttestationOn}" />
+                            <RadioButton x:Name="AttestationUploadOffRadio"
+                                         GroupName="SettingsAttestationUpload"
+                                         Click="AttestationUpload_OnClick"
+                                         Content="{x:Static oobe:Resources.O_AttestationOff}" />
+                        </StackPanel>
+                        <!-- 未同意出境须知时上面的单选组会置灰。补签入口必须放在该组**外面**，否则
+                             它会跟着一起被禁用；就地补签后立即解锁，用户不必离开页面重进 -->
+                        <StackPanel x:Name="EgressConsentPrompt" Spacing="4" IsVisible="False">
+                            <TextBlock Text="{x:Static lv:Resources.M_EgressConsentRequired}"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="320"
+                                       FontWeight="SemiBold" />
+                            <Button Content="{x:Static lv:Resources.C_EgressConsentGrant}"
+                                    Click="GrantEgressConsent_OnClick"
+                                    HorizontalAlignment="Left" />
+                        </StackPanel>
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_ProofFolder"
                                     Header="{x:Static lv:Resources.S_ProofFolder}"
                                     Description="{x:Static lv:Resources.S_ProofFolder_D}"
@@ -67,6 +148,8 @@
                                 Click="OpenProofFolder_OnClick" />
                         <Button Content="{x:Static lv:Resources.C_OpenVerificationWebsite}"
                                 Click="OpenVerificationWebsite_OnClick" />
+                        <Button Content="{x:Static lv:Resources.C_OpenProofReplay}"
+                                Click="OpenProofReplay_OnClick" />
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
@@ -87,6 +170,14 @@
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
+
+            <!-- 链判决在每次抽取回执返回时都会更新。它是「本地链被删过或倒退过」唯一的外部信号，
+                 所以单独显著提示，而不是埋进上面的计数摘要里 -->
+            <TextBlock x:Name="ProofChainAlertText"
+                       TextWrapping="Wrap"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                       IsVisible="False" />
 
             <fa:FASettingsExpander x:Name="S_ProofIntegrity"
                                     Header="{x:Static lv:Resources.S_ProofIntegrity}"
@@ -111,6 +202,7 @@
                                     IconSource="{sr:FluentIconSource {sr:Fi HardDriveFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding SelectedStorageIndex}">
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_Unlimited}" />
                         <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_16MB}" />
                         <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_32MB}" />
                         <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_64MB}" />
@@ -128,12 +220,13 @@
                                     IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding SelectedRetentionIndex}">
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_Never}" />
                         <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_7}" />
                         <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_15}" />
                         <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_30}" />
                         <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_60}" />
                         <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_90}" />
-                        <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_Never}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_365}" />
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

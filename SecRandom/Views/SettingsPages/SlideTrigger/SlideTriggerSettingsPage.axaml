@@ -1,0 +1,142 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="using:SecRandom.Views.SettingsPages.SlideTrigger"
+             xmlns:langs="using:SecRandom.Langs.SettingsPages.SlideTrigger"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             x:Class="SecRandom.Views.SettingsPages.SlideTrigger.SlideTriggerSettingsPage"
+             x:DataType="local:SlideTriggerSettingsPage">
+
+    <ScrollViewer>
+        <StackPanel Margin="16" Spacing="12" Classes="page-container">
+
+            <sr:IconText Text="{x:Static langs:Resources.S_Intro}" Glyph="{sr:Fi NumberSymbolFilled}" />
+
+            <fa:FASettingsExpander Header="{x:Static langs:Resources.S_Generate}"
+                                   Description="{x:Static langs:Resources.S_Generate_D}"
+                                   >
+                <StackPanel Spacing="10">
+
+                    <!-- 编辑态横幅：参数写在二维码里，所以保存后必须把新图片换进课件 -->
+                    <Border x:Name="EditBanner" IsVisible="False" Padding="10" CornerRadius="6"
+                            Background="{DynamicResource SystemFillColorCautionBackgroundBrush}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock x:Name="EditBannerText" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            <Button Content="{x:Static langs:Resources.C_CancelEdit}" Click="CancelEdit_OnClick" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBox x:Name="NameBox" Watermark="{x:Static langs:Resources.C_NameWatermark}" />
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Static langs:Resources.C_ListName}" FontSize="12" Opacity="0.7" />
+                        <TextBox x:Name="ListBox" Watermark="{x:Static langs:Resources.C_ListNameWatermark}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Static langs:Resources.C_Count}" FontSize="12" Opacity="0.7" />
+                            <NumericUpDown x:Name="CountBox" Minimum="1" Maximum="50" Value="1" Width="140" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Static langs:Resources.C_ExpiresDays}" FontSize="12" Opacity="0.7" />
+                            <NumericUpDown x:Name="ExpiresBox" Minimum="0" Maximum="3650" Value="0" Width="140" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <CheckBox x:Name="ShowAnimationBox" Content="{x:Static langs:Resources.C_ShowAnimation}" IsChecked="True" />
+                    <CheckBox x:Name="VoiceBox" Content="{x:Static langs:Resources.C_Voice}" IsChecked="True" />
+
+                    <!-- 「可重复」「忽略历史权重」没有对应开关：触发路径表达不了这两项，给出开关只会生成一张永远不触发的标记 -->
+                    <TextBlock Text="{x:Static langs:Resources.M_UnsupportedParamsHint}" FontSize="12"
+                               Opacity="0.7" TextWrapping="Wrap" />
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Static langs:Resources.C_Timing}" FontSize="12" Opacity="0.7" />
+                        <ComboBox x:Name="TimingBox" SelectedIndex="0" HorizontalAlignment="Stretch">
+                            <ComboBoxItem Content="{x:Static langs:Resources.O_TimingDelay}" />
+                            <ComboBoxItem Content="{x:Static langs:Resources.O_TimingInputs}" />
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Static langs:Resources.C_Delay}" FontSize="12" Opacity="0.7" />
+                            <NumericUpDown x:Name="DelayBox" Minimum="0" Maximum="10" Value="1" Width="130" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Static langs:Resources.C_Inputs}" FontSize="12" Opacity="0.7" />
+                            <NumericUpDown x:Name="InputsBox" Minimum="1" Maximum="5" Value="1" Width="130" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Static langs:Resources.C_Timeout}" FontSize="12" Opacity="0.7" />
+                            <NumericUpDown x:Name="TimeoutBox" Minimum="1" Maximum="60" Value="15" Width="130" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Static langs:Resources.C_Gender}" FontSize="12" Opacity="0.7" />
+                            <TextBox x:Name="GenderBox" Width="160" />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Static langs:Resources.C_Group}" FontSize="12" Opacity="0.7" />
+                            <TextBox x:Name="GroupBox" Width="160" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="{x:Static langs:Resources.C_GenerateAndCopy}" Click="Generate_OnClick" />
+                        <Button Content="{x:Static langs:Resources.C_GenerateAndSave}" Click="GenerateAndSave_OnClick" />
+                    </StackPanel>
+                </StackPanel>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static langs:Resources.S_Markers}"
+                                   Description="{x:Static langs:Resources.S_Markers_D}"
+                                   >
+                <StackPanel Spacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="{x:Static langs:Resources.C_NewSession}" Click="NewSession_OnClick" />
+                        <Button Content="{x:Static langs:Resources.C_ProbeNow}" Click="Probe_OnClick" />
+                        <TextBlock x:Name="SessionText" VerticalAlignment="Center" FontSize="12" Opacity="0.75" />
+                    </StackPanel>
+
+                    <!-- 快捷键复制：课上按一下就进剪贴板，不需要打开任何窗口 -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{x:Static langs:Resources.C_QuickCopyShortcut}" FontSize="12" Opacity="0.7"
+                                   VerticalAlignment="Center" />
+                        <TextBox x:Name="QuickShortcutBox" Width="150"
+                                 Watermark="{x:Static langs:Resources.C_ShortcutWatermark}"
+                                 LostFocus="QuickShortcut_OnLostFocus" />
+                        <TextBlock x:Name="QuickMarkerText" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{x:Static langs:Resources.M_QuickCopyHint}" FontSize="12" Opacity="0.7"
+                               TextWrapping="Wrap" />
+
+                    <!--
+                        自动识别默认关闭：它会读取投放画面，必须是用户明确打开的行为，而不是新装即生效
+                    -->
+                    <CheckBox x:Name="WatcherBox" Content="{x:Static langs:Resources.C_Watcher}"
+                              IsCheckedChanged="Watcher_OnChanged" />
+                    <TextBlock Text="{x:Static langs:Resources.M_WatcherHint}" FontSize="12"
+                               Opacity="0.7" TextWrapping="Wrap" />
+
+                    <!-- 上课自动开始新一节：标记是按"节"单次触发的，靠人工记得点按钮最容易漏，交给课程联动 -->
+                    <CheckBox x:Name="ClassSessionBox" Content="{x:Static langs:Resources.C_ClassSession}"
+                              IsCheckedChanged="ClassSession_OnChanged" />
+                    <TextBlock Text="{x:Static langs:Resources.M_ClassSessionHint}" FontSize="12"
+                               Opacity="0.7" TextWrapping="Wrap" />
+
+                    <TextBlock x:Name="EmptyHint" Text="{x:Static langs:Resources.M_NoMarkers}"
+                               FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+
+                    <!-- 行由代码构建：这里只有三条信息 + 三个动作，用 DataTemplate 反而要维护一套一次性绑定 -->
+                    <StackPanel x:Name="MarkerRows" Spacing="8" />
+                </StackPanel>
+            </fa:FASettingsExpander>
+
+            <TextBlock x:Name="StatusText" FontSize="12" TextWrapping="Wrap" Opacity="0.85" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

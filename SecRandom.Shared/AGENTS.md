@@ -4,6 +4,10 @@
 Shared-contract supplement to ../AGENTS.md. Update this file when persisted model shapes,
 contract interfaces, or path helper semantics change. AI agents touching those areas must
 update this file in the same task.
+
+This is the VeriRandom fork. Any shared-contract divergence from upstream SecRandom (model
+shapes, defaults, serialization behavior) must also be logged in ../DownStream_Change.md in the
+same change. An unlogged fork change is an incomplete change.
 -->
 
 ## OVERVIEW
@@ -19,6 +23,7 @@ SecRandom.Shared/
 ├── ComponentModels/   # ObservableDictionary helper type
 ├── Extensions/        # Dependency-light helpers for shared interfaces
 ├── Interfaces/        # Attached settings contracts
+├── Models/ControlNode/ # control-v1 frame/capability contracts (UI-free)
 ├── Models/Profile/    # Student/prize list/history data models
 ├── Models/            # AttachableSettingsObject base model
 ├── Updates/           # UI-free signed release manifest and package-marker DTOs
@@ -47,7 +52,7 @@ SecRandom.Shared/
 | Fair draw logic | `SecRandom.Core/Services/Draw/` | Partial `DrawEngine`, weighted draw, filters, crypto RNG, plus `DrawCommitCoordinator` (`IDrawCommitService`) transactional commits and shared `DrawRepeatPolicy`/`DrawCandidateFilter`. |
 | Config persistence | `SecRandom.Core/Services/Config/` | `FileConfigService` and handlers are host-internal Core runtime services; desktop keeps its existing package-root data path. v3 backup/archive transfer lives in `SecRandom.Core/Services/Archive/` (`DataArchiveService`). |
 | Audit tooling | `scripts/FairnessAudit/` | Standalone fairness/performance validation script and HTML report generator. |
-| Release update signing | `scripts/ReleaseManifest/`, `.github/workflows/build_publish.yml` | Ed25519 key-generation helper and CI manifest signer; private key is Actions-secret-only. Release intermediates and final artifacts are grouped under `artifacts/release/`. |
+| Release update signing | `scripts/ReleaseManifest/`, `.github/workflows/build_publish.yml`, `.github/workflows/build_ios.yml` | Ed25519 key-generation helper and CI manifest signer; private key is Actions-secret-only. Release intermediates and final artifacts are grouped under `artifacts/release/`. iOS is built out of band and its IPA is attached to the release afterwards together with a re-signed manifest. |
 | Reusable controls/styles | `SecRandom.Core/Controls/`, `SecRandom.Core/Styles/`, `SecRandom.Core/StylesBase.axaml` | App style entrypoint includes Core bundle. |
 | Localization rules | `SecRandom/Langs/`, `SecRandom.Core/Langs/`, `docs/localization.md` | Per-page resource folders; `.csproj` registers base resx/designer only. Privacy page resources live under `SecRandom/Langs/SettingsPages/General/Privacy/`. |
 | Shared contracts | `SecRandom.Shared/` | Keep UI/runtime dependencies out. Profile list items use hidden stable `RecordId` keys; visible `Id`/student number/prize number is optional metadata. |
@@ -97,11 +102,13 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - `ProfileRecordIdentity` is the boundary helper for filling missing/duplicate `RecordId` values and resolving legacy `Id`/`Name` history keys without ambiguous fallback.
 - `Student` and `Prize` include persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
 - `ProfileListOrderingExtensions` is the shared presentation ordering for students and prizes: numeric IDs sort first, followed by other IDs, then records without IDs by `CurrentCulture` name order. Use it in list-management and remaining-list UI so every language and draw surface stays consistent.
+- `Models/ControlNode/` holds the `control-v1` node-channel contracts: one tolerant `ControlFrame` record (all fields nullable, unknown fields ignored, `desired_state_revision` as `long` because the service generates ~1.7×10¹² values), capability/frame-type/error-code/reject-reason string constants, and `ControlProtocolJson` for (de)serialization. `ControlFrame.CurrentClass` is **parse-only**: it stays so a frame from another implementation still deserializes, but the client must never populate it (班级/名单名不进控制平面). Keep them dependency-free and serialization-only: the transport, session, and draw-gate behavior live in `SecRandom.Core/Services/ControlNode/` and the app layer.
 - IPC DTOs under `Models/Ipc/` are serialization-only contracts. Keep them free of UI/runtime services and do not emit internal `RecordId` values in external projections.
 - Update DTOs under `Updates/` remain serialization-only. Manifest signature verification, network access, package extraction, and installer process execution belong in the app layer.
 - Mobile Android releases use the same signed manifest with `android-apk` artifacts. The manifest contract remains distribution-neutral; downloading, package installation, and iOS distribution handling stay in the corresponding app layer.
 - Draw proofs serialize their product algorithm release as `algorithmEngineVersion`; retain the nullable legacy `kernelVersion` reader only for historical proof files. User-visible labels must call it an algorithm engine version, not a kernel version.
 - New proof files are locally `OfflineReproducible`; `DrawProofWitness` receipt fields are nullable so the same contract can carry a later server replay attestation without writing empty historical challenge fields. The receipt is excluded from the canonical proof hash, while challenge/key fields remain historical compatibility data.
+- The fork adds `OwnProof` (`Models/Verification/OwnProof.cs`, `format: verirandom-own-proof/v1`), the reference node written as a sibling `*.ownproof.json` of an Up proof. It reuses `DrawProofBeacon` for the pulse copy and is a declaration only: it never enters the canonical Up proof hash and never decides fairness. `DrawProof.Beacon` stays nullable for reading legacy files, but new Up proofs must be written with it null. `DrawProofBeacon` also carries the pulse's `cipherSuite` and a `beaconSources` list: the cipher suite decides the canonical byte layout a pulse signature was computed over, so a verifier must refuse an unknown value rather than assume one, and the source list is what lets a future mixed-source draw be traced to the authority whose certificate has to verify each pulse. Both fields are fork-local Own-node data; the Up chain stays byte-compatible.
 - `HistoryItem.DrawRoundId` is an additive persisted field. New multi-record draws share one value so IPC history can group a logical draw; empty legacy values require conservative fallback grouping.
 - `HistoryItem.CourseName` is an additive persisted course-history field. Empty values represent legacy/global history; new linkage writes use it only for a resolved subject or the stable `__break__` marker while record identity remains `RecordId`.
 - Attached settings objects use `Guid` keys and `Dictionary<Guid, object?>`; coordinate changes with Core draw/settings

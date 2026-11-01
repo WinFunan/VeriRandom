@@ -37,13 +37,19 @@
      <value>, </value>
   </data>
   <data name="M_RepeatLimitExhausted" xml:space="preserve">
-     <value>Not enough members remain. Reset the records or adjust the filters.</value>
+     <value>Not enough members remain. Reset the records or adjust the filters</value>
   </data>
   <data name="M_InvalidWeight" xml:space="preserve">
      <value>Invalid weight settings</value>
   </data>
   <data name="C_Reset" xml:space="preserve">
      <value>Reset</value>
+  </data>
+  <data name="C_ResultWindow" xml:space="preserve">
+    <value>Result window</value>
+  </data>
+  <data name="M_ResultWindowRestore" xml:space="preserve">
+    <value>Restore main window</value>
   </data>
   <data name="C_ShowRemainingList" xml:space="preserve">
      <value>Show remaining list</value>
@@ -93,4 +99,14 @@
   <data name="C_Start" xml:space="preserve">
      <value>Start</value>
   </data>
+  <data name="C_SignedPolicyBadgeFormat" xml:space="preserve">
+    <value>Locked · Fingerprint {0}</value>
+  </data>
+  <data name="C_SignedPolicyBadgeTipFormat" xml:space="preserve">
+    <value>Draws on this machine are locked by a signed policy; signer: {0}; signed: {1}</value>
+  </data>
+  <data name="C_SettingsDigestBadgeFormat" xml:space="preserve"><value>digest {0}</value></data>
+  <data name="C_SettingsDigestBadgeTipFormat" xml:space="preserve"><value>Settings file digest (SHA-256): {0}
+File: {1}
+This badge can be turned off in More settings</value></data>
 </root>

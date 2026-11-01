@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Services;
 using SecRandom.Services.Draw;
@@ -181,6 +183,11 @@ public sealed class PluginDrawServiceTests : IDisposable
         services.AddSingleton<IWitnessClient>(_ => new StubWitnessClient());
         services.AddSingleton<ITimestampAuthorityClient>(_ => new StubTimestampAuthorityClient());
         services.AddSingleton<ProofChainStore>();
+        // The exporter chain needs the reference-node store and its writer: resolving DrawProofExportService without
+        // them throws at resolution time, which no build job would catch because CI does not run the test projects.
+        services.AddSingleton<OwnProofChainStore>();
+        services.AddSingleton<OwnProofExportService>();
+        services.AddSingleton<GateEvidenceExportService>();
         services.AddSingleton<DrawProofExportService>();
         services.AddSingleton<DrawProofAttestationService>();
         services.AddSingleton<CsesScheduleParser>();
@@ -190,6 +197,8 @@ public sealed class PluginDrawServiceTests : IDisposable
         services.AddSingleton<ClassIslandScheduleSource>();
         services.AddSingleton<CourseLinkageService>();
         services.AddSingleton<ISecurityService>(_ => new StubSecurityService(allowAuthorization));
+        // 集控锁定在这些测试里始终是放开的：这里只验证插件抽取的授权与提交链路。
+        services.AddSingleton<IControlDrawGate>(_ => new AlwaysUnlockedDrawGate());
         services.AddSingleton<LinkageDrawCoordinator>();
         // Draw reporting is best-effort and gated by the privacy mode; the default test privacy mode
         // reports, so the service writes its counter file into the per-test data root.
@@ -285,6 +294,9 @@ public sealed class PluginDrawServiceTests : IDisposable
             return Task.FromResult(allow);
         }
 
+        public Task<bool> AuthorizeArchiveImportAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(allow);
+
         public Task<bool> SetPasswordAsync(string password, string? currentPassword = null, CancellationToken cancellationToken = default)
             => Task.FromResult(allow);
 
@@ -301,6 +313,9 @@ public sealed class PluginDrawServiceTests : IDisposable
             => Task.CompletedTask;
 
         public Task<bool> ConfirmTotpAsync(string secret, string code, CancellationToken cancellationToken = default)
+            => Task.FromResult(allow);
+
+        public Task<bool> RemoveTotpAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default)
             => Task.FromResult(allow);
 
         public Task<IReadOnlyList<UsbBindingInfo>> GetUsbBindingsAsync(CancellationToken cancellationToken = default)
@@ -327,5 +342,33 @@ public sealed class PluginDrawServiceTests : IDisposable
                 update();
             return allow;
         }
+
+        public bool IsSudoModeActive() => false;
+
+        public bool IsGlobalSudoModeActive() => false;
+
+        public void DeactivateGlobalSudoMode()
+        {
+        }
+
+        public void DeactivateSudoMode()
+        {
+        }
+
+        public void DeactivateSettingsSudoMode()
+        {
+        }
+
+        // 抽奖测试不涉及 Sudo 状态变化，接口要求的事件只保留一个空实现
+        public event Action? SudoModeChanged
+        {
+            add { }
+            remove { }
+        }
+    }
+
+    private sealed class AlwaysUnlockedDrawGate : IControlDrawGate
+    {
+        public bool IsDrawLocked => false;
     }
 }

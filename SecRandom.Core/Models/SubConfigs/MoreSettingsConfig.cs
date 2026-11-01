@@ -61,4 +61,71 @@ public partial class MoreSettingsConfig : ObservableObject
     [ObservableProperty] private string _decreaseLotteryCountShortcut = string.Empty;
     [ObservableProperty] private string _startRollCallShortcut = string.Empty;
     [ObservableProperty] private string _startLotteryShortcut = string.Empty;
+
+    /// <summary>
+    ///     Window-global key that puts the quick courseware marker on the clipboard, so a deck can be prepared without
+    ///     opening this application. Empty means the key is not registered at all.
+    /// </summary>
+    [ObservableProperty] private string _copySlideTriggerMarkerShortcut = string.Empty;
+
+    // Raw-number page state. The bounds are remembered between sessions because a classroom reuses the same range
+    // (a dice roll, a seat number) far more often than it changes it. Whether the range and source choice may be
+    // changed is NOT stored here: locking them is a protection, so it lives in the encrypted security settings as
+    // SecuritySettingsConfig.ProtectRawRandomSettings and is released only by a fresh password.
+    [ObservableProperty] private long _rawRandomLowerBound;
+    [ObservableProperty] private long _rawRandomUpperBound = 100;
+
+    // Explicit candidate set, e.g. "5,10". A set is what a teacher actually needs when the values are fixed tiers
+    // (money denominations, seat numbers); a range cannot express that without allowing the values in between.
+    [ObservableProperty] private bool _rawRandomUseValues;
+    [ObservableProperty] private string _rawRandomValuesText = string.Empty;
+
+    // Exclusions, generator bounds and predicate are remembered for the same reason the range is: a classroom reuses one
+    // filter far more often than it rewrites it, and a filter that disappears on every restart reads as a lost setting
+    // rather than as "not saved". They are part of the locked block, so the page's lock still gates whether they can be
+    // changed at all.
+    [ObservableProperty] private string _rawRandomExclusionsText = string.Empty;
+    [ObservableProperty] private string _rawRandomGeneratorFromText = string.Empty;
+    [ObservableProperty] private string _rawRandomGeneratorToText = string.Empty;
+    [ObservableProperty] private string _rawRandomPredicateText = string.Empty;
+
+    // Advanced output controls. Off by default because they change what "the result" even is; the page shows the
+    // advanced block only when this is on.
+    [ObservableProperty] private bool _rawRandomAdvancedOptionsEnabled;
+    [ObservableProperty] private bool _rawRandomRawEntropyEnabled;
+    [ObservableProperty] private int _rawRandomBitCount = 32;
+
+    /// <summary>0 = decimal, 1 = hex, 2 = printable ASCII. Stored as an int so an older build reads a sane default.</summary>
+    [ObservableProperty] private int _rawRandomOutputFormat = 1;
+
+    /// <summary>ASCII characters to produce when format 2 is selected, independent of the bit width.</summary>
+    [ObservableProperty] private int _rawRandomAsciiCharCount = 16;
+
+    /// <summary>
+    ///     Allow filling a wider output by concatenating several independent samples. Only sources that produce fresh
+    ///     material per fetch (local CSPRNG, random.org) actually gain entropy this way; a beacon inside one pulse does
+    ///     not, and the measured figure on screen says so instead of pretending otherwise.
+    /// </summary>
+    [ObservableProperty] private bool _rawRandomEntropyConcatEnabled;
+
+    /// <summary>
+    ///     Show the settings-file digest on the draw surface while the local-hash integrity mode is active. On by
+    ///     default: with no issuer to compare against, that digest is the only value a person can check by eye.
+    /// </summary>
+    [ObservableProperty] private bool _showSettingsDigestBadge = true;
+
+    // Result mini-window size. Resizing it on a classroom touchscreen is a deliberate, effortful action, so the
+    // chosen size is remembered; the position is not, because the card re-centres on whichever display the app runs on
+    // and a remembered position from a disconnected monitor would put it off-screen.
+    [ObservableProperty] private double _resultMiniWindowWidth = 360;
+    [ObservableProperty] private double _resultMiniWindowHeight = 320;
+
+    // Courseware-marker auto-detection. Off by default: it reads the projected screen, so it must be a deliberate
+    // choice rather than something a fresh install starts doing.
+    [ObservableProperty] private bool _slideTriggerWatcherEnabled;
+
+    // A lesson start rolls the marker session, so a term-long deck re-arms itself without the teacher pressing
+    // "start a new lesson" every period. On by default: it only affects marker re-arming, only when a marker library
+    // exists, and only while course linkage is actually available.
+    [ObservableProperty] private bool _slideTriggerAutoSessionOnClassStart = true;
 }

@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Services.Config;
+using SecRandom.Services.Consent;
 
 namespace SecRandom.Services.Auth;
 
@@ -11,6 +13,7 @@ namespace SecRandom.Services.Auth;
 /// </summary>
 public sealed class SectlHeartbeatService(
     SectlAuthService authService,
+    MainConfigHandler configHandler,
     ILogger<SectlHeartbeatService> logger) : BackgroundService
 {
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromMinutes(5);
@@ -37,7 +40,9 @@ public sealed class SectlHeartbeatService(
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await SendHeartbeatIfSignedInAsync(stoppingToken).ConfigureAwait(false);
+                // SECTL servers are outside mainland China; the cross-border egress consent gates the heartbeat too.
+                if (SectlTrafficPolicy.IsEgressAllowed(configHandler))
+                    await SendHeartbeatIfSignedInAsync(stoppingToken).ConfigureAwait(false);
                 await WaitForNextHeartbeatAsync(stoppingToken).ConfigureAwait(false);
             }
         }

@@ -21,9 +21,11 @@ namespace SecRandom.Core.Services.SingleInstance;
 public sealed class SingleInstanceService : IDisposable
 {
     // 使用项目特定 ID 作为 Mutex / Pipe 名称后缀，保证唯一性。
-    private const string AppId = "SecRandom_3F2A1B0E";
-    private const string MutexName = $"SecRandom_SingleInstance_{AppId}";
-    public const string IpcPipeName = $"SecRandom_IPC_{AppId}";
+    // VeriRandom 与上游 SecRandom 可同机共存，因此这里的名称必须自有：与上游共用会让两个进程
+    // 被判定为同一实例，后者把激活请求投递到对方进程。
+    private const string AppId = "VeriRandom_7D5E4C21";
+    private const string MutexName = $"VeriRandom_SingleInstance_{AppId}";
+    public const string IpcPipeName = $"VeriRandom_IPC_{AppId}";
     private static readonly TimeSpan FrameReadTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan ResponseReadTimeout = TimeSpan.FromSeconds(30);
     private const int MaxConcurrentConnections = 8;

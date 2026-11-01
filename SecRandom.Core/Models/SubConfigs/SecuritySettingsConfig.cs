@@ -17,7 +17,6 @@ public partial class SecuritySettingsConfig : ObservableObject
     ///     并在启动时校验该文件是否被程序之外的改动修改过。
     /// </summary>
     [ObservableProperty] private bool _settingsIntegrityCheckEnabled;
-
     /// <summary>
     ///     校验发现改动后要执行的操作；默认仍然是原有的「用安全密码确认后继续」。
     /// </summary>
@@ -28,6 +27,19 @@ public partial class SecuritySettingsConfig : ObservableObject
     /// </summary>
     [ObservableProperty]
     private SettingsIntegrityRestoreSource _settingsIntegrityRestoreSource = SettingsIntegrityRestoreSource.Local;
+
+    /// <summary>
+    ///     配置文件的完整性保护方式：仅本地指纹（原有行为）或由另一台设备签发的分离签名。
+    ///     签名模式只部署公钥与签名文档，抽取机永远不持有私钥，因此只能验证策略而不能自行签发。
+    /// </summary>
+    [ObservableProperty] private ConfigIntegrityMode _configIntegrityMode = ConfigIntegrityMode.LocalFingerprint;
+
+    /// <summary>
+    ///     Whether the signed policy also covers the roster/list files. Opt-in on purpose: covering them means
+    ///     every list edit invalidates the signature and needs a re-sign, which is right for a locked-down draw
+    ///     machine and wrong for one whose rosters change during the term.
+    /// </summary>
+    [ObservableProperty] private bool _configIntegrityIncludeRosters;
 
     [ObservableProperty] private bool _protectOpenSettings;
     [ObservableProperty] private bool _protectToggleMainWindow;
@@ -41,6 +53,19 @@ public partial class SecuritySettingsConfig : ObservableObject
     [ObservableProperty] private bool _protectLotteryStart;
     [ObservableProperty] private bool _protectLotteryReset;
     [ObservableProperty] private bool _protectLinkage;
+
+    /// <summary>
+    ///     锁定主界面「随机数」页的范围与熵源选择。它是一项防护而不是普通界面偏好：解锁会放宽对"这次抽取用了哪个
+    ///     范围、哪个来源"的约束，因此关掉它必须重新输密码，且该开关本身随安全设置一起存进加密文件。
+    /// </summary>
+    [ObservableProperty] private bool _protectRawRandomSettings;
+
+    /// <summary>
+    ///     Sudo 模式总开关。关闭后每一次受保护操作都要重新验证。
+    /// </summary>
+    [ObservableProperty] private bool _sudoModeEnabled = true;
+
+    [ObservableProperty] private int _sudoModeDurationSeconds = 20;
 
     // Compatibility bridges for the original placeholder fields.
     public bool VerifyBeforeSensitiveOperations

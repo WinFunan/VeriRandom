@@ -93,6 +93,12 @@ public interface ISecurityService
     Task<string?> BeginTotpSetupAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default);
     Task CancelTotpSetupAsync(string secret, CancellationToken cancellationToken = default);
     Task<bool> ConfirmTotpAsync(string secret, string code, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     移除已配置的 TOTP。种子从凭据信封中清除、免密副本一并删除、该验证方式关闭，
+    ///     并且和其余凭据操作一样始终要求重新输入一次安全密码（不接受任何 Sudo 状态）。
+    /// </summary>
+    Task<bool> RemoveTotpAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<UsbBindingInfo>> GetUsbBindingsAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<UsbDeviceInfo>> GetUsbDevicesAsync(CancellationToken cancellationToken = default);
     Task<bool> BindUsbAsync(string deviceId, CancellationToken cancellationToken = default);
@@ -100,6 +106,20 @@ public interface ISecurityService
     Task<bool> UnbindUsbAsync(string bindingId, CancellationToken cancellationToken = default);
     Task<bool> UnbindUsbAsync(TopLevel xamlRoot, string bindingId, CancellationToken cancellationToken = default);
     bool TryUpdateSettings(Action update);
+
+    /// <summary>
+    ///     导入或恢复一份备份前的授权检查。安全设置已经不随归档走（它们住在加密的
+    ///     <c>data/config/security/settings.json</c>，任何归档都够不到），所以这里不再比较候选配置，
+    ///     而是把"导入"本身当作受保护操作：当前有保护且有可验证凭据时要求重新输入一次密码，
+    ///     任何 Sudo 状态都不生效；没有保护时直接放行。
+    /// </summary>
+    Task<bool> AuthorizeArchiveImportAsync(CancellationToken cancellationToken = default);
+    bool IsSudoModeActive();
+    bool IsGlobalSudoModeActive();
+    void DeactivateGlobalSudoMode();
+    void DeactivateSudoMode();
+    void DeactivateSettingsSudoMode();
+    event Action? SudoModeChanged;
 }
 
 public sealed record UsbBindingInfo(string Id, string DisplayName, bool IsPresent);

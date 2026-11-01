@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <root>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
@@ -72,9 +72,7 @@
     <data name="S_Ack_Contributors" xml:space="preserve">
         <value>Contributors</value>
     </data>
-    <data name="S_Ack_Contributors_D" xml:space="preserve">
-        <value>View GitHub contributors who have committed code to SecRandom</value>
-    </data>
+    <data name="S_Ack_Contributors_D" xml:space="preserve"><value>View the GitHub contributors of both this repository and the upstream repository; the two are merged and sorted by contributions</value></data>
     <data name="S_Ack_Contributors_ContributionCount" xml:space="preserve">
         <value>{0} commits</value>
     </data>
@@ -103,11 +101,11 @@
         <value>Close</value>
     </data>
     <data name="M_InternalSettingsActivated" xml:space="preserve">
-        <value>“Internal Settings” is now shown in the Attached Settings menu at the right of each member or prize in List Management. It is available only for this run and is hidden automatically after the app restarts.&#xA;&#xA;Internal settings affect candidate weights and are not appropriate for fair, public, or auditable draws in activities or organizations. When a selected person has internal settings enabled, uploading the verifiable file to the verification website shows a notice; this can expose the setting.&#xA;&#xA;Internal settings have lower priority than fair-draw rules. A member or prize with internal settings that is selected now is not guaranteed to be selected next time.</value>
+        <value>“Internal Settings” is now shown in the Attached Settings menu at the right of each member or prize in List Management. It is available only for this run and is hidden automatically after the app restarts.&#xA;&#xA;Internal settings affect candidate weights and are not appropriate for fair, public, or auditable draws in activities or organizations. When a selected person has internal settings enabled, uploading the verifiable file to the verification website shows a notice; this can expose the setting.&#xA;&#xA;Internal settings have lower priority than fair-draw rules. A member or prize with internal settings that is selected now is not guaranteed to be selected next time</value>
     </data>
     <data name="S_App_ForkNotice" xml:space="preserve">
         <value>Open-source fork notice</value>
-    </data>
+    </data><data name="S_Community" xml:space="preserve"><value>Support this repository and its community</value></data><data name="S_Community_D" xml:space="preserve"><value>VeriRandom is the fork maintained in this repository; every entry below points at this fork's own repository and community channels</value></data><data name="S_Community_QQGroup" xml:space="preserve"><value>QQ group 768421833</value></data><data name="S_Community_QQGroup_D" xml:space="preserve"><value>Join this fork's QQ group for discussion and feedback</value></data><data name="S_Community_Email" xml:space="preserve"><value>Email</value></data><data name="S_Community_Email_D" xml:space="preserve"><value>love-code-yeyixiao@outlook.com</value></data><data name="S_Community_Bilibili" xml:space="preserve"><value>Bilibili</value></data><data name="S_Community_Bilibili_D" xml:space="preserve"><value>Visit this fork's author page on Bilibili</value></data><data name="S_Community_Issues" xml:space="preserve"><value>Issue tracker</value></data><data name="S_Community_Issues_D" xml:space="preserve"><value>File an issue in the VeriRandom repository</value></data><data name="S_Community_Contributing" xml:space="preserve"><value>Contributing guide</value></data><data name="S_Community_Contributing_D" xml:space="preserve"><value>Read the contribution process and the CLA sign-off</value></data><data name="S_Author_Scope_D" xml:space="preserve"><value>Everything below belongs to upstream SecRandom: its author, its organisation and its community channels. None of it is part of this fork</value></data><data name="S_Author_Upstream_QQGroup" xml:space="preserve"><value>QQ group 833875216</value></data><data name="S_Author_Upstream_QQGroup_D" xml:space="preserve"><value>Upstream SecRandom's QQ group</value></data><data name="S_Author_Upstream_QQChannel" xml:space="preserve"><value>QQ channel</value></data><data name="S_Author_Upstream_QQChannel_D" xml:space="preserve"><value>Upstream SecRandom's QQ channel</value></data><data name="S_Author_Upstream_Email" xml:space="preserve"><value>Email</value></data><data name="S_Author_Upstream_Email_D" xml:space="preserve"><value>lzy.12@foxmail.com</value></data><data name="S_Author_Upstream_Docs" xml:space="preserve"><value>Official documentation</value></data><data name="S_Author_Upstream_Docs_D" xml:space="preserve"><value>Upstream SecRandom's documentation site</value></data><data name="S_Author_Upstream_DeepWiki" xml:space="preserve"><value>DeepWiki</value></data><data name="S_Author_Upstream_DeepWiki_D" xml:space="preserve"><value>Upstream SecRandom's DeepWiki code index</value></data><data name="S_Author_Upstream_Contributing" xml:space="preserve"><value>Upstream contributing guide</value></data><data name="S_Author_Upstream_Contributing_D" xml:space="preserve"><value>Upstream SecRandom's contribution process</value></data><data name="C_BannerPlaceholder" xml:space="preserve"><value>Asset pending: VeriRandom banner (placeholder)</value></data><data name="C_CommunityImage" xml:space="preserve"><value>Community image</value></data>
     <data name="M_App_ForkNotice" xml:space="preserve">
         <value>This product is an open-source fork of SecRandom and must not be regarded as SecRandom itself</value>
     </data>

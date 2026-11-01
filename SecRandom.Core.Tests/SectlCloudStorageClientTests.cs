@@ -207,8 +207,6 @@ public sealed class SectlCloudStorageClientTests
             var path = request.RequestUri!.AbsolutePath;
             if (path == "/api/oauth/refresh")
                 return Json("{\"access_token\":\"refreshed-access-token\",\"refresh_token\":\"refreshed-refresh-token\",\"user_id\":\"user-1\",\"expires_in\":3600}");
-            if (request.RequestUri.Host == "uapis.cn")
-                return Json("{\"ip\":\"203.0.113.10\"}");
 
             tokens.Add(request.Headers.Authorization?.Parameter);
             listAttempts++;
@@ -237,8 +235,11 @@ public sealed class SectlCloudStorageClientTests
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new TestConfigService(new MainConfigModel()));
+        // The fork's cross-border consent gates every SECTL call; the test exercises the enabled behaviour.
+        configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
-        var authService = new SectlAuthService(factory, deviceUuidStore);
+        var authService = new SectlAuthService(TestTokenStore.Create(), factory, deviceUuidStore,
+            NullLogger<SectlAuthService>.Instance, configHandler, new LoopbackAuthRedirectBrokerFactory());
         if (signedIn)
             SetToken(authService, new SectlToken("access-token", "refresh-token", "user-1", 3600));
         return new SectlCloudStorageClient(authService, factory, NullLogger<SectlCloudStorageClient>.Instance);

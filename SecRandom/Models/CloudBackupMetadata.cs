@@ -11,4 +11,10 @@ public class CloudBackupMetadata
     public bool IsComplete { get; set; } = true;
     public int PartCount { get; set; }
     public string StatusText { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     Whether the package was uploaded by the removed client-side encryption feature, taken from
+    ///     the cloud file names so the listing can flag it without a manifest download per backup.
+    /// </summary>
+    public bool IsLegacyEncrypted { get; set; }
 }

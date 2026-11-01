@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="C_EntropySources" xml:space="preserve"><value>熵源</value></data>
+  <data name="C_Generate" xml:space="preserve"><value>生成</value></data>
+  <data name="C_LocalCsprng" xml:space="preserve"><value>本地 CSPRNG</value></data>
+  <data name="C_LowerBound" xml:space="preserve"><value>下界</value></data>
+  <data name="C_LockSettings" xml:space="preserve"><value>锁定范围与熵源</value></data>
+  <data name="C_PageTitle" xml:space="preserve"><value>随机数</value></data>
+  <data name="C_Range" xml:space="preserve"><value>取值范围</value></data>
+  <data name="C_SourceDrand" xml:space="preserve"><value>drand 网络</value></data>
+  <data name="C_SourceNist" xml:space="preserve"><value>NIST 信标</value></data>
+  <data name="C_SourceRandomOrg" xml:space="preserve"><value>random.org</value></data>
+  <data name="C_UpperBound" xml:space="preserve"><value>上界</value></data>
+  <data name="M_GeneratedNotVerifiable" xml:space="preserve"><value>已生成，但本次混入了不可复核的熵源，结果不能作为可复核证据</value></data>
+  <data name="M_GeneratedVerifiable" xml:space="preserve"><value>已生成，种子来自单一可验证源，可用该源公布的脉冲重算</value></data>
+  <data name="M_GenerateFailedFormat" xml:space="preserve"><value>生成失败：{0}</value></data>
+  <data name="M_Generating" xml:space="preserve"><value>正在生成</value></data>
+  <data name="M_LockedHint" xml:space="preserve"><value>范围与熵源已锁定，取消下面的锁定开关即可修改</value></data>
+  <data name="M_NoEntropySource" xml:space="preserve"><value>请至少选择一个熵源</value></data>
+  <data name="M_NotVerifiableNotice" xml:space="preserve"><value>已勾选 random.org 或本地 CSPRNG：可复核性受损，本次结果只能说明输入产出了这个数，不能作为公平性证据</value></data>
+  <data name="M_PageDescription" xml:space="preserve"><value>在给定范围内生成一个裸随机数（不考虑重复与放回）；只勾选一个可验证熵源时，事后可用该源公布的公开脉冲重算这个数</value></data>
+  <data name="M_RangeInvalid" xml:space="preserve"><value>范围无效：下界不能大于上界，且两侧都必须是整数</value></data>
+  <data name="M_Ready" xml:space="preserve"><value>设置范围与熵源后点击生成</value></data>
+  <data name="M_ResultFormat" xml:space="preserve"><value>本次结果：{0}</value></data>
+  <data name="M_VerifiableNotice" xml:space="preserve"><value>只勾选了一个可验证熵源：事后可用该源公布的公开脉冲重算这个数</value></data>
+  <data name="M_Locked" xml:space="preserve"><value>已锁定，范围与熵源不可修改</value></data>
+  <data name="M_ProofSavedFormat" xml:space="preserve"><value>已写入证明 {0}，本机重算校验通过</value></data>
+  <data name="M_ProofVerifyFailed" xml:space="preserve"><value>结果已生成，但证明自校验未通过：请勿使用这份记录，并把日志反馈给开发者</value></data>
+  <data name="M_UnlockCancelled" xml:space="preserve"><value>未通过验证，仍保持锁定</value></data>
+  <data name="M_Unlocked" xml:space="preserve"><value>已解锁，范围与熵源可以修改</value></data>
+  <data name="C_UseValues" xml:space="preserve"><value>使用指定集合</value></data>
+  <data name="C_ValuesWatermark" xml:space="preserve"><value>只从这些值里抽，例如 5,10（逗号或空格分隔）</value></data>
+  <data name="C_BatchCount" xml:space="preserve"><value>生成个数</value></data>
+  <data name="C_AdvancedOptions" xml:space="preserve"><value>高级选项</value></data>
+  <data name="C_RawEntropy" xml:space="preserve"><value>输出原始熵（不按范围取值）</value></data>
+  <data name="C_BitCount" xml:space="preserve"><value>取多少位</value></data>
+  <data name="M_AdvancedHint" xml:space="preserve"><value>位数越宽不等于熵越多：输出全部由种子确定性展开，可用熵不会超过熵源本身</value></data>
+  <data name="M_EntropyFormat" xml:space="preserve"><value>符号 {0} 个 · 每符号 {1:F2} bit · 合计 {2:F0} bit · 熵源上限 {3} bit</value></data>
+  <data name="C_ExclusionsWatermark" xml:space="preserve"><value>从候选中排除，例如 7,8 或 13-15（可留空）</value></data>
+  <data name="C_Generator" xml:space="preserve"><value>枚举生成器</value></data>
+  <data name="C_GeneratorFrom" xml:space="preserve"><value>X 从</value></data>
+  <data name="C_GeneratorTo" xml:space="preserve"><value>X 到</value></data>
+  <data name="C_PredicateWatermark" xml:space="preserve"><value>判定式，例如 X%2==0（留空表示全要）</value></data>
+  <data name="M_PredicateHint" xml:space="preserve"><value>判定式只有 X 一个变量，支持 + - * / % 与比较、逻辑运算，没有赋值与循环</value></data>
+  <data name="M_CandidatesFormat" xml:space="preserve"><value>候选 {0} 个</value></data>
+  <data name="M_ValuesInvalidFormat" xml:space="preserve"><value>筛选条件无效：{0}</value></data>
+  <data name="C_CopyResult" xml:space="preserve"><value>复制结果</value></data>
+  <data name="M_CopiedResultFormat" xml:space="preserve"><value>已复制 {0} 个字符</value></data>
+  <data name="M_NothingToCopy" xml:space="preserve"><value>还没有结果可复制</value></data>
+  <data name="M_ClipboardUnavailable" xml:space="preserve"><value>剪贴板不可用，无法复制</value></data>
+  <data name="C_OutputFormat" xml:space="preserve"><value>表示方式</value></data>
+  <data name="O_FormatDecimal" xml:space="preserve"><value>十进制</value></data>
+  <data name="O_FormatHex" xml:space="preserve"><value>十六进制</value></data>
+  <data name="O_FormatAscii" xml:space="preserve"><value>可打印 ASCII</value></data>
+  <data name="C_AsciiCharCount" xml:space="preserve"><value>字符个数</value></data>
+  <data name="C_AllowConcat" xml:space="preserve"><value>拼接多个采样填满更宽的输出</value></data>
+  <data name="M_ConcatHint" xml:space="preserve"><value>仅本地 CSPRNG 与 random.org 每次取数会带来新熵；同一信标脉冲内不会，此时输出更宽但实际熵不变（见下方实测值）</value></data>
+  <data name="M_GeneratorHelp" xml:space="preserve"><value>语法：只有 X 一个变量&#10;X%2==0 → 偶数&#10;X%3!=0 → 不是 3 的倍数&#10;X&gt;=10 &amp;&amp; X&lt;=20 → 只取 10 到 20&#10;支持 + - * / %、比较、&amp;&amp; || !、括号</value></data>
+  <data name="M_ExclusionsIneffective" xml:space="preserve"><value>排除项没有匹配到任何候选值</value></data>
+  <data name="M_ConcatNoGain" xml:space="preserve"><value>（拼接没有带来新的熵）</value></data>
+  <data name="C_ConfidentialMode" xml:space="preserve"><value>机密模式（不写记录）</value></data>
+  <data name="C_RevealResult" xml:space="preserve"><value>显示结果</value></data>
+  <data name="C_HideResult" xml:space="preserve"><value>隐藏结果</value></data>
+  <data name="M_ConfidentialMasked" xml:space="preserve"><value>结果已遮盖</value></data>
+  <data name="M_ConfidentialGenerated" xml:space="preserve"><value>已生成（机密模式：未写入记录，本次结果无法事后复核）</value></data>
+  <data name="M_ConfidentialNotice" xml:space="preserve"><value>机密模式：不写记录，可复核性为零</value></data>
+  <data name="M_ConfidentialHint" xml:space="preserve"><value>勾选后这次生成不写任何记录，种子与结果只留在内存里；结果默认以 * 遮盖，需要时再显示或复制。复制会把内容放进系统剪贴板（含剪贴板历史），这一步由你决定；关闭应用后无法再复原</value></data>
+  <data name="M_CopiedConfidentialFormat" xml:space="preserve"><value>已复制 {0} 个字符（机密模式：内容已进入系统剪贴板）</value></data>
+</root>

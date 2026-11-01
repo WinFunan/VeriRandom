@@ -1,19 +1,22 @@
 # 贡献指南
 
-感谢你为 SecRandom 提交问题、提出建议、完善文档或贡献代码。
+感谢你为 VeriRandom 提交问题、提出建议、完善文档或贡献代码。
+
+> [!IMPORTANT]
+> 此产品是 SecRandom 的一个开源分支，不应视作 SecRandom 本身。本指南中的仓库地址、Issue 与发布流程均指本仓库（VeriRandom）。如需向原项目反馈上游问题，请前往 [SECTL/SecRandom](https://github.com/SECTL/SecRandom)。
 
 **语言** [ **简体中文** | [English](resources/CONTRIBUTING_EN.md) | [日本語](resources/CONTRIBUTING_JA.md) ]
 
 ## 提交 Issue
 
-- 使用 [GitHub Issues](https://github.com/SECTL/SecRandom/issues) 报告缺陷或提出功能请求。
-- 提交缺陷时，请提供复现步骤、预期行为、实际行为、SecRandom 版本、系统环境和必要日志或截图。
+- 使用 [GitHub Issues](https://github.com/WinFunan/VeriRandom/issues) 报告本仓库的缺陷或提出功能请求。
+- 提交缺陷时，请提供复现步骤、预期行为、实际行为、VeriRandom 版本、系统环境和必要日志或截图。
 - 提交功能请求时，请说明使用场景、预期行为和现有功能无法满足需求的原因。
 - 不要在公开 Issue、日志或截图中提交密码、TOTP 密钥、USB 绑定令牌或其他敏感数据。
 
 ## 开发环境
 
-SecRandom v3 是基于 .NET 的桌面应用：
+VeriRandom v3 是基于 .NET 的桌面应用：
 
 | 类别 | 技术 | 用途 |
 | --- | --- | --- |
@@ -32,8 +35,8 @@ SecRandom v3 是基于 .NET 的桌面应用：
 ### 获取与运行
 
 ```bash
-git clone https://github.com/<your-account>/SecRandom.git
-cd SecRandom
+git clone https://github.com/WinFunan/VeriRandom.git
+cd VeriRandom
 git remote add upstream https://github.com/SECTL/SecRandom.git
 
 dotnet restore SecRandom.sln
@@ -69,6 +72,16 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 - 不要提交 `bin/`、`obj/`、`artifacts/`、`publish/` 或打包过程生成的文件。
 - 修改文档时，保持简体中文、英文和日文 README/贡献指南中的事实、链接和结构同步。
 
+## 贡献者许可协议（CLA）
+
+首次提交 Pull Request 前，请阅读并签署 [CLA.md](CLA.md)。在 PR 中回复以下声明即视为签署：
+
+> I have read the CLA Document and I hereby sign the CLA
+>
+> 我已阅读 CLA 文件并在此签署本协议
+
+CLA 授予维护者就你的贡献进行许可与再许可的权利，并约定维护者在调整本项目出站许可证前须提前不少于 30 天公示。本仓库是 SecRandom 的开源分支，CLA **不能**改变上游 GPLv3 代码的许可证。
+
 ## 提交与 Pull Request
 
 - 从当前目标分支创建主题分支，并在开始前同步上游。
@@ -82,6 +95,7 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 仓库使用 GitHub Actions：
 
 - `.github/workflows/build_publish.yml` 负责多平台构建、打包、签名清单生成和手动发布流程。
+- `.github/workflows/build_ios.yml` 负责 iOS 构建：其余平台发布后，它把 IPA、重新签名的更新清单和刷新后的发布说明补交到对应的 Release。
 - `.github/workflows/codeQL.yml` 负责 CodeQL 安全扫描。
 
 常规贡献无需通过提交信息触发发布。发布由维护者在 GitHub Actions 的手动工作流中指定发布标签后执行。

@@ -52,4 +52,10 @@
   <data name="S_Interaction_StickToEdgeDisplayStyle_D"><value>Choose a roll-call icon, the word “Draw,” or a direction arrow for the edge handle</value></data>
   <data name="S_Dock"><value>Edge Collapse</value></data><data name="S_Dock_Size"><value>Handle size</value></data><data name="S_Dock_Size_D"><value>Adjust the square side length of the edge handle</value></data>
   <data name="O_StickDisplay_Icon"><value>Icon</value></data><data name="O_StickDisplay_Text"><value>Text</value></data><data name="O_StickDisplay_Arrow"><value>Arrow</value></data>
+  <data name="S_Interaction_RestoreFocusAfterQuickDraw" xml:space="preserve">
+    <value>Restore focus after quick draw</value>
+  </data>
+  <data name="S_Interaction_RestoreFocusAfterQuickDraw_D" xml:space="preserve">
+    <value>Remembers the foreground window before a quick draw and hands it back when the draw window closes (Windows only; inert on other platforms)</value>
+  </data>
 </root>

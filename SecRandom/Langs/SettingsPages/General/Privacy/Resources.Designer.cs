@@ -137,5 +137,50 @@ namespace SecRandom.Langs.SettingsPages.General.Privacy {
                 return ResourceManager.GetString("S_SentryTelemetry_Enabled_D", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 未禁用：按跨境须知与各在线开关执行.
+        /// </summary>
+        public static string M_SectlEgressOff {
+            get {
+                return ResourceManager.GetString("M_SectlEgressOff", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 已禁用：所有 SECTL 联网功能均不可用.
+        /// </summary>
+        public static string M_SectlEgressOn {
+            get {
+                return ResourceManager.GetString("M_SectlEgressOn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 联网总开关.
+        /// </summary>
+        public static string S_SectlEgress {
+            get {
+                return ResourceManager.GetString("S_SectlEgress", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 一键禁用所有 SECTL 联网.
+        /// </summary>
+        public static string S_SectlEgress_Switch {
+            get {
+                return ResourceManager.GetString("S_SectlEgress_Switch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 关闭本软件所有会连接 SecRandom / SECTL 服务器的功能.
+        /// </summary>
+        public static string S_SectlEgress_Switch_D {
+            get {
+                return ResourceManager.GetString("S_SectlEgress_Switch_D", resourceCulture);
+            }
+        }
     }
 }

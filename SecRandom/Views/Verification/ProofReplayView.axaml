@@ -1,0 +1,179 @@
+<local:ProofReplayView xmlns="https://github.com/avaloniaui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:local="using:SecRandom.Views.Verification"
+                       xmlns:lv="using:SecRandom.Langs.SettingsPages.General.Verification"
+                       x:Class="SecRandom.Views.Verification.ProofReplayView"
+                       x:DataType="local:ProofReplayView"
+                       NavigationPage.HasBackButton="True"
+                       NavigationPage.HasNavigationBar="True">
+    <local:ProofReplayView.Styles>
+        <!-- 链条上的节点：只有"选中"与"未选中"两种观感，不引入任何新的主题资源，避免主题缺失导致渲染失败 -->
+        <Style Selector="Border.chainNode">
+            <Setter Property="Width" Value="112" />
+            <Setter Property="Height" Value="60" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Opacity" Value="0.8" />
+            <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Border.chainNode.selected">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        <Style Selector="Line.chainLink">
+            <Setter Property="Stroke" Value="{DynamicResource ControlElevationBorderBrush}" />
+            <Setter Property="StrokeThickness" Value="2" />
+        </Style>
+    </local:ProofReplayView.Styles>
+
+    <Grid ColumnDefinitions="*,400" RowDefinitions="Auto,*" Margin="12">
+        <TextBlock x:Name="SummaryText"
+                   Grid.Row="0" Grid.ColumnSpan="2"
+                   Margin="0 0 0 8"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+        <!-- 自由画布：只做展示与选择，不提供任何拖动/编辑 -->
+        <Grid Grid.Row="1" Grid.Column="0">
+            <ScrollViewer x:Name="ChainScroll"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
+                <Canvas x:Name="ChainCanvas" Background="Transparent" Height="240" />
+            </ScrollViewer>
+            <!-- 节点按链序从左往右排，最新的一份在最右边；证明多了它会落在视野之外，所以给一个跳转按钮 -->
+            <Button x:Name="JumpLatestButton"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0 8 20 0"
+                    Content="{x:Static lv:Resources.C_ProofReplay_JumpLatest}"
+                    Click="JumpLatest_OnClick" />
+        </Grid>
+
+        <Border Grid.Row="1" Grid.Column="1"
+                Margin="12 0 0 0" Padding="12"
+                CornerRadius="8"
+                Background="{DynamicResource ControlFillColorSecondaryBrush}">
+            <ScrollViewer>
+                <StackPanel Spacing="8">
+                    <!-- 证明可以来自任意目录：跨设备核验时把对方导出的证明文件夹选进来即可 -->
+                    <Button x:Name="LoadFolderButton"
+                            HorizontalAlignment="Stretch"
+                            Content="{x:Static lv:Resources.S_ProofFolder}"
+                            Click="LoadFolder_OnClick" />
+                    <Separator Margin="0 4" />
+                    <TextBlock x:Name="SelectedTitleText" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock x:Name="SelectedDetailText" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <Separator Margin="0 4" />
+                    <Button x:Name="LoadRosterButton"
+                            HorizontalAlignment="Stretch"
+                            Content="{x:Static lv:Resources.C_ProofReplay_LoadRoster}"
+                            Click="LoadRoster_OnClick" />
+                    <Button x:Name="UseCurrentRosterButton"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="False"
+                            Content="{x:Static lv:Resources.C_ProofReplay_UseCurrentRoster}"
+                            Click="UseCurrentRoster_OnClick" />
+                    <TextBlock x:Name="RosterText" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <Button x:Name="ReplayButton"
+                            Classes="accent"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="False"
+                            Content="{x:Static lv:Resources.C_ProofReplay_Run}"
+                            Click="Replay_OnClick" />
+                    <!-- 详情只复述文件里写了什么；它不判断可信度，那是下面证据打分器的事 -->
+                    <Button x:Name="DetailsButton"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="False"
+                            Content="{x:Static lv:Resources.C_ProofDetails}"
+                            Click="Details_OnClick" />
+                    <TextBlock x:Name="ReplayStatusText" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock x:Name="ReplayDetailText" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                    <Separator Margin="0 4" />
+                    <!-- 证据打分与重放共用这块画布：选中哪个节点就评哪一份证明 -->
+                    <TextBlock Text="{x:Static lv:Resources.S_ProofTrust}"
+                               FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock Text="{x:Static lv:Resources.S_ProofTrust_D}"
+                               FontSize="11" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{x:Static lv:Resources.C_ProofTrust_Sources}"
+                               FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <WrapPanel>
+                        <CheckBox x:Name="TrustBeacon"
+                                  Content="{x:Static lv:Resources.C_ProofTrust_Beacon}"
+                                  IsChecked="True"
+                                  Margin="0 0 12 0" />
+                        <CheckBox x:Name="TrustTimestamp"
+                                  Content="{x:Static lv:Resources.C_ProofTrust_Timestamp}"
+                                  IsChecked="True"
+                                  Margin="0 0 12 0" />
+                        <CheckBox x:Name="TrustServer"
+                                  Content="{x:Static lv:Resources.C_ProofTrust_Server}"
+                                  IsChecked="True"
+                                  Margin="0 0 12 0" />
+                        <CheckBox x:Name="TrustWitness"
+                                  Content="{x:Static lv:Resources.C_ProofTrust_Witness}"
+                                  Margin="0 0 12 0" />
+                    </WrapPanel>
+                    <TextBlock Text="{x:Static lv:Resources.C_ProofTrust_WitnessHint}"
+                               FontSize="11" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <DatePicker x:Name="WitnessDate" HorizontalAlignment="Stretch" />
+                    <TimePicker x:Name="WitnessTime" HorizontalAlignment="Stretch" />
+                    <ComboBox x:Name="WitnessConfidence"
+                              HorizontalAlignment="Stretch"
+                              SelectedIndex="0"
+                              ToolTip.Tip="{x:Static lv:Resources.C_ProofTrust_Confidence}">
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_ProofTrust_Confidence_High}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_ProofTrust_Confidence_Medium}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_ProofTrust_Confidence_Low}" />
+                    </ComboBox>
+                    <Button x:Name="AssessTrustButton"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="False"
+                            Content="{x:Static lv:Resources.C_ProofTrust_Assess}"
+                            Click="AssessTrust_OnClick" />
+                    <Button x:Name="AssessAllButton"
+                            HorizontalAlignment="Stretch"
+                            Content="{x:Static lv:Resources.C_ProofReplay_AssessAll}"
+                            Click="AssessAll_OnClick" />
+                    <TextBlock x:Name="TrustResultText" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                    <!--
+                        裸随机数记录不在抽签链上（它们没有候选池，也就没有可以重放的抽签内核），因此单独校验：
+                        按记录自带的熵源原文重算种子与结果，再复核它自己的链哈希
+                    -->
+                    <Button x:Name="VerifyRawProofsButton"
+                            HorizontalAlignment="Stretch"
+                            Content="{x:Static lv:Resources.C_VerifyRawProofs}"
+                            Click="VerifyRawProofs_OnClick" />
+                    <TextBlock x:Name="VerifyRawProofsText" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                    <!--
+                        随机数记录单独一行：它们不在抽签链上（没有候选池，抽签内核无法重放），
+                        但"记录了什么值、用种子重算出来是什么值"同样要能在同一个窗口里点到
+                    -->
+                    <CheckBox x:Name="IncludeRawBox"
+                              Content="{x:Static lv:Resources.C_ProofReplay_IncludeRaw}"
+                              IsCheckedChanged="IncludeRaw_OnChanged" />
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  MaxHeight="120"
+                                  IsVisible="{Binding #IncludeRawBox.IsChecked}">
+                        <StackPanel x:Name="RawNodesPanel" Orientation="Horizontal" Spacing="6" />
+                    </ScrollViewer>
+                    <TextBlock x:Name="RawReplayText" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</local:ProofReplayView>
