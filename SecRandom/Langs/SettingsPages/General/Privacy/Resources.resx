@@ -60,6 +60,9 @@
     <data name="M_SectlEgressOn" xml:space="preserve">
         <value>已禁用：所有 SECTL 联网功能均不可用</value>
     </data>
+    <data name="M_SectlEgressForced" xml:space="preserve">
+        <value>本版本固定禁用：无法在此开启任何 SECTL 联网</value>
+    </data>
     <data name="S_SectlEgress" xml:space="preserve">
         <value>联网总开关</value>
     </data>

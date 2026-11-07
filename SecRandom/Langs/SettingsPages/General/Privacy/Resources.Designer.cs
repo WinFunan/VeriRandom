@@ -157,6 +157,15 @@ namespace SecRandom.Langs.SettingsPages.General.Privacy {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 本版本固定禁用：无法在此开启任何 SECTL 联网.
+        /// </summary>
+        public static string M_SectlEgressForced {
+            get {
+                return ResourceManager.GetString("M_SectlEgressForced", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 联网总开关.
         /// </summary>
         public static string S_SectlEgress {

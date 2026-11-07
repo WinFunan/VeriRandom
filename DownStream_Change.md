@@ -1734,6 +1734,22 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 
 **影响**：这是本分支第一个"不依赖 `settings.json`、且能压过已签发同意"的隐私开关；`THREAT_MODEL.md` T12 同步登记。
 
+### 60.1 本版本把总开关固定为禁用（可解除）
+
+**决定**：该版本**默认禁用且不允许从界面关闭**——`SectlEgressSwitch.ForcedDisabled = true`。理由是把"不发任何 SECTL 请求"变成这一版的实际行为，而不是一条需要用户自己发现的选项。
+
+**实现**：
+
+| 位置 | 变更 |
+|---|---|
+| `SecRandom/Services/Consent/SectlEgressSwitch.cs` | 新增 `ForcedDisabled` 常量与 `IsForced`；`IsDisabled` 在强制期恒为 true（不再读文件）；文件缺失或损坏也一律按"已禁用"（`Load()` 默认值从 `false` 改为 `true`）；`SetDisabled` 在强制期**仍然写盘**但只记 warning、不发 `Changed` |
+| `SecRandom/Views/SettingsPages/General/PrivacySettingsPage.axaml.cs` | 开关在强制期 `IsEnabled = false`（只显示状态），事件处理器加同样的守卫；状态行显示 `M_SectlEgressForced` |
+| `SecRandom/Langs/SettingsPages/General/Privacy/` | 三语新增 `M_SectlEgressForced` |
+
+**留的余地**：解除只需把 `ForcedDisabled` 改成 `false`。页面与政策都只问 `IsDisabled`，不改 UI 代码就会自动恢复可操作；用户此前写入的偏好仍在 `sectl-egress.json` 里，不会被强制状态覆盖。
+
+**代价**：本版无法登录 SECTL 账号、无法使用正式公证、云备份、在线状态、使用统计、版本上报、公告与云端名单传输；这些入口仍显示，但会在调用处给出被拒绝的结果。绑定关系与"导入设置无法解除"的约束不变。
+
 ## 61. 跨仓库接入 VisionFair（NewAlgorithm）抽取算法
 
 **目标**：把 `WinFunan/VeriRandom.NewAlgorithm` 的欠账均衡算法作为**第三个点名算法选项**接进来，同时满足三条约束——

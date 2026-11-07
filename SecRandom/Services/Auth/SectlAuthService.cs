@@ -200,9 +200,13 @@ public sealed class SectlAuthService(
 
     public async Task SignInAsync(CancellationToken cancellationToken = default)
     {
-        // Fork gate: nothing may leave for SECTL before the cross-border notice is accepted.
+        // Fork gate: nothing may leave for SECTL before the cross-border notice is accepted, and nothing may leave
+        // at all while the device-level kill switch is on. The two reasons produce different messages so a user who
+        // already signed the notice is not told to sign it again.
         if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
-            throw new InvalidOperationException("尚未同意跨境数据传输须知，已阻止登录 SECTL 账号。");
+            throw new InvalidOperationException(SectlTrafficPolicy.IsEgressSwitchOff()
+                ? "本版本已禁用所有 SECTL 联网，无法登录账号。"
+                : "尚未同意跨境数据传输须知，已阻止登录 SECTL 账号。");
 
         var verifier = Base64Url(RandomNumberGenerator.GetBytes(32));
         var challenge = Base64Url(SHA256.HashData(Encoding.UTF8.GetBytes(verifier)));
@@ -312,7 +316,9 @@ public sealed class SectlAuthService(
         // Account-bound calls reach SECTL's servers, which are outside mainland China, so they are gated by
         // the cross-border egress consent like every other SECTL path.
         if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
-            throw new InvalidOperationException("尚未同意跨境数据传输须知，已阻止向 SECTL 发送数据。");
+            throw new InvalidOperationException(SectlTrafficPolicy.IsEgressSwitchOff()
+                ? "本版本已禁用所有 SECTL 联网，已阻止向 SECTL 发送数据。"
+                : "尚未同意跨境数据传输须知，已阻止向 SECTL 发送数据。");
 
         ArgumentNullException.ThrowIfNull(createRequest);
         var accessToken = await GetUsableAccessTokenAsync(cancellationToken).ConfigureAwait(false);

@@ -33,7 +33,8 @@ public partial class PrivacySettingsPage : UserControl
         _initializingEgress = true;
         SectlEgressSwitchToggle.IsChecked = EgressSwitch?.IsDisabled == true;
         _initializingEgress = false;
-        SectlEgressSwitchToggle.IsEnabled = EgressSwitch is not null;
+        // 本版本把开关固定为禁用：控件只显示状态，不接受改动；解除强制后这一行会自动恢复可操作
+        SectlEgressSwitchToggle.IsEnabled = EgressSwitch is not null && !EgressSwitch.IsForced;
         UpdateEgressStatus();
 
         Loaded += OnLoaded;
@@ -61,7 +62,7 @@ public partial class PrivacySettingsPage : UserControl
         // opening a dialog whose confirmation changes no behaviour.
         if (SectlTrafficPolicy.IsEgressSwitchOff())
         {
-            this.ShowWarningToast(lsp.Resources.M_SectlEgressOn);
+            this.ShowWarningToast(lsp.Resources.M_SectlEgressForced);
             return;
         }
 
@@ -112,7 +113,7 @@ public partial class PrivacySettingsPage : UserControl
     /// </summary>
     private void SectlEgressSwitch_OnCheckedChanged(object? sender, RoutedEventArgs e)
     {
-        if (_initializingEgress || EgressSwitch is null)
+        if (_initializingEgress || EgressSwitch is null || EgressSwitch.IsForced)
             return;
 
         var disabled = SectlEgressSwitchToggle.IsChecked == true;
@@ -132,7 +133,9 @@ public partial class PrivacySettingsPage : UserControl
     }
 
     private void UpdateEgressStatus() =>
-        SectlEgressStatus.Text = EgressSwitch?.IsDisabled == true
-            ? lsp.Resources.M_SectlEgressOn
-            : lsp.Resources.M_SectlEgressOff;
+        SectlEgressStatus.Text = EgressSwitch?.IsForced == true
+            ? lsp.Resources.M_SectlEgressForced
+            : EgressSwitch?.IsDisabled == true
+                ? lsp.Resources.M_SectlEgressOn
+                : lsp.Resources.M_SectlEgressOff;
 }
