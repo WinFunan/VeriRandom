@@ -3,11 +3,14 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums.Configs;
@@ -145,6 +148,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             return;
         }
 
+        var wasStandaloneTotpCapable = IsStandaloneTotpCapable();
         await ApplySecuritySettingsUpdateAsync(
             xamlRoot,
             () =>
@@ -153,6 +157,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
                     option.SetSelected(requestedOptions.Contains(option));
             },
             SynchronizeSelectedFactorOptions);
+        await AnnounceNewlyAllowedStandaloneTotpAsync(xamlRoot, wasStandaloneTotpCapable);
     }
 
     private void SubscribeSettings()
@@ -255,10 +260,12 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             return;
         }
 
+        var wasStandaloneTotpCapable = IsStandaloneTotpCapable();
         await ApplySecuritySettingsUpdateAsync(
             xamlRoot,
             () => setValue(requested),
             () => toggle.IsChecked = current);
+        await AnnounceNewlyAllowedStandaloneTotpAsync(xamlRoot, wasStandaloneTotpCapable);
     }
 
     /// <summary>
@@ -451,8 +458,13 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         }
 
         var code = await SecuritySetupDialogs.ShowTotpSetupAsync(xamlRoot, secret);
+        var wasStandaloneTotpCapable = IsStandaloneTotpCapable();
         if (code is not null && await _securityService.ConfirmTotpAsync(secret, code))
+        {
             this.ShowSuccessToast(SR.M_TotpSaved);
+            // 在「任意已选验证方式」模式下新建 TOTP，等于这一刻起 TOTP 可以单独解锁
+            await AnnounceNewlyAllowedStandaloneTotpAsync(xamlRoot, wasStandaloneTotpCapable);
+        }
         else if (code is not null) this.ShowErrorToast(SR.M_TotpSaveFailed);
         else await _securityService.CancelTotpSetupAsync(secret);
         RefreshSecurityState();
@@ -523,6 +535,37 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             RefreshSecurityState();
         }
     }
+
+    /// <summary>
+    ///     「任意已选验证方式」模式下 TOTP 能单独解锁，靠的是与凭据文件同目录的可读种子副本。它只约束
+    ///     界面：能读到本机文件的人可以直接算出验证码。因此这种组合一旦成立就明确说一次，而不是把代价
+    ///     只写在设置项描述里；只在刚变成可用的那次提示，避免每开一次设置页都弹。
+    /// </summary>
+    private async Task AnnounceNewlyAllowedStandaloneTotpAsync(TopLevel xamlRoot, bool wasCapable)
+    {
+        if (wasCapable || !IsStandaloneTotpCapable())
+            return;
+
+        var dialog = new FATaskDialog
+        {
+            XamlRoot = xamlRoot,
+            Title = SR.M_TotpStandaloneNoticeTitle,
+            Header = SR.M_TotpStandaloneNoticeTitle,
+            Content = new TextBlock
+            {
+                Text = SR.M_TotpStandaloneNotice,
+                TextWrapping = TextWrapping.Wrap
+            }
+        };
+        dialog.Buttons.Add(new FATaskDialogButton(SR.C_Acknowledge, "acknowledge") { IsDefault = true });
+        await dialog.ShowAsync();
+    }
+
+    /// <summary>模式、因素与已配置的种子三者同时成立时，TOTP 才能脱离主密码单独解锁。</summary>
+    private bool IsStandaloneTotpCapable() =>
+        !Settings.RequireAllSelectedFactors
+        && Settings.TotpEnabled
+        && _securityService.GetUiState().HasTotp;
 
     private void SynchronizeSelectedFactorOptions()
     {

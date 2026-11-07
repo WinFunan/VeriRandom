@@ -23,7 +23,7 @@
   <data name="S_Password" xml:space="preserve"><value>パスワード</value></data>
   <data name="S_Password_D" xml:space="preserve"><value>パスワードは 6 文字以上必要です</value></data>
   <data name="S_Totp" xml:space="preserve"><value>TOTP コード</value></data>
-  <data name="S_Totp_D" xml:space="preserve"><value>認証アプリの 6 桁コードを使用します</value></data>
+  <data name="S_Totp_D" xml:space="preserve"><value>認証アプリの 6 桁コードを使用します。「選択したすべての方式を要求」をオフにすると単独で解除できますが、これは画面側の制限にすぎず、本機のファイルを読める人は解除要素を取得できます</value></data>
   <data name="S_Usb" xml:space="preserve"><value>USB ドライブ</value></data>
   <data name="S_Usb_D" xml:space="preserve"><value>登録したドライブにセキュリティトークンを保存します</value></data>
   <data name="S_Factors" xml:space="preserve"><value>認証方式</value></data>
@@ -162,4 +162,7 @@
   <data name="S_RawRandomOperations" xml:space="preserve"><value>乱数</value></data>
   <data name="S_RawRandomOperations_D" xml:space="preserve"><value>メイン画面の「乱数」ページで範囲とエントロピー源の選択をロックします。解除にはセキュリティパスワードが必要です</value></data>
   <data name="C_RawRandomSettings" xml:space="preserve"><value>範囲とエントロピー源をロック</value></data>
+  <data name="M_TotpStandaloneNoticeTitle" xml:space="preserve"><value>TOTP の単独使用</value></data>
+  <data name="M_TotpStandaloneNotice" xml:space="preserve"><value>画面側の制限にすぎず、攻撃者は解除要素を簡単に取得できます</value></data>
+  <data name="C_Acknowledge" xml:space="preserve"><value>了解しました</value></data>
 </root>

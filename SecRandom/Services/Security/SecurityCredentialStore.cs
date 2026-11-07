@@ -230,12 +230,14 @@ internal sealed class SecurityCredentialStore
     /// 「任意已选验证方式」模式下校验 TOTP 时无法先用主密码解开信封，因此该模式把种子
     /// 以可读形式保存在凭据文件旁边的独立文件中，供免密校验使用。该目录已被排除出全部
     /// 导出、云备份与 Android DocumentsProvider；切回「全部已选验证方式」或移除密码时
-    /// 会删除此文件。
+    /// 会删除此文件。可读种子意味着「仅 TOTP」只是界面层的限制：安全设置页在允许这种组合时
+    /// 会明确提示，而 <see cref="GlobalConstants.AllowStandaloneTotpVerification" /> 一旦关闭
+    /// 整条免密路径立即失效（本版默认开启）。
     /// </summary>
     public string? LoadStandaloneTotp()
     {
-        // The plaintext seed copy is only ever honoured when TOTP-only verification is allowed; outside a
-        // debug build or an explicit startup opt-in this returns null so a leftover file cannot be used.
+        // The plaintext seed copy is only honoured while TOTP-only verification is allowed; turning that
+        // policy off makes this return null so a leftover file cannot be used to bypass the password.
         if (!GlobalConstants.AllowStandaloneTotpVerification)
             return null;
 

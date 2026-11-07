@@ -99,6 +99,7 @@ public partial class Resources
     public static string C_NewPasswordPlaceholder => Text(nameof(C_NewPasswordPlaceholder));
     public static string C_ConfirmPasswordPlaceholder => Text(nameof(C_ConfirmPasswordPlaceholder));
     public static string C_TotpPlaceholder => Text(nameof(C_TotpPlaceholder));
+    public static string C_Acknowledge => Text(nameof(C_Acknowledge));
     public static string C_UsbPathPlaceholder => Text(nameof(C_UsbPathPlaceholder));
     public static string C_SelectUsb => Text(nameof(C_SelectUsb));
     public static string C_SelectedUsb => Text(nameof(C_SelectedUsb));
@@ -125,6 +126,8 @@ public partial class Resources
     public static string M_VerificationLockedFormat => Text(nameof(M_VerificationLockedFormat));
     public static string M_VerificationInvalid => Text(nameof(M_VerificationInvalid));
     public static string M_VerificationTotpStandalonePending => Text(nameof(M_VerificationTotpStandalonePending));
+    public static string M_TotpStandaloneNoticeTitle => Text(nameof(M_TotpStandaloneNoticeTitle));
+    public static string M_TotpStandaloneNotice => Text(nameof(M_TotpStandaloneNotice));
     public static string M_VerificationUnavailable => Text(nameof(M_VerificationUnavailable));
     public static string M_LockoutFormat => Text(nameof(M_LockoutFormat));
     public static string M_IntegrityDialogTitle => Text(nameof(M_IntegrityDialogTitle));

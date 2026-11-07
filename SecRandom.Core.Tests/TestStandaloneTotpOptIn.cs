@@ -5,9 +5,9 @@ namespace SecRandom.Core.Tests;
 
 /// <summary>
 ///     The security tests deliberately exercise the TOTP-only verification path (the one that reads the
-///     readable <c>totp-standalone.json</c> seed copy). That path ships disabled outside a debug build, and
-///     CI runs Release, so the test process has to apply the same opt-in the desktop
-///     <c>--allow-standalone-totp</c> switch does. It only widens production behavior inside tests.
+///     readable <c>totp-standalone.json</c> seed copy). The opt-in is applied explicitly so the suite never
+///     depends on the production default of <c>GlobalConstants.AllowStandaloneTotpVerification</c>: narrowing
+///     that policy again must not silently turn these tests into no-ops. It only widens behavior inside tests.
 /// </summary>
 internal static class TestStandaloneTotpOptIn
 {

@@ -84,12 +84,15 @@ public static class GlobalConstants
     public static bool IsDevelopment => false;
 #endif
 
-    // Fork policy: a TOTP code can only be checked without the user's password by keeping a plaintext
-    // seed copy in `data/config/security/totp-standalone.json`. That readable seed is the one credential
-    // this fork refuses to keep, so TOTP-only verification is off unless the build is a debug build or the
-    // process was started with the explicit opt-in below. USB-only and password-augmented verification are
-    // unaffected.
-    private static bool _allowStandaloneTotpVerification = IsDevelopment;
+    // Fork policy (relaxed in this release): TOTP may verify on its own again. Checking a code without the
+    // user's password requires keeping a readable seed copy in `data/config/security/totp-standalone.json`,
+    // which is a real downgrade: whoever can read that file can mint valid codes, so the protection becomes
+    // an interface-level restriction instead of a cryptographic one. The seed still lives inside the
+    // owner-only credential directory that no archive, cloud backup, or Android provider can reach, and the
+    // security page states that trade-off at the moment TOTP becomes usable alone, so the choice is the
+    // user's. `--allow-standalone-totp` and EnableStandaloneTotpVerification() stay as explicit widening
+    // hooks so a later policy can narrow the default again without touching any call site.
+    private static bool _allowStandaloneTotpVerification = true;
 
     public static bool AllowStandaloneTotpVerification => _allowStandaloneTotpVerification;
 
@@ -97,8 +100,9 @@ public static class GlobalConstants
     public static void EnableStandaloneTotpVerification() => _allowStandaloneTotpVerification = true;
 
     /// <summary>
-    ///     Enables TOTP-only verification when the process was started with <c>--allow-standalone-totp</c>.
-    ///     Debug builds already allow it, and this must only ever widen, never narrow, that.
+    ///     Honours <c>--allow-standalone-totp</c>. The shipped default is already on, so this is only meaningful
+    ///     when a build narrows <see cref="AllowStandaloneTotpVerification" /> again; it must only ever widen,
+    ///     never narrow, that.
     /// </summary>
     public static bool EnableStandaloneTotpVerificationIfRequested(IEnumerable<string>? arguments)
     {

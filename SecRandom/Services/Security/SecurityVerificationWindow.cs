@@ -112,6 +112,17 @@ internal static class SecurityVerificationDialog
         {
             panel.Children.Add(new TextBlock { Text = SR.S_Totp });
             panel.Children.Add(totp);
+            if (!request.RequireAllSelectedFactors && request.TotpStandaloneReady)
+            {
+                // 免密副本是可读的，所以「仅 TOTP」只挡界面上的误操作；每次单独使用都把这句放回眼前
+                panel.Children.Add(new TextBlock
+                {
+                    Text = SR.M_TotpStandaloneNotice,
+                    TextWrapping = TextWrapping.Wrap,
+                    Foreground = Brushes.Orange,
+                    Opacity = 0.9
+                });
+            }
             if (!request.RequireAllSelectedFactors && !request.TotpStandaloneReady)
             {
                 // 免密副本只在主密码验证后被刷新，升级后的首次免密校验必然失败，

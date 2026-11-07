@@ -52,7 +52,7 @@
   <data name="S_Password" xml:space="preserve"><value>密码</value></data>
   <data name="S_Password_D" xml:space="preserve"><value>密码至少需要 6 位</value></data>
   <data name="S_Totp" xml:space="preserve"><value>TOTP 动态口令</value></data>
-  <data name="S_Totp_D" xml:space="preserve"><value>配置后可使用认证器应用生成的 6 位验证码</value></data>
+  <data name="S_Totp_D" xml:space="preserve"><value>配置后可使用认证器应用生成的 6 位验证码；关闭“全部已选验证方式均需验证”后可单独解锁，但这只是界面层的限制，能读到本机文件的人可以直接取得解锁因子</value></data>
   <data name="S_Usb" xml:space="preserve"><value>绑定 U 盘</value></data>
   <data name="S_Usb_D" xml:space="preserve"><value>绑定盘内会保存专用安全令牌，插入该盘时可作为验证方式</value></data>
   <data name="S_Factors" xml:space="preserve"><value>验证方式</value></data>
@@ -191,4 +191,7 @@
   <data name="S_RawRandomOperations" xml:space="preserve"><value>随机数</value></data>
   <data name="S_RawRandomOperations_D" xml:space="preserve"><value>锁定主界面「随机数」页的范围与熵源选择，关掉它需要重新输入安全密码</value></data>
   <data name="C_RawRandomSettings" xml:space="preserve"><value>锁定范围与熵源</value></data>
+  <data name="M_TotpStandaloneNoticeTitle" xml:space="preserve"><value>TOTP 单独验证</value></data>
+  <data name="M_TotpStandaloneNotice" xml:space="preserve"><value>仅界面逻辑限制，攻击者可轻易获得解锁因子</value></data>
+  <data name="C_Acknowledge" xml:space="preserve"><value>我知道了</value></data>
 </root>

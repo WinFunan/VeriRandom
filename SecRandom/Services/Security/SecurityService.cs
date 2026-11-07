@@ -318,8 +318,8 @@ internal sealed class SecurityService(
             var usbPassed = factors.Contains(SecurityFactor.Usb) &&
                             response.UsbPresent &&
                             metadata.UsbBindings.Any(IsBindingPresent);
-            // 「任意已选验证方式」模式下 TOTP 能单独通过，靠的是凭据文件旁的免密副本；本分支默认
-            // 不保留那份可读种子，因此该路径在未显式允许时整体不可用
+            // 「任意已选验证方式」模式下 TOTP 能单独通过，靠的是凭据文件旁的免密副本；该副本在本版默认保留，
+            // 因此这条路径可用，代价是能读到该文件的人可以直接生成验证码（安全页会在启用时明确提示）
             var totpPassed = false;
             if (GlobalConstants.AllowStandaloneTotpVerification
                 && factors.Contains(SecurityFactor.Totp)
@@ -987,7 +987,7 @@ internal sealed class SecurityService(
         }
 
         // 信封先落盘，再同步免密 TOTP 副本，避免出现「新种子 / 旧信封」的错配。
-        // 未允许「仅 TOTP」验证时一律删除副本：升级后遗留的明文种子会在下一次保存时被清掉
+        // 未允许「仅 TOTP」验证（或该模式不成立）时一律删除副本，避免留下不会被使用的明文种子
         var totpSecret = context.Credentials.TotpSecret;
         try
         {

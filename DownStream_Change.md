@@ -28,7 +28,7 @@
 | 7 | TSA 时间戳改为可显式关闭 + 沃通隐私提示 | 验证设置页、时间戳客户端、OOBE 隐私政策提示 | 中高（改了验证链路的网络行为开关） |
 | 8 | 新增「自有参考链（Own）」补充声明 | 新增 `*.ownproof.json`、自有链头、完整性报告字段 | **高**（新增落盘格式） |
 | 9 | 跨境数据传输闸门 + 抽取上传改为无默认二选一 | 新增枚举/配置、OOBE 与设置页、6 类 SECTL 出网路径、`SectlAuthService`/`SectlHeartbeatService`/`PlatformVersionReportService` 构造函数 | **高**（改动了所有出境路径的开关语义，并与上游的令牌轮换重写叠加） |
-| 10 | 禁用「仅 TOTP」单一验证 | `GlobalConstants` 调试开关、`SecurityService`/`SecurityCredentialStore`、桌面启动参数 | 中（改了安全验证的判定条件） |
+| 10 | 「仅 TOTP」单一验证：先禁用，现放开并在启用时明确提示 | `GlobalConstants` 默认值、`SecurityService`/`SecurityCredentialStore`、安全设置页与验证对话框、桌面启动参数 | 中（改了安全验证的判定条件与提示） |
 | 11 | 自有标识改名 | 包名、URI、可执行名、安装包标记、安装器、单实例名、macOS/Linux 路径；收尾需改写 §7 禁止改名表 | **高**（改动产品身份与全部兼容契约） |
 | 12 | 桌面资源覆盖加载器健壮性修复 | `OverlayAssetLoader`、桌面 `Program` 启动资源诊断 | 中（修的是启动期字体加载失败） |
 | 13 | 普通模式证明可信度评分 | 新增 Core 评分器与测试、验证设置页新增评估区块 | 中（新增功能，不动既有证明格式） |
@@ -423,30 +423,38 @@
 - 隐私设置页新增跨境须知行（标题/说明复用 OOBE 资源 `C_CrossBorderTitle` / `C_CrossBorderOptionalNote`，**不复制法律文本**）与 `CrossBorderTransferAccept_OnClick` 补签入口，供首次设置时跳过的安装事后补签。
 - 「抽取验证」设置页新增 `S_AttestationUpload` 行，供**已过首次设置的用户事后改选**提交/不提交；控件用 `x:Name` 直接读写（`RefreshAttestationUpload` / `AttestationUpload_OnClick`），不依赖 `INotifyPropertyChanged`，选项文案复用 OOBE 的 `O_AttestationOn` / `O_AttestationOff`。
 
-## 13. 禁用「仅 TOTP」单一验证（可调试开关）
+## 13. 「仅 TOTP」单一验证：先禁用，现放开并在启用时明确提示
 
-**意图**：TOTP 验证码要脱离主密码校验，就只能保留明文种子副本 `data/config/security/totp-standalone.json`（见 §4 与 AGENTS 的安全条目）。本分支不再接受这份可读种子：**仅 TOTP 的单一验证被彻底禁用**，只有调试构建或显式启动参数才允许启用。USB 单独验证、以及「密码 + 其他因素」的组合不受影响。
+**当前决定**：允许 TOTP 单独解锁。TOTP 验证码要脱离主密码校验，就只能保留明文种子副本 `data/config/security/totp-standalone.json`（见 §4 与 AGENTS 的安全条目），而这份可读种子意味着「仅 TOTP」**只是界面层的限制**：能读到该文件的人可以直接算出验证码。本分支一度因此彻底禁用这条路径；现在改为放开，但把代价说清楚，而不是让用户以为它等同于密码：
+
+- 安全页 TOTP 条目描述（`S_Totp_D`）常驻写明「关闭『全部已选验证方式均需验证』后可单独解锁，但这只是界面层的限制」
+- 组合**刚成立**时弹一次 `M_TotpStandaloneNotice`（「仅界面逻辑限制，攻击者可轻易获得解锁因子」）：在「任意已选验证方式」模式下新建 TOTP、选中 TOTP、或关掉「全部已选验证方式均需验证」
+- 验证对话框在 TOTP 可单独通过的每次解锁里都重复这句（行内提示，不再多弹一个窗）
 
 **新增文件**：
 
 | 文件 | 说明 |
 |------|------|
-| `SecRandom.Core.Tests/TestStandaloneTotpOptIn.cs` | `[ModuleInitializer]` 调用 `GlobalConstants.EnableStandaloneTotpVerification()`；安全测试本来就是在验证「已启用」路径，而 CI 跑 Release，必须显式开启 |
+| `SecRandom.Core.Tests/TestStandaloneTotpOptIn.cs` | `[ModuleInitializer]` 调用 `GlobalConstants.EnableStandaloneTotpVerification()`；安全测试本来就在验证「已启用」路径，显式开启让测试**不依赖**生产默认值（本版默认为开，关掉策略时测试仍能跑到这条路径） |
 
 **修改文件**：
 
 | 文件 | 改动 |
 |------|------|
-| `SecRandom.Core/GlobalConstants.cs` | 新增 `AllowStandaloneTotpVerification`（`= IsDevelopment`，即仅 Debug 构建默认可用于 Windows 开发机）、`EnableStandaloneTotpVerification()`、`EnableStandaloneTotpVerificationIfRequested(args)`（识别 `--allow-standalone-totp`） |
-| `SecRandom.Desktop/Program.cs` | 启动时调用 `GlobalConstants.EnableStandaloneTotpVerificationIfRequested(args)`（与 `PluginManager.SetStartupArguments` 并列） |
-| `SecRandom/Services/Security/SecurityCredentialStore.cs` | `LoadStandaloneTotp()` 在未允许时**直接返回 `null`**，遗留副本不再被读取 |
-| `SecRandom/Services/Security/SecurityService.cs` | `totpPassed` 增加 `AllowStandaloneTotpVerification` 前置条件；凭据保存时未允许则改为 `DeleteStandaloneTotp()`，从而在下一次保存时清除遗留明文文件 |
+| `SecRandom.Core/GlobalConstants.cs` | `AllowStandaloneTotpVerification` 默认值 `IsDevelopment` → `true`；`EnableStandaloneTotpVerification()` 与 `--allow-standalone-totp` 保留为显式放宽钩子，改回 `false` 即恢复旧行为且无需改任何调用点 |
+| `SecRandom.Desktop/Program.cs` | 仍调用 `EnableStandaloneTotpVerificationIfRequested(args)`（与 `PluginManager.SetStartupArguments` 并列），在默认已开时是幂等操作 |
+| `SecRandom/Services/Security/SecurityCredentialStore.cs` | `LoadStandaloneTotp()` 仍以该常量为前置条件：关闭策略时**直接返回 `null`**，遗留副本不再被读取 |
+| `SecRandom/Services/Security/SecurityService.cs` | `totpPassed` 仍以该常量为前置条件；凭据保存时未允许（或模式不成立）则 `DeleteStandaloneTotp()`，保持「新种子 / 旧副本」同步 |
+| `SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml.cs` | `IsStandaloneTotpCapable()` 判断组合是否成立；`AnnounceNewlyAllowedStandaloneTotpAsync()` 只在**刚变成可用**时弹一次提示，避免每次开设置页都弹 |
+| `SecRandom/Services/Security/SecurityVerificationWindow.cs` | 验证对话框在 TOTP 可单独通过时行内重复提示 |
+| `SecRandom/Langs/SettingsPages/Security/` | 三语新增 `M_TotpStandaloneNoticeTitle` / `M_TotpStandaloneNotice` / `C_Acknowledge`，并扩写 `S_Totp_D` |
 
 **行为**：
-- 未允许时，"任意已选方式"模式下 TOTP **不能单独通过**；此时不带密码的尝试会走到既有的「免密尝试」分支并计入失败次数（保留对验证码暴破的限制）——该分支无需改动。
-- 已有安装升级后，遗留的 `totp-standalone.json` 在下次保存凭据时被删除；在此之前也不会被读取。
+- 「任意已选方式」模式下，TOTP 现在**能单独通过**：凭据保存时写入免密副本，验证时不需要先解信封。不带密码且验证码错误的尝试仍走既有「免密尝试」分支并计入失败次数，对验证码暴破的限制不变。
+- 切回「全部已选验证方式均需验证」、移除密码或移除 TOTP 时，副本仍会被删除。
+- 把 `AllowStandaloneTotpVerification` 改回 `false` 会立刻恢复旧行为（副本被忽略并在下次保存时清除），页面提示也会随之消失——提示只在策略允许时才有意义。
 
-**已知缺口**：移动端 head 没有命令行入口，该调试路径只能靠 Debug 构建开启；若需要在移动端也能调试，需再加一个 head 级开关。
+**为什么仍然保留副本目录的加固**：`data/config/security/` 依然是 owner-only 目录且排除出全部导出、云备份与 Android DocumentsProvider，所以「能读到它的人」是**本机同一用户或已取得其权限的攻击者**，而不是备份、云端或第三方应用。
 
 ---
 
