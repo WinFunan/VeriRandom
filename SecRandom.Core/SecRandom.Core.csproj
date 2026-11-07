@@ -36,10 +36,28 @@
         <PackageReference Include="Xaml.Behaviors" Version="12.0.5" />
     </ItemGroup>
 
+    <PropertyGroup>
+        <!-- The algorithm tier lives in its own repository and is an OPTIONAL dependency: this repository must build
+             even when that checkout is missing or does not compile (a broken optional dependency may never take the
+             main program down). Everything below is therefore keyed off whether the project file actually exists. -->
+        <NewAlgorithmProject>$(MSBuildThisFileDirectory)..\vendors\NewAlgorithm\SecRandom.NewAlgorithm\SecRandom.NewAlgorithm.csproj</NewAlgorithmProject>
+        <NewAlgorithmAvailable Condition="Exists('$(NewAlgorithmProject)')">true</NewAlgorithmAvailable>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\SecRandom.Shared\SecRandom.Shared.csproj"/>
         <ProjectReference Include="..\roslyn\IconsMappingGenerator\IconsMappingGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     </ItemGroup>
+
+    <ItemGroup Condition="'$(NewAlgorithmAvailable)' == 'true'">
+        <!-- PrivateAssets keeps the dependency out of the packed SecRandom.Core nuspec: that package must stay
+             installable by plugin authors, while this repository does not publish the algorithm package. -->
+        <ProjectReference Include="$(NewAlgorithmProject)" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <PropertyGroup Condition="'$(NewAlgorithmAvailable)' == 'true'">
+        <DefineConstants>$(DefineConstants);NEWALGORITHM</DefineConstants>
+    </PropertyGroup>
 
     <ItemGroup>
         <EmbeddedResource Update="Langs\Common\Resources.resx">

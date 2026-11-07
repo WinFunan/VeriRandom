@@ -504,4 +504,4 @@
   <data name="C_SetAvatarViaPrize_D" xml:space="preserve">
     <value>くじ引き名簿ページを開き、景品の追加設定（画像表示）で景品画像を設定します</value>
   </data>
-</root>
+<data name="O_AlgorithmNewAlgorithm" xml:space="preserve"><value>均衡抽選</value></data></root>

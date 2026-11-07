@@ -78,4 +78,4 @@
   <data name="S_StudentImageSize_D" xml:space="preserve"><value>Display edge length of member images in draw results, in pixels</value></data>
   <data name="S_LotteryImageSize" xml:space="preserve"><value>Prize Image Size</value></data>
   <data name="S_LotteryImageSize_D" xml:space="preserve"><value>Display edge length of prize images in draw results, in pixels</value></data>
-</root>
+<data name="O_AlgorithmNewAlgorithm" xml:space="preserve"><value>Balanced draw</value></data></root>

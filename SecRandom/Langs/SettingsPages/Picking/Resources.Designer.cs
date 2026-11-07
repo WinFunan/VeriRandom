@@ -915,6 +915,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         public static string O_AlgorithmRandom => ResourceManager.GetString("O_AlgorithmRandom", resourceCulture);
         public static string O_AlgorithmInventory => ResourceManager.GetString("O_AlgorithmInventory", resourceCulture);
         public static string O_AlgorithmWeighted => ResourceManager.GetString("O_AlgorithmWeighted", resourceCulture);
+        public static string O_AlgorithmNewAlgorithm => ResourceManager.GetString("O_AlgorithmNewAlgorithm", resourceCulture);
         
         /// <summary>
         ///   Looks up a localized string similar to 显示奖品图片.

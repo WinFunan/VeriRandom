@@ -31,11 +31,41 @@ jobs:
           submodules: recursive
           ref: ${{ github.ref }}
 
+      # SecRandom.Core 的 ProjectReference 指向这条路径，但这一档是**可选依赖**：仓库不可达、tag 不存在或检出失败
+      # 都不能让流水线变红，所以这一步允许失败，由下面的探测把不可用的目录删掉，主程序照常编译
+      - name: 检出 NewAlgorithm
+        id: newalgorithm
+        if: ${{ matrix.language == 'csharp' }}
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: WinFunan/VeriRandom.NewAlgorithm
+          ref: v0.1.0
+          path: vendors/NewAlgorithm
+          persist-credentials: false
+
       - name: 安装 .NET SDK
         if: ${{ matrix.language == 'csharp' }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+
+      # 可选依赖：编译不过就删掉，让主工程照常扫描，而不是让整条 CodeQL 作业变红
+      - name: 校验 NewAlgorithm
+        if: ${{ matrix.language == 'csharp' }}
+        shell: pwsh
+        run: |
+          $project = 'vendors/NewAlgorithm/SecRandom.NewAlgorithm/SecRandom.NewAlgorithm.csproj'
+          if (-not (Test-Path $project)) {
+            Write-Host '::warning::NewAlgorithm is not available; building without the extra algorithm tier.'
+            exit 0
+          }
+          dotnet build $project -c Release --nologo
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host '::warning::NewAlgorithm does not build; removing it so the main build stays green.'
+            Remove-Item 'vendors/NewAlgorithm' -Recurse -Force
+          }
+          exit 0
 
       - name: 还原工作负载
         if: ${{ matrix.language == 'csharp' }}

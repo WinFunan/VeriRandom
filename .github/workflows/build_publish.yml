@@ -14,6 +14,13 @@ on:
 permissions:
   contents: read
 
+# The draw-algorithm tier lives in its own repository. Every job that compiles the solution checks that repository
+# out at this tag, so the version is one explicit, greppable value instead of a submodule pointer buried in the tree.
+# For a private source repository add `token: ${{ secrets.NEWALGORITHM_TOKEN }}` to the step and grant it read access.
+env:
+  NEWALGORITHM_REPOSITORY: WinFunan/VeriRandom.NewAlgorithm
+  NEWALGORITHM_REF: v0.1.0
+
 jobs:
   # Release publication is gated on metadata.yaml: clients resolve a channel to a release tag there
   # and reject the release manifest when its tag/channel disagree, so a stale channel entry
@@ -93,10 +100,41 @@ jobs:
           submodules: recursive
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
 
+      # The ProjectReference in SecRandom.Core points at this path, but the tier is OPTIONAL: a missing tag, an
+      # unreachable repository or a broken checkout must never fail the pipeline. This step is therefore allowed to
+      # fail, and the probe below removes an unusable tree so the main build compiles without the tier.
+      - name: Checkout NewAlgorithm
+        id: newalgorithm
+        continue-on-error: true
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.NEWALGORITHM_REPOSITORY }}
+          ref: ${{ env.NEWALGORITHM_REF }}
+          path: vendors/NewAlgorithm
+          persist-credentials: false
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+
+      # Optional cross-repository dependency: when its project does not build, delete it instead of letting it break
+      # this pipeline. SecRandom.Core's project reference is conditional on the file existing, so the main build then
+      # compiles without the extra algorithm tier and the tier simply does not appear in the list.
+      - name: Validate NewAlgorithm checkout
+        shell: pwsh
+        run: |
+          $project = 'vendors/NewAlgorithm/SecRandom.NewAlgorithm/SecRandom.NewAlgorithm.csproj'
+          if (-not (Test-Path $project)) {
+            Write-Host '::warning::NewAlgorithm is not available; building without the extra algorithm tier.'
+            exit 0
+          }
+          dotnet build $project -c Release --nologo
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host '::warning::NewAlgorithm does not build; removing it so the main build stays green.'
+            Remove-Item 'vendors/NewAlgorithm' -Recurse -Force
+          }
+          exit 0
 
       - name: Restore
         shell: pwsh
@@ -588,10 +626,41 @@ jobs:
           submodules: recursive
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
 
+      # The ProjectReference in SecRandom.Core points at this path, but the tier is OPTIONAL: a missing tag, an
+      # unreachable repository or a broken checkout must never fail the pipeline. This step is therefore allowed to
+      # fail, and the probe below removes an unusable tree so the main build compiles without the tier.
+      - name: Checkout NewAlgorithm
+        id: newalgorithm
+        continue-on-error: true
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.NEWALGORITHM_REPOSITORY }}
+          ref: ${{ env.NEWALGORITHM_REF }}
+          path: vendors/NewAlgorithm
+          persist-credentials: false
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+
+      # Optional cross-repository dependency: when its project does not build, delete it instead of letting it break
+      # this pipeline. SecRandom.Core's project reference is conditional on the file existing, so the main build then
+      # compiles without the extra algorithm tier and the tier simply does not appear in the list.
+      - name: Validate NewAlgorithm checkout
+        shell: pwsh
+        run: |
+          $project = 'vendors/NewAlgorithm/SecRandom.NewAlgorithm/SecRandom.NewAlgorithm.csproj'
+          if (-not (Test-Path $project)) {
+            Write-Host '::warning::NewAlgorithm is not available; building without the extra algorithm tier.'
+            exit 0
+          }
+          dotnet build $project -c Release --nologo
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host '::warning::NewAlgorithm does not build; removing it so the main build stays green.'
+            Remove-Item 'vendors/NewAlgorithm' -Recurse -Force
+          }
+          exit 0
 
       - name: Get Version
         id: get_version
@@ -690,10 +759,41 @@ jobs:
           submodules: recursive
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
 
+      # The ProjectReference in SecRandom.Core points at this path, but the tier is OPTIONAL: a missing tag, an
+      # unreachable repository or a broken checkout must never fail the pipeline. This step is therefore allowed to
+      # fail, and the probe below removes an unusable tree so the main build compiles without the tier.
+      - name: Checkout NewAlgorithm
+        id: newalgorithm
+        continue-on-error: true
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.NEWALGORITHM_REPOSITORY }}
+          ref: ${{ env.NEWALGORITHM_REF }}
+          path: vendors/NewAlgorithm
+          persist-credentials: false
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
+
+      # Optional cross-repository dependency: when its project does not build, delete it instead of letting it break
+      # this pipeline. SecRandom.Core's project reference is conditional on the file existing, so the main build then
+      # compiles without the extra algorithm tier and the tier simply does not appear in the list.
+      - name: Validate NewAlgorithm checkout
+        shell: pwsh
+        run: |
+          $project = 'vendors/NewAlgorithm/SecRandom.NewAlgorithm/SecRandom.NewAlgorithm.csproj'
+          if (-not (Test-Path $project)) {
+            Write-Host '::warning::NewAlgorithm is not available; building without the extra algorithm tier.'
+            exit 0
+          }
+          dotnet build $project -c Release --nologo
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host '::warning::NewAlgorithm does not build; removing it so the main build stays green.'
+            Remove-Item 'vendors/NewAlgorithm' -Recurse -Force
+          }
+          exit 0
 
       - name: Get Latest Tag
         id: get_tag

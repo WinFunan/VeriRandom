@@ -1,6 +1,3 @@
 [submodule "vendors/EdgeTtsSharp"]
 	path = vendors/EdgeTtsSharp
 	url = https://github.com/SECTL/EdgeTtsSharp.git
-[submodule "vendors/NewAlgorithm"]
-	path = vendors/NewAlgorithm
-	url = https://github.com/WinFunan/VeriRandom.NewAlgorithm.git

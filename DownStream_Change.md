@@ -1733,3 +1733,39 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 **未做**：没有在 OOBE 增加这个开关（首次引导的隐私页仍只问 Sentry / 在线状态与证明保留），也没有为它新增自动化测试——CI 不跑测试。
 
 **影响**：这是本分支第一个"不依赖 `settings.json`、且能压过已签发同意"的隐私开关；`THREAT_MODEL.md` T12 同步登记。
+
+## 61. 跨仓库接入 VisionFair（NewAlgorithm）抽取算法
+
+**目标**：把 `WinFunan/VeriRandom.NewAlgorithm` 的欠账均衡算法作为**第三个点名算法选项**接进来，同时满足三条约束——
+
+1. **不复制源码**：算法留在自己的仓库，带自己的项目、命名空间、测试、版本与发行说明；本仓库只表达"依赖某个版本"。
+2. **不靠子模块指针**：早期曾用 submodule 挂 `vendors/NewAlgorithm`（把提交号写进树里）。现在改为**按 tag 拉取**：CI 用 `actions/checkout` 的 `repository` + `ref`，本地用脚本，版本只在一处声明。
+3. **一条流水线产出**：所有编译 Core 的作业都必须先把算法仓库放进 `vendors/NewAlgorithm`，否则 `ProjectReference` 找不到项目、还原直接失败。
+
+**实现**：
+
+| 位置 | 变更 |
+|---|---|
+| `SecRandom.Core/SecRandom.Core.csproj` | `ProjectReference` 指向 `..\vendors\NewAlgorithm\SecRandom.NewAlgorithm\SecRandom.NewAlgorithm.csproj`，但**整条引用是有条件的**：只有该工程文件存在时才加入，并同时定义 `NEWALGORITHM` 编译符号；标 `PrivateAssets="all"` 是因为 Core 会被打成 NuGet 包给插件作者，而算法包不从本仓库发布 |
+| `SecRandom.Core/Services/Draw/NewAlgorithmRegistration.cs`（新增） | `AddNewAlgorithmRollCallAlgorithm(...)`：有符号时注册 `builtin.newAlgorithm`，没有符号时是**空操作**。这里刻意不提供"回退到内置公平权重"的分支——用别的算法却打上这个算法的标签，比这一档不存在更糟 |
+| `SecRandom.Core/Services/Draw/NewAlgorithmRollCallAlgorithm.cs`（新增） | 实现 `IRollCallAlgorithm`，只产出权重：把候选映射成 `StudentMetaData`（`Multiplier` 固定 1.0，`Cap` 固定 0——`Cap` 在对方模型里只是调用方的池过滤字段，权重计算完全不看它）、历史次数取 `History.TotalCount`、组/性别在开启时映射成均衡维度，再调 `FairDrawWeights.Compute` + `ToProbabilities`。**保底份额只应用一次**：直接把概率当作权重返回，采样器再归一化；用原始权重会丢掉保底，把概率再乘一次则是重复应用 |
+| `SecRandom/App.axaml.cs` | 注册 `builtin.newAlgorithm`，显示名走 `Langs/SettingsPages/Picking/Resources.O_AlgorithmNewAlgorithm` |
+| `SecRandom/Langs/SettingsPages/Picking/` | 三语新增 `O_AlgorithmNewAlgorithm`（均衡抽取 / Balanced draw / 均衡抽選） |
+| `.github/workflows/build_publish.yml` | 顶部 `env` 声明 `NEWALGORITHM_REPOSITORY` / `NEWALGORITHM_REF`（tag）；`build_desktop`、`build_pluginsdk`、`build_android` 三个作业按 tag 检出到 `vendors/NewAlgorithm`，检出步 `continue-on-error: true`，并在 `Setup .NET` 之后插入探测步 |
+| `.github/workflows/codeQL.yml` | C# 作业同样按 tag 检出（CodeQL 也编译桌面项目），同样允许失败并执行探测 |
+| `.gitignore` | 忽略 `/vendors/NewAlgorithm/`：仓库里不再保存它的任何文件或指针 |
+| `scripts/fetch-newalgorithm.ps1`（新增） | 本地等价物：`git clone --depth 1 --branch <tag>` 到同一路径 |
+| `.gitmodules` | 删除 `vendors/NewAlgorithm` 条目（`vendors/EdgeTtsSharp` 仍是子模块） |
+
+**验证口径（重要）**：新算法**不新增** `VerificationAlgorithmProfile` 取值，继续落在 `StudentFair*` 家族。理由是证明的线上请求逐候选携带 `WeightMicros`，验证端按**记录下来的权重**重放、不重算权重，所以重放仍然逐字精确；`algorithmProfile` 描述的是"历史均衡加权"这个策略家族，两套公式都属于该家族。**新增专用 profile 字节的前提是服务端重放内核认识它**——在那之前加一个字节只会让每次存证都失败。算法名与公式差异记录在此，供后续服务端升级后切换。
+
+**弃车保帅：可选依赖绝不拖垮主程序**。这一档从设计上就是"能接就接，接不上就少一档"：
+
+1. `SecRandom.Core.csproj` 先用 `Exists()` 判断工程文件，只有存在时才加 `ProjectReference` 并定义 `NEWALGORITHM`；不存在时 Core 与主程序照常编译。
+2. 适配器整份文件包在 `#if NEWALGORITHM` 里，注册扩展在无符号时是空操作，所以 App 不必知道依赖是否存在，也不会引用一个不存在的类型。
+3. CI 的检出步 `continue-on-error: true`（tag 没推、仓库不可达都只是 warning），随后探测步先单独 `dotnet build` 算法工程；**编译不过就把整棵目录删掉**，主构建于是走"工程文件不存在"的分支。
+4. 结果是三档变两档：算法下拉里没有「均衡抽取」，其余功能不受影响；**不会**静默回退到内置公平权重——那样会让一次抽取打着 A 算法的标签、实际用 B 算法算权重。
+
+**外部前提**：`WinFunan/VeriRandom.NewAlgorithm` 需要存在 `v0.1.0` 这条 tag（本地已创建，需推送到远端）。推送前 CI 不会红，只会少这一档并给出 `::warning::`。若该仓库是私有的，`actions/checkout` 步骤要补 `token:` 并授予读权限。
+
+**未做**：`build_ios.yml.disabled` 没有加这一步（该作业当前禁用，恢复 iOS 构建时必须补上）。

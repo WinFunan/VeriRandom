@@ -473,3 +473,7 @@ $RECYCLE.BIN/
 /.playwright-cli
 /.verify-desktop
 /.verify-desktop-2
+
+# The draw-algorithm tier is checked out here by CI (tag-pinned) and by scripts/fetch-newalgorithm.ps1; it is not
+# tracked by this repository, so its own history, tags and releases stay in WinFunan/VeriRandom.NewAlgorithm.
+/vendors/NewAlgorithm/

@@ -1128,6 +1128,9 @@ public partial class App : Application
                     "builtin.fair", Langs.SettingsPages.Picking.Resources.O_AlgorithmFair);
                 services.AddRollCallAlgorithm<RandomRollCallAlgorithm>(
                     "builtin.random", Langs.SettingsPages.Picking.Resources.O_AlgorithmRandom);
+                // 可选依赖：算法仓库缺失或编译不过时这里只是不注册，主程序照常构建与启动
+                services.AddNewAlgorithmRollCallAlgorithm(
+                    Langs.SettingsPages.Picking.Resources.O_AlgorithmNewAlgorithm);
                 services.AddLotteryAlgorithm<InventoryLotteryAlgorithm>(
                     "builtin.inventory", Langs.SettingsPages.Picking.Resources.O_AlgorithmInventory);
                 services.AddLotteryAlgorithm<WeightedLotteryAlgorithm>(
