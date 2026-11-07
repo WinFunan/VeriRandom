@@ -25,6 +25,7 @@
 
 > [!NOTE]
 > VeriRandom 以 GNU GPLv3 协议发布！您可以修改和再发布源代码，但再发布的衍生作品也必须遵循 GNU GPLv3
+> 由于一些原因，我们从本分支中移除了与SECTL有关的在线功能
 
 ## VeriRandom
 
