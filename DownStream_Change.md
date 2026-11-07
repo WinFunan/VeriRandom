@@ -1767,6 +1767,7 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 | `SecRandom.Core/Services/Draw/NewAlgorithmRollCallAlgorithm.cs`（新增） | 实现 `IRollCallAlgorithm`，只产出权重：把候选映射成 `StudentMetaData`（`Multiplier` 固定 1.0，`Cap` 固定 0——`Cap` 在对方模型里只是调用方的池过滤字段，权重计算完全不看它）、历史次数取 `History.TotalCount`、组/性别在开启时映射成均衡维度，再调 `FairDrawWeights.Compute` + `ToProbabilities`。**保底份额只应用一次**：直接把概率当作权重返回，采样器再归一化；用原始权重会丢掉保底，把概率再乘一次则是重复应用 |
 | `SecRandom/App.axaml.cs` | 注册 `builtin.newAlgorithm`，显示名走 `Langs/SettingsPages/Picking/Resources.O_AlgorithmNewAlgorithm` |
 | `SecRandom/Langs/SettingsPages/Picking/` | 三语新增 `O_AlgorithmNewAlgorithm`（均衡抽取 / Balanced draw / 均衡抽選） |
+| `SecRandom/Views/SettingsPages/About/AboutSettingsPage.axaml` + `SecRandom/Langs/SettingsPages/About/` | 鸣谢区最上方新增「均衡抽取算法」一项：说明该算法在独立仓库按版本维护、本分支只引用不复制源码，并链接到算法仓库；三语新增 `S_Ack_NewAlgorithm` / `S_Ack_NewAlgorithm_D`。该项**不按** `NEWALGORITHM` 符号显隐——它声明的是"这一档算法的来源与致谢"，而不是"本次构建是否带上了它"，静态资源也就不必为了可用性去读 Core 的注册表 |
 | `.github/workflows/build_publish.yml` | 顶部 `env` 声明 `NEWALGORITHM_REPOSITORY` / `NEWALGORITHM_REF`（tag）；`build_desktop`、`build_pluginsdk`、`build_android` 三个作业按 tag 检出到 `vendors/NewAlgorithm`，检出步 `continue-on-error: true`，并在 `Setup .NET` 之后插入探测步 |
 | `.github/workflows/codeQL.yml` | C# 作业同样按 tag 检出（CodeQL 也编译桌面项目），同样允许失败并执行探测 |
 | `.gitignore` | 忽略 `/vendors/NewAlgorithm/`：仓库里不再保存它的任何文件或指针 |

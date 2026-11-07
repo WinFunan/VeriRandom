@@ -109,4 +109,5 @@
     <data name="M_App_ForkNotice" xml:space="preserve">
         <value>This product is an open-source fork of SecRandom and must not be regarded as SecRandom itself</value>
     </data>
+<data name="S_Ack_NewAlgorithm" xml:space="preserve"><value>Balanced draw algorithm</value></data><data name="S_Ack_NewAlgorithm_D" xml:space="preserve"><value>The balanced draw algorithm is maintained in the separate WinFunan/VeriRandom.NewAlgorithm repository — this fork only references a pinned version instead of copying its source, with thanks to the repository's author for keeping the strategy improved</value></data>
 </root>

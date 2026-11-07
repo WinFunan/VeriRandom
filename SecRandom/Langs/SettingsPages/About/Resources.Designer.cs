@@ -472,5 +472,23 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("M_App_ForkNotice", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 均衡抽取算法.
+        /// </summary>
+        public static string S_Ack_NewAlgorithm {
+            get {
+                return ResourceManager.GetString("S_Ack_NewAlgorithm", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 「均衡抽取」算法由独立仓库 WinFunan/VeriRandom.NewAlgorithm 维护.
+        /// </summary>
+        public static string S_Ack_NewAlgorithm_D {
+            get {
+                return ResourceManager.GetString("S_Ack_NewAlgorithm_D", resourceCulture);
+            }
+        }
     }
 }

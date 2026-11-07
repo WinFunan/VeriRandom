@@ -399,6 +399,15 @@
             <fa:FASettingsExpander x:Name="S_Ack"
                                    Header="{x:Static lsa:Resources.S_Ack}"
                                     IconSource="{sr:FluentIconSource {sr:Fi HeartFilled}}" IsExpanded="True">
+                <!-- 算法引用与致谢：算法由独立仓库按版本维护，这里只标明来源并提供入口，不复制其源码 -->
+                <fa:FASettingsExpanderItem x:Name="S_Ack_NewAlgorithm"
+                                           Content="{x:Static lsa:Resources.S_Ack_NewAlgorithm}"
+                                           Description="{x:Static lsa:Resources.S_Ack_NewAlgorithm_D}"
+                                            IsClickEnabled="True"
+                                            ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://github.com/WinFunan/VeriRandom.NewAlgorithm" />
+
                 <fa:FASettingsExpanderItem x:Name="S_Ack_OnlineUsers"
                                            Content="{x:Static lsa:Resources.S_Ack_OnlineUsers}"
                                            Description="{x:Static lsa:Resources.S_Ack_OnlineUsers_D}"
