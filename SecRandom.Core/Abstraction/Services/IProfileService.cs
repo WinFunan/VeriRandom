@@ -22,6 +22,11 @@ public interface IProfileService
     public void LoadStudentProfile(string name, bool saveCurrent = true);
     public void LoadPrizeProfile(string name, bool saveCurrent = true);
 
+    /// <param name="historyGroup">
+    ///     History record group the written records belong to. <see langword="null" /> means the draw was not
+    ///     grouped, which is written as the empty marker (the default group): the write side never persists a
+    ///     "no group" distinction, because a record always lands in exactly one group.
+    /// </param>
     public void RecordStudentHistory(
         IReadOnlyList<Student> students,
         DateTime now,
@@ -31,9 +36,15 @@ public interface IProfileService
         int drawMethod = 0,
         IReadOnlyDictionary<Student, double>? weights = null,
         string courseName = "",
-        string? drawRoundId = null);
+        string? drawRoundId = null,
+        string? historyGroup = null);
 
-    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null);
+    /// <param name="courseName">
+    ///     Linkage course the prize records belong to; empty keeps global prize history. Prize history had no
+    ///     course dimension before history groups, so this parameter is additive for the same reason.
+    /// </param>
+    /// <param name="historyGroup">History record group; <see langword="null" /> is written as the default group.</param>
+    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null, string courseName = "", string? historyGroup = null);
 
     public void ClearCurrentStudentHistory();
     public void ClearCurrentPrizeHistory();

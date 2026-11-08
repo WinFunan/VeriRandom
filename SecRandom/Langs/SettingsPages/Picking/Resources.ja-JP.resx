@@ -504,4 +504,19 @@
   <data name="C_SetAvatarViaPrize_D" xml:space="preserve">
     <value>くじ引き名簿ページを開き、景品の追加設定（画像表示）で景品画像を設定します</value>
   </data>
-<data name="O_AlgorithmNewAlgorithm" xml:space="preserve"><value>均衡抽選</value></data></root>
+  <data name="O_AlgorithmNewAlgorithm" xml:space="preserve">
+    <value>均衡抽選</value>
+  </data>
+  <data name="S_QuickDrawHistoryGroup" xml:space="preserve">
+    <value>記録グループ</value>
+  </data>
+  <data name="S_QuickDrawHistoryGroup_D" xml:space="preserve">
+    <value>グループを選ぶとクイック抽選はそのグループの履歴だけで重みを計算し、今回の記録もそのグループにのみ書き込みます；不要なときは「記録グループを使わない」を選んでください</value>
+  </data>
+  <data name="O_QuickDrawHistoryGroupNone" xml:space="preserve">
+    <value>記録グループを使わない</value>
+  </data>
+  <data name="S_QuickDrawHistoryGroup_Disabled" xml:space="preserve">
+    <value>履歴記録グループ機能が有効になっていません。「既定の抽選設定」で有効にできます</value>
+  </data>
+</root>

@@ -1,237 +1,418 @@
+<?xml version="1.0" encoding="utf-8"?>
 <root>
-    <resheader name="resmimetype">
-        <value>text/microsoft-resx</value>
-    </resheader>
-    <resheader name="version">
-        <value>1.3</value>
-    </resheader>
-    <resheader name="reader">
-        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
             PublicKeyToken=b77a5c561934e089
         </value>
-    </resheader>
-    <resheader name="writer">
-        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
             PublicKeyToken=b77a5c561934e089
         </value>
-    </resheader>
-    <data name="M_NeedsRestarting" xml:space="preserve">
+  </resheader>
+  <data name="M_NeedsRestarting" xml:space="preserve">
         <value>Needs Restarting</value>
     </data>
-    <data name="M_NeedsRestarting_D" xml:space="preserve">
+  <data name="M_NeedsRestarting_D" xml:space="preserve">
         <value>Some settings require a restart to take effect</value>
     </data>
-    <data name="M_NeedsRestarting_Primary" xml:space="preserve">
+  <data name="M_NeedsRestarting_Primary" xml:space="preserve">
         <value>Restart</value>
     </data>
-    <data name="M_NeedsRestarting_Close" xml:space="preserve">
+  <data name="M_NeedsRestarting_Close" xml:space="preserve">
         <value>Cancel</value>
     </data>
-    <data name="M_NeedsRestarting_Tooltip" xml:space="preserve">
+  <data name="M_NeedsRestarting_Tooltip" xml:space="preserve">
         <value>Some settings require a restart to take effect. Click to restart the application</value>
     </data>
-    <data name="C_SearchBox_Watermark" xml:space="preserve">
+  <data name="C_SearchBox_Watermark" xml:space="preserve">
         <value>Search Settings...</value>
     </data>
-    <data name="C_MoreOptions" xml:space="preserve">
+  <data name="C_MoreOptions" xml:space="preserve">
         <value>More Options...</value>
     </data>
-    <data name="C_MoreOptions_ExportDiagnosticData" xml:space="preserve">
+  <data name="C_MoreOptions_ExportDiagnosticData" xml:space="preserve">
         <value>Export diagnostic data</value>
     </data>
-    <data name="C_MoreOptions_ExportDiagnosticData_D" xml:space="preserve">
+  <data name="C_MoreOptions_ExportDiagnosticData_D" xml:space="preserve">
         <value>Export redacted runtime information and limited logs now</value>
     </data>
-    <data name="C_MoreOptions_ExportSettings" xml:space="preserve">
+  <data name="C_MoreOptions_ExportSettings" xml:space="preserve">
         <value>Export settings</value>
     </data>
-    <data name="C_MoreOptions_ExportSettings_D" xml:space="preserve">
+  <data name="C_MoreOptions_ExportSettings_D" xml:space="preserve">
         <value>Export portable non-credential settings</value>
     </data>
-    <data name="C_MoreOptions_ImportSettings" xml:space="preserve">
+  <data name="C_MoreOptions_ImportSettings" xml:space="preserve">
         <value>Import settings</value>
     </data>
-    <data name="C_MoreOptions_ImportSettings_D" xml:space="preserve">
+  <data name="C_MoreOptions_ImportSettings_D" xml:space="preserve">
         <value>Replace non-credential settings after creating a recovery snapshot</value>
     </data>
-    <data name="C_MoreOptions_ExportAllData" xml:space="preserve">
+  <data name="C_MoreOptions_ExportAllData" xml:space="preserve">
         <value>Export all data</value>
     </data>
-    <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
+  <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
         <value>Export all non-credential data and settings now</value>
     </data>
-    <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
+  <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
         <value>Import all data</value>
     </data>
-    <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve">
+  <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve">
         <value>Import a current-version or v2 archive after creating a recovery snapshot</value>
     </data>
-    <data name="C_MoreOptions_OpenLogDirectory"><value>Open log directory</value></data>
-    <data name="C_MoreOptions_OpenDataDirectory"><value>Open data directory</value></data>
-    <data name="C_MoreOptions_OpenAppDirectory"><value>Open application directory</value></data>
-    <data name="C_ExportSettingsFileTitle" xml:space="preserve">
+  <data name="C_MoreOptions_OpenLogDirectory">
+    <value>Open log directory</value>
+  </data>
+  <data name="C_MoreOptions_OpenDataDirectory">
+    <value>Open data directory</value>
+  </data>
+  <data name="C_MoreOptions_OpenAppDirectory">
+    <value>Open application directory</value>
+  </data>
+  <data name="C_ExportSettingsFileTitle" xml:space="preserve">
         <value>Export settings</value>
     </data>
-    <data name="C_ExportDiagnosticDataFileTitle" xml:space="preserve">
+  <data name="C_ExportDiagnosticDataFileTitle" xml:space="preserve">
         <value>Export diagnostic data</value>
     </data>
-    <data name="C_ImportSettingsFileTitle" xml:space="preserve">
+  <data name="C_ImportSettingsFileTitle" xml:space="preserve">
         <value>Import settings</value>
     </data>
-    <data name="C_ExportAllDataFileTitle" xml:space="preserve">
+  <data name="C_ExportAllDataFileTitle" xml:space="preserve">
         <value>Export all data</value>
     </data>
-    <data name="C_ImportAllDataFileTitle" xml:space="preserve">
+  <data name="C_ImportAllDataFileTitle" xml:space="preserve">
         <value>Import all data</value>
     </data>
-    <data name="C_JsonFileType" xml:space="preserve">
+  <data name="C_JsonFileType" xml:space="preserve">
         <value>JSON files</value>
     </data>
-    <data name="C_ZipFileType" xml:space="preserve">
+  <data name="C_ZipFileType" xml:space="preserve">
         <value>ZIP files</value>
     </data>
-    <data name="C_Import" xml:space="preserve">
+  <data name="C_Import" xml:space="preserve">
         <value>Import</value>
     </data>
-    <data name="C_Cancel" xml:space="preserve">
+  <data name="C_Cancel" xml:space="preserve">
         <value>Cancel</value>
     </data>
-    <data name="C_DiagnosticStandard" xml:space="preserve">
+  <data name="C_DiagnosticStandard" xml:space="preserve">
         <value>Standard diagnostic package</value>
     </data>
-    <data name="C_DiagnosticExtended" xml:space="preserve">
+  <data name="C_DiagnosticExtended" xml:space="preserve">
         <value>Extended diagnostic package</value>
     </data>
-    <data name="M_DiagnosticExportTitle" xml:space="preserve">
+  <data name="M_DiagnosticExportTitle" xml:space="preserve">
         <value>Export diagnostic data</value>
     </data>
-    <data name="M_DiagnosticExportContent" xml:space="preserve">
+  <data name="M_DiagnosticExportContent" xml:space="preserve">
         <value>The standard package contains all redacted logs and runtime information. The extended package also contains a redacted settings snapshot, profile counts, and redacted crash reports. Neither package includes profile or history contents or security credentials</value>
     </data>
-    <data name="M_ImportTitle" xml:space="preserve">
+  <data name="M_ImportTitle" xml:space="preserve">
         <value>Confirm import</value>
     </data>
-    <data name="M_ImportSettingsContent" xml:space="preserve">
+  <data name="M_ImportSettingsContent" xml:space="preserve">
         <value>All non-credential settings, including window, startup, theme, draw, and desktop integration settings, will be replaced. A recovery snapshot is created first; import is cancelled if it fails. Passwords, TOTP, USB bindings, and lockout state are not imported</value>
     </data>
-    <data name="M_ImportAllDataContent" xml:space="preserve">
+  <data name="M_ImportAllDataContent" xml:space="preserve">
         <value>All non-credential data, settings, profiles, history, and resources will be replaced. A full recovery snapshot is created first; import is cancelled if it fails. Unrepresentable v2 history is retained as raw data. Security credentials are not imported</value>
     </data>
-    <data name="M_ExportSuccess" xml:space="preserve">
+  <data name="M_ExportSuccess" xml:space="preserve">
         <value>Exported: {0}</value>
     </data>
-    <data name="M_ImportSuccess" xml:space="preserve">
+  <data name="M_ImportSuccess" xml:space="preserve">
         <value>Import complete. Recovery backup: {0}</value>
     </data>
-    <data name="M_ExportFailed" xml:space="preserve">
+  <data name="M_ExportFailed" xml:space="preserve">
         <value>Export failed</value>
     </data>
-    <data name="M_ImportFailed" xml:space="preserve">
+  <data name="M_ImportFailed" xml:space="preserve">
         <value>Import failed before replacement completed</value>
     </data>
-    <data name="M_PageNotFound" xml:space="preserve">
+  <data name="M_PageNotFound" xml:space="preserve">
         <value>Page {0} Not Found</value>
     </data>
-    <data name="M_OpenDirectoryFailed"><value>Unable to open the directory</value></data>
-    <data name="C_MoreOptions_LogViewer"><value>View logs</value></data>
-    <data name="C_MoreOptions_LogViewer_D"><value>View and manage application log files</value></data>
-  <data name="C_Close"><value>Close</value></data>
-  <data name="C_CopySessionCode"><value>Copy session code</value></data>
-    <data name="M_ImportUnsupportedTitle"><value>Unsupported Import File</value></data>
-    <data name="M_ImportUnsupportedContent"><value>This is not a supported VeriRandom v3 export file.</value></data>
-    <data name="M_ImportUnsupportedUnknownVersion"><value>Unknown</value></data>
-    <data name="M_ImportUnsupportedVersion"><value>Detected export version: {0}&#xA;&#xA;{1}&#xA;&#xA;No recovery snapshot was created and no data was changed</value></data>
-    <data name="M_NavigateFailed" xml:space="preserve">
+  <data name="M_OpenDirectoryFailed">
+    <value>Unable to open the directory</value>
+  </data>
+  <data name="C_MoreOptions_LogViewer">
+    <value>View logs</value>
+  </data>
+  <data name="C_MoreOptions_LogViewer_D">
+    <value>View and manage application log files</value>
+  </data>
+  <data name="C_Close">
+    <value>Close</value>
+  </data>
+  <data name="C_CopySessionCode">
+    <value>Copy session code</value>
+  </data>
+  <data name="M_ImportUnsupportedTitle">
+    <value>Unsupported Import File</value>
+  </data>
+  <data name="M_ImportUnsupportedContent">
+    <value>This is not a supported VeriRandom v3 export file.</value>
+  </data>
+  <data name="M_ImportUnsupportedUnknownVersion">
+    <value>Unknown</value>
+  </data>
+  <data name="M_ImportUnsupportedVersion">
+    <value>Detected export version: {0}
+
+{1}
+
+No recovery snapshot was created and no data was changed</value>
+  </data>
+  <data name="M_NavigateFailed" xml:space="preserve">
         <value>An error occurred during navigation</value>
     </data>
-    <data name="C_MoreOptions_Feedback"><value>Feedback</value></data>
-    <data name="C_Announcements"><value>Announcements</value></data>
-    <data name="C_Feedback_Title"><value>Feedback</value></data>
-    <data name="C_Feedback_CloseTemporary"><value>Close for now</value></data>
-    <data name="C_Feedback_Bug"><value>Bug</value></data>
-    <data name="C_Feedback_Feature"><value>Feature / experience improvement</value></data>
-    <data name="C_Feedback_Summary"><value>Summary</value></data>
-    <data name="C_Feedback_SummaryPlaceholder"><value>Summarize the issue or suggestion in one sentence</value></data>
-    <data name="C_Feedback_ContactEmail"><value>Contact email (optional)</value></data>
-    <data name="C_Feedback_ContactEmailPlaceholder"><value>Used only if we need to reply</value></data>
-    <data name="C_Feedback_CrashReport"><value>Crash report</value></data>
-    <data name="C_Feedback_Expected"><value>Expected behavior</value></data>
-    <data name="C_Feedback_ExpectedPlaceholder"><value>Describe what you expected to happen</value></data>
-    <data name="C_Feedback_Actual"><value>Actual result</value></data>
-    <data name="C_Feedback_ActualPlaceholder"><value>Describe what actually happened</value></data>
-    <data name="C_Feedback_Reproduce"><value>Steps to reproduce</value></data>
-    <data name="C_Feedback_ReproducePlaceholder"><value>1. First...&#10;2. Then...&#10;3. ...</value></data>
-    <data name="C_Feedback_Motivation"><value>Background and motivation</value></data>
-    <data name="C_Feedback_MotivationPlaceholder"><value>Why is this needed? What situation would it help with</value></data>
-    <data name="C_Feedback_Request"><value>Feature or improvement requested</value></data>
-    <data name="C_Feedback_RequestPlaceholder"><value>Describe the desired feature, workflow, or experience improvement as specifically as possible</value></data>
-    <data name="C_Feedback_DiagnosticNotice"><value>A redacted ZIP attachment equivalent to Export diagnostic data is generated and uploaded automatically when you submit, to help investigate the issue</value></data>
-    <data name="C_Feedback_Cancel"><value>Cancel feedback</value></data>
-    <data name="C_Feedback_Submit"><value>Submit feedback</value></data>
-    <data name="M_Feedback_Required"><value>Fill in all required fields before submitting feedback</value></data>
-    <data name="M_Feedback_InvalidEmail"><value>Enter a valid contact email or leave it blank</value></data>
-    <data name="M_Feedback_Success"><value>Feedback submitted. Thank you for your help</value></data>
-    <data name="M_Feedback_DiagnosticTooLarge"><value>The diagnostic ZIP exceeds the upload limit, so feedback was not submitted. Clear logs and try again, or use GitHub</value></data>
-    <data name="M_Feedback_Failed"><value>Feedback submission failed. Try again later or use GitHub</value></data>
-  <data name="C_TransferFileExport" xml:space="preserve"><value>Export to file</value></data>
-  <data name="C_TransferFileImport" xml:space="preserve"><value>Import from file</value></data>
-  <data name="C_TransferQuickQrExport" xml:space="preserve"><value>Quick QR export to another device</value></data>
-  <data name="C_TransferOfflineQrExport" xml:space="preserve"><value>Offline QR export to another device</value></data>
-  <data name="C_TransferSessionCodeExport" xml:space="preserve"><value>Session-code export to another device</value></data>
-  <data name="C_TransferQuickQrImport" xml:space="preserve"><value>Quick QR import</value></data>
-  <data name="C_TransferOfflineQrImport" xml:space="preserve"><value>Offline QR import</value></data>
-  <data name="C_TransferSessionCodeImport" xml:space="preserve"><value>Session-code import</value></data>
-  <data name="C_TransferQuickQrTitle" xml:space="preserve"><value>Quick QR transfer</value></data>
-  <data name="C_TransferOfflineQrTitle" xml:space="preserve"><value>Offline QR transfer</value></data>
-  <data name="C_TransferSessionCodeTitle" xml:space="preserve"><value>Session-code transfer</value></data>
-  <data name="C_TransferPortalHint" xml:space="preserve"><value>Scan on another device or open SecRandom Sync to receive the transfer</value></data>
-  <data name="C_TransferStatusFrames" xml:space="preserve"><value>Frame {0} / {1}</value></data>
-  <data name="C_TransferStatusReady" xml:space="preserve"><value>Ready to receive a transfer</value></data>
-  <data name="C_TransferStatusReceiving" xml:space="preserve"><value>Receiving transfer</value></data>
-  <data name="C_TransferStatusWaitingForQr" xml:space="preserve"><value>Waiting for camera to scan QR code</value></data>
-  <data name="C_TransferStatusReceivingQr" xml:space="preserve"><value>Receiving QR code data</value></data>
-  <data name="C_TransferStatusSending" xml:space="preserve"><value>Sending to other devices</value></data>
-  <data name="C_TransferStatusCompleted" xml:space="preserve"><value>QR code data received</value></data>
-  <data name="C_TransferScanHint" xml:space="preserve"><value>Use the camera to scan the QR code shown on the other device</value></data>
-  <data name="C_TransferOpenCamera" xml:space="preserve"><value>Open camera</value></data>
-  <data name="C_TransferStopCamera" xml:space="preserve"><value>Stop camera</value></data>
-  <data name="M_TransferFailed" xml:space="preserve"><value>Transfer failed: {0}</value></data>
-  <data name="M_TransferWrongContent" xml:space="preserve"><value>The received transfer does not match this operation</value></data>
-  <data name="C_TransferCopyAddress" xml:space="preserve"><value>Copy address</value></data>
-  <data name="C_TransferSessionCodeLabel" xml:space="preserve"><value>Session code</value></data>
-  <data name="C_TransferFrames" xml:space="preserve"><value>Transfer frames</value></data>
-  <data name="C_TransferSpeed" xml:space="preserve"><value>Transfer speed</value></data>
-  <data name="C_TransferSize" xml:space="preserve"><value>Data size</value></data>
-  <data name="C_TransferSession" xml:space="preserve"><value>Session</value></data>
-  <data name="C_TransferStatus" xml:space="preserve"><value>Status</value></data>
-  <data name="C_TransferFramesPerSecond" xml:space="preserve"><value>{0:F1} frames/s</value></data>
-  <data name="C_TransferLocal" xml:space="preserve"><value>Local</value></data>
-  <data name="C_TransferProgress" xml:space="preserve"><value>Transfer progress</value></data>
-  <data name="C_TransferReceived" xml:space="preserve"><value>Received / total size</value></data>
-  <data name="C_TransferFramesDetail" xml:space="preserve"><value>New / duplicate / invalid</value></data>
-  <data name="C_TransferElapsed" xml:space="preserve"><value>Elapsed</value></data>
-  <data name="C_TransferExportHint" xml:space="preserve"><value>Scan the displayed QR code on another device to receive the transfer</value></data>
-  <data name="C_TransferCameraOne" xml:space="preserve"><value>Camera 1</value></data>
-  <data name="C_TransferCameraTwo" xml:space="preserve"><value>Camera 2</value></data>
-    <data name="Account_NotSignedIn" xml:space="preserve">
+  <data name="C_MoreOptions_Feedback">
+    <value>Feedback</value>
+  </data>
+  <data name="C_Announcements">
+    <value>Announcements</value>
+  </data>
+  <data name="C_Feedback_Title">
+    <value>Feedback</value>
+  </data>
+  <data name="C_Feedback_CloseTemporary">
+    <value>Close for now</value>
+  </data>
+  <data name="C_Feedback_Bug">
+    <value>Bug</value>
+  </data>
+  <data name="C_Feedback_Feature">
+    <value>Feature / experience improvement</value>
+  </data>
+  <data name="C_Feedback_Summary">
+    <value>Summary</value>
+  </data>
+  <data name="C_Feedback_SummaryPlaceholder">
+    <value>Summarize the issue or suggestion in one sentence</value>
+  </data>
+  <data name="C_Feedback_ContactEmail">
+    <value>Contact email (optional)</value>
+  </data>
+  <data name="C_Feedback_ContactEmailPlaceholder">
+    <value>Used only if we need to reply</value>
+  </data>
+  <data name="C_Feedback_CrashReport">
+    <value>Crash report</value>
+  </data>
+  <data name="C_Feedback_Expected">
+    <value>Expected behavior</value>
+  </data>
+  <data name="C_Feedback_ExpectedPlaceholder">
+    <value>Describe what you expected to happen</value>
+  </data>
+  <data name="C_Feedback_Actual">
+    <value>Actual result</value>
+  </data>
+  <data name="C_Feedback_ActualPlaceholder">
+    <value>Describe what actually happened</value>
+  </data>
+  <data name="C_Feedback_Reproduce">
+    <value>Steps to reproduce</value>
+  </data>
+  <data name="C_Feedback_ReproducePlaceholder">
+    <value>1. First...
+2. Then...
+3. ...</value>
+  </data>
+  <data name="C_Feedback_Motivation">
+    <value>Background and motivation</value>
+  </data>
+  <data name="C_Feedback_MotivationPlaceholder">
+    <value>Why is this needed? What situation would it help with</value>
+  </data>
+  <data name="C_Feedback_Request">
+    <value>Feature or improvement requested</value>
+  </data>
+  <data name="C_Feedback_RequestPlaceholder">
+    <value>Describe the desired feature, workflow, or experience improvement as specifically as possible</value>
+  </data>
+  <data name="C_Feedback_DiagnosticNotice">
+    <value>A redacted ZIP attachment equivalent to Export diagnostic data is generated and uploaded automatically when you submit, to help investigate the issue</value>
+  </data>
+  <data name="C_Feedback_Cancel">
+    <value>Cancel feedback</value>
+  </data>
+  <data name="C_Feedback_Submit">
+    <value>Submit feedback</value>
+  </data>
+  <data name="M_Feedback_Required">
+    <value>Fill in all required fields before submitting feedback</value>
+  </data>
+  <data name="M_Feedback_InvalidEmail">
+    <value>Enter a valid contact email or leave it blank</value>
+  </data>
+  <data name="M_Feedback_Success">
+    <value>Feedback submitted. Thank you for your help</value>
+  </data>
+  <data name="M_Feedback_DiagnosticTooLarge">
+    <value>The diagnostic ZIP exceeds the upload limit, so feedback was not submitted. Clear logs and try again, or use GitHub</value>
+  </data>
+  <data name="M_Feedback_Failed">
+    <value>Feedback submission failed. Try again later or use GitHub</value>
+  </data>
+  <data name="C_TransferFileExport" xml:space="preserve">
+    <value>Export to file</value>
+  </data>
+  <data name="C_TransferFileImport" xml:space="preserve">
+    <value>Import from file</value>
+  </data>
+  <data name="C_TransferQuickQrExport" xml:space="preserve">
+    <value>Quick QR export to another device</value>
+  </data>
+  <data name="C_TransferOfflineQrExport" xml:space="preserve">
+    <value>Offline QR export to another device</value>
+  </data>
+  <data name="C_TransferSessionCodeExport" xml:space="preserve">
+    <value>Session-code export to another device</value>
+  </data>
+  <data name="C_TransferQuickQrImport" xml:space="preserve">
+    <value>Quick QR import</value>
+  </data>
+  <data name="C_TransferOfflineQrImport" xml:space="preserve">
+    <value>Offline QR import</value>
+  </data>
+  <data name="C_TransferSessionCodeImport" xml:space="preserve">
+    <value>Session-code import</value>
+  </data>
+  <data name="C_TransferQuickQrTitle" xml:space="preserve">
+    <value>Quick QR transfer</value>
+  </data>
+  <data name="C_TransferOfflineQrTitle" xml:space="preserve">
+    <value>Offline QR transfer</value>
+  </data>
+  <data name="C_TransferSessionCodeTitle" xml:space="preserve">
+    <value>Session-code transfer</value>
+  </data>
+  <data name="C_TransferPortalHint" xml:space="preserve">
+    <value>Scan on another device or open SecRandom Sync to receive the transfer</value>
+  </data>
+  <data name="C_TransferStatusFrames" xml:space="preserve">
+    <value>Frame {0} / {1}</value>
+  </data>
+  <data name="C_TransferStatusReady" xml:space="preserve">
+    <value>Ready to receive a transfer</value>
+  </data>
+  <data name="C_TransferStatusReceiving" xml:space="preserve">
+    <value>Receiving transfer</value>
+  </data>
+  <data name="C_TransferStatusWaitingForQr" xml:space="preserve">
+    <value>Waiting for camera to scan QR code</value>
+  </data>
+  <data name="C_TransferStatusReceivingQr" xml:space="preserve">
+    <value>Receiving QR code data</value>
+  </data>
+  <data name="C_TransferStatusSending" xml:space="preserve">
+    <value>Sending to other devices</value>
+  </data>
+  <data name="C_TransferStatusCompleted" xml:space="preserve">
+    <value>QR code data received</value>
+  </data>
+  <data name="C_TransferScanHint" xml:space="preserve">
+    <value>Use the camera to scan the QR code shown on the other device</value>
+  </data>
+  <data name="C_TransferOpenCamera" xml:space="preserve">
+    <value>Open camera</value>
+  </data>
+  <data name="C_TransferStopCamera" xml:space="preserve">
+    <value>Stop camera</value>
+  </data>
+  <data name="M_TransferFailed" xml:space="preserve">
+    <value>Transfer failed: {0}</value>
+  </data>
+  <data name="M_TransferWrongContent" xml:space="preserve">
+    <value>The received transfer does not match this operation</value>
+  </data>
+  <data name="C_TransferCopyAddress" xml:space="preserve">
+    <value>Copy address</value>
+  </data>
+  <data name="C_TransferSessionCodeLabel" xml:space="preserve">
+    <value>Session code</value>
+  </data>
+  <data name="C_TransferFrames" xml:space="preserve">
+    <value>Transfer frames</value>
+  </data>
+  <data name="C_TransferSpeed" xml:space="preserve">
+    <value>Transfer speed</value>
+  </data>
+  <data name="C_TransferSize" xml:space="preserve">
+    <value>Data size</value>
+  </data>
+  <data name="C_TransferSession" xml:space="preserve">
+    <value>Session</value>
+  </data>
+  <data name="C_TransferStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="C_TransferFramesPerSecond" xml:space="preserve">
+    <value>{0:F1} frames/s</value>
+  </data>
+  <data name="C_TransferLocal" xml:space="preserve">
+    <value>Local</value>
+  </data>
+  <data name="C_TransferProgress" xml:space="preserve">
+    <value>Transfer progress</value>
+  </data>
+  <data name="C_TransferReceived" xml:space="preserve">
+    <value>Received / total size</value>
+  </data>
+  <data name="C_TransferFramesDetail" xml:space="preserve">
+    <value>New / duplicate / invalid</value>
+  </data>
+  <data name="C_TransferElapsed" xml:space="preserve">
+    <value>Elapsed</value>
+  </data>
+  <data name="C_TransferExportHint" xml:space="preserve">
+    <value>Scan the displayed QR code on another device to receive the transfer</value>
+  </data>
+  <data name="C_TransferCameraOne" xml:space="preserve">
+    <value>Camera 1</value>
+  </data>
+  <data name="C_TransferCameraTwo" xml:space="preserve">
+    <value>Camera 2</value>
+  </data>
+  <data name="Account_NotSignedIn" xml:space="preserve">
         <value>Not signed in</value>
     </data>
-    <data name="Account_SignedIn" xml:space="preserve">
+  <data name="Account_SignedIn" xml:space="preserve">
         <value>Signed in</value>
     </data>
-    <data name="Account_InfoUnavailable" xml:space="preserve">
+  <data name="Account_InfoUnavailable" xml:space="preserve">
         <value>Account information is temporarily unavailable</value>
     </data>
-    <data name="Account_SignIn" xml:space="preserve">
+  <data name="Account_SignIn" xml:space="preserve">
         <value>Sign in</value>
     </data>
   <data name="Account_SignOut" xml:space="preserve">
     <value>Sign out</value>
   </data>
-  <data name="Account_UserIdLabel" xml:space="preserve"><value>User ID</value></data>
-  <data name="Account_EmailLabel" xml:space="preserve"><value>Email</value></data>
-  <data name="Account_CopyUserId" xml:space="preserve"><value>Copy user ID</value></data>
-  <data name="Account_CopyEmail" xml:space="preserve"><value>Copy email</value></data>
-  <data name="Account_Copied" xml:space="preserve"><value>Copied</value></data>
-  <data name="Account_CopyFailed" xml:space="preserve"><value>Copy failed</value></data>
+  <data name="Account_UserIdLabel" xml:space="preserve">
+    <value>User ID</value>
+  </data>
+  <data name="Account_EmailLabel" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Account_CopyUserId" xml:space="preserve">
+    <value>Copy user ID</value>
+  </data>
+  <data name="Account_CopyEmail" xml:space="preserve">
+    <value>Copy email</value>
+  </data>
+  <data name="Account_Copied" xml:space="preserve">
+    <value>Copied</value>
+  </data>
+  <data name="Account_CopyFailed" xml:space="preserve">
+    <value>Copy failed</value>
+  </data>
 </root>

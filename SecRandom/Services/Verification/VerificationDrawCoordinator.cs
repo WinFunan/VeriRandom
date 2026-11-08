@@ -45,6 +45,7 @@ public sealed class VerificationDrawCoordinator(
         DrawProofExportContext exportContext,
         Guid? parentProofId = null,
         string courseName = "",
+        string? historyGroup = null,
         CancellationToken cancellationToken = default)
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
@@ -53,7 +54,7 @@ public sealed class VerificationDrawCoordinator(
         VerificationDrawInput input;
         try
         {
-            input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules, rosterDigest);
+            input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules, rosterDigest, historyGroup);
         }
         catch (NoEligibleCandidatesException exception)
         {
@@ -75,6 +76,7 @@ public sealed class VerificationDrawCoordinator(
         IReadOnlyDictionary<string, int> temporaryCounts,
         IReadOnlyCollection<Prize> prizes,
         DrawProofExportContext exportContext,
+        string? historyGroup = null,
         CancellationToken cancellationToken = default)
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
@@ -83,7 +85,7 @@ public sealed class VerificationDrawCoordinator(
         VerificationDrawInput input;
         try
         {
-            input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules, rosterDigest);
+            input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules, rosterDigest, historyGroup);
         }
         catch (NoEligibleCandidatesException exception)
         {

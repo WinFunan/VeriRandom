@@ -68,4 +68,7 @@ namespace SecRandom.Langs.MainPages.RollCall {
         public static string C_SettingsDigestBadgeTipFormat => ResourceManager.GetString("C_SettingsDigestBadgeTipFormat", resourceCulture);
         public static string C_SignedPolicyBadgeTipFormat => ResourceManager.GetString("C_SignedPolicyBadgeTipFormat", resourceCulture);
     }
+
+        public static string O_HistoryGroup => ResourceManager.GetString("O_HistoryGroup", resourceCulture);
+        public static string O_HistoryGroupDefault => ResourceManager.GetString("O_HistoryGroupDefault", resourceCulture);
 }

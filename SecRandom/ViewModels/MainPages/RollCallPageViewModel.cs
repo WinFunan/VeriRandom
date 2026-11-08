@@ -46,6 +46,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 {
     private static string AllGroupsOption => SR.O_AllGroups;
     private static string AllGendersOption => SR.O_AllGenders;
+    private static string DefaultHistoryGroupOption => SR.O_HistoryGroupDefault;
 
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
@@ -61,6 +62,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly RollCallDrawService _rollCallDrawService;
     private readonly NotificationService? _notificationService;
+    private readonly IHistoryGroupCatalog _historyGroupCatalog;
     private readonly FileSystemWatcher? _studentListWatcher;
     private List<Student> _lastResultStudents = [];
     private int _studentIdPadWidth;
@@ -73,6 +75,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _selectedGroup = AllGroupsOption;
     [ObservableProperty] private string _selectedGender = AllGendersOption;
+    [ObservableProperty] private string _selectedHistoryGroup = DefaultHistoryGroupOption;
     [ObservableProperty] private int _drawCount = 1;
     [ObservableProperty] private string _statusText = SR.M_Ready;
     [ObservableProperty] private bool _isResultVisible;
@@ -92,6 +95,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
         RollCallDrawService rollCallDrawService,
+        IHistoryGroupCatalog historyGroupCatalog,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         DrawAudioService? drawAudioService = null,
         NotificationService? notificationService = null)
@@ -108,6 +112,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _rollCallDrawService = rollCallDrawService;
+        _historyGroupCatalog = historyGroupCatalog;
         _voiceAnnouncementService = voiceAnnouncementService;
         _drawAudioService = drawAudioService;
         _notificationService = notificationService;
@@ -124,6 +129,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         Config.RollCallSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.DefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.MoreSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.General.HistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged += SettingsOnPropertyChanged;
 
         // 分离签名既不写 settings.json 也不写本页的任何配置子树，所以上面那几条配置订阅收不到
@@ -222,6 +228,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public ObservableCollection<string> StudentListNames { get; } = [];
     public ObservableCollection<string> GroupOptions { get; } = [AllGroupsOption];
     public ObservableCollection<string> GenderOptions { get; } = [AllGendersOption];
+    public ObservableCollection<string> HistoryGroupOptions { get; } = [DefaultHistoryGroupOption];
     public ObservableCollection<RollCallResultItem> ResultItems { get; } = [];
     public ObservableCollection<RollCallRemainingItem> RemainingItems { get; } = [];
 
@@ -241,6 +248,17 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     // 结果浮窗是桌面窗口：手机和平板把结果留在主界面里显示，所以只由这个标志决定按钮是否出现。
     public bool SupportsResultWindow => App.IsDesktop;
+    /// <summary>
+    ///     记录组选择器是否出现：既要功能开关打开，也要这一页的显隐开关打开。
+    /// </summary>
+    /// <remarks>
+    ///     功能开关落在 <c>General.HistoryGroups.Enabled</c>（设备功能总闸），显隐开关落在
+    ///     <c>MoreSettings</c>（与「范围/性别选择器」同一族，属于主页面布局偏好）。用派生属性而不是
+    ///     手写 <c>IsVisible</c> 转换器，是为了让移动端复用同一份 VM 时自动一致。
+    /// </remarks>
+    public bool IsHistoryGroupSelectorVisible =>
+        Config.General.HistoryGroups.Enabled && MoreSettings.RollCallHistoryGroupSelector;
+
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0);
@@ -289,6 +307,28 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
+    /// <summary>
+    ///     本次抽取要读写的记录组；<see langword="null" /> 表示不做组隔离（看全部历史）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         三态语义：<see langword="null" /> = 不按组过滤（功能关闭或本页选择器隐藏时的旧行为）；
+    ///         空串 = 「默认记录组」，即 <c>HistoryItem.HistoryGroup</c> 为空串的未分组记录；
+    ///         其余 = 该组的记录。空串与 <see langword="null" /> 必须分开，否则「默认记录组」这个
+    ///         选项会把已分组记录也算进来，标签就成了假话。
+    ///     </para>
+    ///     <para>
+    ///         这里刻意把「选择器当前不可见」也算成 <see langword="null" />：功能总闸被关掉、或本页
+    ///         显隐开关被关掉之后，隐藏起来的选择器不可能再被用户看见，这时若继续沿用内存里残留的
+    ///         旧选择，抽取就会静默落进一个用户以为已经失效的组——这是这个功能最容易出的
+    ///         「静默写错地方」，所以在唯一取值点上兜住。
+    ///     </para>
+    /// </remarks>
+    private string? CurrentHistoryGroup =>
+        IsHistoryGroupSelectorVisible
+            ? SelectedHistoryGroup == DefaultHistoryGroupOption ? string.Empty : SelectedHistoryGroup
+            : null;
+
     partial void OnSelectedStudentListNameChanged(string value)
     {
         if (!string.IsNullOrWhiteSpace(value) && !_isApplyingSelectionRefresh)
@@ -313,6 +353,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     partial void OnSelectedGenderChanged(string value)
     {
+        RefreshCounts();
+    }
+
+    partial void OnSelectedHistoryGroupChanged(string value)
+    {
+        // 组选择是纯界面状态：不写配置、不触发验证、只刷新计数与剩余名单。
+        // 「换组即改权重」全靠这一条路径，所以这里绝不能顺手 Save()。
         RefreshCounts();
     }
 
@@ -429,6 +476,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         }
 
         var count = Math.Clamp(DrawCount, 1, candidates.Count);
+        // 记录组与候选池同一刻冻结：候选用的是这一刻的组，记录也要落进同一个组，
+        // 否则中途切组会让「按 A 组权重抽出来的人写进 B 组记录」。
+        var historyGroup = CurrentHistoryGroup;
         SetDrawCommandRunning(true);
         try
         {
@@ -441,7 +491,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
             var courseName = _linkageDrawCoordinator.GetCourseName();
             var drawTask = _rollCallDrawService.DrawAsync(new RollCallDrawRequest(
-                SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, count, courseName));
+                SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, count, courseName, historyGroup));
             var previewTask = ShowPreviewAsync(candidates, count, MusicSettings.AnimationMusic);
             List<Student> drawnStudents;
             try
@@ -683,6 +733,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         Config.RollCallSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.General.HistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
         _studentListWatcher?.Dispose();
     }
@@ -733,6 +784,15 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         {
             OnPropertyChanged(nameof(IsControlPanelOnLeft));
             OnPropertyChanged(nameof(IsControlPanelOnRight));
+        }
+
+        if (sender == Config.MoreSettings || sender == Config.General.HistoryGroups)
+        {
+            // 选择器显隐会改变「当前生效的组」的含义（隐藏即不做组隔离），所以两种开关变化
+            // 都要重算派生属性、刷新可选组与计数。
+            OnPropertyChanged(nameof(IsHistoryGroupSelectorVisible));
+            RefreshHistoryGroupOptions();
+            RefreshCounts();
         }
 
         if (IsResultVisible)
@@ -850,11 +910,47 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         var students = GetVisibleStudents().ToList();
         ReplaceOptions(GroupOptions, AllGroupsOption, students.Select(s => s.Group));
         ReplaceOptions(GenderOptions, AllGendersOption, students.Select(s => s.Gender));
+        RefreshHistoryGroupOptions();
 
         if (!GroupOptions.Contains(SelectedGroup))
             SelectedGroup = AllGroupsOption;
         if (!GenderOptions.Contains(SelectedGender))
             SelectedGender = AllGendersOption;
+    }
+
+    /// <summary>
+    ///     记录组下拉项 = 默认项 + 当前档案里已存在的记录组。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         组名来自「注册过的组 ∪ 记录上出现过的组名」，因此删掉组登记后旧记录仍会作为选项出现，
+    ///         不会让用户手里只剩一个看不到数据的空组。
+    ///     </para>
+    ///     <para>
+    ///         选中项在刷新后仍然存在就保留，否则回落到默认项——但仅在选择器可见时才回写，
+    ///         免得功能关闭期间把用户的选择悄悄清掉。
+    ///     </para>
+    /// </remarks>
+    private void RefreshHistoryGroupOptions()
+    {
+        if (!IsHistoryGroupSelectorVisible)
+            return;
+
+        IReadOnlyList<string> groups;
+        try
+        {
+            groups = _historyGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall);
+        }
+        catch (Exception exception)
+        {
+            // 组目录读不出来时只降级成「只有默认项」，不能连主页面都打不开。
+            _logger.LogWarning(exception, "读取点名历史记录组失败。");
+            return;
+        }
+
+        ReplaceOptions(HistoryGroupOptions, DefaultHistoryGroupOption, groups);
+        if (!HistoryGroupOptions.Contains(SelectedHistoryGroup))
+            SelectedHistoryGroup = DefaultHistoryGroupOption;
     }
 
     private void RefreshCounts()

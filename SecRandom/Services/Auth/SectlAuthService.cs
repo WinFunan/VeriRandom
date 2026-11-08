@@ -23,17 +23,13 @@ namespace SecRandom.Services.Auth;
 ///     one immediately, so this service must (1) persist the new pair atomically before the new
 ///     access token is used, (2) collapse concurrent refreshes into one flight, and (3) treat a
 ///     rejected refresh token as terminal instead of retrying it in a loop.
-///     The fork adds the cross-border egress consent: SECTL's servers are outside mainland China, so
-///     sign-in, the authorized-request boundary, and the heartbeat all refuse to run until the user
-///     has accepted the cross-border data transfer notice (see <c>SectlTrafficPolicy</c>).
 /// </summary>
 public sealed class SectlAuthService(
     SectlTokenStore tokenStore,
     IHttpClientFactory httpClientFactory,
     DeviceUuidStore deviceUuidStore,
     ILogger<SectlAuthService> logger,
-    // Both are required: the fork's egress gate consults the config handler before any SECTL request,
-    // and upstream's mobile support receives the OAuth redirect through the broker.
+    // Required: the fork's egress gate consults the config handler before any SECTL request.
     MainConfigHandler configHandler,
     IAuthRedirectBrokerFactory redirectBrokerFactory)
 {
@@ -46,18 +42,33 @@ public sealed class SectlAuthService(
     private const string AvatarBucketId = "69cce3720009a343f892";
     private const string BrowserBaseUrl = "https://sectl.cn";
     private const string OAuthScope = "user:read cloud:read cloud:write";
+    private const string OpenIdScope = "openid";
     private static readonly Uri HeartbeatUri = new($"{ApiBaseUrl}/api/oauth/heartbeat");
+    private static readonly Uri IntrospectionUri = new($"{ApiBaseUrl}/api/oauth/introspect");
+    private static readonly Uri DiscoveryUri = new($"{ApiBaseUrl}/.well-known/openid-configuration");
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    /// <summary>Fallback access-token lifetime when the service omits or invalidates <c>expires_in</c>.</summary>
+    /// <summary>
+    ///     Port the desktop loopback redirect is pinned to. The OIDC branch compares the redirect URI
+    ///     character by character and refuses both a custom scheme and a wildcard port, so an
+    ///     OIDC-capable attempt has to come back to one fixed address — the platform registers
+    ///     <c>http://localhost:52831/callback</c> exactly. Binding can still fail (Windows reserves
+    ///     port ranges for Hyper-V/WinNAT), and the loopback broker then falls back to a free port,
+    ///     which only costs the OIDC id_token, never the sign-in itself.
+    /// </summary>
+    public const int OidcRedirectPort = 52831;
+
+    /// <summary>Fallback access-token lifetime when the service omits <c>expires_in</c> entirely.</summary>
     private const int DefaultAccessTokenLifetimeSeconds = 3600;
 
     /// <summary>
-    ///     Refresh token lifetime. It runs from the first authorization and rotation never extends
-    ///     it, so the client stops refreshing — instead of looping against a dead token — once the
-    ///     window is over.
+    ///     Lifetime placeholder for a token that never expires by time. The service keeps
+    ///     <c>ACCESS_TOKEN_TTL_SECONDS = REFRESH_TOKEN_TTL_SECONDS = -1</c> and reports
+    ///     <c>expires_in = 315360000</c> (ten years) purely so a generic OAuth client can still compute
+    ///     a far-away absolute expiry; a token is only ever invalidated by a logout, a revoked refresh
+    ///     family, or a deleted account.
     /// </summary>
-    private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(180);
+    private const int UnlimitedExpiresInSeconds = 315_360_000;
 
     /// <summary>Refresh this long before the access token expires so a request never carries a dying token.</summary>
     private static readonly TimeSpan AccessTokenRefreshLead = TimeSpan.FromMinutes(5);
@@ -73,8 +84,14 @@ public sealed class SectlAuthService(
     ];
 
     private readonly object _refreshGate = new();
+    private readonly object _oidcDiscoveryGate = new();
     private readonly string _tokenPath = tokenStore.Path;
     private Task<SectlRefreshOutcome>? _inflightRefresh;
+    private Task<SectlOidcConfiguration?>? _inflightOidcDiscovery;
+    private SectlOidcConfiguration? _oidcConfiguration;
+    private Task<SectlJwkSet?>? _inflightJwks;
+    private SectlJwkSet? _jwks;
+    private Uri? _jwksUri;
     private SectlToken? _token;
     private int _sessionVersion;
     private bool _initialized;
@@ -91,6 +108,14 @@ public sealed class SectlAuthService(
     /// </summary>
     public bool RequiresReauthorization { get; private set; }
 
+    /// <summary>
+    ///     Why the last <c>id_token</c> was discarded, or <see langword="null" /> when it verified (or when
+    ///     the authorization was plain OAuth 2.0 and returned none). A sign-in never fails over this, so this
+    ///     is the only trace of a key set the client could not use — it is surfaced in the log and left for a
+    ///     caller that wants to explain the missing OIDC identity.
+    /// </summary>
+    public SectlIdTokenRejection? LastIdTokenRejection { get; private set; }
+
     public event EventHandler? StateChanged;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -100,7 +125,7 @@ public sealed class SectlAuthService(
 
         try
         {
-            _token = await tokenStore.LoadAsync(cancellationToken).ConfigureAwait(false);
+            _token = DropUnverifiedStoredIdToken(await tokenStore.LoadAsync(cancellationToken).ConfigureAwait(false));
         }
         catch
         {
@@ -136,7 +161,12 @@ public sealed class SectlAuthService(
             if (redirect is null)
                 return;
 
-            await CompleteAuthorizationAsync(redirect, expectedState: null, cancellationToken).ConfigureAwait(false);
+            // A resumed authorization is always a mobile one: the desktop loopback redirect cannot outlive
+            // the process that registered the listener, while the custom scheme is what a reclaimed app is
+            // handed. A custom scheme is never OIDC eligible, so the attempt asked for plain OAuth 2.0 and
+            // no id_token is expected.
+            await CompleteAuthorizationAsync(redirect, expectedState: null, requiresIdToken: false,
+                cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -155,6 +185,11 @@ public sealed class SectlAuthService(
     {
         try
         {
+            // 令牌不按时间过期，会话被服务端结束的唯一方式是撤销；这一层校验只在后台进行，
+            // 启动链路永远不等待它，校验本身失败也不会清掉本地会话。
+            if (!await VerifyStoredSessionAsync(cancellationToken).ConfigureAwait(false))
+                return;
+
             await InitializeAccountDataWithRetryAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
@@ -163,6 +198,63 @@ public sealed class SectlAuthService(
         finally
         {
             StateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    ///     Confirms the stored session is still accepted. Tokens never expire by time, so revocation is
+    ///     the only thing that can end one, and introspection is the endpoint that reports it as
+    ///     <c>active: false</c>. A request that cannot produce an answer keeps the session.
+    /// </summary>
+    private async Task<bool> VerifyStoredSessionAsync(CancellationToken cancellationToken)
+    {
+        var introspection = await IntrospectAsync(cancellationToken).ConfigureAwait(false);
+        if (introspection is null || introspection.Active)
+            return true;
+
+        logger.LogInformation("SECTL 令牌已被撤销，清除本地会话并要求重新授权。");
+        ClearSession("session_revoked", requiresReauthorization: true);
+        StateChanged?.Invoke(this, EventArgs.Empty);
+        return false;
+    }
+
+    /// <summary>
+    ///     Asks the service whether the stored access token is still usable. It is best-effort by
+    ///     design: an unreachable endpoint returns <see langword="null" />, so a flaky network can never
+    ///     be mistaken for a revoked session. The response reports a token that has no time-based end
+    ///     as <c>expires_at: "-1"</c>, which must never be parsed as a date (it would read as 2000-12-31
+    ///     and make a freshly issued token look expired), so the raw value is handed back untouched.
+    /// </summary>
+    public async Task<SectlTokenIntrospection?> IntrospectAsync(CancellationToken cancellationToken = default)
+    {
+        var accessToken = _token?.AccessToken;
+        if (string.IsNullOrWhiteSpace(accessToken))
+            return null;
+
+        try
+        {
+            var payload = new { token = accessToken, client_id = ClientId };
+            using var request = new HttpRequestMessage(HttpMethod.Post, IntrospectionUri)
+            {
+                Content = JsonContent.Create(payload, options: JsonOptions)
+            };
+            request.Headers.UserAgent.ParseAdd(BuildUserAgent());
+            using var response = await httpClientFactory.CreateClient().SendAsync(request, cancellationToken)
+                .ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content
+                .ReadFromJsonAsync<SectlTokenIntrospection>(JsonOptions, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            logger.LogDebug(exception, "SECTL 令牌校验请求失败，保留本地会话。");
+            return null;
         }
     }
 
@@ -200,62 +292,324 @@ public sealed class SectlAuthService(
 
     public async Task SignInAsync(CancellationToken cancellationToken = default)
     {
-        // Fork gate: nothing may leave for SECTL before the cross-border notice is accepted, and nothing may leave
-        // at all while the device-level kill switch is on. The two reasons produce different messages so a user who
-        // already signed the notice is not told to sign it again.
+        // Fork gate: nothing may leave for SECTL before the cross-border notice is accepted, and nothing may
+        // leave at all while the device-level kill switch is on. The two reasons produce different messages so
+        // a user who already signed the notice is not told to sign it again.
         if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
             throw new InvalidOperationException(SectlTrafficPolicy.IsEgressSwitchOff()
                 ? "本版本已禁用所有 SECTL 联网，无法登录账号。"
                 : "尚未同意跨境数据传输须知，已阻止登录 SECTL 账号。");
-
         var verifier = Base64Url(RandomNumberGenerator.GetBytes(32));
         var challenge = Base64Url(SHA256.HashData(Encoding.UTF8.GetBytes(verifier)));
         var state = Base64Url(RandomNumberGenerator.GetBytes(16));
+        var nonce = Base64Url(RandomNumberGenerator.GetBytes(32));
 
-        using var broker = redirectBrokerFactory.Create();
-        var attempt = new AuthRedirectAttempt(broker.CreateRedirectUri(), state, verifier);
+        var broker = redirectBrokerFactory.Create(preferOidcRedirectPort: true);
+        AuthRedirectAttempt attempt;
+        bool requestsOpenId;
+        try
+        {
+            (attempt, requestsOpenId) =
+                await PrepareAttemptAsync(broker, state, verifier, nonce, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpListenerException)
+        {
+            // The pinned port is taken, or it lies inside a range Windows reserves for Hyper-V. Signing
+            // in matters more than the id_token, so this attempt falls back to a free loopback port and
+            // to the OAuth 2.0 flow, which does accept a dynamic port.
+            logger.LogInformation("OIDC 回调端口 {Port} 不可用，改用随机环回端口并走 OAuth 2.0 流程。", OidcRedirectPort);
+            broker.Dispose();
+            broker = redirectBrokerFactory.Create(preferOidcRedirectPort: false);
+            (attempt, requestsOpenId) =
+                await PrepareAttemptAsync(broker, state, verifier, nonce, cancellationToken).ConfigureAwait(false);
+        }
+
+        using (broker)
+        {
+            var authorizeUrl = BuildAuthorizeUrl(attempt, challenge, requestsOpenId);
+            // 桌面与 Android 交给系统浏览器，回调通过 loopback 或自定义 scheme 深链回来；
+            // iOS 用 ASWebAuthenticationSession，回调由该浏览器直接交回。
+            if (!IAppHost.GetService<IAuthBrowser>().TryOpenAuthorization(authorizeUrl))
+                throw new InvalidOperationException("无法打开浏览器。");
+
+            AuthRedirectResult redirect;
+            try
+            {
+                redirect = await broker.WaitForRedirectAsync(attempt, cancellationToken).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                // 授权页被关掉或服务端拒绝了 redirect_uri 时，回调永远不会到达：给用户一个明确的结论，
+                // 而不是让界面一直停在“登录中”。
+                throw new InvalidOperationException("登录超时，请重试。");
+            }
+
+            await CompleteAuthorizationAsync(redirect, state, requestsOpenId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
+
+    private async Task<(AuthRedirectAttempt Attempt, bool RequestsOpenId)> PrepareAttemptAsync(
+        IAuthRedirectBroker broker,
+        string state,
+        string codeVerifier,
+        string nonce,
+        CancellationToken cancellationToken)
+    {
+        var attempt = new AuthRedirectAttempt(broker.CreateRedirectUri(), state, codeVerifier, nonce);
         // The desktop broker starts its loopback listener here; a mobile broker records the attempt,
         // because the redirect may come back to a process that was reclaimed in the meantime.
         await broker.PrepareAsync(attempt, cancellationToken).ConfigureAwait(false);
+        var requestsOpenId =
+            await ShouldRequestOpenIdAsync(attempt.RedirectUri, cancellationToken).ConfigureAwait(false);
+        return (attempt, requestsOpenId);
+    }
 
-        var query = string.Join("&", new Dictionary<string, string>
+    /// <summary>
+    ///     Builds the authorization URL. The browser keeps using the site origin instead of the
+    ///     discovery document's <c>authorization_endpoint</c>: the authorization endpoint authenticates
+    ///     with the site login session, which only exists on the origin the user signed in on.
+    /// </summary>
+    private static string BuildAuthorizeUrl(AuthRedirectAttempt attempt, string codeChallenge,
+        bool requestsOpenId)
+    {
+        var parameters = new Dictionary<string, string>
         {
             ["client_id"] = ClientId,
             ["redirect_uri"] = attempt.RedirectUri,
             ["response_type"] = "code",
-            ["code_challenge"] = challenge,
+            ["code_challenge"] = codeChallenge,
             ["code_challenge_method"] = "S256",
-            ["scope"] = OAuthScope,
-            ["state"] = state
-        }.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
+            ["scope"] = requestsOpenId ? $"{OAuthScope} {OpenIdScope}" : OAuthScope,
+            ["state"] = attempt.State
+        };
+        if (requestsOpenId)
+            parameters["nonce"] = attempt.Nonce ?? string.Empty;
 
-        var authorizeUrl = $"{BrowserBaseUrl}/oauth/authorize?{query}";
-        // 桌面与 Android 交给系统浏览器，回调通过 loopback 或自定义 scheme 深链回来；
-        // iOS 用 ASWebAuthenticationSession，回调由该浏览器直接交回。
-        if (!IAppHost.GetService<IAuthBrowser>().TryOpenAuthorization(authorizeUrl))
-            throw new InvalidOperationException("无法打开浏览器。");
+        var query = string.Join("&",
+            parameters.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
+        return $"{BrowserBaseUrl}/oauth/authorize?{query}";
+    }
 
-        AuthRedirectResult redirect;
+    /// <summary>
+    ///     Decides whether this attempt may ask for the OIDC branch. Two conditions must hold: the
+    ///     redirect URI has to be one OIDC accepts — a registered <c>http</c> loopback URI on the pinned
+    ///     port, because a custom scheme or a wildcard/dynamic port is refused by the authorization
+    ///     endpoint — and the discovery document has to advertise <c>openid</c>. A discovery failure
+    ///     therefore falls back to plain OAuth 2.0 instead of blocking the sign-in.
+    /// </summary>
+    private async Task<bool> ShouldRequestOpenIdAsync(string redirectUri, CancellationToken cancellationToken)
+    {
+        if (!IsOidcEligibleRedirect(redirectUri))
+            return false;
+
+        var configuration = await TryGetOidcConfigurationAsync(cancellationToken).ConfigureAwait(false);
+        return configuration?.SupportsOpenId == true;
+    }
+
+    internal static bool IsOidcEligibleRedirect(string redirectUri) =>
+        Uri.TryCreate(redirectUri, UriKind.Absolute, out var uri)
+        && uri.Scheme == Uri.UriSchemeHttp
+        && IsLoopbackHost(uri.Host)
+        && uri.Port == OidcRedirectPort;
+
+    private static bool IsLoopbackHost(string host) =>
+        string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(host, "127.0.0.1", StringComparison.Ordinal)
+        || string.Equals(host, "[::1]", StringComparison.Ordinal)
+        || string.Equals(host, "::1", StringComparison.Ordinal);
+
+    private Task<SectlOidcConfiguration?> TryGetOidcConfigurationAsync(CancellationToken cancellationToken)
+    {
+        lock (_oidcDiscoveryGate)
+        {
+            if (_oidcConfiguration is not null)
+                return Task.FromResult<SectlOidcConfiguration?>(_oidcConfiguration);
+
+            return _inflightOidcDiscovery ??= FetchOidcConfigurationAsync();
+        }
+    }
+
+    private async Task<SectlOidcConfiguration?> FetchOidcConfigurationAsync()
+    {
         try
         {
-            redirect = await broker.WaitForRedirectAsync(attempt, cancellationToken).ConfigureAwait(false);
+            using var request = new HttpRequestMessage(HttpMethod.Get, DiscoveryUri);
+            request.Headers.UserAgent.ParseAdd(BuildUserAgent());
+            using var response = await httpClientFactory.CreateClient().SendAsync(request).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var configuration = await response.Content
+                .ReadFromJsonAsync<SectlOidcConfiguration>(JsonOptions).ConfigureAwait(false);
+            lock (_oidcDiscoveryGate)
+            {
+                _oidcConfiguration = configuration;
+            }
+
+            return configuration;
         }
-        catch (TimeoutException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            // 授权页被关掉或服务端拒绝了 redirect_uri 时，回调永远不会到达：给用户一个明确的结论，
-            // 而不是让界面一直停在“登录中”。
-            throw new InvalidOperationException("登录超时，请重试。");
+            logger.LogDebug(exception, "读取 SECTL OIDC 发现文档失败，本次授权走 OAuth 2.0 流程。");
+            return null;
+        }
+        finally
+        {
+            lock (_oidcDiscoveryGate)
+            {
+                _inflightOidcDiscovery = null;
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Whether this client may follow a metadata address the discovery document names. The document is
+    ///     fetched over HTTPS from the fixed API host, but <c>jwks_uri</c> comes <em>from</em> it, so a plain
+    ///     HTTP key set on a public host would let anyone on the path substitute signing keys.
+    /// </summary>
+    private static bool IsAllowedMetadataUri(Uri uri) =>
+        uri.Scheme == Uri.UriSchemeHttps || (uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback);
+
+    /// <summary>
+    ///     Reads the published key set, cached for the process and fetched once at a time. A cached set is
+    ///     reused while the document keeps naming the same <c>jwks_uri</c>; keys are never written to disk,
+    ///     so a rotated key set cannot outlive the process.
+    /// </summary>
+    private Task<SectlJwkSet?> TryGetJwksAsync(Uri jwksUri, bool forceRefresh)
+    {
+        lock (_oidcDiscoveryGate)
+        {
+            if (!forceRefresh && _jwks is not null && Equals(_jwksUri, jwksUri))
+                return Task.FromResult<SectlJwkSet?>(_jwks);
+            if (!forceRefresh && _inflightJwks is not null)
+                return _inflightJwks;
+
+            return _inflightJwks = FetchJwksAsync(jwksUri);
+        }
+    }
+
+    private async Task<SectlJwkSet?> FetchJwksAsync(Uri jwksUri)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, jwksUri);
+            request.Headers.UserAgent.ParseAdd(BuildUserAgent());
+            using var response = await httpClientFactory.CreateClient().SendAsync(request).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var keySet = await response.Content
+                .ReadFromJsonAsync<SectlJwkSet>(JsonOptions).ConfigureAwait(false);
+            if (keySet?.Keys is null || keySet.Keys.Length == 0)
+                return null;
+
+            lock (_oidcDiscoveryGate)
+            {
+                _jwks = keySet;
+                _jwksUri = jwksUri;
+            }
+
+            return keySet;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogDebug(exception, "读取 SECTL OIDC 公钥集失败，本次不校验 id_token。");
+            return null;
+        }
+        finally
+        {
+            lock (_oidcDiscoveryGate)
+            {
+                _inflightJwks = null;
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Verifies the <c>id_token</c> the token exchange returned and drops it when it does not verify.
+    ///     Dropping is what this method does by itself, because an unverified claim set must never be stored
+    ///     for a later caller to read; whether that also fails the sign-in is the caller's decision and
+    ///     depends on whether the attempt asked for <c>openid</c> — see
+    ///     <see cref="CompleteAuthorizationAsync" />, which turns a drop into an error when it did.
+    ///     <see cref="LastIdTokenRejection" /> carries the reason.
+    /// </summary>
+    public async Task<SectlToken> VerifyIdTokenAsync(SectlToken token, CancellationToken cancellationToken = default)
+    {
+        LastIdTokenRejection = null;
+        if (string.IsNullOrWhiteSpace(token.IdToken))
+            return token;
+
+        var configuration = await TryGetOidcConfigurationAsync(cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(configuration?.Issuer)
+            || string.IsNullOrWhiteSpace(configuration.JwksUri)
+            || !Uri.TryCreate(configuration.JwksUri, UriKind.Absolute, out var jwksUri)
+            || !IsAllowedMetadataUri(jwksUri))
+            return DropIdToken(token, SectlIdTokenRejection.KeysUnavailable);
+
+        var parameters = new SectlIdTokenValidationParameters(configuration.Issuer, ClientId, token.IdTokenNonce);
+        var keySet = await TryGetJwksAsync(jwksUri, forceRefresh: false).ConfigureAwait(false);
+        var validation = SectlIdTokenValidator.Validate(token.IdToken, keySet, parameters);
+
+        // A key rotation between publishing and signing is the one failure a second look can fix, so an
+        // unknown kid re-reads the key set exactly once instead of rejecting a token the service just issued.
+        if (validation.Rejection == SectlIdTokenRejection.UnknownKeyId)
+        {
+            keySet = await TryGetJwksAsync(jwksUri, forceRefresh: true).ConfigureAwait(false);
+            validation = SectlIdTokenValidator.Validate(token.IdToken, keySet, parameters);
         }
 
-        await CompleteAuthorizationAsync(redirect, state, cancellationToken).ConfigureAwait(false);
+        return validation.IsValid
+            ? token with { IdTokenVerifiedAt = DateTimeOffset.UtcNow }
+            : DropIdToken(token, validation.Rejection ?? SectlIdTokenRejection.InvalidSignature);
+    }
+
+    /// <summary>
+    ///     The message a failed OIDC sign-in shows. It names the concrete reason instead of "登录失败",
+    ///     because the usual cause is a service-side OIDC setting and only the reason tells an operator
+    ///     which one to look at.
+    /// </summary>
+    private static string BuildIdTokenFailureMessage(SectlIdTokenRejection rejection) => rejection == SectlIdTokenRejection.Missing
+        ? "SECTL 未返回 OIDC id_token，登录已中止；请检查服务端的 OIDC 配置。"
+        : $"SECTL 返回的 OIDC id_token 未通过校验（{rejection}），登录已中止。";
+
+    private SectlToken DropIdToken(SectlToken token, SectlIdTokenRejection rejection)
+    {
+        LastIdTokenRejection = rejection;
+        logger.LogWarning("SECTL 返回的 id_token 未通过校验（{Reason}），已丢弃；是否因此中止登录由调用方决定。", rejection);
+        return token with { IdToken = null, IdTokenNonce = null, IdTokenVerifiedAt = null };
+    }
+
+    /// <summary>
+    ///     Drops an <c>id_token</c> read from disk that carries no verification stamp, which is what a token
+    ///     file written by a build before verification existed looks like. The claims are not re-verified here
+    ///     on purpose: an <c>id_token</c> lives about an hour, so re-checking at startup would mostly fail, and
+    ///     fetching the key set on every launch would make a session depend on the network. Dropping is the
+    ///     honest answer — that claim set was never proven — and it costs nothing, because the access token
+    ///     keeps the session and a fresh authorization carries a fresh <c>id_token</c>.
+    /// </summary>
+    private SectlToken? DropUnverifiedStoredIdToken(SectlToken? token)
+    {
+        if (token is null || string.IsNullOrWhiteSpace(token.IdToken) || token.IdTokenVerifiedAt is not null)
+            return token;
+
+        logger.LogInformation("已丢弃上次登录留下的未校验 id_token；登录状态不受影响。");
+        return token with { IdToken = null, IdTokenNonce = null };
     }
 
     /// <summary>
     ///     Exchanges an authorization code for the token pair. <paramref name="expectedState" /> is the
     ///     state this sign-in attempt generated; pass <see langword="null" /> only when the broker has
-    ///     already matched the redirect against the attempt it recorded.
+    ///     already matched the redirect against the attempt it recorded. <paramref name="requiresIdToken" />
+    ///     mirrors whether that attempt asked for <c>openid</c>: once the scope is there, OIDC makes the
+    ///     <c>id_token</c> part of the result, so an absent or unverifiable one fails the sign-in instead of
+    ///     being dropped — a claim set the client asked for and then did not check would be worse than never
+    ///     asking, because it invites callers to trust whatever the service happened to return. When the
+    ///     attempt asked for plain OAuth 2.0 (the service does not advertise OIDC, or the redirect URI is one
+    ///     OIDC refuses), no <c>id_token</c> is expected and this stays non-blocking.
     /// </summary>
-    private async Task CompleteAuthorizationAsync(AuthRedirectResult redirect, string? expectedState,
+    internal async Task CompleteAuthorizationAsync(AuthRedirectResult redirect, string? expectedState,
+        bool requiresIdToken,
         CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(redirect.Error))
@@ -279,11 +633,29 @@ public sealed class SectlAuthService(
         var authorized = issued with
         {
             AccessTokenExpiresAt = authorizedAt.AddSeconds(ResolveAccessTokenLifetime(issued)),
-            // The 180-day refresh window starts here and rotation never moves it.
-            RefreshTokenIssuedAt = authorizedAt
+            RefreshTokenIssuedAt = authorizedAt,
+            // Only an OIDC authorization carries a nonce; keep it beside the id_token so verification can
+            // replay the binding the token claims. The pending check compares it against the `nonce` claim.
+            IdTokenNonce = string.IsNullOrWhiteSpace(issued.IdToken) ? null : redirect.Nonce
         };
-        await tokenStore.SaveAsync(authorized, cancellationToken);
-        SetSession(authorized);
+        // Verifying here rather than at read time keeps one rule: whatever is stored was verified, and a
+        // token that does not verify is dropped instead of being saved for a later caller to trust.
+        var verified = await VerifyIdTokenAsync(authorized, cancellationToken).ConfigureAwait(false);
+        if (requiresIdToken && string.IsNullOrWhiteSpace(verified.IdToken))
+        {
+            // Nothing is stored and no session is set: this attempt asked for an OIDC identity and the
+            // service did not produce a usable one, so the authorization did not succeed. The reason stays
+            // on the instance so the caller can log it or show it.
+            var rejection = LastIdTokenRejection
+                            ?? (string.IsNullOrWhiteSpace(authorized.IdToken)
+                                ? SectlIdTokenRejection.Missing
+                                : SectlIdTokenRejection.InvalidSignature);
+            LastIdTokenRejection = rejection;
+            throw new InvalidOperationException(BuildIdTokenFailureMessage(rejection));
+        }
+
+        await tokenStore.SaveAsync(verified, cancellationToken);
+        SetSession(verified);
         await InitializeAccountDataWithRetryAsync(cancellationToken);
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -313,13 +685,12 @@ public sealed class SectlAuthService(
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         CancellationToken cancellationToken = default)
     {
-        // Account-bound calls reach SECTL's servers, which are outside mainland China, so they are gated by
-        // the cross-border egress consent like every other SECTL path.
+        // Account-bound calls reach SECTL's servers, which are outside mainland China, so they are gated
+        // by the cross-border egress consent like every other SECTL path.
         if (!SectlTrafficPolicy.IsEgressAllowed(configHandler))
             throw new InvalidOperationException(SectlTrafficPolicy.IsEgressSwitchOff()
                 ? "本版本已禁用所有 SECTL 联网，已阻止向 SECTL 发送数据。"
                 : "尚未同意跨境数据传输须知，已阻止向 SECTL 发送数据。");
-
         ArgumentNullException.ThrowIfNull(createRequest);
         var accessToken = await GetUsableAccessTokenAsync(cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(accessToken))
@@ -562,7 +933,6 @@ public sealed class SectlAuthService(
             logger.LogInformation("未同意跨境数据传输须知，已阻止 SECTL 令牌刷新。");
             return SectlRefreshOutcome.Unavailable("cross_border_not_accepted", retryable: true);
         }
-
         var current = _token;
         var refreshToken = current?.RefreshToken;
         if (current is null || string.IsNullOrWhiteSpace(refreshToken))
@@ -574,14 +944,9 @@ public sealed class SectlAuthService(
             return SectlRefreshOutcome.Ended("refresh_token_missing");
         }
 
-        if (current.RefreshTokenIssuedAt is { } issuedAt && DateTimeOffset.UtcNow - issuedAt >= RefreshTokenLifetime)
-        {
-            logger.LogWarning("SECTL refresh token 已满 180 天，无法再轮换，需要重新授权。");
-            ClearSession("refresh_token_expired", requiresReauthorization: true);
-            StateChanged?.Invoke(this, EventArgs.Empty);
-            return SectlRefreshOutcome.Ended("refresh_token_expired");
-        }
-
+        // Tokens never expire by time (`ACCESS_TOKEN_TTL_SECONDS = REFRESH_TOKEN_TTL_SECONDS = -1`), so
+        // no local age check may end the session: a stored pair stays usable until the service revokes
+        // it, which introspection reports and the refresh endpoint answers with `invalid_grant`.
         var sessionVersion = Volatile.Read(ref _sessionVersion);
 
         // Refreshing rotates a single-use token, so the whole read/rotate/write sequence holds a
@@ -843,8 +1208,14 @@ public sealed class SectlAuthService(
     private static bool IsAccessTokenRevoked(string? description) =>
         description is not null && description.Contains("revoked", StringComparison.OrdinalIgnoreCase);
 
-    private static int ResolveAccessTokenLifetime(SectlToken token) =>
-        token.ExpiresIn > 0 ? token.ExpiresIn : DefaultAccessTokenLifetimeSeconds;
+    private static int ResolveAccessTokenLifetime(SectlToken token) => token.ExpiresIn switch
+    {
+        // A negative lifetime is the service's own "never expires" constant; its documented response
+        // already reports ten years instead, so this only guards a client that receives `-1` directly.
+        < 0 => UnlimitedExpiresInSeconds,
+        > 0 => token.ExpiresIn,
+        _ => DefaultAccessTokenLifetimeSeconds
+    };
 
     private static bool IsExpiringWithin(SectlToken token, TimeSpan lead) =>
         token.AccessTokenExpiresAt is { } expiresAt && expiresAt - DateTimeOffset.UtcNow <= lead;
@@ -965,11 +1336,41 @@ public sealed record SectlToken(
     public DateTimeOffset? AccessTokenExpiresAt { get; init; }
 
     /// <summary>
-    ///     When the fixed 180-day refresh window started (the first authorization). Rotation keeps
-    ///     this value, because a rotation never extends the window.
+    ///     When the pair was first authorized. Rotation keeps this value, because a rotation never
+    ///     restarts the session; it is recorded for diagnostics only — the service expires nothing by
+    ///     time, so it no longer bounds how long the client keeps refreshing.
     /// </summary>
     [JsonPropertyName("refresh_token_issued_at")]
     public DateTimeOffset? RefreshTokenIssuedAt { get; init; }
+
+    /// <summary>
+    ///     The OIDC <c>id_token</c> the authorization returned, or <see langword="null" /> for a plain
+    ///     OAuth 2.0 authorization, whenever the service could not sign one, and whenever the token did not
+    ///     verify. It is only ever stored after <see cref="SectlIdTokenValidator" /> accepted its RS256
+    ///     signature, issuer, audience, lifetime, and nonce against the published key set
+    ///     (<see cref="SectlAuthService.VerifyIdTokenAsync" />), so its claims may be read; a token that
+    ///     failed verification is dropped instead of being kept unverified.
+    /// </summary>
+    [JsonPropertyName("id_token")]
+    public string? IdToken { get; init; }
+
+    /// <summary>
+    ///     The <c>nonce</c> sent with the authorization request that produced <see cref="IdToken" />. It is
+    ///     the value verification compares the token's <c>nonce</c> claim against, so it is kept only while
+    ///     the token it belongs to is kept.
+    /// </summary>
+    [JsonPropertyName("id_token_nonce")]
+    public string? IdTokenNonce { get; init; }
+
+    /// <summary>
+    ///     When <see cref="IdToken" /> passed verification. Its only job is to keep the "stored means verified"
+    ///     rule true across builds: a token file written before verification existed has an <c>id_token</c> but
+    ///     no stamp, and <see cref="SectlAuthService.InitializeAsync" /> drops such a claim set on load instead
+    ///     of trusting it — no signature check is repeated at startup, because that would need the key set on
+    ///     every launch and would discard a perfectly good token whenever the network is down.
+    /// </summary>
+    [JsonPropertyName("id_token_verified_at")]
+    public DateTimeOffset? IdTokenVerifiedAt { get; init; }
 }
 
 public sealed record SectlUser(

@@ -32,9 +32,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      # Required to start the iOS workflow below: dispatching another workflow through the
-      # GITHUB_TOKEN needs actions: write.
-      actions: write
     steps:
       - name: Checkout release tag
         uses: actions/checkout@v6
@@ -47,34 +44,6 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event.inputs.release_tag }}
         run: ./scripts/validate-release-metadata.ps1
-
-      # The iOS build is the slowest target and cannot hold the release back, so it runs in the
-      # separate "Build iOS" workflow. Starting it here - before the platform builds - lets both run
-      # in parallel; that workflow waits for the release this run creates and then attaches the IPA
-      # together with a refreshed update manifest and release note.
-      - name: Trigger the iOS build
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
-        run: |
-          set -uo pipefail
-          # Prefer the ref this run was dispatched from, since it carries build_ios.yml; fall back to
-          # the default branch so a tag that predates the workflow file still gets an iOS build.
-          for ref in "${{ github.ref_name }}" "${{ github.event.repository.default_branch }}"; do
-            if [ -z "$ref" ]; then
-              continue
-            fi
-            if gh workflow run build_ios.yml --repo "$GH_REPO" --ref "$ref" -f "release_tag=$RELEASE_TAG"; then
-              echo "Dispatched the iOS build from ref '$ref' for $RELEASE_TAG."
-              exit 0
-            fi
-            echo "Could not dispatch the iOS build from ref '$ref'."
-          done
-          # The release does not depend on iOS: dispatch the workflow by hand and the IPA is still
-          # attached automatically once it finishes.
-          echo "::warning::Could not trigger the iOS build automatically. Run 'gh workflow run build_ios.yml -f release_tag=$RELEASE_TAG' to attach the IPA to the release."
 
   build_desktop:
     name: Build_${{ matrix.os }}_${{ matrix.arch }}

@@ -81,6 +81,24 @@ if (-not [string]::IsNullOrWhiteSpace($InventoryPath)) {
     }
 }
 
+    if (-not $files) {
+        throw "No assets found in $InventoryPath"
+    }
+} else {
+    if (-not (Test-Path $outDir)) {
+        throw "Output directory not found: $outDir"
+    }
+
+    $localFiles = Get-ChildItem -Path $outDir -File | Sort-Object Name
+    if (-not $localFiles) {
+        throw "No files found in $outDir"
+    }
+
+    $files = foreach ($file in $localFiles) {
+        [pscustomobject]@{ Name = $file.Name; Sha256 = (Get-FileHash $file.FullName -Algorithm SHA256).Hash }
+    }
+}
+
 $md5Summary = @"
 > [!important]
 > 请在下方 **Assets** 中下载文件；下载后请核对 SHA256。

@@ -1794,3 +1794,44 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 **外部前提**：`WinFunan/VeriRandom.NewAlgorithm` 需要存在 `v0.1.0` 这条 tag（本地已创建，需推送到远端）。推送前 CI 不会红，只会少这一档并给出 `::warning::`。若该仓库是私有的，`actions/checkout` 步骤要补 `token:` 并授予读权限。
 
 **未做**：`build_ios.yml.disabled` 没有加这一步（该作业当前禁用，恢复 iOS 构建时必须补上）。
+
+---
+
+## 62. 同步上游 3.2.0 树（`93db47a5`）：治理、认证与统计口径
+
+**目标**：把上游 55 个提交（含历史记录组、统一统计入口、OIDC、Edge TTS GEC）并进本分支，但**不让上游的贡献者治理机制覆盖本分支自己的治理文件**，也不让上游改动悄悄打开本分支主动关掉的出网通道。
+
+**治理层（本节的强制约定）**：
+
+| 上游带来 | 本分支处置 | 理由 |
+|---|---|---|
+| 根目录 `CLA.md`（v1.0，2026-11-01） | **保留本分支自己的 `CLA.md`**，不采用上游文本 | 两者路径相同、条款不同；本分支的贡献者协议是独立文件，绝不能被上游同步替换 |
+| `.github/workflows/cla.yml`（CLA Assistant，`pull_request_target` + `contents: write`） | **不采用** | 上游的分支保护与 `cla-signatures` 分支在本仓库不存在；带写权限的 `pull_request_target` 在本仓库只会增加攻击面。签署按 `pull_request_template.md` 的签署声明人工核对 |
+| `.github/CODEOWNERS`（把全仓库指派给上游维护者） | **不采用** | 它指向的是上游的评审人；本仓库是否需要 code-owner 评审、由谁承担，属于本仓库自己的分支保护决定 |
+| `.github/workflows/build_ios.yml`（每次 push 都跑 macOS） | **不采用**，本分支继续用 `build_ios.yml.disabled` | 本分支不发布 IPA，随 push 触发的 iOS 作业只会白烧 macOS 分钟数，并可能与 `publish` 的产物清单冲突 |
+| `metadata.yaml` 的频道 tag | **保留本分支的取值** | 频道 tag 是发布决定，不由上游同步改写 |
+
+**代码层合并口径**：
+
+| 区域 | 处置 |
+|---|---|
+| `.resx` / `Resources.Designer.cs`（39+4 个冲突文件） | 按**键名并集**从两侧 stage 重建：本分支文案优先，上游新增键补齐；132 个 `.resx` 全部通过严格 UTF-8 + XML 解析且无重复键 |
+| `SectlAuthService` | 采用上游的 OIDC / introspection / 回调页重写，再**重新装回本分支的出网闸门**（登录、`SendAuthorizedAsync`、令牌刷新）与 `MainConfigHandler` 构造依赖 |
+| `PlatformUsageReportService` / `PlatformVersionReportService` | 采用上游的 `PlatformStatsApi.ReportUri` 统一入口，同时保留本分支的出网闸门（版本上报虽不受 `OnlineStatusMode` 约束，仍受设备级总开关约束） |
+| `SecuritySettingsConfig` / `SecurityService` / `GeneralSettingsConfig` | 保留 `ProtectRawRandomSettings` 与放宽防护判定，采用上游的 `HistoryGroups` 设置子树与历史组作用域命名 |
+| `DrawEngine.Verification` | 采用上游的 `ToHistoryScopeName`，保留本分支的 `BuildGateEvidence` |
+| `HistoryExportService` | 采用上游的「记录组」列（导出表头/行值），本分支原有的候选优先排序不变 |
+| `GlobalConstants` | 保留本分支的无 tag 回退与 `LooksLikeVersionTag` 校验；不采用上游的 `0.0.0.0` 回退 |
+| 根 `AGENTS.md` | 取并集：补入上游的统计统一入口、历史组三角色作用域、OIDC/TTL、Edge TTS GEC 与 CLA 条目；并注明「`main.rawRandom` 页面已被上游移除、本分支保留」 |
+
+**收口状态**：冲突已全部解决（0 个未合并文件、仓库内无残留冲突标记）。收口时额外做了三件事：
+
+1. **去掉上游的 iOS 派发**：自动合并把 `validate_release` 里 `gh workflow run build_ios.yml` 这一步带了进来，还顺带要求 `actions: write`。本分支不发布 IPA，已把该步骤与权限一并删除（保留 `contents: read`）。
+2. **修复一处真实重复成员**：自动合并把 `SecurityService` 的 Sudo 方法块（`IsSudoModeActive` 起共 9 个成员，约 107 行）复制了两份，会直接 CS0111。已删除第二份并按 9 个成员各一份复核。
+3. **测试合并口径**：测试文件按「等签名」取舍——本分支的构造点补充 `configHandler`（`SectlAuthService` 的出网闸门依赖）保留本分支，上游新增的历史组/统一入口/永不按时间过期等断言采用上游；`GlobalConstantsTests`、`UpdateVersionComparerTests`、`PlatformVersionReportServiceTests` 的 fork 专属断言（无 tag 回退、`Mu` 序号、跨境同意开关）保留本分支。
+
+**CI 密钥审计（本次同步）**：`build_publish.yml` 的 `secrets.*` 集合在合并前后**完全一致**，上游没有新增任何密钥引用；本分支只是多了一条注释形式的 `NEWALGORITHM_TOKEN`（私有算法仓库才需要）。各密钥缺失时的行为仍是本分支既有的降级策略——Android 四个签名密钥缺失时打 debug 签名并 `::warning::`（`ANDROID_SIGNED=false`），Windows/macOS 签名按空值跳过，NuGet 发布步骤被 `if: ${{ false }}` 挡住，`NEWALGORITHM` 检出 `continue-on-error: true`。上游新增的治理型闸门（CLA Assistant、CODEOWNERS、每次 push 的 iOS 作业）都没有进入本分支。唯一的行为性变化是上游从 `NuGet.config` 删掉了 `globalPackagesFolder=.nuget/packages`，本仓库 CI 没有缓存该路径，因此只是本机还原位置回到用户全局缓存。
+
+**顺带发现（非本次回归）**：`ListManagement/{RollCall,LotteryList}`、`Picking`、`Update`、`Debug` 等目录的 `en-US`/`ja-JP` 早于本次同步就缺 42/26/2 条中文键的译文，本次并集合并只是把它们原样保留，未扩大缺口。
+
+

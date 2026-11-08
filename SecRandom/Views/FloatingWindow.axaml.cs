@@ -85,7 +85,10 @@ public partial class FloatingWindow : Window
             if (buttonRegistry is not null)
                 buttonRegistry.Changed -= FloatingWindowButtonRegistry_OnChanged;
         };
-        RefreshItems();
+        
+        var settings = ViewModel.Config.FloatingWindowSettings;
+        ButtonsPanel.Children.Add(GetStartingButton(settings));
+        Dispatcher.UIThread.Post(RefreshItems);
     }
 
     private void FloatingWindowButtonRegistry_OnChanged(object? sender, EventArgs e)
@@ -100,6 +103,9 @@ public partial class FloatingWindow : Window
 
     public void RefreshItems()
     {
+        if (App.Current.IsStopping)
+            return;
+        
         var settings = ViewModel.Config.FloatingWindowSettings;
         ApplyWindowSettings(settings);
         ButtonsPanel.Children.Clear();
@@ -244,6 +250,11 @@ public partial class FloatingWindow : Window
         _wasVisibleBeforeCourseLinkage = false;
     }
 
+    private static Button GetStartingButton(FloatingWindowSettingsConfig settings)
+    {
+        return CreateButton(FluentIcons.ArrowClockwiseRegular, Langs.Common.Resources.Feat_Starting, settings);
+    }
+
     private static Button GetRollCallButton(FloatingWindowSettingsConfig settings)
     {
         var b = CreateButton(FluentIcons.PeopleFilled, Langs.Common.Resources.Feat_RollCall, settings);
@@ -317,7 +328,6 @@ public partial class FloatingWindow : Window
             VerticalContentAlignment = VerticalAlignment.Center
         };
 
-        ToolTip.SetTip(button, label);
         button.Content = displayStyle switch
         {
             1 => new FluentIcon(icon, size * 0.64),

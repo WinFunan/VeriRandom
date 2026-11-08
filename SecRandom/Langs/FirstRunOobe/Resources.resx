@@ -3,11 +3,20 @@
   <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
     <xsd:element name="root" msdata:IsDataSet="true" />
   </xsd:schema>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-  <resheader name="version"><value>1.3</value></resheader>
-  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="PrivacyPolicy" xml:space="preserve"><value>VeriRandom 隐私政策（版本 1）
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PrivacyPolicy" xml:space="preserve">
+    <value>VeriRandom 隐私政策（版本 1）
 
 1. 适用范围与接受；VeriRandom 是面向活动与组织的随机抽取工具；继续使用本软件，即表示您已阅读并接受本隐私政策；本政策不排除适用法律赋予您的权利
 
@@ -17,14 +26,16 @@
 
 4. 在线状态统计；默认关闭；正常上报会参与在线人数统计并包含由公网 IP 推导的粗略位置信息；匿名上报仅计入在线人数，不上传 IP 或地区信息；停止上报则不参与在线状态统计；上报数据同样将被发送给 SecRandom 与 SECTL
 
-5. 选择与变更；以上隐私选项默认关闭，您可以在本页或“设置 > 常规 > 隐私”中随时修改
+5. 选择与变更；以上隐私选项默认关闭，您可以在本页或“设置 &gt; 常规 &gt; 隐私”中随时修改
 
 6. 网络请求；只有在对应选项开启后，应用才会进行相应的遥测或在线状态网络请求；关闭选项后，后续请求将停止
 
 7. 更新与终止；隐私政策发生实质变更时会提高政策版本并要求重新确认；您可随时停止使用本软件
 
-8. 与 GPLv3 的关系；本政策不替代、不限制 GNU GPLv3 对源代码、修改和分发的权利；GNU GPLv3 将另行展示</value></data>
-  <data name="SecRandomPrivacyPolicy" xml:space="preserve"><value>本隐私政策文本引用自 SecRandom v3.0.0 版本；该版本为当前 SecRandom 核心，以及官方二进制文件中内置的正式文本，建议留意其提供方是否发布了政策更新提示
+8. 与 GPLv3 的关系；本政策不替代、不限制 GNU GPLv3 对源代码、修改和分发的权利；GNU GPLv3 将另行展示</value>
+  </data>
+  <data name="SecRandomPrivacyPolicy" xml:space="preserve">
+    <value>本隐私政策文本引用自 SecRandom v3.0.0 版本；该版本为当前 SecRandom 核心，以及官方二进制文件中内置的正式文本，建议留意其提供方是否发布了政策更新提示
 
 SecRandom 隐私政策（版本 1）
 
@@ -36,175 +47,535 @@ SecRandom 隐私政策（版本 1）
 
 4. 在线状态统计；默认关闭；正常上报会参与在线人数统计并包含由公网 IP 推导的粗略位置信息；匿名上报仅计入在线人数，不上传 IP 或地区信息；停止上报则不参与在线状态统计；上报数据同样将被发送给 SecRandom 与 SECTL
 
-5. 选择与变更；以上隐私选项默认关闭，您可以在本页或“设置 > 常规 > 隐私”中随时修改
+5. 选择与变更；以上隐私选项默认关闭，您可以在本页或“设置 &gt; 常规 &gt; 隐私”中随时修改
 
 6. 网络请求；只有在对应选项开启后，应用才会进行相应的遥测或在线状态网络请求；关闭选项后，后续请求将停止
 
 7. 更新与终止；隐私政策发生实质变更时会提高政策版本并要求重新确认；您可随时停止使用本软件
 
-8. 与 GPLv3 的关系；本政策不替代、不限制 GNU GPLv3 对源代码、修改和分发的权利；GNU GPLv3 将另行展示</value></data>
-  <data name="GplNotice" xml:space="preserve"><value>GNU General Public License v3.0（GPLv3）说明
+8. 与 GPLv3 的关系；本政策不替代、不限制 GNU GPLv3 对源代码、修改和分发的权利；GNU GPLv3 将另行展示</value>
+  </data>
+  <data name="GplNotice" xml:space="preserve">
+    <value>GNU General Public License v3.0（GPLv3）说明
 
 VeriRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改和再分发软件，但在分发修改版本时需遵守其 copyleft 条款，包括提供对应源代码并以 GPLv3 许可分发
 
-完整许可证文本以 GNU GPLv3 官方文本为准；本页确认不要求您放弃 GPLv3 赋予的任何权利</value></data>
-  <data name="VerificationNotice" xml:space="preserve"><value>关于可验证抽取
+完整许可证文本以 GNU GPLv3 官方文本为准；本页确认不要求您放弃 GPLv3 赋予的任何权利</value>
+  </data>
+  <data name="VerificationNotice" xml:space="preserve">
+    <value>关于可验证抽取
 
 1. 普通模式会记录候选池、权重、抽取规则、随机材料和结果；它可在离线状态下完成本地抽取并保存可重放证明；联网时，新的抽取会提交给 fair.sectl.cn 独立重放和签名；离线保存或提交失败的历史证明不会自动补传，但可在联网后手动上传到验证网站；签名可发现提交后的证明文件篡改
 
 2. 正式公证模式会先将匿名候选池、权重和规则锁定到 fair.sectl.cn，再由服务端生成随机材料、计算结果并保存不可变官方证明；网络波动、断网、服务不可用、设备故障或其他不可抗力导致未取得服务端完结证明时，不会产生本地替代结果，也不会自动切换模式；服务端确认锁定后，候选池、规则、随机材料和结果均不能在流程中替换、补抽或重算
 
-3. 正式公证可防止本地抽取代码、随机材料和结果文件在已锁定流程中被替换；它仍不能证明现实名单本身完整真实，也不能证明候选池在提交前未被人为筛选</value></data>
-  <data name="C_Title" xml:space="preserve"><value>VeriRandom 初始设置</value></data>
-  <data name="C_Intro" xml:space="preserve"><value>先阅读可验证抽取须知，并完成必要的隐私政策与 GPLv3 确认；其余内容可随时在设置中调整</value></data>
-  <data name="C_WelcomeTitle" xml:space="preserve"><value>欢迎使用 VeriRandom</value></data>
-  <data name="C_WelcomeDescription" xml:space="preserve"><value>接下来将用几步完成首次设置；可验证抽取须知、隐私政策与 GPLv3 确认是必需的，名单、抽奖、外观和桌面集成均可跳过，并可随时在设置中修改</value></data>
-  <data name="C_Language" xml:space="preserve"><value>语言</value></data>
-  <data name="C_LegalTitle" xml:space="preserve"><value>隐私政策与开源许可</value></data>
-  <data name="C_LegalDescription" xml:space="preserve"><value>继续使用前，请先阅读可验证抽取须知，再确认隐私政策与 GNU GPLv3；隐私选项默认关闭，您可以在下方调整</value></data>
-  <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>VeriRandom 隐私政策</value></data>
-  <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>我已阅读并同意 VeriRandom 隐私政策</value></data>
-  <data name="C_SecRandomServicesTitle" xml:space="preserve"><value>SecRandom 在线服务与隐私</value></data>
-  <data name="C_SecRandomServicesClause" xml:space="preserve"><value>若要使用目前软件中集成的在线有关功能，您需要额外与SECTL达成协议许可关系；SECTL组织是一个与我们并没有必然法律关联的独立主体，他们将对您上传的数据获得访问权</value></data><data name="C_SecRandomServicesDisclaimer" xml:space="preserve"><value>使用在线功能，即表示您同意 SecRandom 的服务条款和隐私政策；您与 SECTL 之间形成直接的服务关系，VeriRandom 不是该关系的当事方</value></data>
-  <data name="C_SecRandomServicesAccept" xml:space="preserve"><value>我已阅读并同意上述说明与 SecRandom 隐私政策</value></data><data name="C_SecRandomServicesOptionalNote" xml:space="preserve"><value>（可选）此项在首次设置中不是必选项，因此可以跳过；但当你之后启用数据遥测或在线状态，或切换到“正式公证”模式时，必须补签本确认，且补签必须经过确认弹窗，不能跳过</value></data><data name="C_SecRandomServicesAcceptOptional" xml:space="preserve"><value>（可选）我已阅读并同意上述说明与 SecRandom 隐私政策</value></data><data name="C_TimestampPrivacyNotice" xml:space="preserve"><value>隐私提示：为获取 RFC 3161 时间戳，本软件会将证明摘要等去标识化信息发送给沃通（WoTrus）及其时间戳服务；该信息不包含名单、姓名、学号或抽取结果，仅用于证明该摘要在对应时间点已经存在</value></data><data name="C_CrossBorderTitle" xml:space="preserve"><value>跨境数据传输须知</value></data><data name="C_CrossBorderBody" xml:space="preserve"><value>本软件的部分可选功能会把数据传输到 SecRandom 与 SECTL 的服务器，这些服务器位于中华人民共和国境外（SECTL 当前服务节点位于德国巴伐利亚邦阿多特多夫，具体地址以其官方披露为准），因此启用这些功能会构成个人信息出境；涉及的功能包括抽取证明提交与服务端重放验证、正式公证、在线状态与使用统计上报、版本使用量上报、SECTL 账户登录与其心跳、账户云备份；跨境传输的数据均已去标识化，只包含证明摘要、设备标识、版本号与设备类型等必要信息，不包含名单、姓名、学号或抽取结果；若你所在地区对个人信息出境有额外要求，请自行确认合规性后再启用</value></data><data name="C_CrossBorderOptionalNote" xml:space="preserve"><value>（可选）此项在首次设置中不是必选项；如果不勾选，所有可能向 SECTL 服务器发送数据的功能都会被强制禁用（含 SECTL 账户登录与账户云备份），你可以在之后需要用到这些功能时再补签，补签必须经过确认弹窗</value></data><data name="C_CrossBorderAccept" xml:space="preserve"><value>（可选）我已阅读并同意上述跨境数据传输须知</value></data><data name="C_CrossBorderAcceptRequired" xml:space="preserve"><value>我已阅读并同意上述跨境数据传输须知</value></data><data name="C_CrossBorderConfirm" xml:space="preserve"><value>同意并继续</value></data><data name="C_AttestationTitle" xml:space="preserve"><value>抽取完成后自动提交签名验证</value></data><data name="C_AttestationBody" xml:space="preserve"><value>普通模式的抽取完成后，可以把本次证明自动提交给 SECTL 服务器申请签名与服务端重放验证；提交只发送证明摘要与匿名审计载荷，不发送名单或抽取结果；此选项没有默认值，必须由你主动选择，未选择时不会提交</value></data><data name="O_AttestationOn" xml:space="preserve"><value>提交：抽取完成后自动申请签名与重放验证</value></data><data name="O_AttestationOff" xml:space="preserve"><value>不提交：证明只保存在本机，验证过程完全离线</value></data>
-  <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
-  <data name="C_GplAccept" xml:space="preserve"><value>我已阅读 GNU GPLv3 许可说明</value></data>
-  <data name="C_VerificationNoticeTitle" xml:space="preserve"><value>关于可验证抽取的须知</value></data>
-  <data name="C_VerificationNoticeAccept" xml:space="preserve"><value>我已阅读关于可验证抽取的须知</value></data>
-  <data name="C_DataTitle" xml:space="preserve"><value>导入或选择名单</value></data>
-  <data name="C_DataDescription" xml:space="preserve"><value>可恢复已有的 VeriRandom v3 数据，并选择或导入首次使用的点名名单；跳过不会影响后续使用</value></data>
-  <data name="C_RestoreTitle" xml:space="preserve"><value>恢复已有数据</value></data>
-  <data name="C_RestoreDescription" xml:space="preserve"><value>导入前会检查导出版本，只接受 v3 文件</value></data>
-  <data name="C_ImportSettings" xml:space="preserve"><value>导入 v3 设置</value></data>
-  <data name="C_ImportAllData" xml:space="preserve"><value>导入 v3 全部数据</value></data>
-  <data name="C_RollCallList" xml:space="preserve"><value>点名名单</value></data>
-  <data name="C_RollCallListDescription" xml:space="preserve"><value>选择首次用于点名的名单，也可导入名单文件</value></data>
-  <data name="C_ImportRoster" xml:space="preserve"><value>导入名单</value></data>
-  <data name="C_RefreshList" xml:space="preserve"><value>刷新</value></data>
-  <data name="C_AddList" xml:space="preserve"><value>新建</value></data>
-  <data name="C_RenameList" xml:space="preserve"><value>重命名</value></data>
-  <data name="C_DeleteList" xml:space="preserve"><value>删除</value></data>
-  <data name="C_AddStudentListTitle" xml:space="preserve"><value>新建名单</value></data>
-  <data name="C_AddPrizeListTitle" xml:space="preserve"><value>新建奖品池</value></data>
-  <data name="C_RenameListTitle" xml:space="preserve"><value>重命名名单</value></data>
-  <data name="C_DeleteListTitle" xml:space="preserve"><value>删除名单</value></data>
-  <data name="C_ListNameTitle" xml:space="preserve"><value>名单名称</value></data>
-  <data name="C_ListNamePlaceholder" xml:space="preserve"><value>请输入名称</value></data>
-  <data name="C_DefaultStudentListName" xml:space="preserve"><value>新名单</value></data>
-  <data name="C_DefaultPrizeListName" xml:space="preserve"><value>新奖品池</value></data>
-  <data name="C_LotteryTitle" xml:space="preserve"><value>抽奖功能</value></data>
-  <data name="C_LotteryDescription" xml:space="preserve"><value>关闭后会隐藏抽奖侧栏和浮窗选项，并拒绝抽奖快捷键及外部指令</value></data>
-  <data name="C_LotteryEnabled" xml:space="preserve"><value>启用抽奖</value></data>
-  <data name="C_PrizeImport" xml:space="preserve"><value>导入奖品池</value></data>
-  <data name="C_PrizeList" xml:space="preserve"><value>抽奖名单</value></data>
-  <data name="C_PrizeListDescription" xml:space="preserve"><value>选择首次用于抽奖的名单，也可导入奖品文件</value></data>
-  <data name="C_AppearanceTitle" xml:space="preserve"><value>外观与浮窗</value></data>
-  <data name="C_Theme" xml:space="preserve"><value>主题</value></data>
-  <data name="C_ThemeDescription" xml:space="preserve"><value>选择浅色、深色或跟随系统外观</value></data>
-  <data name="O_ThemeLight" xml:space="preserve"><value>浅色</value></data>
-  <data name="O_ThemeDark" xml:space="preserve"><value>深色</value></data>
-  <data name="O_ThemeAuto" xml:space="preserve"><value>跟随系统</value></data>
-  <data name="C_ThemeColor" xml:space="preserve"><value>主题色</value></data>
-  <data name="C_ThemeColorDescription" xml:space="preserve"><value>使用系统主题色，或选择自定义的应用主题色</value></data>
-  <data name="O_SystemColor" xml:space="preserve"><value>系统主题色</value></data>
-  <data name="O_CustomColor" xml:space="preserve"><value>自定义主题色</value></data>
-  <data name="C_Opacity" xml:space="preserve"><value>浮窗透明度</value></data>
-  <data name="C_OpacityDescription" xml:space="preserve"><value>透明度会在完成设置后应用到浮窗</value></data>
-  <data name="C_DesktopTitle" xml:space="preserve"><value>桌面集成</value></data>
-  <data name="C_DesktopDescription" xml:space="preserve"><value>这些选项会在完成时写入系统；若平台拒绝操作，设置会保持关闭并可稍后重试</value></data>
-  <data name="C_Autostart" xml:space="preserve"><value>开机启动</value></data>
-  <data name="C_AutostartDescription" xml:space="preserve"><value>登录系统后自动启动 VeriRandom</value></data>
-  <data name="C_ShowStartupWindow" xml:space="preserve"><value>启动显示主窗口</value></data>
-  <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>设置软件启动时是否自动显示主窗口</value></data>
-  <data name="C_ExternalIntegration" xml:space="preserve"><value>外部链接与联动</value></data>
-  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>注册 verirandom:// 链接以允许外部程序唤起 VeriRandom</value></data>
-  <data name="C_PrivacyTitle" xml:space="preserve"><value>隐私</value></data>
-    <data name="C_PrivacyDescription" xml:space="preserve"><value>选择应用启动后可发送的诊断和在线状态信息，后续可随时在设置中调整</value></data>
-    <data name="C_PrivacyDataDestination" xml:space="preserve"><value>注意：开启后，相关数据将被发送给 SecRandom（上游项目与其所属组织 SECTL）；本分支不接收这些数据</value></data>
-  <data name="C_ControlTitle" xml:space="preserve"><value>集控</value></data>
-  <data name="C_ControlDescription" xml:space="preserve"><value>开启后这台设备会作为集控节点连入集控平台，可被远程查看状态、锁定抽取并下发抽取；开关与身份保存在本机自己的状态文件里，导入设置不会替您打开它</value></data>
-  <data name="C_ControlRemoteEnabled" xml:space="preserve"><value>允许被远程控制</value></data>
-  <data name="C_ControlRemoteEnabledDescription" xml:space="preserve"><value>这是本机自己的开关，关闭后无论集控平台下发什么命令都不会执行</value></data>
-  <data name="C_ControlDisplayName" xml:space="preserve"><value>显示名称</value></data>
-  <data name="C_ControlDisplayNameDescription" xml:space="preserve"><value>集控平台设备列表里显示的名字；留空则上报主机名</value></data>
-  <data name="C_ControlNodeId" xml:space="preserve"><value>节点 ID</value></data>
-  <data name="C_ControlNodeIdDescription" xml:space="preserve"><value>安装时生成并长期保持不变，在集控平台注册这台设备时用它</value></data>
-  <data name="C_ControlGroupId" xml:space="preserve"><value>所属组 ID</value></data>
-  <data name="C_ControlGroupIdDescription" xml:space="preserve"><value>由集控平台建组后提供；节点必须先在该组注册，否则连接会被拒绝</value></data>
-  <data name="C_ControlPlatform" xml:space="preserve"><value>集控平台</value></data>
-  <data name="C_ControlPlatformDescription" xml:space="preserve"><value>在浏览器中打开集控平台网页控制台，管理加入本组的设备</value></data>
-  <data name="C_OpenControlPlane_Official" xml:space="preserve"><value>打开SecRandom集控平台</value></data>
-  <data name="C_OpenControlPlane_ThirdParty" xml:space="preserve"><value>打开第三方托管集控平台</value></data>
-  <data name="M_ControlConnectAfterSetup" xml:space="preserve"><value>这台设备会在完成设置并启动后连接集控平台，届时可在「设置 > 通用 > 集控」查看连接状态</value></data>
-  <data name="M_ControlPlatformOpenFailed" xml:space="preserve"><value>打开集控平台失败，请在设置中重试</value></data>
-    <data name="C_PrivacyEncouragement" xml:space="preserve"><value>求求了嘛~开启会对我们未来的更新会起到更大的帮助</value></data>
-  <data name="C_SentryTelemetry" xml:space="preserve"><value>启用 Sentry 遥测</value></data>
-    <data name="C_SentryTelemetryDescription" xml:space="preserve"><value>开启后上传崩溃、日志、追踪和性能分析数据；不会控制在线状态统计</value></data>
-  <data name="C_OnlineStatus" xml:space="preserve"><value>在线状态</value></data>
-   <data name="C_OnlineStatusDescription" xml:space="preserve"><value>正常上报包含粗略位置信息，匿名上报仅计入在线人数不报位置，停止则不上报在线状态</value></data>
-   <data name="O_OnlineStatusMode_Full" xml:space="preserve"><value>正常上报</value></data>
-  <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>匿名上报</value></data>
-  <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>停止上报</value></data>
-  <data name="C_CompleteTitle" xml:space="preserve"><value>完成设置</value></data>
-  <data name="C_CompleteDescription" xml:space="preserve"><value>已阅读可验证抽取须知并确认隐私政策与 GPLv3 后，点击完成即可进入 VeriRandom；名单、抽奖、外观、桌面集成和隐私均可在设置中再次调整</value></data>
-  <data name="C_CompletedItems" xml:space="preserve"><value>已配置项目</value></data>
-  <data name="C_CompletedClass" xml:space="preserve"><value>点名名单与奖品池可在名单管理中维护</value></data>
-  <data name="C_CompletedAppearance" xml:space="preserve"><value>抽奖入口、主题和浮窗外观可在设置中修改</value></data>
-  <data name="C_CompletedIntegration" xml:space="preserve"><value>外部链接开关不会关闭应用内部的单实例通信</value></data>
-  <data name="C_CompletedControl" xml:space="preserve"><value>集控开关、显示名称与所属组均可在集控设置中修改</value></data>
-  <data name="C_CompletedPrivacy" xml:space="preserve"><value>遥测和在线状态均可在隐私设置中更改</value></data>
-  <data name="C_OverwriteTitle" xml:space="preserve"><value>确认覆盖名单</value></data>
-  <data name="C_Overwrite" xml:space="preserve"><value>覆盖</value></data>
-  <data name="C_ResourcesTitle" xml:space="preserve"><value>项目资源</value></data>
-  <data name="C_SectlWebsite" xml:space="preserve"><value>SECTL 官网</value></data>
-  <data name="C_Documentation" xml:space="preserve"><value>VeriRandom 文档</value></data>
-  <data name="C_AuthorBilibili" xml:space="preserve"><value>黎泽懿_Aionflux 的哔哩哔哩</value></data>
-  <data name="C_Sponsor" xml:space="preserve"><value>爱发电赞助</value></data>
-  <data name="C_Community" xml:space="preserve"><value>SECTL 社区群</value></data><data name="C_CommunityQQGroup" xml:space="preserve"><value>QQ 群</value></data><data name="C_CommunityEmail" xml:space="preserve"><value>邮箱</value></data><data name="C_CommunityBilibili" xml:space="preserve"><value>哔哩哔哩</value></data><data name="C_CommunityIssues" xml:space="preserve"><value>问题反馈</value></data><data name="C_CommunityContributing" xml:space="preserve"><value>贡献指南</value></data>
-  <data name="C_CommunityAnswer" xml:space="preserve"><value>QQ群：768421833，入群答案：VeriRandom</value></data>
-  <data name="C_Previous" xml:space="preserve"><value>上一步</value></data>
-  <data name="C_Start" xml:space="preserve"><value>开始</value></data>
-  <data name="C_Next" xml:space="preserve"><value>下一步</value></data>
-  <data name="C_Finish" xml:space="preserve"><value>完成</value></data>
-  <data name="C_ImportSettingsTitle" xml:space="preserve"><value>导入 v3 设置</value></data>
-  <data name="C_ImportAllDataTitle" xml:space="preserve"><value>导入 v3 全部数据</value></data>
-  <data name="C_ImportTitle" xml:space="preserve"><value>确认导入</value></data>
-  <data name="C_Import" xml:space="preserve"><value>导入</value></data>
-  <data name="C_Cancel" xml:space="preserve"><value>取消</value></data>
-  <data name="C_Close" xml:space="preserve"><value>关闭</value></data>
-  <data name="C_JsonFileType" xml:space="preserve"><value>JSON 文件</value></data>
-  <data name="C_ZipFileType" xml:space="preserve"><value>ZIP 文件</value></data>
-  <data name="C_ExitTitle" xml:space="preserve"><value>退出初始设置</value></data>
-  <data name="C_ExitDescription" xml:space="preserve"><value>尚未完成可验证抽取须知、隐私政策与许可确认；退出将关闭 VeriRandom，不会保存 OOBE 完成状态</value></data>
-  <data name="C_Exit" xml:space="preserve"><value>退出应用</value></data>
-  <data name="C_ContinueSetup" xml:space="preserve"><value>继续设置</value></data>
-  <data name="M_ImportConfirmation" xml:space="preserve"><value>来源版本：{0}
-将处理 {1} 个文件；导入前会创建恢复快照，安全凭据不会导入</value></data>
-  <data name="M_UnsupportedImportTitle" xml:space="preserve"><value>不支持的导入文件</value></data>
-  <data name="M_UnsupportedImport" xml:space="preserve"><value>仅支持 VeriRandom v3 导出文件；检测到的版本：{0}；
+3. 正式公证可防止本地抽取代码、随机材料和结果文件在已锁定流程中被替换；它仍不能证明现实名单本身完整真实，也不能证明候选池在提交前未被人为筛选</value>
+  </data>
+  <data name="C_Title" xml:space="preserve">
+    <value>VeriRandom 初始设置</value>
+  </data>
+  <data name="C_Intro" xml:space="preserve">
+    <value>先阅读可验证抽取须知，并完成必要的隐私政策与 GPLv3 确认；其余内容可随时在设置中调整</value>
+  </data>
+  <data name="C_WelcomeTitle" xml:space="preserve">
+    <value>欢迎使用 VeriRandom</value>
+  </data>
+  <data name="C_WelcomeDescription" xml:space="preserve">
+    <value>接下来将用几步完成首次设置；可验证抽取须知、隐私政策与 GPLv3 确认是必需的，名单、抽奖、外观和桌面集成均可跳过，并可随时在设置中修改</value>
+  </data>
+  <data name="C_Language" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="C_LegalTitle" xml:space="preserve">
+    <value>隐私政策与开源许可</value>
+  </data>
+  <data name="C_LegalDescription" xml:space="preserve">
+    <value>继续使用前，请先阅读可验证抽取须知，再确认隐私政策与 GNU GPLv3；隐私选项默认关闭，您可以在下方调整</value>
+  </data>
+  <data name="C_PrivacyPolicyTitle" xml:space="preserve">
+    <value>VeriRandom 隐私政策</value>
+  </data>
+  <data name="C_PrivacyPolicyAccept" xml:space="preserve">
+    <value>我已阅读并同意 VeriRandom 隐私政策</value>
+  </data>
+  <data name="C_SecRandomServicesTitle" xml:space="preserve">
+    <value>SecRandom 在线服务与隐私</value>
+  </data>
+  <data name="C_SecRandomServicesClause" xml:space="preserve">
+    <value>若要使用目前软件中集成的在线有关功能，您需要额外与SECTL达成协议许可关系；SECTL组织是一个与我们并没有必然法律关联的独立主体，他们将对您上传的数据获得访问权</value>
+  </data>
+  <data name="C_SecRandomServicesDisclaimer" xml:space="preserve">
+    <value>使用在线功能，即表示您同意 SecRandom 的服务条款和隐私政策；您与 SECTL 之间形成直接的服务关系，VeriRandom 不是该关系的当事方</value>
+  </data>
+  <data name="C_SecRandomServicesAccept" xml:space="preserve">
+    <value>我已阅读并同意上述说明与 SecRandom 隐私政策</value>
+  </data>
+  <data name="C_SecRandomServicesOptionalNote" xml:space="preserve">
+    <value>（可选）此项在首次设置中不是必选项，因此可以跳过；但当你之后启用数据遥测或在线状态，或切换到“正式公证”模式时，必须补签本确认，且补签必须经过确认弹窗，不能跳过</value>
+  </data>
+  <data name="C_SecRandomServicesAcceptOptional" xml:space="preserve">
+    <value>（可选）我已阅读并同意上述说明与 SecRandom 隐私政策</value>
+  </data>
+  <data name="C_TimestampPrivacyNotice" xml:space="preserve">
+    <value>隐私提示：为获取 RFC 3161 时间戳，本软件会将证明摘要等去标识化信息发送给沃通（WoTrus）及其时间戳服务；该信息不包含名单、姓名、学号或抽取结果，仅用于证明该摘要在对应时间点已经存在</value>
+  </data>
+  <data name="C_CrossBorderTitle" xml:space="preserve">
+    <value>跨境数据传输须知</value>
+  </data>
+  <data name="C_CrossBorderBody" xml:space="preserve">
+    <value>本软件的部分可选功能会把数据传输到 SecRandom 与 SECTL 的服务器，这些服务器位于中华人民共和国境外（SECTL 当前服务节点位于德国巴伐利亚邦阿多特多夫，具体地址以其官方披露为准），因此启用这些功能会构成个人信息出境；涉及的功能包括抽取证明提交与服务端重放验证、正式公证、在线状态与使用统计上报、版本使用量上报、SECTL 账户登录与其心跳、账户云备份；跨境传输的数据均已去标识化，只包含证明摘要、设备标识、版本号与设备类型等必要信息，不包含名单、姓名、学号或抽取结果；若你所在地区对个人信息出境有额外要求，请自行确认合规性后再启用</value>
+  </data>
+  <data name="C_CrossBorderOptionalNote" xml:space="preserve">
+    <value>（可选）此项在首次设置中不是必选项；如果不勾选，所有可能向 SECTL 服务器发送数据的功能都会被强制禁用（含 SECTL 账户登录与账户云备份），你可以在之后需要用到这些功能时再补签，补签必须经过确认弹窗</value>
+  </data>
+  <data name="C_CrossBorderAccept" xml:space="preserve">
+    <value>（可选）我已阅读并同意上述跨境数据传输须知</value>
+  </data>
+  <data name="C_CrossBorderAcceptRequired" xml:space="preserve">
+    <value>我已阅读并同意上述跨境数据传输须知</value>
+  </data>
+  <data name="C_CrossBorderConfirm" xml:space="preserve">
+    <value>同意并继续</value>
+  </data>
+  <data name="C_AttestationTitle" xml:space="preserve">
+    <value>抽取完成后自动提交签名验证</value>
+  </data>
+  <data name="C_AttestationBody" xml:space="preserve">
+    <value>普通模式的抽取完成后，可以把本次证明自动提交给 SECTL 服务器申请签名与服务端重放验证；提交只发送证明摘要与匿名审计载荷，不发送名单或抽取结果；此选项没有默认值，必须由你主动选择，未选择时不会提交</value>
+  </data>
+  <data name="O_AttestationOn" xml:space="preserve">
+    <value>提交：抽取完成后自动申请签名与重放验证</value>
+  </data>
+  <data name="O_AttestationOff" xml:space="preserve">
+    <value>不提交：证明只保存在本机，验证过程完全离线</value>
+  </data>
+  <data name="C_GplTitle" xml:space="preserve">
+    <value>GNU GPLv3</value>
+  </data>
+  <data name="C_GplAccept" xml:space="preserve">
+    <value>我已阅读 GNU GPLv3 许可说明</value>
+  </data>
+  <data name="C_VerificationNoticeTitle" xml:space="preserve">
+    <value>关于可验证抽取的须知</value>
+  </data>
+  <data name="C_VerificationNoticeAccept" xml:space="preserve">
+    <value>我已阅读关于可验证抽取的须知</value>
+  </data>
+  <data name="C_DataTitle" xml:space="preserve">
+    <value>导入或选择名单</value>
+  </data>
+  <data name="C_DataDescription" xml:space="preserve">
+    <value>可恢复已有的 VeriRandom v3 数据，并选择或导入首次使用的点名名单；跳过不会影响后续使用</value>
+  </data>
+  <data name="C_RestoreTitle" xml:space="preserve">
+    <value>恢复已有数据</value>
+  </data>
+  <data name="C_RestoreDescription" xml:space="preserve">
+    <value>导入前会检查导出版本，只接受 v3 文件</value>
+  </data>
+  <data name="C_ImportSettings" xml:space="preserve">
+    <value>导入 v3 设置</value>
+  </data>
+  <data name="C_ImportAllData" xml:space="preserve">
+    <value>导入 v3 全部数据</value>
+  </data>
+  <data name="C_RollCallList" xml:space="preserve">
+    <value>点名名单</value>
+  </data>
+  <data name="C_RollCallListDescription" xml:space="preserve">
+    <value>选择首次用于点名的名单，也可导入名单文件</value>
+  </data>
+  <data name="C_ImportRoster" xml:space="preserve">
+    <value>导入名单</value>
+  </data>
+  <data name="C_RefreshList" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="C_AddList" xml:space="preserve">
+    <value>新建</value>
+  </data>
+  <data name="C_RenameList" xml:space="preserve">
+    <value>重命名</value>
+  </data>
+  <data name="C_DeleteList" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="C_AddStudentListTitle" xml:space="preserve">
+    <value>新建名单</value>
+  </data>
+  <data name="C_AddPrizeListTitle" xml:space="preserve">
+    <value>新建奖品池</value>
+  </data>
+  <data name="C_RenameListTitle" xml:space="preserve">
+    <value>重命名名单</value>
+  </data>
+  <data name="C_DeleteListTitle" xml:space="preserve">
+    <value>删除名单</value>
+  </data>
+  <data name="C_ListNameTitle" xml:space="preserve">
+    <value>名单名称</value>
+  </data>
+  <data name="C_ListNamePlaceholder" xml:space="preserve">
+    <value>请输入名称</value>
+  </data>
+  <data name="C_DefaultStudentListName" xml:space="preserve">
+    <value>新名单</value>
+  </data>
+  <data name="C_DefaultPrizeListName" xml:space="preserve">
+    <value>新奖品池</value>
+  </data>
+  <data name="C_LotteryTitle" xml:space="preserve">
+    <value>抽奖功能</value>
+  </data>
+  <data name="C_LotteryDescription" xml:space="preserve">
+    <value>关闭后会隐藏抽奖侧栏和浮窗选项，并拒绝抽奖快捷键及外部指令</value>
+  </data>
+  <data name="C_LotteryEnabled" xml:space="preserve">
+    <value>启用抽奖</value>
+  </data>
+  <data name="C_PrizeImport" xml:space="preserve">
+    <value>导入奖品池</value>
+  </data>
+  <data name="C_PrizeList" xml:space="preserve">
+    <value>抽奖名单</value>
+  </data>
+  <data name="C_PrizeListDescription" xml:space="preserve">
+    <value>选择首次用于抽奖的名单，也可导入奖品文件</value>
+  </data>
+  <data name="C_AppearanceTitle" xml:space="preserve">
+    <value>外观与浮窗</value>
+  </data>
+  <data name="C_Theme" xml:space="preserve">
+    <value>主题</value>
+  </data>
+  <data name="C_ThemeDescription" xml:space="preserve">
+    <value>选择浅色、深色或跟随系统外观</value>
+  </data>
+  <data name="O_ThemeLight" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="O_ThemeDark" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="O_ThemeAuto" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="C_ThemeColor" xml:space="preserve">
+    <value>主题色</value>
+  </data>
+  <data name="C_ThemeColorDescription" xml:space="preserve">
+    <value>使用系统主题色，或选择自定义的应用主题色</value>
+  </data>
+  <data name="O_SystemColor" xml:space="preserve">
+    <value>系统主题色</value>
+  </data>
+  <data name="O_CustomColor" xml:space="preserve">
+    <value>自定义主题色</value>
+  </data>
+  <data name="C_Opacity" xml:space="preserve">
+    <value>浮窗透明度</value>
+  </data>
+  <data name="C_OpacityDescription" xml:space="preserve">
+    <value>透明度会在完成设置后应用到浮窗</value>
+  </data>
+  <data name="C_DesktopTitle" xml:space="preserve">
+    <value>桌面集成</value>
+  </data>
+  <data name="C_DesktopDescription" xml:space="preserve">
+    <value>这些选项会在完成时写入系统；若平台拒绝操作，设置会保持关闭并可稍后重试</value>
+  </data>
+  <data name="C_Autostart" xml:space="preserve">
+    <value>开机启动</value>
+  </data>
+  <data name="C_AutostartDescription" xml:space="preserve">
+    <value>登录系统后自动启动 VeriRandom</value>
+  </data>
+  <data name="C_ShowStartupWindow" xml:space="preserve">
+    <value>启动显示主窗口</value>
+  </data>
+  <data name="C_ShowStartupWindowDescription" xml:space="preserve">
+    <value>设置软件启动时是否自动显示主窗口</value>
+  </data>
+  <data name="C_ExternalIntegration" xml:space="preserve">
+    <value>外部链接与联动</value>
+  </data>
+  <data name="C_ExternalIntegrationDescription" xml:space="preserve">
+    <value>注册 verirandom:// 链接以允许外部程序唤起 VeriRandom</value>
+  </data>
+  <data name="C_PrivacyTitle" xml:space="preserve">
+    <value>隐私</value>
+  </data>
+  <data name="C_PrivacyDescription" xml:space="preserve">
+    <value>选择应用启动后可发送的诊断和在线状态信息，后续可随时在设置中调整</value>
+  </data>
+  <data name="C_PrivacyDataDestination" xml:space="preserve">
+    <value>注意：开启后，相关数据将被发送给 SecRandom（上游项目与其所属组织 SECTL）；本分支不接收这些数据</value>
+  </data>
+  <data name="C_ControlTitle" xml:space="preserve">
+    <value>集控</value>
+  </data>
+  <data name="C_ControlDescription" xml:space="preserve">
+    <value>开启后这台设备会作为集控节点连入集控平台，可被远程查看状态、锁定抽取并下发抽取；开关与身份保存在本机自己的状态文件里，导入设置不会替您打开它</value>
+  </data>
+  <data name="C_ControlRemoteEnabled" xml:space="preserve">
+    <value>允许被远程控制</value>
+  </data>
+  <data name="C_ControlRemoteEnabledDescription" xml:space="preserve">
+    <value>这是本机自己的开关，关闭后无论集控平台下发什么命令都不会执行</value>
+  </data>
+  <data name="C_ControlDisplayName" xml:space="preserve">
+    <value>显示名称</value>
+  </data>
+  <data name="C_ControlDisplayNameDescription" xml:space="preserve">
+    <value>集控平台设备列表里显示的名字；留空则上报主机名</value>
+  </data>
+  <data name="C_ControlNodeId" xml:space="preserve">
+    <value>节点 ID</value>
+  </data>
+  <data name="C_ControlNodeIdDescription" xml:space="preserve">
+    <value>安装时生成并长期保持不变，在集控平台注册这台设备时用它</value>
+  </data>
+  <data name="C_ControlGroupId" xml:space="preserve">
+    <value>所属组 ID</value>
+  </data>
+  <data name="C_ControlGroupIdDescription" xml:space="preserve">
+    <value>由集控平台建组后提供；节点必须先在该组注册，否则连接会被拒绝</value>
+  </data>
+  <data name="C_ControlPlatform" xml:space="preserve">
+    <value>集控平台</value>
+  </data>
+  <data name="C_ControlPlatformDescription" xml:space="preserve">
+    <value>在浏览器中打开集控平台网页控制台，管理加入本组的设备</value>
+  </data>
+  <data name="C_OpenControlPlane_Official" xml:space="preserve">
+    <value>打开SecRandom集控平台</value>
+  </data>
+  <data name="C_OpenControlPlane_ThirdParty" xml:space="preserve">
+    <value>打开第三方托管集控平台</value>
+  </data>
+  <data name="M_ControlConnectAfterSetup" xml:space="preserve">
+    <value>这台设备会在完成设置并启动后连接集控平台，届时可在「设置 &gt; 通用 &gt; 集控」查看连接状态</value>
+  </data>
+  <data name="M_ControlPlatformOpenFailed" xml:space="preserve">
+    <value>打开集控平台失败，请在设置中重试</value>
+  </data>
+  <data name="C_PrivacyEncouragement" xml:space="preserve">
+    <value>求求了嘛~开启会对我们未来的更新会起到更大的帮助</value>
+  </data>
+  <data name="C_SentryTelemetry" xml:space="preserve">
+    <value>启用 Sentry 遥测</value>
+  </data>
+  <data name="C_SentryTelemetryDescription" xml:space="preserve">
+    <value>开启后上传崩溃、日志、追踪和性能分析数据；不会控制在线状态统计</value>
+  </data>
+  <data name="C_OnlineStatus" xml:space="preserve">
+    <value>在线状态</value>
+  </data>
+  <data name="C_OnlineStatusDescription" xml:space="preserve">
+    <value>正常上报包含粗略位置信息，匿名上报仅计入在线人数不报位置，停止则不上报在线状态</value>
+  </data>
+  <data name="O_OnlineStatusMode_Full" xml:space="preserve">
+    <value>正常上报</value>
+  </data>
+  <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve">
+    <value>匿名上报</value>
+  </data>
+  <data name="O_OnlineStatusMode_Off" xml:space="preserve">
+    <value>停止上报</value>
+  </data>
+  <data name="C_CompleteTitle" xml:space="preserve">
+    <value>完成设置</value>
+  </data>
+  <data name="C_CompleteDescription" xml:space="preserve">
+    <value>已阅读可验证抽取须知并确认隐私政策与 GPLv3 后，点击完成即可进入 VeriRandom；名单、抽奖、外观、桌面集成和隐私均可在设置中再次调整</value>
+  </data>
+  <data name="C_CompletedItems" xml:space="preserve">
+    <value>已配置项目</value>
+  </data>
+  <data name="C_CompletedClass" xml:space="preserve">
+    <value>点名名单与奖品池可在名单管理中维护</value>
+  </data>
+  <data name="C_CompletedAppearance" xml:space="preserve">
+    <value>抽奖入口、主题和浮窗外观可在设置中修改</value>
+  </data>
+  <data name="C_CompletedIntegration" xml:space="preserve">
+    <value>外部链接开关不会关闭应用内部的单实例通信</value>
+  </data>
+  <data name="C_CompletedControl" xml:space="preserve">
+    <value>集控开关、显示名称与所属组均可在集控设置中修改</value>
+  </data>
+  <data name="C_CompletedPrivacy" xml:space="preserve">
+    <value>遥测和在线状态均可在隐私设置中更改</value>
+  </data>
+  <data name="C_OverwriteTitle" xml:space="preserve">
+    <value>确认覆盖名单</value>
+  </data>
+  <data name="C_Overwrite" xml:space="preserve">
+    <value>覆盖</value>
+  </data>
+  <data name="C_ResourcesTitle" xml:space="preserve">
+    <value>项目资源</value>
+  </data>
+  <data name="C_SectlWebsite" xml:space="preserve">
+    <value>SECTL 官网</value>
+  </data>
+  <data name="C_Documentation" xml:space="preserve">
+    <value>VeriRandom 文档</value>
+  </data>
+  <data name="C_AuthorBilibili" xml:space="preserve">
+    <value>黎泽懿_Aionflux 的哔哩哔哩</value>
+  </data>
+  <data name="C_Sponsor" xml:space="preserve">
+    <value>爱发电赞助</value>
+  </data>
+  <data name="C_Community" xml:space="preserve">
+    <value>SECTL 社区群</value>
+  </data>
+  <data name="C_CommunityQQGroup" xml:space="preserve">
+    <value>QQ 群</value>
+  </data>
+  <data name="C_CommunityEmail" xml:space="preserve">
+    <value>邮箱</value>
+  </data>
+  <data name="C_CommunityBilibili" xml:space="preserve">
+    <value>哔哩哔哩</value>
+  </data>
+  <data name="C_CommunityIssues" xml:space="preserve">
+    <value>问题反馈</value>
+  </data>
+  <data name="C_CommunityContributing" xml:space="preserve">
+    <value>贡献指南</value>
+  </data>
+  <data name="C_CommunityAnswer" xml:space="preserve">
+    <value>QQ群：768421833，入群答案：VeriRandom</value>
+  </data>
+  <data name="C_Previous" xml:space="preserve">
+    <value>上一步</value>
+  </data>
+  <data name="C_Start" xml:space="preserve">
+    <value>开始</value>
+  </data>
+  <data name="C_Next" xml:space="preserve">
+    <value>下一步</value>
+  </data>
+  <data name="C_Finish" xml:space="preserve">
+    <value>完成</value>
+  </data>
+  <data name="C_ImportSettingsTitle" xml:space="preserve">
+    <value>导入 v3 设置</value>
+  </data>
+  <data name="C_ImportAllDataTitle" xml:space="preserve">
+    <value>导入 v3 全部数据</value>
+  </data>
+  <data name="C_ImportTitle" xml:space="preserve">
+    <value>确认导入</value>
+  </data>
+  <data name="C_Import" xml:space="preserve">
+    <value>导入</value>
+  </data>
+  <data name="C_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="C_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="C_JsonFileType" xml:space="preserve">
+    <value>JSON 文件</value>
+  </data>
+  <data name="C_ZipFileType" xml:space="preserve">
+    <value>ZIP 文件</value>
+  </data>
+  <data name="C_ExitTitle" xml:space="preserve">
+    <value>退出初始设置</value>
+  </data>
+  <data name="C_ExitDescription" xml:space="preserve">
+    <value>尚未完成可验证抽取须知、隐私政策与许可确认；退出将关闭 VeriRandom，不会保存 OOBE 完成状态</value>
+  </data>
+  <data name="C_Exit" xml:space="preserve">
+    <value>退出应用</value>
+  </data>
+  <data name="C_ContinueSetup" xml:space="preserve">
+    <value>继续设置</value>
+  </data>
+  <data name="M_ImportConfirmation" xml:space="preserve">
+    <value>来源版本：{0}
+将处理 {1} 个文件；导入前会创建恢复快照，安全凭据不会导入</value>
+  </data>
+  <data name="M_UnsupportedImportTitle" xml:space="preserve">
+    <value>不支持的导入文件</value>
+  </data>
+  <data name="M_UnsupportedImport" xml:space="preserve">
+    <value>仅支持 VeriRandom v3 导出文件；检测到的版本：{0}；
 {1}
-未修改任何数据</value></data>
-  <data name="M_UnknownVersion" xml:space="preserve"><value>未识别</value></data>
-  <data name="M_UnsupportedImportDetail" xml:space="preserve"><value>该文件不是受支持的 VeriRandom v3 导出文件</value></data>
-  <data name="M_ImportCompleted" xml:space="preserve"><value>导入完成；请继续确认当前版本的隐私政策与 GNU GPLv3</value></data>
-  <data name="M_ImportFailed" xml:space="preserve"><value>导入失败</value></data>
-  <data name="M_AgreementRequired" xml:space="preserve"><value>请先阅读并确认可验证抽取须知、隐私政策与 GNU GPLv3</value></data>
-  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>完成前需要确认可验证抽取须知、隐私政策与 GNU GPLv3</value></data>
-  <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>部分桌面集成未能启用，已保留为关闭状态；可在设置中稍后重试</value></data>
-  <data name="M_StudentsImported" xml:space="preserve"><value>已导入 {0} 名成员，并设为默认名单</value></data>
-  <data name="M_PrizesImported" xml:space="preserve"><value>已导入 {0} 个奖品，并设为默认奖品池</value></data>
-  <data name="M_OverwriteListContent" xml:space="preserve"><value>“{0}”当前包含 {1} 条记录；导入 {2} 条记录将覆盖现有内容</value></data>
-  <data name="M_ListNameEmpty" xml:space="preserve"><value>名称不能为空</value></data>
-  <data name="M_ListNameInvalid" xml:space="preserve"><value>名称包含文件名非法字符</value></data>
-  <data name="M_ListNameExists" xml:space="preserve"><value>同名名单已存在</value></data>
-  <data name="M_KeepOneList" xml:space="preserve"><value>至少需要保留一个名单</value></data>
-  <data name="M_DeleteListContent" xml:space="preserve"><value>确定要删除“{0}”吗？此操作无法撤销</value></data>
-  <data name="M_StepProgress" xml:space="preserve"><value>步骤 {0}/{1}</value></data>
-  <data name="C_ProofRetention" xml:space="preserve"><value>本机证明保留</value></data>
-  <data name="C_ProofRetentionDescription" xml:space="preserve"><value>抽取证明留在本机，用来事后复核这次抽取；删掉之后就再也无法复核</value></data>
-  <data name="O_ProofRetention_Forever" xml:space="preserve"><value>永久保留（推荐）</value></data>
-  <data name="O_ProofRetention_365" xml:space="preserve"><value>一年</value></data>
-  <data name="O_ProofRetention_90" xml:space="preserve"><value>90 天</value></data>
-  <data name="O_ProofRetention_30" xml:space="preserve"><value>30 天</value></data>
-  <data name="M_ProofRetentionWarning" xml:space="preserve"><value>自动清除会让旧证明无法再参与复核：本机只能核对保留下来的那一段，越早删除，「从最早一次抽取开始核对」就越不可能。每份证明只有几 KB，永久保留通常不是负担</value></data>
+未修改任何数据</value>
+  </data>
+  <data name="M_UnknownVersion" xml:space="preserve">
+    <value>未识别</value>
+  </data>
+  <data name="M_UnsupportedImportDetail" xml:space="preserve">
+    <value>该文件不是受支持的 VeriRandom v3 导出文件</value>
+  </data>
+  <data name="M_ImportCompleted" xml:space="preserve">
+    <value>导入完成；请继续确认当前版本的隐私政策与 GNU GPLv3</value>
+  </data>
+  <data name="M_ImportFailed" xml:space="preserve">
+    <value>导入失败</value>
+  </data>
+  <data name="M_AgreementRequired" xml:space="preserve">
+    <value>请先阅读并确认可验证抽取须知、隐私政策与 GNU GPLv3</value>
+  </data>
+  <data name="M_CompletionAgreementRequired" xml:space="preserve">
+    <value>完成前需要确认可验证抽取须知、隐私政策与 GNU GPLv3</value>
+  </data>
+  <data name="M_DesktopIntegrationFailed" xml:space="preserve">
+    <value>部分桌面集成未能启用，已保留为关闭状态；可在设置中稍后重试</value>
+  </data>
+  <data name="M_StudentsImported" xml:space="preserve">
+    <value>已导入 {0} 名成员，并设为默认名单</value>
+  </data>
+  <data name="M_PrizesImported" xml:space="preserve">
+    <value>已导入 {0} 个奖品，并设为默认奖品池</value>
+  </data>
+  <data name="M_OverwriteListContent" xml:space="preserve">
+    <value>“{0}”当前包含 {1} 条记录；导入 {2} 条记录将覆盖现有内容</value>
+  </data>
+  <data name="M_ListNameEmpty" xml:space="preserve">
+    <value>名称不能为空</value>
+  </data>
+  <data name="M_ListNameInvalid" xml:space="preserve">
+    <value>名称包含文件名非法字符</value>
+  </data>
+  <data name="M_ListNameExists" xml:space="preserve">
+    <value>同名名单已存在</value>
+  </data>
+  <data name="M_KeepOneList" xml:space="preserve">
+    <value>至少需要保留一个名单</value>
+  </data>
+  <data name="M_DeleteListContent" xml:space="preserve">
+    <value>确定要删除“{0}”吗？此操作无法撤销</value>
+  </data>
+  <data name="M_StepProgress" xml:space="preserve">
+    <value>步骤 {0}/{1}</value>
+  </data>
+  <data name="C_ProofRetention" xml:space="preserve">
+    <value>本机证明保留</value>
+  </data>
+  <data name="C_ProofRetentionDescription" xml:space="preserve">
+    <value>抽取证明留在本机，用来事后复核这次抽取；删掉之后就再也无法复核</value>
+  </data>
+  <data name="O_ProofRetention_Forever" xml:space="preserve">
+    <value>永久保留（推荐）</value>
+  </data>
+  <data name="O_ProofRetention_365" xml:space="preserve">
+    <value>一年</value>
+  </data>
+  <data name="O_ProofRetention_90" xml:space="preserve">
+    <value>90 天</value>
+  </data>
+  <data name="O_ProofRetention_30" xml:space="preserve">
+    <value>30 天</value>
+  </data>
+  <data name="M_ProofRetentionWarning" xml:space="preserve">
+    <value>自动清除会让旧证明无法再参与复核：本机只能核对保留下来的那一段，越早删除，「从最早一次抽取开始核对」就越不可能。每份证明只有几 KB，永久保留通常不是负担</value>
+  </data>
 </root>

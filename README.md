@@ -27,6 +27,9 @@
 > VeriRandom 以 GNU GPLv3 协议发布！您可以修改和再发布源代码，但再发布的衍生作品也必须遵循 GNU GPLv3
 > 由于一些原因，我们从本分支中移除了与SECTL有关的在线功能
 
+> [!IMPORTANT]
+> 本仓库自 2026 年 11 月 1 日起要求贡献者签署[贡献者许可协议（CLA）](CLA.md)。首次提交 Pull Request 时会被要求在 PR 中签署，未签署的 PR 不会被合并。CLA 只做许可授予、不转让版权，也不改变任何已发布版本在 GNU GPLv3 下的授权。
+
 ## VeriRandom
 
 VeriRandom 是面向课堂、团队、活动、决策、重要利益分配等场景的公平抽取应用，同时也提供高度自定义化的随机数/随机字符串生成能力，相比 SecRandom ，它更注重抽取结果的可验证性以及密码学可靠性，旨在为抽取结果提供高度不可抵赖性与可复核性。
@@ -151,6 +154,8 @@ VeriRandom 是面向课堂、团队、活动、决策、重要利益分配等场
 </a>
 
 感谢每一位为 VeriRandom 与 SecRandom 提交代码、报告问题、完善文档和提供反馈的贡献者。头像由 GitHub 贡献者数据动态生成，点击可前往[本仓库Github 贡献者页面](https://github.com/WinFunan/VeriRandom/graphs/contributors) 或 [上游仓库GitHub 贡献者页面](https://github.com/SECTL/SecRandom/graphs/contributors) 查看完整统计
+
+感谢 Dubi906w 提供的 UIAccess 任务栏图标修复方法。代码来自 [LegacyIsland / UIAccessX](https://github.com/segf4ultk1nger/dubiisland)。
 
 ## 对本仓库支持与社区
 - [QQ群 768421833](https://qm.qq.com/q/EvhyCJWqCA)

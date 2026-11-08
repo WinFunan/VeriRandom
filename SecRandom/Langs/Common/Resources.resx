@@ -1,142 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <root>
-    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
-                id="root"
-                xmlns="">
-        <xsd:element name="root" msdata:IsDataSet="true">
-
-        </xsd:element>
-    </xsd:schema>
-    <resheader name="resmimetype">
-        <value>text/microsoft-resx</value>
-    </resheader>
-    <resheader name="version">
-        <value>1.3</value>
-    </resheader>
-    <resheader name="reader">
-        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true"></xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
             PublicKeyToken=b77a5c561934e089
         </value>
-    </resheader>
-    <resheader name="writer">
-        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
             PublicKeyToken=b77a5c561934e089
         </value>
-    </resheader>
-
-    <data name="Feat_Settings" xml:space="preserve">
+  </resheader>
+  <data name="Feat_Settings" xml:space="preserve">
         <value>设置</value>
     </data>
-    <data name="Menu_ToggleMainWindow" xml:space="preserve">
+  <data name="Menu_ToggleMainWindow" xml:space="preserve">
         <value>显隐主窗口</value>
     </data>
-    <data name="Menu_ToggleFloatingWindow" xml:space="preserve">
+  <data name="Menu_ToggleFloatingWindow" xml:space="preserve">
         <value>显隐浮窗</value>
     </data>
-    <data name="Menu_ShowMainWindow" xml:space="preserve">
+  <data name="Menu_ShowMainWindow" xml:space="preserve">
         <value>显示主窗口</value>
     </data>
-    <data name="Menu_ShowFloatingWindow" xml:space="preserve">
+  <data name="Menu_ShowFloatingWindow" xml:space="preserve">
         <value>显示浮窗</value>
     </data>
-    <data name="Menu_HideFloatingWindow" xml:space="preserve">
+  <data name="Menu_HideFloatingWindow" xml:space="preserve">
         <value>隐藏浮窗</value>
     </data>
-    <data name="Feat_RollCall" xml:space="preserve">
+  <data name="Feat_RollCall" xml:space="preserve">
         <value>点名</value>
     </data>
-    <data name="Feat_QuickDraw" xml:space="preserve">
+  <data name="Feat_QuickDraw" xml:space="preserve">
         <value>闪抽</value>
     </data>
-    <data name="C_QuickDrawAutoCloseHint" xml:space="preserve">
-        <value>{0} 秒后自动关闭&#xA;连续点击 3 次关闭窗口</value>
+  <data name="C_QuickDrawAutoCloseHint" xml:space="preserve">
+        <value>{0} 秒后自动关闭
+连续点击 3 次关闭窗口</value>
     </data>
-    <data name="C_QuickDrawManualCloseHint" xml:space="preserve">
+  <data name="C_QuickDrawManualCloseHint" xml:space="preserve">
         <value>连续点击 3 次关闭窗口</value>
     </data>
-    <data name="Feat_Lottery" xml:space="preserve">
+  <data name="Feat_Lottery" xml:space="preserve">
         <value>抽奖</value>
     </data>
-    <data name="Feat_Timer" xml:space="preserve">
+  <data name="Feat_Timer" xml:space="preserve">
         <value>计时器</value>
     </data>
-    <data name="Settings_About" xml:space="preserve">
+  <data name="Settings_About" xml:space="preserve">
         <value>关于 VeriRandom</value>
     </data>
-    <data name="Settings_Basic" xml:space="preserve">
+  <data name="Settings_Basic" xml:space="preserve">
         <value>基础</value>
     </data>
-    <data name="Settings_RosterManagement" xml:space="preserve">
+  <data name="Settings_RosterManagement" xml:space="preserve">
         <value>名单管理</value>
     </data>
-    <data name="Settings_Draw" xml:space="preserve">
+  <data name="Settings_Draw" xml:space="preserve">
         <value>抽取设置</value>
     </data>
-    <data name="Settings_FloatingWindow" xml:space="preserve">
+  <data name="Settings_FloatingWindow" xml:space="preserve">
         <value>浮窗管理</value>
     </data>
-    <data name="Settings_Notification" xml:space="preserve">
+  <data name="Settings_Notification" xml:space="preserve">
         <value>通知设置</value>
     </data>
-    <data name="Settings_RollCallNotification" xml:space="preserve">
+  <data name="Settings_RollCallNotification" xml:space="preserve">
         <value>点名通知设置</value>
     </data>
-    <data name="Settings_QuickDrawNotification" xml:space="preserve">
+  <data name="Settings_QuickDrawNotification" xml:space="preserve">
         <value>闪抽通知设置</value>
     </data>
-    <data name="Settings_LotteryNotification" xml:space="preserve">
+  <data name="Settings_LotteryNotification" xml:space="preserve">
         <value>抽奖通知设置</value>
     </data>
-    <data name="Settings_Security" xml:space="preserve">
+  <data name="Settings_Security" xml:space="preserve">
         <value>安全设置</value>
     </data>
-    <data name="Settings_Linkage" xml:space="preserve">
+  <data name="Settings_Linkage" xml:space="preserve">
         <value>联动设置</value>
     </data>
-    <data name="Settings_Voice" xml:space="preserve">
+  <data name="Settings_Voice" xml:space="preserve">
         <value>语音设置</value>
     </data>
-    <data name="Feat_History" xml:space="preserve">
+  <data name="Feat_History" xml:space="preserve">
         <value>历史记录</value>
     </data>
-    <data name="Feat_RollCallHistory" xml:space="preserve">
+  <data name="Feat_RollCallHistory" xml:space="preserve">
         <value>点名历史</value>
     </data>
-    <data name="Feat_LotteryHistory" xml:space="preserve">
+  <data name="Feat_LotteryHistory" xml:space="preserve">
         <value>抽奖历史</value>
     </data>
-    <data name="Settings_HistoryManagement" xml:space="preserve">
+  <data name="Settings_HistoryManagement" xml:space="preserve">
         <value>历史记录管理</value>
     </data>
-    <data name="Settings_Update" xml:space="preserve">
+  <data name="Settings_Update" xml:space="preserve">
         <value>更新设置</value>
     </data>
-    <data name="Menu_OpenSettings" xml:space="preserve">
+  <data name="Menu_OpenSettings" xml:space="preserve">
         <value>打开设置</value>
     </data>
-    <data name="Menu_OpenMainWindow" xml:space="preserve">
+  <data name="Menu_OpenMainWindow" xml:space="preserve">
         <value>打开主窗口</value>
     </data>
-    <data name="Menu_ExitProgram" xml:space="preserve">
+  <data name="Menu_ExitProgram" xml:space="preserve">
         <value>退出程序</value>
     </data>
-    <data name="App_Description" xml:space="preserve">
+  <data name="App_Description" xml:space="preserve">
         <value>基于动态权重的公平随机工具，让抽取与决策告别争议</value>
     </data>
-    <data name="App_License" xml:space="preserve">
+  <data name="App_License" xml:space="preserve">
         <value>本项目基于 GNU General Public License v3.0 获得许可</value>
     </data>
-    <data name="C_ToBeWritten" xml:space="preserve">
+  <data name="C_ToBeWritten" xml:space="preserve">
         <value>(等待编写)</value>
     </data>
-    <data name="C_Close" xml:space="preserve">
+  <data name="C_Close" xml:space="preserve">
         <value>关闭</value>
     </data>
-    <data name="M_PortableDataDirectoryUnavailableTitle" xml:space="preserve">
+  <data name="M_PortableDataDirectoryUnavailableTitle" xml:space="preserve">
         <value>无法写入便携版数据目录</value>
     </data>
-    <data name="M_PortableDataDirectoryUnavailableContent" xml:space="preserve">
+  <data name="M_PortableDataDirectoryUnavailableContent" xml:space="preserve">
         <value>VeriRandom 便携版必须能够写入其所在目录中的 data 文件夹
 
 数据目录: {0}
@@ -144,131 +139,133 @@
 
 请将整个便携版文件夹移动到可写位置，或调整该目录权限后重试</value>
     </data>
-    <data name="M_UnknownError" xml:space="preserve">
+  <data name="M_UnknownError" xml:space="preserve">
         <value>未知错误</value>
     </data>
-    <data name="AttachedSettings_BehindScene" xml:space="preserve">
+  <data name="AttachedSettings_BehindScene" xml:space="preserve">
         <value>内幕设置</value>
     </data>
-    <data name="Settings_Backup" xml:space="preserve">
+  <data name="Settings_Backup" xml:space="preserve">
         <value>备份设置</value>
     </data>
-    <data name="Menu_RestartProgram" xml:space="preserve">
+  <data name="Menu_RestartProgram" xml:space="preserve">
         <value>重启程序</value>
     </data>
-    <data name="Settings_General" xml:space="preserve">
+  <data name="Settings_General" xml:space="preserve">
         <value>通用设置</value>
     </data>
-    <data name="Settings_Home" xml:space="preserve">
+  <data name="Settings_Home" xml:space="preserve">
         <value>概览</value>
     </data>
-    <data name="Settings_Personalized" xml:space="preserve">
+  <data name="Settings_Personalized" xml:space="preserve">
         <value>个性化设置</value>
     </data>
-    <data name="Settings_Appearance" xml:space="preserve">
+  <data name="Settings_Appearance" xml:space="preserve">
         <value>外观</value>
     </data>
-    <data name="Settings_FairPick" xml:space="preserve">
+  <data name="Settings_FairPick" xml:space="preserve">
         <value>公平抽取设置</value>
     </data>
-    <data name="Settings_VoiceMusic" xml:space="preserve">
+  <data name="Settings_VoiceMusic" xml:space="preserve">
         <value>语音与音乐</value>
     </data>
-    <data name="Settings_DefaultNotification" xml:space="preserve">
+  <data name="Settings_DefaultNotification" xml:space="preserve">
         <value>默认提醒设置</value>
     </data>
-    <data name="Settings_Plugin" xml:space="preserve">
+  <data name="Settings_Plugin" xml:space="preserve">
         <value>插件</value>
     </data>
-    <data name="Settings_EnableShortcut" xml:space="preserve">
+  <data name="Settings_EnableShortcut" xml:space="preserve">
         <value>启用快捷键</value>
     </data>
-    <data name="Settings_EnableShortcut_D" xml:space="preserve">
+  <data name="Settings_EnableShortcut_D" xml:space="preserve">
         <value>允许通过键盘快捷键打开页面或执行抽取</value>
     </data>
-    <data name="Settings_OpenRollCallPageShortcut" xml:space="preserve">
+  <data name="Settings_OpenRollCallPageShortcut" xml:space="preserve">
         <value>打开点名页面</value>
     </data>
-    <data name="Settings_OpenRollCallPageShortcut_D" xml:space="preserve">
+  <data name="Settings_OpenRollCallPageShortcut_D" xml:space="preserve">
         <value>设置打开点名页面的快捷键</value>
     </data>
-    <data name="Settings_QuickDrawShortcut" xml:space="preserve">
+  <data name="Settings_QuickDrawShortcut" xml:space="preserve">
         <value>执行闪抽</value>
     </data>
-    <data name="Settings_QuickDrawShortcut_D" xml:space="preserve">
+  <data name="Settings_QuickDrawShortcut_D" xml:space="preserve">
         <value>设置执行闪抽的快捷键</value>
     </data>
-    <data name="Settings_OpenLotteryPageShortcut" xml:space="preserve">
+  <data name="Settings_OpenLotteryPageShortcut" xml:space="preserve">
         <value>打开抽奖页面</value>
     </data>
-    <data name="Settings_OpenLotteryPageShortcut_D" xml:space="preserve">
+  <data name="Settings_OpenLotteryPageShortcut_D" xml:space="preserve">
         <value>设置打开抽奖页面的快捷键</value>
     </data>
-    <data name="Settings_ShortcutExampleRollCall" xml:space="preserve">
+  <data name="Settings_ShortcutExampleRollCall" xml:space="preserve">
         <value>Ctrl+Alt+R</value>
     </data>
-    <data name="Settings_ShortcutExampleQuickDraw" xml:space="preserve">
+  <data name="Settings_ShortcutExampleQuickDraw" xml:space="preserve">
         <value>Ctrl+Alt+Q</value>
     </data>
-    <data name="Settings_ShortcutExampleLottery" xml:space="preserve">
+  <data name="Settings_ShortcutExampleLottery" xml:space="preserve">
         <value>Ctrl+Alt+L</value>
     </data>
-    <data name="Settings_FairPick_ByTotal" xml:space="preserve">
+  <data name="Settings_FairPick_ByTotal" xml:space="preserve">
         <value>按总抽取次数公平抽取</value>
     </data>
-    <data name="Settings_FairPick_ByTotal_D" xml:space="preserve">
+  <data name="Settings_FairPick_ByTotal_D" xml:space="preserve">
         <value>根据历史抽取次数调整候选权重</value>
     </data>
-    <data name="Settings_FairPick_ByGroup" xml:space="preserve">
+  <data name="Settings_FairPick_ByGroup" xml:space="preserve">
         <value>按分组公平抽取</value>
     </data>
-    <data name="Settings_FairPick_ByGender" xml:space="preserve">
+  <data name="Settings_FairPick_ByGender" xml:space="preserve">
         <value>按性别公平抽取</value>
     </data>
-    <data name="Settings_FairPick_ByTime" xml:space="preserve">
+  <data name="Settings_FairPick_ByTime" xml:space="preserve">
         <value>按时间公平抽取</value>
     </data>
-    <data name="Settings_FairPick_Weights" xml:space="preserve">
+  <data name="Settings_FairPick_Weights" xml:space="preserve">
         <value>高级权重设置</value>
     </data>
-    <data name="Settings_FairPick_Protection" xml:space="preserve">
+  <data name="Settings_FairPick_Protection" xml:space="preserve">
         <value>抽取保护设置</value>
     </data>
-    <data name="Settings_FairPick_GapProtection" xml:space="preserve">
+  <data name="Settings_FairPick_GapProtection" xml:space="preserve">
         <value>平均间隔保护</value>
     </data>
-    <data name="Settings_FairPick_GapThreshold" xml:space="preserve">
+  <data name="Settings_FairPick_GapThreshold" xml:space="preserve">
         <value>差值阈值</value>
     </data>
-    <data name="Settings_FairPick_GapThreshold_D" xml:space="preserve">
+  <data name="Settings_FairPick_GapThreshold_D" xml:space="preserve">
         <value>允许的最大抽取次数差距</value>
     </data>
-    <data name="Settings_FairPick_Shield" xml:space="preserve">
+  <data name="Settings_FairPick_Shield" xml:space="preserve">
         <value>抽取后屏蔽</value>
     </data>
-    <data name="Settings_FairPick_ColdStart" xml:space="preserve">
+  <data name="Settings_FairPick_ColdStart" xml:space="preserve">
         <value>冷启动保护</value>
     </data>
-
-    <data name="MultiInstance_Title" xml:space="preserve">
+  <data name="MultiInstance_Title" xml:space="preserve">
         <value>应用程序已在运行</value>
     </data>
-    <data name="MultiInstance_Message" xml:space="preserve">
+  <data name="MultiInstance_Message" xml:space="preserve">
         <value>VeriRandom 已经有一个实例正在运行</value>
     </data>
-    <data name="MultiInstance_OpenExisting" xml:space="preserve">
+  <data name="MultiInstance_OpenExisting" xml:space="preserve">
         <value>打开已有实例主界面</value>
     </data>
-    <data name="MultiInstance_Restart" xml:space="preserve">
+  <data name="MultiInstance_Restart" xml:space="preserve">
         <value>重启实例</value>
     </data>
-    <data name="MultiInstance_Cancel" xml:space="preserve">
+  <data name="MultiInstance_Cancel" xml:space="preserve">
         <value>取消</value>
     </data>
-    <data name="C_PickButtonText" xml:space="preserve">
+  <data name="C_PickButtonText" xml:space="preserve">
         <value>抽</value>
     </data>
-    <data name="Menu_ExitSudoMode" xml:space="preserve">
+  <data name="Menu_ExitSudoMode" xml:space="preserve">
         <value>退出 Sudo 模式</value>
+    </data>
+  <data name="Feat_Starting" xml:space="preserve">
+        <value>启动中</value>
     </data>
 </root>

@@ -48,6 +48,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private static string NoStudentOption => SR.O_NoStudentAssignment;
     private static string AllGroupsOption => SR.O_AllGroups;
     private static string AllGendersOption => SR.O_AllGenders;
+    private static string DefaultHistoryGroupOption => SR.O_HistoryGroupDefault;
 
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
@@ -62,6 +63,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly LotteryDrawService _lotteryDrawService;
     private readonly IProfileCatalogManager _profileCatalogManager;
+    private readonly IHistoryGroupCatalog _historyGroupCatalog;
     private readonly NotificationService? _notificationService;
     private readonly IFeatureAvailabilityService _featureAvailability;
     private readonly FileSystemWatcher? _prizeListWatcher;
@@ -76,6 +78,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _selectedStudentListName = NoStudentOption;
     [ObservableProperty] private string _selectedGroup = AllGroupsOption;
     [ObservableProperty] private string _selectedGender = AllGendersOption;
+    [ObservableProperty] private string _selectedHistoryGroup = DefaultHistoryGroupOption;
     [ObservableProperty] private int _drawCount = 1;
     [ObservableProperty] private string _statusText = SR.M_Ready;
     [ObservableProperty] private bool _isResultVisible;
@@ -99,6 +102,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         IFeatureAvailabilityService featureAvailability,
         LotteryDrawService lotteryDrawService,
         IProfileCatalogManager profileCatalogManager,
+        IHistoryGroupCatalog historyGroupCatalog,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null)
         : base(configHandler)
@@ -116,6 +120,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _lotteryDrawService = lotteryDrawService;
         _profileCatalogManager = profileCatalogManager;
+        _historyGroupCatalog = historyGroupCatalog;
         _featureAvailability = featureAvailability;
         _notificationService = notificationService;
         if (App.IsDesktop && !OperatingSystem.IsIOS())
@@ -128,6 +133,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.LotterySettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.DefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.MoreSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.General.HistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged += SettingsOnPropertyChanged;
         RefreshPrizeLists();
         RefreshStudentLists();
@@ -138,6 +144,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public ObservableCollection<string> StudentListNames { get; } = [NoStudentOption];
     public ObservableCollection<string> GroupOptions { get; } = [AllGroupsOption];
     public ObservableCollection<string> GenderOptions { get; } = [AllGendersOption];
+    public ObservableCollection<string> HistoryGroupOptions { get; } = [DefaultHistoryGroupOption];
     public ObservableCollection<LotteryResultItem> ResultItems { get; } = [];
     public ObservableCollection<LotteryRemainingItem> RemainingItems { get; } = [];
 
@@ -157,6 +164,15 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public bool IsStudentAssignmentEnabled => SelectedStudentListName != NoStudentOption;
     public bool IsGroupSelectorVisible => MoreSettings.LotteryRangeSelector && IsStudentAssignmentEnabled;
     public bool IsGenderSelectorVisible => MoreSettings.LotteryGenderSelector && IsStudentAssignmentEnabled;
+
+    /// <summary>
+    ///     记录组选择器是否出现：功能总闸 + 本页显隐开关 + 指派了学生名单（没有学生名单就没有「人的历史」可隔离）。
+    /// </summary>
+    public bool IsHistoryGroupSelectorVisible =>
+        Config.General.HistoryGroups.Enabled
+        && MoreSettings.LotteryHistoryGroupSelector
+        && IsStudentAssignmentEnabled;
+
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0);
     public string DrawButtonText => IsDrawing ? SR.C_Stop : SR.C_Start;
     public bool CanDecreaseCount => DrawCount > 1;
@@ -200,6 +216,35 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
+    /// <summary>
+    ///     本次抽奖要读写的记录组；<see langword="null" /> 表示不做组隔离（看全部历史）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         三态语义（与点名页一致）：<see langword="null" /> = 不按组过滤；空串 = 「默认记录组」，
+    ///         即未分组的记录；其余 = 该组。空串与 <see langword="null" /> 必须分开，否则「默认记录组」
+    ///         会把已分组记录也算进来。
+    ///     </para>
+    ///     <para>
+    ///         抽奖页这一项隔离的是「人」的历史而不是奖品的历史：<c>Issue #294</c> 的动机是
+    ///         「上课被抽过回答问题的人在抽奖品时概率被压低」，所以按组隔离的必须是学生历史。
+    ///         组名因此按 <see cref="HistoryGroupKind.RollCall" /> 登记与统计，与点名页共用同一批组。
+    ///     </para>
+    ///     <para>
+    ///         同一个组名会被写进本次抽奖产生的奖品记录（作为标记，便于历史页/导出按组查看），
+    ///         但奖品历史的读侧在生产路径上不参与权重（奖池权重来自会话临时计数），所以它只是标记。
+    ///     </para>
+    ///     <para>
+    ///         选择器不可见时一律按 <see langword="null" /> 处理：功能被关掉、显隐开关被关掉、或取消
+    ///         指派学生名单之后，隐藏起来的选择器不可能再被用户看见，若继续沿用内存里的旧选择，
+    ///         抽奖就会静默落进一个用户以为已失效的组。
+    ///     </para>
+    /// </remarks>
+    private string? CurrentHistoryGroup =>
+        IsHistoryGroupSelectorVisible
+            ? SelectedHistoryGroup == DefaultHistoryGroupOption ? string.Empty : SelectedHistoryGroup
+            : null;
+
     partial void OnSelectedPrizeListNameChanged(string value)
     {
         if (string.IsNullOrWhiteSpace(value) || _isApplyingSelectionRefresh)
@@ -224,6 +269,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsStudentAssignmentEnabled));
         OnPropertyChanged(nameof(IsGroupSelectorVisible));
         OnPropertyChanged(nameof(IsGenderSelectorVisible));
+        OnPropertyChanged(nameof(IsHistoryGroupSelectorVisible));
         RefreshCounts();
     }
 
@@ -234,6 +280,12 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     partial void OnSelectedGenderChanged(string value)
     {
+        RefreshCounts();
+    }
+
+    partial void OnSelectedHistoryGroupChanged(string value)
+    {
+        // 组选择是纯界面状态：不写配置、不触发验证、只刷新计数与剩余名单。
         RefreshCounts();
     }
 
@@ -319,6 +371,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         }
 
         var count = Math.Clamp(DrawCount, 1, Math.Max(1, RemainingCount > 0 ? RemainingCount : prizes.Count));
+        // 记录组与候选池同一刻冻结：可分配学生按这一刻的组权重挑，记录也落进同一个组。
+        var historyGroup = CurrentHistoryGroup;
         SetDrawCommandRunning(true);
         try
         {
@@ -338,7 +392,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 CurrentGroupScope,
                 CurrentGenderScope,
                 count,
-                courseName));
+                courseName,
+                historyGroup));
             var previewTask = ShowPreviewAsync(prizes, count, previewStudents, MusicSettings.AnimationMusic);
             List<Prize> drawn;
             List<Student> assignedStudents;
@@ -1127,6 +1182,33 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             SelectedGroup = AllGroupsOption;
         if (!GenderOptions.Contains(SelectedGender))
             SelectedGender = AllGendersOption;
+
+        RefreshHistoryGroupOptions();
+    }
+
+    /// <summary>
+    ///     记录组下拉项 = 默认项 + 已存在的点名历史记录组（抽奖页隔离的是「人」的历史）。
+    /// </summary>
+    private void RefreshHistoryGroupOptions()
+    {
+        if (!IsHistoryGroupSelectorVisible)
+            return;
+
+        IReadOnlyList<string> groups;
+        try
+        {
+            groups = _historyGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall);
+        }
+        catch (Exception exception)
+        {
+            // 组目录读不出来只降级成「只有默认项」，不能让抽奖页打不开。
+            _logger.LogWarning(exception, "读取点名历史记录组失败。");
+            return;
+        }
+
+        ReplaceOptions(HistoryGroupOptions, DefaultHistoryGroupOption, groups);
+        if (!HistoryGroupOptions.Contains(SelectedHistoryGroup))
+            SelectedHistoryGroup = DefaultHistoryGroupOption;
     }
 
     private string FormatPrize(Prize prize, int displayId)
@@ -1162,6 +1244,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(IsGenderSelectorVisible));
         }
 
+        if (sender == Config.MoreSettings || sender == Config.General.HistoryGroups)
+        {
+            // 选择器显隐会改变「当前生效的组」的含义（隐藏即不做组隔离），两种开关变化都要重算并刷新一轮。
+            OnPropertyChanged(nameof(IsHistoryGroupSelectorVisible));
+            RefreshHistoryGroupOptions();
+            RefreshCounts();
+        }
+
         if (_lastResultPrizes.Count > 0)
             ReplaceResults(_lastResultPrizes);
 
@@ -1184,6 +1274,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.LotterySettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.General.HistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
         _prizeListWatcher?.Dispose();
         _studentListWatcher?.Dispose();

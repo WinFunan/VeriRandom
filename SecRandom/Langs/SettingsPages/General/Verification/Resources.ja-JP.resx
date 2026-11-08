@@ -1,16 +1,341 @@
-<?xml version="1.0" encoding="utf-8"?><root><data name="Page_Title"><value>抽選検証</value></data><data name="S_Verification"><value>検証可能な抽選</value></data><data name="C_WitnessNoticeTitle"><value>サーバー検証</value></data><data name="M_WitnessModeNotice"><value>通常モードはローカルですぐに抽選し、オフラインでも利用して再現可能な証明を保存できます。オンライン時は新しい証明をバックグラウンドでサーバーへ送って再現検証し、第三者タイムスタンプも取得します（送るのは証明のダイジェストのみで、名簿や抽選内容は送りません）。オフラインで保存した履歴証明は自動送信されません。証明は追記型ハッシュチェーンとして保存されるため、事後の改変・証明の削除・チェーンの作り直しを検出できます。また証明は使用した名簿のレコード ID と表示情報の対応ダイジェストを約束するため、抽選後に名簿を書き換えても検出できます。ただし抽選前のローカルアプリ、乱数種、名簿の変更や、抽選前の名簿の絞り込みは証明しません。</value></data><data name="S_VerificationMode"><value>検証可能な抽選モード</value></data><data name="S_VerificationMode_D"><value>通常モードはオフラインでローカル抽選し、後で手動検証でき、正式公証モードではサーバーが候補プールを固定し、乱数材料を生成して結果を計算します</value></data><data name="O_VerificationMode_Local"><value>通常モード</value></data><data name="O_VerificationMode_Server"><value>正式公証モード</value></data><data name="C_ModeConfirmTitle"><value>検証可能な抽選モードを切り替え</value></data><data name="C_ModeConfirmSwitch"><value>内容を読み、切り替えます</value></data><data name="C_Cancel"><value>キャンセル</value></data><data name="C_ModeReadConfirm"><value>上記の制限を読み、理解しました。</value></data><data name="M_ModeConfirmLocal"><value>通常モードはローカルですぐに抽選し、オフラインでも再現可能な証明を保存します。オンライン時、アプリは新しく完了した通常抽選ごとに fair.sectl.cn へ再現署名要求を1回だけバックグラウンド送信し、第三者タイムスタンプも取得します（送るのは証明のダイジェストのみで、名簿や抽選内容は送りません）。オフラインや失敗した履歴証明は自動送信されません。
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Page_Title">
+    <value>抽選検証</value>
+  </data>
+  <data name="S_Verification">
+    <value>検証可能な抽選</value>
+  </data>
+  <data name="C_WitnessNoticeTitle">
+    <value>サーバー検証</value>
+  </data>
+  <data name="M_WitnessModeNotice">
+    <value>通常モードはローカルですぐに抽選し、オフラインでも利用して再現可能な証明を保存できます。オンライン時は新しい証明をバックグラウンドでサーバーへ送って再現検証し、第三者タイムスタンプも取得します（送るのは証明のダイジェストのみで、名簿や抽選内容は送りません）。オフラインで保存した履歴証明は自動送信されません。証明は追記型ハッシュチェーンとして保存されるため、事後の改変・証明の削除・チェーンの作り直しを検出できます。また証明は使用した名簿のレコード ID と表示情報の対応ダイジェストを約束するため、抽選後に名簿を書き換えても検出できます。ただし抽選前のローカルアプリ、乱数種、名簿の変更や、抽選前の名簿の絞り込みは証明しません。</value>
+  </data>
+  <data name="S_VerificationMode">
+    <value>検証可能な抽選モード</value>
+  </data>
+  <data name="S_VerificationMode_D">
+    <value>通常モードはオフラインでローカル抽選し、後で手動検証でき、正式公証モードではサーバーが候補プールを固定し、乱数材料を生成して結果を計算します</value>
+  </data>
+  <data name="O_VerificationMode_Local">
+    <value>通常モード</value>
+  </data>
+  <data name="O_VerificationMode_Server">
+    <value>正式公証モード</value>
+  </data>
+  <data name="C_ModeConfirmTitle">
+    <value>検証可能な抽選モードを切り替え</value>
+  </data>
+  <data name="C_ModeConfirmSwitch">
+    <value>内容を読み、切り替えます</value>
+  </data>
+  <data name="C_Cancel">
+    <value>キャンセル</value>
+  </data>
+  <data name="C_ModeReadConfirm">
+    <value>上記の制限を読み、理解しました。</value>
+  </data>
+  <data name="M_ModeConfirmLocal">
+    <value>通常モードはローカルですぐに抽選し、オフラインでも再現可能な証明を保存します。オンライン時、アプリは新しく完了した通常抽選ごとに fair.sectl.cn へ再現署名要求を1回だけバックグラウンド送信し、第三者タイムスタンプも取得します（送るのは証明のダイジェストのみで、名簿や抽選内容は送りません）。オフラインや失敗した履歴証明は自動送信されません。
 
 証明は追記型ハッシュチェーンとして保存されるため、事後の改変・証明の削除・チェーンの作り直しを検出できます。サーバーは端末ごとに確認したチェーン先頭も記憶するため、ローカル証明を全て消して作り直すとチェーン位置の後退として報告されます。
 
 証明は使用した名簿の「レコード ID → 氏名・学籍番号・グループ」の対応ダイジェストを約束するため、抽選後に名簿を書き換えて当選レコードを別人に向ける行為も検出できます。
 
-抽選前のローカルアプリ、実際の名簿、乱数種が変更されていないことや、事前に何度も試して結果を選んでいないこと、抽選前に名簿を絞り込んでいないことは証明できません。</value></data><data name="M_ModeConfirmFormal" xml:space="preserve"><value>以下は SecRandom（上流プロジェクト）による説明で、句読点を少し調整し注記を加えたものです
+抽選前のローカルアプリ、実際の名簿、乱数種が変更されていないことや、事前に何度も試して結果を選んでいないこと、抽選前に名簿を絞り込んでいないことは証明できません。</value>
+  </data>
+  <data name="M_ModeConfirmFormal" xml:space="preserve">
+    <value>以下は SecRandom（上流プロジェクト）による説明で、句読点を少し調整し注記を加えたものです
 
 「正式公証」モードは、まず今回の匿名候補プール・重み・ルールを fair.sectl.cn に固定します。その後サーバーが乱数材料を生成し、最終結果を計算して「不変の公式証明」（ここでは本製品の上流製品を管理する非法人組織 SECTL を指します）を保存します
 
 通信障害、切断、サービス停止、端末故障その他の不可抗力によりサーバーの完了証明が得られない場合、この「正式公証」はローカルの代替結果を生成せず、通常モードへ自動的に切り替わることもありません。サーバーが固定を確認した後は、候補プール、重み、ルール、乱数材料、結果を同一フロー内で置換・追加抽選・再計算することはできません。新しい抽選は別の独立した「公証」としてのみ行えます
 
-これにより、固定されたフロー内でローカル抽選コード、乱数種、結果ファイルが置換されることを防げますが、現実の名簿が完全かつ真正であることや、送信前に候補プールが人為的に絞り込まれていないことは依然として証明できません</value></data><data name="M_ModeConfirmFormalNoticeTitle" xml:space="preserve"><value>注意</value></data><data name="M_ModeConfirmFormalNotice" xml:space="preserve"><value>この機能は上流の SecRandom が提供するもので、上流が「正式公証」と命名しています。この名称は上流による自機能の説明であり、VeriRandom がその法的性質や効力について評価するものではありません。この機能を利用すると、データは SECTL のサーバーへ送信され、SecRandom の利用規約とプライバシーポリシーが適用されます。機能の具体的な仕組みと効力については SECTL の公式説明を基準にしてください。このビルドでは、この機能に含まれる仕組みは SecRandom 中央サーバーを「唯一の信頼」根としています。「唯一」などの限定的な表現は客観的な技術記述であり、明示的または暗示的な評価を構成しません</value></data><data name="M_ModeConfirmFormalWarning" xml:space="preserve"><value>法的効力を要する証明として用いる前に、この機能が要件に正確に適合するかを厳密に確認することを推奨します</value></data><data name="C_ModeConfirmSecRandomServices" xml:space="preserve"><value>上記の SecRandom オンラインサービスに関する説明と免責事項を読み、同意します</value></data><data name="S_TimestampAuthority" xml:space="preserve"><value>タイムスタンプサービス（TSA）</value></data><data name="S_TimestampAuthority_D" xml:space="preserve"><value>既定で有効です。有効にすると各証明は沃通（WoTrus）TSA に RFC 3161 タイムスタンプを要求し、送信するのは証明のダイジェストのみです。無効にするとタイムスタンプを取得しなくなり、ビーコン照合は周期のアンカーを失い、参考証明に記録されたパルス索引からのみ遡れます</value></data><data name="C_TimestampDisableTitle" xml:space="preserve"><value>タイムスタンプサービスを無効にする</value></data><data name="C_TimestampDisableBody" xml:space="preserve"><value>無効にすると、証明は SecRandom サービスから独立した時刻のアンカーを失います。さらにビーコン照合も周期のアンカーを失い、参考証明に記録されたパルス索引でパルスを取得できても、タイムスタンプの周期（許容範囲内の前周期を含む）と突き合わせることはできません。影響を理解した上でのみ無効にしてください</value></data><data name="C_TimestampDisableConfirm" xml:space="preserve"><value>理解した上で無効にします</value></data><data name="S_AttestationUpload" xml:space="preserve"><value>抽選後の署名検証への自動送信</value></data><data name="S_AttestationUpload_D" xml:space="preserve"><value>通常モードの抽選完了後に、SECTL のサーバーへ署名とサーバー側での再現検証を自動で要求するかどうか。越境データ移転に関するお知らせに同意するまで利用できません（プライバシー設定ページで先に確認してください）。ここには既定値がなく、未選択の間は何も送信されません</value></data><data name="S_ProofTrust" xml:space="preserve"><value>証明の信頼度</value></data><data name="S_ProofTrust_D" xml:space="preserve"><value>信頼する提供元を選択してください。最新の通常モード証明について、実際に裏付けがある証拠の割合で満点から減点し、チェーン自体の整合性が取れない場合は 0 にします</value></data><data name="C_ProofTrust_Sources" xml:space="preserve"><value>信頼する提供元</value></data><data name="C_ProofTrust_Beacon" xml:space="preserve"><value>ビーコン提供元</value></data><data name="C_ProofTrust_Timestamp" xml:space="preserve"><value>タイムスタンプ機関</value></data><data name="C_ProofTrust_Server" xml:space="preserve"><value>SECTL サーバー（サーバー側検証）</value></data><data name="C_ProofTrust_Witness" xml:space="preserve"><value>社会的証言</value></data><data name="C_ProofTrust_WitnessHint" xml:space="preserve"><value>社会的証言には、記憶しているおおよその抽選時刻の入力が必要です</value></data><data name="C_ProofTrust_Confidence" xml:space="preserve"><value>時刻の信頼度</value></data><data name="O_ProofTrust_Confidence_High" xml:space="preserve"><value>高（誤差 5 分以内）</value></data><data name="O_ProofTrust_Confidence_Medium" xml:space="preserve"><value>中（誤差 30 分以内）</value></data><data name="O_ProofTrust_Confidence_Low" xml:space="preserve"><value>低（誤差 2 時間以内）</value></data><data name="C_ProofTrust_Assess" xml:space="preserve"><value>最新の証明を評価</value></data><data name="M_ProofTrust_NoProof" xml:space="preserve"><value>評価できる抽出証明が見つかりません</value></data><data name="M_ProofTrust_Zeroed" xml:space="preserve"><value>証明チェーンの整合性が取れないため、この記録は自証できず信頼度は 0 です</value></data><data name="M_ProofTrust_PreviousPeriod" xml:space="preserve"><value>タイムスタンプがビーコン脉冲の公開時刻より 60 秒以上後（前周期）のため、信頼度を半分にします</value></data><data name="M_ProofTrust_PulseExpired" xml:space="preserve"><value>タイムスタンプがビーコン脉冲の公開時刻より 110 秒を超えており、許容範囲外のため信頼度から 4 分の 3 を減点します</value></data><data name="M_ProofTrust_Score" xml:space="preserve"><value>信頼度：{0} / 100</value></data><data name="M_ProofTrust_Factor_Ok" xml:space="preserve"><value>{0}：証拠あり</value></data><data name="M_ProofTrust_Factor_Missing" xml:space="preserve"><value>{0}：証拠なし</value></data><data name="M_ProofTrust_Factor_Partial" xml:space="preserve"><value>{0}：証拠が一部のみ一致（誤差 {1:0} 秒、許容 {2:0} 秒）</value></data><data name="M_ProofTrust_SelectSource" xml:space="preserve"><value>信頼する提供元を 1 つ以上選択してください</value></data><data name="S_ProofFolder"><value>抽選証明ファイル</value></data><data name="S_ProofFolder_D"><value>証明は日付ごとに自動保存され、フォルダーを開くと .srproof.json を検証サイトへアップロードできます</value></data><data name="C_OpenProofFolder"><value>証明フォルダーを開く</value></data><data name="C_OpenVerificationWebsite"><value>検証サイトを開く</value></data><data name="S_LocalProofStorageLimit"><value>ローカル証明の容量上限</value></data><data name="S_LocalProofStorageLimit_D"><value>新しい証明を生成した後、上限を超えると古い証明を自動削除し、既定は 64 MB</value></data><data name="O_Storage_16MB"><value>16 MB</value></data><data name="O_Storage_32MB"><value>32 MB</value></data><data name="O_Storage_64MB"><value>64 MB</value></data><data name="O_Storage_128MB"><value>128 MB</value></data><data name="O_Storage_256MB"><value>256 MB</value></data><data name="O_Storage_512MB"><value>512 MB</value></data><data name="O_Storage_1GB"><value>1 GB</value></data><data name="S_LocalProofRetention"><value>ローカル証明の保存期間</value></data><data name="S_LocalProofRetention_D"><value>端末内の .srproof.json だけを整理し、共有リンクには影響せず、次の証明生成時に期限切れファイルを削除します</value></data><data name="O_Retention_7"><value>7日</value></data><data name="O_Retention_15"><value>15日</value></data><data name="O_Retention_30"><value>30日</value></data><data name="O_Retention_60"><value>60日</value></data><data name="O_Retention_90"><value>90日</value></data><data name="O_Retention_Never"><value>削除しない</value></data><data name="C_StatusTitle"><value>抽選検証</value></data><data name="M_ServerWitnessedProof"><value>サーバーによる再現検証に成功し、証明を保存しました。</value></data><data name="M_LocalFallbackProof"><value>サーバーを一時利用できません。ローカルで再現可能な証明を保存しました。後で検証サイトへアップロードできます。</value></data><data name="S_ProofQueue"><value>証明の送信キュー</value></data><data name="S_ProofQueue_D"><value>通常モードの証明はすぐに保存され、バックグラウンドでサーバーの再現検証へ送信され、失敗時は自動で再試行し、再接続や再起動後も送信を続けます</value></data><data name="C_RetryProofQueue"><value>今すぐ再試行</value></data><data name="M_ProofQueueIdle"><value>すべての証明をサーバー検証へ送信済みです</value></data><data name="M_ProofQueuePending"><value>送信待ち {0} 件</value></data><data name="M_ProofQueueFailed"><value>送信失敗 {0} 件</value></data><data name="M_ProofQueueConflict"><value>送信中に変更された証明ファイル {0} 件</value></data><data name="S_ProofIntegrity"><value>証明チェーンの整合性</value></data><data name="S_ProofIntegrity_D"><value>端末内の証明ハッシュチェーンが連続していて改変されていないかを検証します。ローカルのチェーンは削除や改変を可視化するだけで、それ以前の記録が削除されていないことは証明できません</value></data><data name="C_VerifyProofs"><value>今すぐ検証</value></data><data name="M_ProofIntegrityIdle"><value>未検証</value></data><data name="M_ProofIntegrityHealthy"><value>証明チェーンは完全です</value></data><data name="M_ProofIntegrityCounts"><value>全 {0} 件、チェーン済み {1} 件、旧形式 {2} 件</value></data><data name="M_ProofIntegrityProblems"><value>欠落 {0}、リンク不整合 {1}、改変 {2}、チェーン先頭超過 {3}、未保存 {4}、期限切れ {5}</value></data><data name="M_ProofIntegrityOwnReference" xml:space="preserve"><value>参照チェーン（Own）：{0} ノード、{1} 件タイムスタンプ済み、ヘッド {2}、保持下限 {3}</value></data><data name="M_ProofIntegrityOwnReferenceProblems" xml:space="preserve"><value>参照チェーンの問題：改変 {0} 件、順序異常 {1} 件</value></data><data name="M_EgressConsentRequired" xml:space="preserve"><value>この項目を有効にするには、データ送出に関する告知への同意が必要です</value></data><data name="C_EgressConsentGrant" xml:space="preserve"><value>確認して同意する</value></data><data name="M_ProofIntegrityLimits"><value>ローカルのチェーンは削除や改変を可視化するだけで、それ以前の記録が削除されていないことは証明できません</value></data><data name="M_ProofIssue_Unreadable"><value>解析不可</value></data><data name="M_ProofIssue_Modified"><value>改変あり</value></data><data name="M_ProofIssue_UnsupportedVersion"><value>未対応バージョン</value></data><data name="M_ProofIssue_BrokenLink"><value>リンク不整合</value></data><data name="M_ProofIssue_Gap"><value>ファイル欠落</value></data><data name="M_ProofIssue_BeyondHead"><value>チェーン先頭超過</value></data><data name="M_ProofIssue_MissingTail"><value>未保存</value></data><data name="M_ProofQueueTimestampFailed"><value>タイムスタンプ未完了 {0} 件</value></data><data name="M_ProofQueueChainAlert"><value>サーバーが検出した証明チェーンの異常 {0} 件</value></data><data name="S_BeaconEntropy"><value>外部ビーコンエントロピー</value></data><data name="S_BeaconEntropy_D"><value>オンにすると通常モードの抽選シードは NIST ビーコンのパルスから派生し、進行役が独自のエントロピーを注入できなくなります。各パルスでは 0 から 1 ずつ増える通し番号を割り当て、同じパルス内で番号は重複しません。ビーコンが利用できない場合はローカルシードへ退避せず抽選は失敗します。通常モードのみ有効です</value></data><data name="S_BeaconEndpoint"><value>ビーコンサービスアドレス</value></data><data name="S_BeaconEndpoint_D"><value>既定では NIST 公式 Beacon v2 を使用します。ミラーを使う場合も証明にはパルス値と署名が記録されるため、後から公式に対して照合できます。リモートアドレスは HTTPS が必須です</value></data><data name="C_FetchBeacon"><value>最新ビーコンを取得</value></data><data name="M_BeaconIdle"><value>未取得</value></data><data name="M_BeaconFetching"><value>取得中...</value></data><data name="M_BeaconFetched"><value>パルス {0}、チェーン {1}、時刻 {2}</value></data><data name="M_BeaconFailed"><value>取得に失敗しました。ネットワークまたはアドレスを確認してください</value></data>
+これにより、固定されたフロー内でローカル抽選コード、乱数種、結果ファイルが置換されることを防げますが、現実の名簿が完全かつ真正であることや、送信前に候補プールが人為的に絞り込まれていないことは依然として証明できません</value>
+  </data>
+  <data name="M_ModeConfirmFormalNoticeTitle" xml:space="preserve">
+    <value>注意</value>
+  </data>
+  <data name="M_ModeConfirmFormalNotice" xml:space="preserve">
+    <value>この機能は上流の SecRandom が提供するもので、上流が「正式公証」と命名しています。この名称は上流による自機能の説明であり、VeriRandom がその法的性質や効力について評価するものではありません。この機能を利用すると、データは SECTL のサーバーへ送信され、SecRandom の利用規約とプライバシーポリシーが適用されます。機能の具体的な仕組みと効力については SECTL の公式説明を基準にしてください。このビルドでは、この機能に含まれる仕組みは SecRandom 中央サーバーを「唯一の信頼」根としています。「唯一」などの限定的な表現は客観的な技術記述であり、明示的または暗示的な評価を構成しません</value>
+  </data>
+  <data name="M_ModeConfirmFormalWarning" xml:space="preserve">
+    <value>法的効力を要する証明として用いる前に、この機能が要件に正確に適合するかを厳密に確認することを推奨します</value>
+  </data>
+  <data name="C_ModeConfirmSecRandomServices" xml:space="preserve">
+    <value>上記の SecRandom オンラインサービスに関する説明と免責事項を読み、同意します</value>
+  </data>
+  <data name="S_TimestampAuthority" xml:space="preserve">
+    <value>タイムスタンプサービス（TSA）</value>
+  </data>
+  <data name="S_TimestampAuthority_D" xml:space="preserve">
+    <value>既定で有効です。有効にすると各証明は沃通（WoTrus）TSA に RFC 3161 タイムスタンプを要求し、送信するのは証明のダイジェストのみです。無効にするとタイムスタンプを取得しなくなり、ビーコン照合は周期のアンカーを失い、参考証明に記録されたパルス索引からのみ遡れます</value>
+  </data>
+  <data name="C_TimestampDisableTitle" xml:space="preserve">
+    <value>タイムスタンプサービスを無効にする</value>
+  </data>
+  <data name="C_TimestampDisableBody" xml:space="preserve">
+    <value>無効にすると、証明は SecRandom サービスから独立した時刻のアンカーを失います。さらにビーコン照合も周期のアンカーを失い、参考証明に記録されたパルス索引でパルスを取得できても、タイムスタンプの周期（許容範囲内の前周期を含む）と突き合わせることはできません。影響を理解した上でのみ無効にしてください</value>
+  </data>
+  <data name="C_TimestampDisableConfirm" xml:space="preserve">
+    <value>理解した上で無効にします</value>
+  </data>
+  <data name="S_AttestationUpload" xml:space="preserve">
+    <value>抽選後の署名検証への自動送信</value>
+  </data>
+  <data name="S_AttestationUpload_D" xml:space="preserve">
+    <value>通常モードの抽選完了後に、SECTL のサーバーへ署名とサーバー側での再現検証を自動で要求するかどうか。越境データ移転に関するお知らせに同意するまで利用できません（プライバシー設定ページで先に確認してください）。ここには既定値がなく、未選択の間は何も送信されません</value>
+  </data>
+  <data name="S_ProofTrust" xml:space="preserve">
+    <value>証明の信頼度</value>
+  </data>
+  <data name="S_ProofTrust_D" xml:space="preserve">
+    <value>信頼する提供元を選択してください。最新の通常モード証明について、実際に裏付けがある証拠の割合で満点から減点し、チェーン自体の整合性が取れない場合は 0 にします</value>
+  </data>
+  <data name="C_ProofTrust_Sources" xml:space="preserve">
+    <value>信頼する提供元</value>
+  </data>
+  <data name="C_ProofTrust_Beacon" xml:space="preserve">
+    <value>ビーコン提供元</value>
+  </data>
+  <data name="C_ProofTrust_Timestamp" xml:space="preserve">
+    <value>タイムスタンプ機関</value>
+  </data>
+  <data name="C_ProofTrust_Server" xml:space="preserve">
+    <value>SECTL サーバー（サーバー側検証）</value>
+  </data>
+  <data name="C_ProofTrust_Witness" xml:space="preserve">
+    <value>社会的証言</value>
+  </data>
+  <data name="C_ProofTrust_WitnessHint" xml:space="preserve">
+    <value>社会的証言には、記憶しているおおよその抽選時刻の入力が必要です</value>
+  </data>
+  <data name="C_ProofTrust_Confidence" xml:space="preserve">
+    <value>時刻の信頼度</value>
+  </data>
+  <data name="O_ProofTrust_Confidence_High" xml:space="preserve">
+    <value>高（誤差 5 分以内）</value>
+  </data>
+  <data name="O_ProofTrust_Confidence_Medium" xml:space="preserve">
+    <value>中（誤差 30 分以内）</value>
+  </data>
+  <data name="O_ProofTrust_Confidence_Low" xml:space="preserve">
+    <value>低（誤差 2 時間以内）</value>
+  </data>
+  <data name="C_ProofTrust_Assess" xml:space="preserve">
+    <value>最新の証明を評価</value>
+  </data>
+  <data name="M_ProofTrust_NoProof" xml:space="preserve">
+    <value>評価できる抽出証明が見つかりません</value>
+  </data>
+  <data name="M_ProofTrust_Zeroed" xml:space="preserve">
+    <value>証明チェーンの整合性が取れないため、この記録は自証できず信頼度は 0 です</value>
+  </data>
+  <data name="M_ProofTrust_PreviousPeriod" xml:space="preserve">
+    <value>タイムスタンプがビーコン脉冲の公開時刻より 60 秒以上後（前周期）のため、信頼度を半分にします</value>
+  </data>
+  <data name="M_ProofTrust_PulseExpired" xml:space="preserve">
+    <value>タイムスタンプがビーコン脉冲の公開時刻より 110 秒を超えており、許容範囲外のため信頼度から 4 分の 3 を減点します</value>
+  </data>
+  <data name="M_ProofTrust_Score" xml:space="preserve">
+    <value>信頼度：{0} / 100</value>
+  </data>
+  <data name="M_ProofTrust_Factor_Ok" xml:space="preserve">
+    <value>{0}：証拠あり</value>
+  </data>
+  <data name="M_ProofTrust_Factor_Missing" xml:space="preserve">
+    <value>{0}：証拠なし</value>
+  </data>
+  <data name="M_ProofTrust_Factor_Partial" xml:space="preserve">
+    <value>{0}：証拠が一部のみ一致（誤差 {1:0} 秒、許容 {2:0} 秒）</value>
+  </data>
+  <data name="M_ProofTrust_SelectSource" xml:space="preserve">
+    <value>信頼する提供元を 1 つ以上選択してください</value>
+  </data>
+  <data name="S_ProofFolder">
+    <value>抽選証明ファイル</value>
+  </data>
+  <data name="S_ProofFolder_D">
+    <value>証明は日付ごとに自動保存され、フォルダーを開くと .srproof.json を検証サイトへアップロードできます</value>
+  </data>
+  <data name="C_OpenProofFolder">
+    <value>証明フォルダーを開く</value>
+  </data>
+  <data name="C_OpenVerificationWebsite">
+    <value>検証サイトを開く</value>
+  </data>
+  <data name="S_LocalProofStorageLimit">
+    <value>ローカル証明の容量上限</value>
+  </data>
+  <data name="S_LocalProofStorageLimit_D">
+    <value>新しい証明を生成した後、上限を超えると古い証明を自動削除し、既定は 64 MB</value>
+  </data>
+  <data name="O_Storage_16MB">
+    <value>16 MB</value>
+  </data>
+  <data name="O_Storage_32MB">
+    <value>32 MB</value>
+  </data>
+  <data name="O_Storage_64MB">
+    <value>64 MB</value>
+  </data>
+  <data name="O_Storage_128MB">
+    <value>128 MB</value>
+  </data>
+  <data name="O_Storage_256MB">
+    <value>256 MB</value>
+  </data>
+  <data name="O_Storage_512MB">
+    <value>512 MB</value>
+  </data>
+  <data name="O_Storage_1GB">
+    <value>1 GB</value>
+  </data>
+  <data name="S_LocalProofRetention">
+    <value>ローカル証明の保存期間</value>
+  </data>
+  <data name="S_LocalProofRetention_D">
+    <value>端末内の .srproof.json だけを整理し、共有リンクには影響せず、次の証明生成時に期限切れファイルを削除します</value>
+  </data>
+  <data name="O_Retention_7">
+    <value>7日</value>
+  </data>
+  <data name="O_Retention_15">
+    <value>15日</value>
+  </data>
+  <data name="O_Retention_30">
+    <value>30日</value>
+  </data>
+  <data name="O_Retention_60">
+    <value>60日</value>
+  </data>
+  <data name="O_Retention_90">
+    <value>90日</value>
+  </data>
+  <data name="O_Retention_Never">
+    <value>削除しない</value>
+  </data>
+  <data name="C_StatusTitle">
+    <value>抽選検証</value>
+  </data>
+  <data name="M_ServerWitnessedProof">
+    <value>サーバーによる再現検証に成功し、証明を保存しました。</value>
+  </data>
+  <data name="M_LocalFallbackProof">
+    <value>サーバーを一時利用できません。ローカルで再現可能な証明を保存しました。後で検証サイトへアップロードできます。</value>
+  </data>
+  <data name="S_ProofQueue">
+    <value>証明の送信キュー</value>
+  </data>
+  <data name="S_ProofQueue_D">
+    <value>通常モードの証明はすぐに保存され、バックグラウンドでサーバーの再現検証へ送信され、失敗時は自動で再試行し、再接続や再起動後も送信を続けます</value>
+  </data>
+  <data name="C_RetryProofQueue">
+    <value>今すぐ再試行</value>
+  </data>
+  <data name="M_ProofQueueIdle">
+    <value>すべての証明をサーバー検証へ送信済みです</value>
+  </data>
+  <data name="M_ProofQueuePending">
+    <value>送信待ち {0} 件</value>
+  </data>
+  <data name="M_ProofQueueFailed">
+    <value>送信失敗 {0} 件</value>
+  </data>
+  <data name="M_ProofQueueConflict">
+    <value>送信中に変更された証明ファイル {0} 件</value>
+  </data>
+  <data name="S_ProofIntegrity">
+    <value>証明チェーンの整合性</value>
+  </data>
+  <data name="S_ProofIntegrity_D">
+    <value>端末内の証明ハッシュチェーンが連続していて改変されていないかを検証します。ローカルのチェーンは削除や改変を可視化するだけで、それ以前の記録が削除されていないことは証明できません</value>
+  </data>
+  <data name="C_VerifyProofs">
+    <value>今すぐ検証</value>
+  </data>
+  <data name="M_ProofIntegrityIdle">
+    <value>未検証</value>
+  </data>
+  <data name="M_ProofIntegrityHealthy">
+    <value>証明チェーンは完全です</value>
+  </data>
+  <data name="M_ProofIntegrityCounts">
+    <value>全 {0} 件、チェーン済み {1} 件、旧形式 {2} 件</value>
+  </data>
+  <data name="M_ProofIntegrityProblems">
+    <value>欠落 {0}、リンク不整合 {1}、改変 {2}、チェーン先頭超過 {3}、未保存 {4}、期限切れ {5}</value>
+  </data>
+  <data name="M_ProofIntegrityOwnReference" xml:space="preserve">
+    <value>参照チェーン（Own）：{0} ノード、{1} 件タイムスタンプ済み、ヘッド {2}、保持下限 {3}</value>
+  </data>
+  <data name="M_ProofIntegrityOwnReferenceProblems" xml:space="preserve">
+    <value>参照チェーンの問題：改変 {0} 件、順序異常 {1} 件</value>
+  </data>
+  <data name="M_EgressConsentRequired" xml:space="preserve">
+    <value>この項目を有効にするには、データ送出に関する告知への同意が必要です</value>
+  </data>
+  <data name="C_EgressConsentGrant" xml:space="preserve">
+    <value>確認して同意する</value>
+  </data>
+  <data name="M_ProofIntegrityLimits">
+    <value>ローカルのチェーンは削除や改変を可視化するだけで、それ以前の記録が削除されていないことは証明できません</value>
+  </data>
+  <data name="M_ProofIssue_Unreadable">
+    <value>解析不可</value>
+  </data>
+  <data name="M_ProofIssue_Modified">
+    <value>改変あり</value>
+  </data>
+  <data name="M_ProofIssue_UnsupportedVersion">
+    <value>未対応バージョン</value>
+  </data>
+  <data name="M_ProofIssue_BrokenLink">
+    <value>リンク不整合</value>
+  </data>
+  <data name="M_ProofIssue_Gap">
+    <value>ファイル欠落</value>
+  </data>
+  <data name="M_ProofIssue_BeyondHead">
+    <value>チェーン先頭超過</value>
+  </data>
+  <data name="M_ProofIssue_MissingTail">
+    <value>未保存</value>
+  </data>
+  <data name="M_ProofQueueTimestampFailed">
+    <value>タイムスタンプ未完了 {0} 件</value>
+  </data>
+  <data name="M_ProofQueueChainAlert">
+    <value>サーバーが検出した証明チェーンの異常 {0} 件</value>
+  </data>
+  <data name="S_BeaconEntropy">
+    <value>外部ビーコンエントロピー</value>
+  </data>
+  <data name="S_BeaconEntropy_D">
+    <value>オンにすると通常モードの抽選シードは NIST ビーコンのパルスから派生し、進行役が独自のエントロピーを注入できなくなります。各パルスでは 0 から 1 ずつ増える通し番号を割り当て、同じパルス内で番号は重複しません。ビーコンが利用できない場合はローカルシードへ退避せず抽選は失敗します。通常モードのみ有効です</value>
+  </data>
+  <data name="S_BeaconEndpoint">
+    <value>ビーコンサービスアドレス</value>
+  </data>
+  <data name="S_BeaconEndpoint_D">
+    <value>既定では NIST 公式 Beacon v2 を使用します。ミラーを使う場合も証明にはパルス値と署名が記録されるため、後から公式に対して照合できます。リモートアドレスは HTTPS が必須です</value>
+  </data>
+  <data name="C_FetchBeacon">
+    <value>最新ビーコンを取得</value>
+  </data>
+  <data name="M_BeaconIdle">
+    <value>未取得</value>
+  </data>
+  <data name="M_BeaconFetching">
+    <value>取得中...</value>
+  </data>
+  <data name="M_BeaconFetched">
+    <value>パルス {0}、チェーン {1}、時刻 {2}</value>
+  </data>
+  <data name="M_BeaconFailed">
+    <value>取得に失敗しました。ネットワークまたはアドレスを確認してください</value>
+  </data>
   <data name="C_RandomOrgSetup" xml:space="preserve">
     <value>random.org 署名を接続</value>
   </data>
@@ -173,70 +498,202 @@
   <data name="M_ProofReplay_RecordedIds" xml:space="preserve">
     <value>記録された recordId の先頭 8 文字：{0}（名簿を選ぶと氏名を表示します）</value>
   </data>
-  <data name="C_VerifyRawProofs" xml:space="preserve"><value>乱数記録を検証</value></data>
-  <data name="M_RawProofsUnavailable" xml:space="preserve"><value>この環境では乱数記録サービスを利用できません</value></data>
-  <data name="M_RawProofsNone" xml:space="preserve"><value>乱数記録はまだありません</value></data>
-  <data name="M_RawProofsAllValidFormat" xml:space="preserve"><value>乱数記録 {0} 件はすべて再計算に成功しました。チェーン末尾の番号は {1} です</value></data>
-  <data name="M_RawProofsSomeInvalidFormat" xml:space="preserve"><value>{0} 件の記録が再計算に失敗しました。これらの記録は使わないでください：{1}</value></data>
-  <data name="S_ProofDetails" xml:space="preserve"><value>証明の詳細</value></data>
-  <data name="C_ProofDetails" xml:space="preserve"><value>詳細</value></data>
-  <data name="M_ProofDetailsNotice" xml:space="preserve"><value>以下はすべて証明ファイル自身が主張している内容で、本機で確認した結論ではありません。「証明の信頼度」の評価と再現結果と併せて判断してください</value></data>
-  <data name="M_ProofDetailsUnreadable" xml:space="preserve"><value>この証明ファイルを読み込めませんでした</value></data>
-  <data name="C_ProofDetail_ProofId" xml:space="preserve"><value>証明 ID</value></data>
-  <data name="C_ProofDetail_Mode" xml:space="preserve"><value>証明の種類</value></data>
-  <data name="C_ProofDetail_Algorithm" xml:space="preserve"><value>アルゴリズム</value></data>
-  <data name="C_ProofDetail_Engine" xml:space="preserve"><value>アルゴリズムエンジンのバージョン</value></data>
-  <data name="C_ProofDetail_FrameVersion" xml:space="preserve"><value>リクエストフレームの版</value></data>
-  <data name="C_ProofDetail_PoolRule" xml:space="preserve"><value>候補プールの規則</value></data>
-  <data name="C_ProofDetail_Sampling" xml:space="preserve"><value>抽出方式</value></data>
-  <data name="C_ProofDetail_Count" xml:space="preserve"><value>抽選数</value></data>
-  <data name="C_ProofDetail_Candidates" xml:space="preserve"><value>匿名候補数</value></data>
-  <data name="C_ProofDetail_GapApplied" xml:space="preserve"><value>平均間隔の保護</value></data>
-  <data name="C_ProofDetail_GapThreshold" xml:space="preserve"><value>平均間隔のしきい値</value></data>
-  <data name="C_ProofDetail_BatchSize" xml:space="preserve"><value>バッチ抽選規模</value></data>
-  <data name="C_ProofDetail_ShareDebtPersonal" xml:space="preserve"><value>個人 share-debt horizon</value></data>
-  <data name="C_ProofDetail_ShareDebtDimension" xml:space="preserve"><value>次元 share-debt horizon</value></data>
-  <data name="C_ProofDetail_ShareDebtFloor" xml:space="preserve"><value>share-debt のランダム下限</value></data>
-  <data name="C_ProofDetail_InputCommitment" xml:space="preserve"><value>入力コミットメント</value></data>
-  <data name="C_ProofDetail_AuditCommitment" xml:space="preserve"><value>監査コミットメント</value></data>
-  <data name="C_ProofDetail_Seed" xml:space="preserve"><value>乱数材料</value></data>
-  <data name="C_ProofDetail_ServerReceipt" xml:space="preserve"><value>サーバー署名</value></data>
-  <data name="M_ProofDetail_ModeOffline" xml:space="preserve"><value>通常モード：ローカルで再現可能な証明</value></data>
-  <data name="M_ProofDetail_ModeOnline" xml:space="preserve"><value>正式公証：サーバー側の立会いロック</value></data>
-  <data name="M_ProofDetail_SamplingFair" xml:space="preserve"><value>履歴公平な重み付け・非復元</value></data>
-  <data name="M_ProofDetail_SamplingUniform" xml:space="preserve"><value>等確率・非復元</value></data>
-  <data name="M_ProofDetail_GapAppliedFormat" xml:space="preserve"><value>適用済み（匿名候補 {0}/{1}）</value></data>
-  <data name="M_ProofDetail_GapNotApplied" xml:space="preserve"><value>未適用</value></data>
-  <data name="M_ProofDetail_ReceiptPresent" xml:space="preserve"><value>確認済み</value></data>
-  <data name="M_ProofDetail_ReceiptAbsent" xml:space="preserve"><value>未確認</value></data>
-  <data name="C_ProofReplay_IncludeRaw" xml:space="preserve"><value>乱数記録を含める</value></data>
-  <data name="M_RawReplayFormat" xml:space="preserve"><value>記録値 {0} · 再計算値 {1} · {2}</value></data>
-  <data name="M_RawReplayMatch" xml:space="preserve"><value>一致</value></data>
-  <data name="M_RawReplayMismatch" xml:space="preserve"><value>不一致です。この記録は使わないでください</value></data>
-  <data name="M_RawReplayNone" xml:space="preserve"><value>乱数記録はまだありません</value></data>
-  <data name="C_RawNodeEntropy" xml:space="preserve"><value>エントロピー</value></data>
-  <data name="M_RawReplayEntropyFormat" xml:space="preserve"><value>エントロピー記録 · 記録ダイジェスト {0} · 再計算ダイジェスト {1} · {2}　表示テキストは保存されておらず、シードのダイジェストのみ照合します</value></data>
-  <data name="M_RawReplayEntropyMatch" xml:space="preserve"><value>一致</value></data>
-  <data name="M_RawReplayEntropyMismatch" xml:space="preserve"><value>不一致です。この記録は使わないでください</value></data>
-  <data name="M_RawReplayEntropyUnverifiable" xml:space="preserve"><value>照合できません（古い記録はラウンド情報を保存していません）</value></data>
-  <data name="C_ProofDetail_SelfCheck" xml:space="preserve"><value>自己整合性</value></data>
-  <data name="M_SelfCheckOk" xml:space="preserve"><value>合格（入力コミットメント・結果フレーム・候補数が一致）</value></data>
-  <data name="M_SelfCheckLegacyEngine" xml:space="preserve"><value>一部合格（別のエンジンバージョンで書かれたため入力コミットメントは再計算できません。結果フレームと候補数は確認済み）</value></data>
-  <data name="M_SelfCheckUnavailable" xml:space="preserve"><value>照合できません（payload をデコードできません）</value></data>
-  <data name="M_SelfCheckInputMismatch" xml:space="preserve"><value>入力コミットメントがファイル内容と一致しません</value></data>
-  <data name="M_SelfCheckResultMismatch" xml:space="preserve"><value>記録された当選者が結果フレームと一致しません</value></data>
-  <data name="M_SelfCheckCountsImpossible" xml:space="preserve"><value>候補数が矛盾しています</value></data>
-  <data name="C_ProofDetail_GateEvidence" xml:space="preserve"><value>しきい値の証拠</value></data>
-  <data name="M_GateEvidenceNone" xml:space="preserve"><value>しきい値の証拠はありません（今回は誰も除外されていないか、この記録が機能より前のものです）</value></data>
-  <data name="M_GateEvidencePresentFormat" xml:space="preserve"><value>{0} 人を除外（候補 {1} → {2}、しきい値 {3}）</value></data>
-  <data name="M_GateEvidenceBound" xml:space="preserve"><value>この証明に結び付いています</value></data>
-  <data name="M_GateEvidenceDetached" xml:space="preserve"><value>この証明に結び付いていません（別の抽選の証拠です）</value></data>
-  <data name="M_GateEvidenceSelfHashInvalid" xml:space="preserve"><value>証拠の内容検査に失敗しました</value></data>
-  <data name="M_SelfCheckGateEvidenceMissing" xml:space="preserve"><value>公平な抽選が除外を行ったと記録していますが、しきい値の証拠が隣にありません（削除されたか、この記録が機能より前のものです）</value></data>
-  <data name="M_SelfCheckGateThresholdMismatch" xml:space="preserve"><value>しきい値の証拠と監査記録のしきい値が一致しません</value></data>
-  <data name="M_SelfCheckGateRemovalContradicts" xml:space="preserve"><value>しきい値の証拠が主張する除外人数が候補数の減少を超えています</value></data>
-  <data name="M_SelfCheckGateRemovalNotJustified" xml:space="preserve"><value>しきい値の証拠が、規則では除外されない人を除外しています</value></data>
-  <data name="M_SelfCheckGateRemovalIncomplete" xml:space="preserve"><value>しきい値の証拠が、規則では除外される人を除外していません（記録から再計算）</value></data>
-  <data name="O_Retention_365" xml:space="preserve"><value>1 年</value></data>
-  <data name="O_Storage_Unlimited" xml:space="preserve"><value>無制限</value></data>
+  <data name="C_VerifyRawProofs" xml:space="preserve">
+    <value>乱数記録を検証</value>
+  </data>
+  <data name="M_RawProofsUnavailable" xml:space="preserve">
+    <value>この環境では乱数記録サービスを利用できません</value>
+  </data>
+  <data name="M_RawProofsNone" xml:space="preserve">
+    <value>乱数記録はまだありません</value>
+  </data>
+  <data name="M_RawProofsAllValidFormat" xml:space="preserve">
+    <value>乱数記録 {0} 件はすべて再計算に成功しました。チェーン末尾の番号は {1} です</value>
+  </data>
+  <data name="M_RawProofsSomeInvalidFormat" xml:space="preserve">
+    <value>{0} 件の記録が再計算に失敗しました。これらの記録は使わないでください：{1}</value>
+  </data>
+  <data name="S_ProofDetails" xml:space="preserve">
+    <value>証明の詳細</value>
+  </data>
+  <data name="C_ProofDetails" xml:space="preserve">
+    <value>詳細</value>
+  </data>
+  <data name="M_ProofDetailsNotice" xml:space="preserve">
+    <value>以下はすべて証明ファイル自身が主張している内容で、本機で確認した結論ではありません。「証明の信頼度」の評価と再現結果と併せて判断してください</value>
+  </data>
+  <data name="M_ProofDetailsUnreadable" xml:space="preserve">
+    <value>この証明ファイルを読み込めませんでした</value>
+  </data>
+  <data name="C_ProofDetail_ProofId" xml:space="preserve">
+    <value>証明 ID</value>
+  </data>
+  <data name="C_ProofDetail_Mode" xml:space="preserve">
+    <value>証明の種類</value>
+  </data>
+  <data name="C_ProofDetail_Algorithm" xml:space="preserve">
+    <value>アルゴリズム</value>
+  </data>
+  <data name="C_ProofDetail_Engine" xml:space="preserve">
+    <value>アルゴリズムエンジンのバージョン</value>
+  </data>
+  <data name="C_ProofDetail_FrameVersion" xml:space="preserve">
+    <value>リクエストフレームの版</value>
+  </data>
+  <data name="C_ProofDetail_PoolRule" xml:space="preserve">
+    <value>候補プールの規則</value>
+  </data>
+  <data name="C_ProofDetail_Sampling" xml:space="preserve">
+    <value>抽出方式</value>
+  </data>
+  <data name="C_ProofDetail_Count" xml:space="preserve">
+    <value>抽選数</value>
+  </data>
+  <data name="C_ProofDetail_Candidates" xml:space="preserve">
+    <value>匿名候補数</value>
+  </data>
+  <data name="C_ProofDetail_GapApplied" xml:space="preserve">
+    <value>平均間隔の保護</value>
+  </data>
+  <data name="C_ProofDetail_GapThreshold" xml:space="preserve">
+    <value>平均間隔のしきい値</value>
+  </data>
+  <data name="C_ProofDetail_BatchSize" xml:space="preserve">
+    <value>バッチ抽選規模</value>
+  </data>
+  <data name="C_ProofDetail_ShareDebtPersonal" xml:space="preserve">
+    <value>個人 share-debt horizon</value>
+  </data>
+  <data name="C_ProofDetail_ShareDebtDimension" xml:space="preserve">
+    <value>次元 share-debt horizon</value>
+  </data>
+  <data name="C_ProofDetail_ShareDebtFloor" xml:space="preserve">
+    <value>share-debt のランダム下限</value>
+  </data>
+  <data name="C_ProofDetail_InputCommitment" xml:space="preserve">
+    <value>入力コミットメント</value>
+  </data>
+  <data name="C_ProofDetail_AuditCommitment" xml:space="preserve">
+    <value>監査コミットメント</value>
+  </data>
+  <data name="C_ProofDetail_Seed" xml:space="preserve">
+    <value>乱数材料</value>
+  </data>
+  <data name="C_ProofDetail_ServerReceipt" xml:space="preserve">
+    <value>サーバー署名</value>
+  </data>
+  <data name="M_ProofDetail_ModeOffline" xml:space="preserve">
+    <value>通常モード：ローカルで再現可能な証明</value>
+  </data>
+  <data name="M_ProofDetail_ModeOnline" xml:space="preserve">
+    <value>正式公証：サーバー側の立会いロック</value>
+  </data>
+  <data name="M_ProofDetail_SamplingFair" xml:space="preserve">
+    <value>履歴公平な重み付け・非復元</value>
+  </data>
+  <data name="M_ProofDetail_SamplingUniform" xml:space="preserve">
+    <value>等確率・非復元</value>
+  </data>
+  <data name="M_ProofDetail_GapAppliedFormat" xml:space="preserve">
+    <value>適用済み（匿名候補 {0}/{1}）</value>
+  </data>
+  <data name="M_ProofDetail_GapNotApplied" xml:space="preserve">
+    <value>未適用</value>
+  </data>
+  <data name="M_ProofDetail_ReceiptPresent" xml:space="preserve">
+    <value>確認済み</value>
+  </data>
+  <data name="M_ProofDetail_ReceiptAbsent" xml:space="preserve">
+    <value>未確認</value>
+  </data>
+  <data name="C_ProofReplay_IncludeRaw" xml:space="preserve">
+    <value>乱数記録を含める</value>
+  </data>
+  <data name="M_RawReplayFormat" xml:space="preserve">
+    <value>記録値 {0} · 再計算値 {1} · {2}</value>
+  </data>
+  <data name="M_RawReplayMatch" xml:space="preserve">
+    <value>一致</value>
+  </data>
+  <data name="M_RawReplayMismatch" xml:space="preserve">
+    <value>不一致です。この記録は使わないでください</value>
+  </data>
+  <data name="M_RawReplayNone" xml:space="preserve">
+    <value>乱数記録はまだありません</value>
+  </data>
+  <data name="C_RawNodeEntropy" xml:space="preserve">
+    <value>エントロピー</value>
+  </data>
+  <data name="M_RawReplayEntropyFormat" xml:space="preserve">
+    <value>エントロピー記録 · 記録ダイジェスト {0} · 再計算ダイジェスト {1} · {2}　表示テキストは保存されておらず、シードのダイジェストのみ照合します</value>
+  </data>
+  <data name="M_RawReplayEntropyMatch" xml:space="preserve">
+    <value>一致</value>
+  </data>
+  <data name="M_RawReplayEntropyMismatch" xml:space="preserve">
+    <value>不一致です。この記録は使わないでください</value>
+  </data>
+  <data name="M_RawReplayEntropyUnverifiable" xml:space="preserve">
+    <value>照合できません（古い記録はラウンド情報を保存していません）</value>
+  </data>
+  <data name="C_ProofDetail_SelfCheck" xml:space="preserve">
+    <value>自己整合性</value>
+  </data>
+  <data name="M_SelfCheckOk" xml:space="preserve">
+    <value>合格（入力コミットメント・結果フレーム・候補数が一致）</value>
+  </data>
+  <data name="M_SelfCheckLegacyEngine" xml:space="preserve">
+    <value>一部合格（別のエンジンバージョンで書かれたため入力コミットメントは再計算できません。結果フレームと候補数は確認済み）</value>
+  </data>
+  <data name="M_SelfCheckUnavailable" xml:space="preserve">
+    <value>照合できません（payload をデコードできません）</value>
+  </data>
+  <data name="M_SelfCheckInputMismatch" xml:space="preserve">
+    <value>入力コミットメントがファイル内容と一致しません</value>
+  </data>
+  <data name="M_SelfCheckResultMismatch" xml:space="preserve">
+    <value>記録された当選者が結果フレームと一致しません</value>
+  </data>
+  <data name="M_SelfCheckCountsImpossible" xml:space="preserve">
+    <value>候補数が矛盾しています</value>
+  </data>
+  <data name="C_ProofDetail_GateEvidence" xml:space="preserve">
+    <value>しきい値の証拠</value>
+  </data>
+  <data name="M_GateEvidenceNone" xml:space="preserve">
+    <value>しきい値の証拠はありません（今回は誰も除外されていないか、この記録が機能より前のものです）</value>
+  </data>
+  <data name="M_GateEvidencePresentFormat" xml:space="preserve">
+    <value>{0} 人を除外（候補 {1} → {2}、しきい値 {3}）</value>
+  </data>
+  <data name="M_GateEvidenceBound" xml:space="preserve">
+    <value>この証明に結び付いています</value>
+  </data>
+  <data name="M_GateEvidenceDetached" xml:space="preserve">
+    <value>この証明に結び付いていません（別の抽選の証拠です）</value>
+  </data>
+  <data name="M_GateEvidenceSelfHashInvalid" xml:space="preserve">
+    <value>証拠の内容検査に失敗しました</value>
+  </data>
+  <data name="M_SelfCheckGateEvidenceMissing" xml:space="preserve">
+    <value>公平な抽選が除外を行ったと記録していますが、しきい値の証拠が隣にありません（削除されたか、この記録が機能より前のものです）</value>
+  </data>
+  <data name="M_SelfCheckGateThresholdMismatch" xml:space="preserve">
+    <value>しきい値の証拠と監査記録のしきい値が一致しません</value>
+  </data>
+  <data name="M_SelfCheckGateRemovalContradicts" xml:space="preserve">
+    <value>しきい値の証拠が主張する除外人数が候補数の減少を超えています</value>
+  </data>
+  <data name="M_SelfCheckGateRemovalNotJustified" xml:space="preserve">
+    <value>しきい値の証拠が、規則では除外されない人を除外しています</value>
+  </data>
+  <data name="M_SelfCheckGateRemovalIncomplete" xml:space="preserve">
+    <value>しきい値の証拠が、規則では除外される人を除外していません（記録から再計算）</value>
+  </data>
+  <data name="O_Retention_365" xml:space="preserve">
+    <value>1 年</value>
+  </data>
+  <data name="O_Storage_Unlimited" xml:space="preserve">
+    <value>無制限</value>
+  </data>
 </root>

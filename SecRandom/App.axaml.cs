@@ -1418,6 +1418,33 @@ public partial class App : Application
                     provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
                     endpointStore: provider.GetRequiredService<IControlPlaneEndpointStore>()));
 
+                // 接入令牌：自建集控的节点凭据，独立加密存放（data/config/security/control-node.json）。
+                // 注册在**共享分支**里：手机端虽然不跑节点，但远程抽取页同样要在"未登录 SECTL"时可用，
+                // 靠的就是这份接入记录；放在 RunsControlNode 分支里会让手机端永远接入不了。
+                services.AddSingleton<INodeEnrollmentStore>(provider => new FileNodeEnrollmentStore(
+                    provider.GetRequiredService<ILogger<FileNodeEnrollmentStore>>()));
+                services.AddSingleton(provider => new NodeEnrollmentClient(
+                    provider.GetRequiredService<IHttpClientFactory>(),
+                    provider.GetRequiredService<IControlPlaneEndpointStore>()));
+
+                // 控制面（集控 REST）客户端：桌面与手机共用同一份实现与同一条 Bearer 边界。
+                // 装饰顺序：未接入时 EnrolledAuthorizedApiSender 原样转交 SectlAuthorizedApiSender（今天的
+                // 行为一字不变），已接入时改出示节点令牌——**绝不再经过账号刷新逻辑**。
+                services.AddSingleton<SectlAuthorizedApiSender>();
+                services.AddSingleton<IAuthorizedApiSender>(provider => new EnrolledAuthorizedApiSender(
+                    provider.GetRequiredService<SectlAuthorizedApiSender>(),
+                    provider.GetRequiredService<INodeEnrollmentStore>(),
+                    provider.GetRequiredService<IHttpClientFactory>()));
+                services.AddSingleton<IControlPlaneDevicePreferenceStore, FileControlPlaneDevicePreferenceStore>();
+                // 控制面基址是可配置的（自建/私有部署），但它**不进 settings.json**：这个地址每次请求都会
+                // 收到本账号的令牌，一次设置导入不该能把令牌指到别的服务器上。见 IControlPlaneEndpointStore。
+                services.AddSingleton<IControlPlaneEndpointStore>(provider => new FileControlPlaneEndpointStore(
+                    provider.GetRequiredService<ILogger<FileControlPlaneEndpointStore>>()));
+                services.AddSingleton<IControlPlaneClient>(provider => new ControlPlaneClient(
+                    provider.GetRequiredService<IAuthorizedApiSender>(),
+                    provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
+                    endpointStore: provider.GetRequiredService<IControlPlaneEndpointStore>()));
+
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
                 services.AddAttachedSettingsControl<SpecificAnnouncementAttachedSettingsControl>(
@@ -1772,6 +1799,11 @@ public partial class App : Application
         if (IAppHost.GetService<MainConfigHandler>().Data.General.Basic.ShowStartupWindow)
             Dispatcher.UIThread.Post(ShowMainWindow, DispatcherPriority.Render);
 
+        if (OperatingSystem.IsWindows())
+        {
+            TaskbarFixer.Start();
+        }
+        
         AppStarted?.Invoke(this, EventArgs.Empty);
     }
 

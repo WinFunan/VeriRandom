@@ -68,6 +68,10 @@
                               ItemsSource="{Binding GenderOptions}" SelectedItem="{Binding SelectedGender}">
                         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
+                    <ComboBox IsVisible="{Binding IsHistoryGroupSelectorVisible}"
+                              ItemsSource="{Binding HistoryGroupOptions}" SelectedItem="{Binding SelectedHistoryGroup}">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
                     <Button Content="{x:Static langs:Resources.C_ShowRemainingList}"
                             IsVisible="{Binding MoreSettings.LotteryRemainingButton}"
                             Click="RemainingListButton_OnClick" />
