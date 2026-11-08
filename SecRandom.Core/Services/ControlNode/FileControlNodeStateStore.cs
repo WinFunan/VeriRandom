@@ -91,28 +91,54 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
             }
         }
 
+        var storedServerUrl = stored?.ServerUrl?.Trim();
+        // 旧版节点通道地址（wss://secrandom-control.sectl.cn/v1/node/connect …）在新集控上不存在：
+        // 读回来就换成新出厂默认，并立刻落盘，否则每次启动都会把死地址再读回来一次。
+        var legacyServerUrl = ControlNodeEndpointResolver.IsLegacyNodeChannel(storedServerUrl);
+
         var state = new ControlNodeState
         {
             NodeId = stored?.NodeId?.Trim() is { Length: > 0 } nodeId ? nodeId : NewNodeId(),
             GroupId = stored?.GroupId?.Trim() ?? string.Empty,
-            ServerUrl = stored?.ServerUrl?.Trim() is { Length: > 0 } serverUrl ? serverUrl : ControlNodeClientOptions.DefaultEndpoint,
+            SiteId = stored?.SiteId?.Trim() is { Length: > 0 } siteId ? siteId : null,
+            SiteName = stored?.SiteName?.Trim(),
+            ClassId = stored?.ClassId?.Trim(),
+            ServerUrl = legacyServerUrl || string.IsNullOrEmpty(storedServerUrl)
+                ? ControlNodeClientOptions.DefaultEndpoint
+                : storedServerUrl,
             // 名字保留用户输入的原样（只把"全是空白"统一成"没填"），Trim 交给上报时的解析。
             DisplayName = string.IsNullOrWhiteSpace(stored?.DisplayName) ? null : stored!.DisplayName,
             RemoteControlEnabled = stored?.RemoteControlEnabled ?? false,
             // 默认关闭：装了新版本不会凭空多出一个"远程抽取"入口，要用户自己在集控页打开。
             RemoteDrawPageEnabled = stored?.RemoteDrawPageEnabled ?? false,
             AppliedDesiredStateRevision = stored?.AppliedDesiredStateRevision ?? ControlDesiredState.NeverSetRevision,
-            DrawLocked = stored?.DrawLocked ?? false
+            DrawLocked = stored?.DrawLocked ?? false,
+            // 旧状态文件没有 schema 记录：从 0 开始，第一次上报时由 report source 决定为 revision 1。
+            SettingsSchemaRevision = stored?.SettingsSchemaRevision ?? 0,
+            SettingsSchemaHash = string.IsNullOrWhiteSpace(stored?.SettingsSchemaHash)
+                ? null
+                : stored!.SettingsSchemaHash
         };
 
         // 首次运行（或身份丢失）时立刻落盘：node_id 必须在任何一次 hello 之前稳定下来。
-        if (stored is null || !string.Equals(stored.NodeId, state.NodeId, StringComparison.Ordinal))
+        // 地址迁移也要落盘，否则迁移只对本次运行生效。
+        if (stored is null
+            || !string.Equals(stored.NodeId, state.NodeId, StringComparison.Ordinal)
+            || legacyServerUrl)
             Save(state);
 
         return state;
     }
 
-    private static string NewNodeId() => Guid.NewGuid().ToString("n");
+    /// <summary>
+    ///     本机 ID：标准 UUID（36 字符带连字符）。
+    /// </summary>
+    /// <remarks>
+    ///     这个值只用于本机标识与界面展示，替代原来的 32 位无连字符 Guid——两者都是随机的
+    ///     128 位，但带连字符的那种用户一眼能看出是 UUID，复制粘贴到别处也不会被当成别的东西。
+    ///     注意：接入之后服务端签发的是设备 ID（Appwrite 20 位 hex），那是另一件事，不要覆盖这个值。
+    /// </remarks>
+    private static string NewNodeId() => Guid.NewGuid().ToString();
 
     private void Save(ControlNodeState state)
     {
@@ -124,12 +150,19 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
                 FormatVersion = FormatVersion,
                 NodeId = state.NodeId,
                 GroupId = string.IsNullOrWhiteSpace(state.GroupId) ? null : state.GroupId,
+                SiteId = string.IsNullOrWhiteSpace(state.SiteId) ? null : state.SiteId,
+                SiteName = string.IsNullOrWhiteSpace(state.SiteName) ? null : state.SiteName,
+                ClassId = string.IsNullOrWhiteSpace(state.ClassId) ? null : state.ClassId,
                 ServerUrl = state.ServerUrl,
                 DisplayName = string.IsNullOrWhiteSpace(state.DisplayName) ? null : state.DisplayName,
                 RemoteControlEnabled = state.RemoteControlEnabled,
                 RemoteDrawPageEnabled = state.RemoteDrawPageEnabled,
                 AppliedDesiredStateRevision = state.AppliedDesiredStateRevision,
                 DrawLocked = state.DrawLocked,
+                SettingsSchemaRevision = state.SettingsSchemaRevision,
+                SettingsSchemaHash = string.IsNullOrWhiteSpace(state.SettingsSchemaHash)
+                    ? null
+                    : state.SettingsSchemaHash,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
 
@@ -154,6 +187,13 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
 
         public string? GroupId { get; set; }
 
+        /// <summary>v4：接入地点 ID/显示名与当前分班，只用于设置页展示。</summary>
+        public string? SiteId { get; set; }
+
+        public string? SiteName { get; set; }
+
+        public string? ClassId { get; set; }
+
         public string? ServerUrl { get; set; }
 
         /// <summary>控制台显示名。空/缺省表示用户没填，上报时回落到主机名。</summary>
@@ -167,6 +207,11 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
         public long AppliedDesiredStateRevision { get; set; }
 
         public bool DrawLocked { get; set; }
+
+        /// <summary>v4.2：最近上报的设置 schema revision 与内容哈希（见 ControlNodeState）。</summary>
+        public int SettingsSchemaRevision { get; set; }
+
+        public string? SettingsSchemaHash { get; set; }
 
         public DateTimeOffset? UpdatedAt { get; set; }
     }

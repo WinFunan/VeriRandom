@@ -34,4 +34,6 @@ public sealed class MacOsPlatformServiceRoot : IPlatformServiceRoot
         new MacOsRemovableStorageBindingMarker();
 
     public IPlatformCameraDeviceCatalog CameraDevices { get; } = new MacOsCameraDeviceCatalog();
+
+    public IPlatformApplicationIconExtractor ApplicationIcons { get; } = new MacOsApplicationIconExtractor();
 }

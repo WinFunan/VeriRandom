@@ -60,7 +60,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 启用覆盖.
+        ///   Looks up a localized string similar to 鍚敤瑕嗙洊.
         /// </summary>
         public static string C_EnableOverride {
             get {
@@ -69,7 +69,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 淡入.
+        ///   Looks up a localized string similar to 娣″叆.
         /// </summary>
         public static string C_FadeIn {
             get {
@@ -78,7 +78,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 淡出.
+        ///   Looks up a localized string similar to 娣″嚭.
         /// </summary>
         public static string C_FadeOut {
             get {
@@ -87,7 +87,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 直接轮换.
+        ///   Looks up a localized string similar to 鐩存帴杞崲.
         /// </summary>
         public static string O_AnimationDirectRotate {
             get {
@@ -96,7 +96,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 淡入上浮.
+        ///   Looks up a localized string similar to 娣″叆涓婃诞.
         /// </summary>
         public static string O_AnimationFadeFloat {
             get {
@@ -105,7 +105,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 左右晃动.
+        ///   Looks up a localized string similar to 宸﹀彸鏅冨姩.
         /// </summary>
         public static string O_AnimationHorizontalShake {
             get {
@@ -114,7 +114,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 自动播放.
+        ///   Looks up a localized string similar to 鑷姩鎾斁.
         /// </summary>
         public static string O_AutoPlay {
             get {
@@ -123,7 +123,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 编号和姓名.
+        ///   Looks up a localized string similar to 缂栧彿鍜屽鍚?
         /// </summary>
         public static string O_Both {
             get {
@@ -132,7 +132,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 下方.
+        ///   Looks up a localized string similar to 涓嬫柟.
         /// </summary>
         public static string O_Bottom {
             get {
@@ -141,7 +141,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 卡片.
+        ///   Looks up a localized string similar to 鍗＄墖.
         /// </summary>
         public static string O_Card {
             get {
@@ -150,7 +150,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 手动清除.
+        ///   Looks up a localized string similar to 鎵嬪姩娓呴櫎.
         /// </summary>
         public static string O_Cleared {
             get {
@@ -159,7 +159,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 按剩余数量.
+        ///   Looks up a localized string similar to 鎸夊墿浣欐暟閲?
         /// </summary>
         public static string O_Count {
             get {
@@ -168,7 +168,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 自定义.
+        ///   Looks up a localized string similar to 鑷畾涔?
         /// </summary>
         public static string O_Custom {
             get {
@@ -177,7 +177,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 默认.
+        ///   Looks up a localized string similar to 榛樿.
         /// </summary>
         public static string O_Default {
             get {
@@ -186,7 +186,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 公平抽取.
+        ///   Looks up a localized string similar to 鍏钩鎶藉彇.
         /// </summary>
         public static string O_Fair {
             get {
@@ -195,7 +195,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 固定颜色.
+        ///   Looks up a localized string similar to 鍥哄畾棰滆壊.
         /// </summary>
         public static string O_FixedColor {
             get {
@@ -204,7 +204,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 跟随全局.
+        ///   Looks up a localized string similar to 璺熼殢鍏ㄥ眬.
         /// </summary>
         public static string O_FollowGlobal {
             get {
@@ -213,7 +213,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 半重复.
+        ///   Looks up a localized string similar to 鍗婇噸澶?
         /// </summary>
         public static string O_HalfRepeat {
             get {
@@ -222,7 +222,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 仅编号.
+        ///   Looks up a localized string similar to 浠呯紪鍙?
         /// </summary>
         public static string O_Id {
             get {
@@ -231,7 +231,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 左侧.
+        ///   Looks up a localized string similar to 宸︿晶.
         /// </summary>
         public static string O_Left {
             get {
@@ -240,7 +240,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 手动停止.
+        ///   Looks up a localized string similar to 鎵嬪姩鍋滄.
         /// </summary>
         public static string O_ManualStop {
             get {
@@ -249,7 +249,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 外部文件：{0}.
+        ///   Looks up a localized string similar to 澶栭儴鏂囦欢锛歿0}.
         /// </summary>
         public static string O_MusicExternal {
             get {
@@ -258,7 +258,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 不可用：{0}.
+        ///   Looks up a localized string similar to 涓嶅彲鐢細{0}.
         /// </summary>
         public static string O_MusicUnavailable {
             get {
@@ -267,7 +267,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 仅姓名.
+        ///   Looks up a localized string similar to 浠呭鍚?
         /// </summary>
         public static string O_Name {
             get {
@@ -276,7 +276,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 无动画.
+        ///   Looks up a localized string similar to 鏃犲姩鐢?
         /// </summary>
         public static string O_NoAnimation {
             get {
@@ -285,7 +285,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 无.
+        ///   Looks up a localized string similar to 鏃?
         /// </summary>
         public static string O_NoColor {
             get {
@@ -294,7 +294,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 不开启音乐.
+        ///   Looks up a localized string similar to 涓嶅紑鍚煶涔?
         /// </summary>
         public static string O_NoMusic {
             get {
@@ -303,7 +303,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 不重复.
+        ///   Looks up a localized string similar to 涓嶉噸澶?
         /// </summary>
         public static string O_NoRepeat {
             get {
@@ -312,7 +312,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 按奖盘.
+        ///   Looks up a localized string similar to 鎸夊鐩?
         /// </summary>
         public static string O_Pan {
             get {
@@ -321,7 +321,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品/小组.
+        ///   Looks up a localized string similar to 濂栧搧/灏忕粍.
         /// </summary>
         public static string O_PrizeBreakGroup {
             get {
@@ -330,7 +330,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品/小组/姓名.
+        ///   Looks up a localized string similar to 濂栧搧/灏忕粍/濮撳悕.
         /// </summary>
         public static string O_PrizeBreakGroupBreakName {
             get {
@@ -339,7 +339,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品/小组-姓名.
+        ///   Looks up a localized string similar to 濂栧搧/灏忕粍-濮撳悕.
         /// </summary>
         public static string O_PrizeBreakGroupHyphenName {
             get {
@@ -348,7 +348,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品/姓名.
+        ///   Looks up a localized string similar to 濂栧搧/濮撳悕.
         /// </summary>
         public static string O_PrizeBreakName {
             get {
@@ -357,7 +357,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品-小组.
+        ///   Looks up a localized string similar to 濂栧搧-灏忕粍.
         /// </summary>
         public static string O_PrizeHyphenGroup {
             get {
@@ -366,7 +366,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品-小组-姓名.
+        ///   Looks up a localized string similar to 濂栧搧-灏忕粍-濮撳悕.
         /// </summary>
         public static string O_PrizeHyphenGroupHyphenName {
             get {
@@ -375,7 +375,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品-姓名.
+        ///   Looks up a localized string similar to 濂栧搧-濮撳悕.
         /// </summary>
         public static string O_PrizeHyphenName {
             get {
@@ -384,7 +384,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 序号 奖品/分组-名称.
+        ///   Looks up a localized string similar to 搴忓彿 濂栧搧/鍒嗙粍-鍚嶇О.
         /// </summary>
         public static string O_PrizeIdPrizeBreakGroupHyphenMember {
             get {
@@ -393,7 +393,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 随机抽取.
+        ///   Looks up a localized string similar to 闅忔満鎶藉彇.
         /// </summary>
         public static string O_Random {
             get {
@@ -402,7 +402,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 随机.
+        ///   Looks up a localized string similar to 闅忔満.
         /// </summary>
         public static string O_RandomColor {
             get {
@@ -411,7 +411,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 随机播放.
+        ///   Looks up a localized string similar to 闅忔満鎾斁.
         /// </summary>
         public static string O_RandomMusic {
             get {
@@ -420,7 +420,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 允许重复.
+        ///   Looks up a localized string similar to 鍏佽閲嶅.
         /// </summary>
         public static string O_Repeat {
             get {
@@ -429,7 +429,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 重启后清除.
+        ///   Looks up a localized string similar to 閲嶅惎鍚庢竻闄?
         /// </summary>
         public static string O_Restarted {
             get {
@@ -438,7 +438,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 右侧.
+        ///   Looks up a localized string similar to 鍙充晶.
         /// </summary>
         public static string O_Right {
             get {
@@ -447,7 +447,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 上方.
+        ///   Looks up a localized string similar to 涓婃柟.
         /// </summary>
         public static string O_Top {
             get {
@@ -456,7 +456,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 默认抽取设置.
+        ///   Looks up a localized string similar to 榛樿鎶藉彇璁剧疆.
         /// </summary>
         public static string Page_Default {
             get {
@@ -465,7 +465,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽奖抽取设置.
+        ///   Looks up a localized string similar to 鎶藉鎶藉彇璁剧疆.
         /// </summary>
         public static string Page_Lottery {
             get {
@@ -474,7 +474,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 闪抽抽取设置.
+        ///   Looks up a localized string similar to 闂娊鎶藉彇璁剧疆.
         /// </summary>
         public static string Page_QuickDraw {
             get {
@@ -483,7 +483,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 点名抽取设置.
+        ///   Looks up a localized string similar to 鐐瑰悕鎶藉彇璁剧疆.
         /// </summary>
         public static string Page_RollCall {
             get {
@@ -492,7 +492,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画模式.
+        ///   Looks up a localized string similar to 鍔ㄧ敾妯″紡.
         /// </summary>
         public static string S_Animation {
             get {
@@ -501,7 +501,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置抽取动画播放方式.
+        ///   Looks up a localized string similar to 璁剧疆鎶藉彇鍔ㄧ敾鎾斁鏂瑰紡.
         /// </summary>
         public static string S_Animation_D {
             get {
@@ -510,7 +510,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画间隔.
+        ///   Looks up a localized string similar to 鍔ㄧ敾闂撮殧.
         /// </summary>
         public static string S_AnimationInterval {
             get {
@@ -519,7 +519,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽取动画每次切换的间隔（毫秒）.
+        ///   Looks up a localized string similar to 鎶藉彇鍔ㄧ敾姣忔鍒囨崲鐨勯棿闅旓紙姣锛?
         /// </summary>
         public static string S_AnimationInterval_D {
             get {
@@ -528,7 +528,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画音乐.
+        ///   Looks up a localized string similar to 鍔ㄧ敾闊充箰.
         /// </summary>
         public static string S_AnimationMusic {
             get {
@@ -537,7 +537,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 选择抽取动画播放时使用的音乐。.
+        ///   Looks up a localized string similar to 閫夋嫨鎶藉彇鍔ㄧ敾鎾斁鏃朵娇鐢ㄧ殑闊充箰銆?
         /// </summary>
         public static string S_AnimationMusic_D {
             get {
@@ -546,7 +546,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 循环播放动画音乐.
+        ///   Looks up a localized string similar to 寰幆鎾斁鍔ㄧ敾闊充箰.
         /// </summary>
         public static string S_AnimationMusicLoop {
             get {
@@ -555,7 +555,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 动画持续期间重复播放动画音乐。.
+        ///   Looks up a localized string similar to 鍔ㄧ敾鎸佺画鏈熼棿閲嶅鎾斁鍔ㄧ敾闊充箰銆?
         /// </summary>
         public static string S_AnimationMusicLoop_D {
             get {
@@ -564,7 +564,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画音乐淡入和淡出.
+        ///   Looks up a localized string similar to 鍔ㄧ敾闊充箰娣″叆鍜屾贰鍑?
         /// </summary>
         public static string S_AnimationMusicFade {
             get {
@@ -573,7 +573,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 上方滑块控制淡入，下方滑块控制淡出，单位为毫秒。.
+        ///   Looks up a localized string similar to 涓婃柟婊戝潡鎺у埗娣″叆锛屼笅鏂规粦鍧楁帶鍒舵贰鍑猴紝鍗曚綅涓烘绉掋€?
         /// </summary>
         public static string S_AnimationMusicFade_D {
             get {
@@ -582,7 +582,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画音乐音量.
+        ///   Looks up a localized string similar to 鍔ㄧ敾闊充箰闊抽噺.
         /// </summary>
         public static string S_AnimationMusicVolume {
             get {
@@ -591,7 +591,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置抽取动画音乐的音量。.
+        ///   Looks up a localized string similar to 璁剧疆鎶藉彇鍔ㄧ敾闊充箰鐨勯煶閲忋€?
         /// </summary>
         public static string S_AnimationMusicVolume_D {
             get {
@@ -600,7 +600,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画样式.
+        ///   Looks up a localized string similar to 鍔ㄧ敾鏍峰紡.
         /// </summary>
         public static string S_AnimationStyle {
             get {
@@ -609,7 +609,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置抽取过程和最终定格时使用的统一动画效果.
+        ///   Looks up a localized string similar to 璁剧疆鎶藉彇杩囩▼鍜屾渶缁堝畾鏍兼椂浣跨敤鐨勭粺涓€鍔ㄧ敾鏁堟灉.
         /// </summary>
         public static string S_AnimationStyle_D {
             get {
@@ -618,7 +618,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 自动播放次数.
+        ///   Looks up a localized string similar to 鑷姩鎾斁娆℃暟.
         /// </summary>
         public static string S_AutoplayCount {
             get {
@@ -627,7 +627,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 自动播放模式下滚动候选结果的次数.
+        ///   Looks up a localized string similar to 鑷姩鎾斁妯″紡涓嬫粴鍔ㄥ€欓€夌粨鏋滅殑娆℃暟.
         /// </summary>
         public static string S_AutoplayCount_D {
             get {
@@ -636,7 +636,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 清除记录.
+        ///   Looks up a localized string similar to 娓呴櫎璁板綍.
         /// </summary>
         public static string S_ClearRecord {
             get {
@@ -645,7 +645,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 控制抽取记录何时清除.
+        ///   Looks up a localized string similar to 鎺у埗鎶藉彇璁板綍浣曟椂娓呴櫎.
         /// </summary>
         public static string S_ClearRecord_D {
             get {
@@ -654,7 +654,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 颜色主题.
+        ///   Looks up a localized string similar to 棰滆壊涓婚.
         /// </summary>
         public static string S_ColorTheme {
             get {
@@ -663,7 +663,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置抽取动画和结果颜色来源.
+        ///   Looks up a localized string similar to 璁剧疆鎶藉彇鍔ㄧ敾鍜岀粨鏋滈鑹叉潵婧?
         /// </summary>
         public static string S_ColorTheme_D {
             get {
@@ -672,7 +672,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 自定义字体.
+        ///   Looks up a localized string similar to 鑷畾涔夊瓧浣?
         /// </summary>
         public static string S_CustomFont {
             get {
@@ -681,7 +681,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 字体族名称，留空时使用默认字体.
+        ///   Looks up a localized string similar to 瀛椾綋鏃忓悕绉帮紝鐣欑┖鏃朵娇鐢ㄩ粯璁ゅ瓧浣?
         /// </summary>
         public static string S_CustomFont_D {
             get {
@@ -690,7 +690,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 默认抽取名单.
+        ///   Looks up a localized string similar to 榛樿鎶藉彇鍚嶅崟.
         /// </summary>
         public static string S_DefaultClass {
             get {
@@ -699,7 +699,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 打开页面或执行闪抽时默认使用的名单.
+        ///   Looks up a localized string similar to 鎵撳紑椤甸潰鎴栨墽琛岄棯鎶芥椂榛樿浣跨敤鐨勫悕鍗?
         /// </summary>
         public static string S_DefaultClass_D {
             get {
@@ -708,7 +708,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 默认抽奖名单.
+        ///   Looks up a localized string similar to 榛樿鎶藉鍚嶅崟.
         /// </summary>
         public static string S_DefaultPool {
             get {
@@ -717,7 +717,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 打开抽奖页时默认使用的奖池.
+        ///   Looks up a localized string similar to 鎵撳紑鎶藉椤垫椂榛樿浣跨敤鐨勫姹?
         /// </summary>
         public static string S_DefaultPool_D {
             get {
@@ -726,7 +726,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 点击后禁用时间.
+        ///   Looks up a localized string similar to 鐐瑰嚮鍚庣鐢ㄦ椂闂?
         /// </summary>
         public static string S_DisableAfterClick {
             get {
@@ -735,7 +735,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 点击一次闪抽后禁用按钮的秒数.
+        ///   Looks up a localized string similar to 鐐瑰嚮涓€娆￠棯鎶藉悗绂佺敤鎸夐挳鐨勭鏁?
         /// </summary>
         public static string S_DisableAfterClick_D {
             get {
@@ -744,7 +744,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 显示格式.
+        ///   Looks up a localized string similar to 鏄剧ず鏍煎紡.
         /// </summary>
         public static string S_DisplayFormat {
             get {
@@ -753,7 +753,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 控制结果中显示姓名、编号或两者.
+        ///   Looks up a localized string similar to 鎺у埗缁撴灉涓樉绀哄鍚嶃€佺紪鍙锋垨涓よ€?
         /// </summary>
         public static string S_DisplayFormat_D {
             get {
@@ -762,7 +762,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 显示样式.
+        ///   Looks up a localized string similar to 鏄剧ず鏍峰紡.
         /// </summary>
         public static string S_DisplayStyle {
             get {
@@ -771,7 +771,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 控制抽取结果的整体样式.
+        ///   Looks up a localized string similar to 鎺у埗鎶藉彇缁撴灉鐨勬暣浣撴牱寮?
         /// </summary>
         public static string S_DisplayStyle_D {
             get {
@@ -780,7 +780,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽取模式.
+        ///   Looks up a localized string similar to 鎶藉彇妯″紡.
         /// </summary>
         public static string S_DrawMode {
             get {
@@ -789,7 +789,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 控制重复抽取记录的处理方式.
+        ///   Looks up a localized string similar to 鎺у埗閲嶅鎶藉彇璁板綍鐨勫鐞嗘柟寮?
         /// </summary>
         public static string S_DrawMode_D {
             get {
@@ -798,7 +798,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽取方式.
+        ///   Looks up a localized string similar to 鎶藉彇鏂瑰紡.
         /// </summary>
         public static string S_DrawType {
             get {
@@ -807,7 +807,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置使用随机抽取或公平抽取.
+        ///   Looks up a localized string similar to 璁剧疆浣跨敤闅忔満鎶藉彇鎴栧叕骞虫娊鍙?
         /// </summary>
         public static string S_DrawType_D {
             get {
@@ -816,7 +816,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 固定颜色.
+        ///   Looks up a localized string similar to 鍥哄畾棰滆壊.
         /// </summary>
         public static string S_FixedColor {
             get {
@@ -825,7 +825,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 颜色主题为固定颜色时使用.
+        ///   Looks up a localized string similar to 棰滆壊涓婚涓哄浐瀹氶鑹叉椂浣跨敤.
         /// </summary>
         public static string S_FixedColor_D {
             get {
@@ -834,7 +834,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 字体大小.
+        ///   Looks up a localized string similar to 瀛椾綋澶у皬.
         /// </summary>
         public static string S_FontSize {
             get {
@@ -843,7 +843,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽取结果文字大小.
+        ///   Looks up a localized string similar to 鎶藉彇缁撴灉鏂囧瓧澶у皬.
         /// </summary>
         public static string S_FontSize_D {
             get {
@@ -852,7 +852,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 字体来源.
+        ///   Looks up a localized string similar to 瀛椾綋鏉ユ簮.
         /// </summary>
         public static string S_FontSource {
             get {
@@ -861,7 +861,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 跟随全局字体或为抽取结果单独指定字体.
+        ///   Looks up a localized string similar to 璺熼殢鍏ㄥ眬瀛椾綋鎴栦负鎶藉彇缁撴灉鍗曠嫭鎸囧畾瀛椾綋.
         /// </summary>
         public static string S_FontSource_D {
             get {
@@ -870,7 +870,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 半重复阈值.
+        ///   Looks up a localized string similar to 鍗婇噸澶嶉槇鍊?
         /// </summary>
         public static string S_HalfRepeat {
             get {
@@ -879,7 +879,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽中次数达到该值后不会再次进入候选池.
+        ///   Looks up a localized string similar to 鎶戒腑娆℃暟杈惧埌璇ュ€煎悗涓嶄細鍐嶆杩涘叆鍊欓€夋睜.
         /// </summary>
         public static string S_HalfRepeat_D {
             get {
@@ -888,7 +888,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽奖方式.
+        ///   Looks up a localized string similar to 鎶藉鏂瑰紡.
         /// </summary>
         public static string S_LotteryDrawType {
             get {
@@ -897,7 +897,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置按奖盘或按剩余数量抽奖.
+        ///   Looks up a localized string similar to 璁剧疆鎸夊鐩樻垨鎸夊墿浣欐暟閲忔娊濂?
         /// </summary>
         public static string S_LotteryDrawType_D {
             get {
@@ -918,7 +918,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         public static string O_AlgorithmNewAlgorithm => ResourceManager.GetString("O_AlgorithmNewAlgorithm", resourceCulture);
         
         /// <summary>
-        ///   Looks up a localized string similar to 显示奖品图片.
+        ///   Looks up a localized string similar to 鏄剧ず濂栧搧鍥剧墖.
         /// </summary>
         public static string S_LotteryImage {
             get {
@@ -927,7 +927,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 在抽奖结果中显示奖品图片。.
+        ///   Looks up a localized string similar to 鍦ㄦ娊濂栫粨鏋滀腑鏄剧ず濂栧搧鍥剧墖銆?
         /// </summary>
         public static string S_LotteryImage_D {
             get {
@@ -936,7 +936,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品图片位置.
+        ///   Looks up a localized string similar to 濂栧搧鍥剧墖浣嶇疆.
         /// </summary>
         public static string S_LotteryImagePosition {
             get {
@@ -945,7 +945,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品图片相对文字的位置。.
+        ///   Looks up a localized string similar to 濂栧搧鍥剧墖鐩稿鏂囧瓧鐨勪綅缃€?
         /// </summary>
         public static string S_LotteryImagePosition_D {
             get {
@@ -954,7 +954,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品图片大小.
+        ///   Looks up a localized string similar to 濂栧搧鍥剧墖澶у皬.
         /// </summary>
         public static string S_LotteryImageSize {
             get {
@@ -963,7 +963,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽奖结果中奖品图片的显示边长，单位为像素.
+        ///   Looks up a localized string similar to 鎶藉缁撴灉涓鍝佸浘鐗囩殑鏄剧ず杈归暱锛屽崟浣嶄负鍍忕礌.
         /// </summary>
         public static string S_LotteryImageSize_D {
             get {
@@ -972,7 +972,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 批量设置头像.
+        ///   Looks up a localized string similar to 鎵归噺璁剧疆澶村儚.
         /// </summary>
         public static string C_BatchAvatar {
             get {
@@ -981,7 +981,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 选择目录.
+        ///   Looks up a localized string similar to 閫夋嫨鐩綍.
         /// </summary>
         public static string C_BatchAvatarChooseDirectory {
             get {
@@ -990,7 +990,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 重新选择外部文件.
+        ///   Looks up a localized string similar to 閲嶆柊閫夋嫨澶栭儴鏂囦欢.
         /// </summary>
         public static string C_BatchAvatarChooseFile {
             get {
@@ -999,7 +999,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 图片只从所选目录的第一层查找.
+        ///   Looks up a localized string similar to 鍥剧墖鍙粠鎵€閫夌洰褰曠殑绗竴灞傛煡鎵?
         /// </summary>
         public static string C_BatchAvatarDirectoryHint {
             get {
@@ -1008,7 +1008,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 头像文件.
+        ///   Looks up a localized string similar to 澶村儚鏂囦欢.
         /// </summary>
         public static string C_BatchAvatarFile {
             get {
@@ -1017,7 +1017,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 根据记录的名称或编号，从所选目录的第一层图片中批量匹配并设置头像.
+        ///   Looks up a localized string similar to 鏍规嵁璁板綍鐨勫悕绉版垨缂栧彿锛屼粠鎵€閫夌洰褰曠殑绗竴灞傚浘鐗囦腑鎵归噺鍖归厤骞惰缃ご鍍?
         /// </summary>
         public static string C_BatchAvatarHint {
             get {
@@ -1026,7 +1026,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 自动匹配 {0} 条记录.
+        ///   Looks up a localized string similar to 鑷姩鍖归厤 {0} 鏉¤褰?
         /// </summary>
         public static string C_BatchAvatarMatchSummary {
             get {
@@ -1035,7 +1035,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 未选择目录.
+        ///   Looks up a localized string similar to 鏈€夋嫨鐩綍.
         /// </summary>
         public static string C_BatchAvatarNoDirectorySelected {
             get {
@@ -1044,7 +1044,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽奖名单.
+        ///   Looks up a localized string similar to 鎶藉鍚嶅崟.
         /// </summary>
         public static string C_BatchAvatarPrize {
             get {
@@ -1053,7 +1053,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 记录.
+        ///   Looks up a localized string similar to 璁板綍.
         /// </summary>
         public static string C_BatchAvatarRecord {
             get {
@@ -1062,7 +1062,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 点名名单.
+        ///   Looks up a localized string similar to 鐐瑰悕鍚嶅崟.
         /// </summary>
         public static string C_BatchAvatarRoster {
             get {
@@ -1071,7 +1071,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 指定点名名单.
+        ///   Looks up a localized string similar to 鎸囧畾鐐瑰悕鍚嶅崟.
         /// </summary>
         public static string C_BatchAvatarTargetRoster {
             get {
@@ -1080,7 +1080,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 指定抽奖名单.
+        ///   Looks up a localized string similar to 鎸囧畾鎶藉鍚嶅崟.
         /// </summary>
         public static string C_BatchAvatarTargetPrize {
             get {
@@ -1089,7 +1089,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置.
+        ///   Looks up a localized string similar to 璁剧疆.
         /// </summary>
         public static string C_BatchAvatarSet {
             get {
@@ -1098,7 +1098,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 取消.
+        ///   Looks up a localized string similar to 鍙栨秷.
         /// </summary>
         public static string C_Cancel {
             get {
@@ -1107,7 +1107,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 确定.
+        ///   Looks up a localized string similar to 纭畾.
         /// </summary>
         public static string C_Confirm {
             get {
@@ -1116,7 +1116,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置点名名单头像.
+        ///   Looks up a localized string similar to 璁剧疆鐐瑰悕鍚嶅崟澶村儚.
         /// </summary>
         public static string C_SetAvatarViaRoster {
             get {
@@ -1125,7 +1125,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 前往点名名单页面，用成员附加设置「展示图片」设置头像.
+        ///   Looks up a localized string similar to 鍓嶅線鐐瑰悕鍚嶅崟椤甸潰锛岀敤鎴愬憳闄勫姞璁剧疆銆屽睍绀哄浘鐗囥€嶈缃ご鍍?
         /// </summary>
         public static string C_SetAvatarViaRoster_D {
             get {
@@ -1134,7 +1134,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置抽奖名单头像.
+        ///   Looks up a localized string similar to 璁剧疆鎶藉鍚嶅崟澶村儚.
         /// </summary>
         public static string C_SetAvatarViaPrize {
             get {
@@ -1143,7 +1143,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 前往抽奖名单页面，用奖品附加设置「展示图片」设置奖品图片.
+        ///   Looks up a localized string similar to 鍓嶅線鎶藉鍚嶅崟椤甸潰锛岀敤濂栧搧闄勫姞璁剧疆銆屽睍绀哄浘鐗囥€嶈缃鍝佸浘鐗?
         /// </summary>
         public static string C_SetAvatarViaPrize_D {
             get {
@@ -1152,7 +1152,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 已为 {0} 条记录设置头像.
+        ///   Looks up a localized string similar to 宸蹭负 {0} 鏉¤褰曡缃ご鍍?
         /// </summary>
         public static string M_BatchAvatarApplied {
             get {
@@ -1161,7 +1161,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 找不到头像文件：{0}.
+        ///   Looks up a localized string similar to 鎵句笉鍒板ご鍍忔枃浠讹細{0}.
         /// </summary>
         public static string M_BatchAvatarFileNotFound {
             get {
@@ -1170,7 +1170,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 请先选择包含图片的目录.
+        ///   Looks up a localized string similar to 璇峰厛閫夋嫨鍖呭惈鍥剧墖鐨勭洰褰?
         /// </summary>
         public static string M_BatchAvatarNoDirectory {
             get {
@@ -1179,7 +1179,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽奖过程显示.
+        ///   Looks up a localized string similar to 鎶藉杩囩▼鏄剧ず.
         /// </summary>
         public static string S_LotteryShowRandom {
             get {
@@ -1188,7 +1188,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽奖过程中候选结果的展示格式.
+        ///   Looks up a localized string similar to 鎶藉杩囩▼涓€欓€夌粨鏋滅殑灞曠ず鏍煎紡.
         /// </summary>
         public static string S_LotteryShowRandom_D {
             get {
@@ -1197,7 +1197,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 自定义显示格式.
+        ///   Looks up a localized string similar to 鑷畾涔夋樉绀烘牸寮?
         /// </summary>
         public static string S_LotteryShowRandomFormat {
             get {
@@ -1206,7 +1206,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 设置抽奖过程的自定义展示格式.
+        ///   Looks up a localized string similar to 璁剧疆鎶藉杩囩▼鐨勮嚜瀹氫箟灞曠ず鏍煎紡.
         /// </summary>
         public static string S_LotteryShowRandomFormat_D {
             get {
@@ -1215,7 +1215,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 插入格式变量.
+        ///   Looks up a localized string similar to 鎻掑叆鏍煎紡鍙橀噺.
         /// </summary>
         public static string C_LotteryShowRandomFormatTokens {
             get {
@@ -1224,7 +1224,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 支持使用以下格式化变量，点按变量即可插入：.
+        ///   Looks up a localized string similar to 鏀寔浣跨敤浠ヤ笅鏍煎紡鍖栧彉閲忥紝鐐规寜鍙橀噺鍗冲彲鎻掑叆锛?
         /// </summary>
         public static string C_LotteryShowRandomFormatIntro {
             get {
@@ -1233,7 +1233,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 序号.
+        ///   Looks up a localized string similar to 搴忓彿.
         /// </summary>
         public static string C_LotteryShowRandomFormatId {
             get {
@@ -1242,7 +1242,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 奖项.
+        ///   Looks up a localized string similar to 濂栭」.
         /// </summary>
         public static string C_LotteryShowRandomFormatPrize {
             get {
@@ -1251,7 +1251,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 奖项 ID.
+        ///   Looks up a localized string similar to 濂栭」 ID.
         /// </summary>
         public static string C_LotteryShowRandomFormatPrizeId {
             get {
@@ -1260,7 +1260,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 奖项名称.
+        ///   Looks up a localized string similar to 濂栭」鍚嶇О.
         /// </summary>
         public static string C_LotteryShowRandomFormatPrizeName {
             get {
@@ -1269,7 +1269,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 成员.
+        ///   Looks up a localized string similar to 鎴愬憳.
         /// </summary>
         public static string C_LotteryShowRandomFormatMember {
             get {
@@ -1278,7 +1278,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 成员 ID.
+        ///   Looks up a localized string similar to 鎴愬憳 ID.
         /// </summary>
         public static string C_LotteryShowRandomFormatMemberId {
             get {
@@ -1287,7 +1287,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 成员名字.
+        ///   Looks up a localized string similar to 鎴愬憳鍚嶅瓧.
         /// </summary>
         public static string C_LotteryShowRandomFormatMemberName {
             get {
@@ -1296,7 +1296,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 成员分组.
+        ///   Looks up a localized string similar to 鎴愬憳鍒嗙粍.
         /// </summary>
         public static string C_LotteryShowRandomFormatGroup {
             get {
@@ -1305,7 +1305,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 格式.
+        ///   Looks up a localized string similar to 鏍煎紡.
         /// </summary>
         public static string C_LotteryShowRandomFormatFormat {
             get {
@@ -1314,7 +1314,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 换行.
+        ///   Looks up a localized string similar to 鎹㈣.
         /// </summary>
         public static string C_LotteryShowRandomFormatLineBreak {
             get {
@@ -1323,7 +1323,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 除换行符以外，其他分隔符可直接输入.
+        ///   Looks up a localized string similar to 闄ゆ崲琛岀浠ュ锛屽叾浠栧垎闅旂鍙洿鎺ヨ緭鍏?
         /// </summary>
         public static string C_LotteryShowRandomFormatDirectSeparators {
             get {
@@ -1332,7 +1332,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 音乐淡入淡出.
+        ///   Looks up a localized string similar to 闊充箰娣″叆娣″嚭.
         /// </summary>
         public static string S_MusicFadeInOut {
             get {
@@ -1341,7 +1341,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 依次设置动画音乐淡入、动画音乐淡出、结果音乐淡入和结果音乐淡出时间（毫秒）。.
+        ///   Looks up a localized string similar to 渚濇璁剧疆鍔ㄧ敾闊充箰娣″叆銆佸姩鐢婚煶涔愭贰鍑恒€佺粨鏋滈煶涔愭贰鍏ュ拰缁撴灉闊充箰娣″嚭鏃堕棿锛堟绉掞級銆?
         /// </summary>
         public static string S_MusicFadeInOut_D {
             get {
@@ -1350,7 +1350,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 音乐音量.
+        ///   Looks up a localized string similar to 闊充箰闊抽噺.
         /// </summary>
         public static string S_MusicVolume {
             get {
@@ -1359,7 +1359,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 依次设置动画音乐和结果音乐的音量。.
+        ///   Looks up a localized string similar to 渚濇璁剧疆鍔ㄧ敾闊充箰鍜岀粨鏋滈煶涔愮殑闊抽噺銆?
         /// </summary>
         public static string S_MusicVolume_D {
             get {
@@ -1368,7 +1368,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 提示语字体大小.
+        ///   Looks up a localized string similar to 鎻愮ず璇瓧浣撳ぇ灏?
         /// </summary>
         public static string S_ReminderFontSize {
             get {
@@ -1377,7 +1377,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 提示语文字大小.
+        ///   Looks up a localized string similar to 鎻愮ず璇枃瀛楀ぇ灏?
         /// </summary>
         public static string S_ReminderFontSize_D {
             get {
@@ -1386,7 +1386,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 提示语.
+        ///   Looks up a localized string similar to 鎻愮ず璇?
         /// </summary>
         public static string S_ReminderText {
             get {
@@ -1395,7 +1395,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽取页结果区域旁显示的提示文字.
+        ///   Looks up a localized string similar to 鎶藉彇椤电粨鏋滃尯鍩熸梺鏄剧ず鐨勬彁绀烘枃瀛?
         /// </summary>
         public static string S_ReminderText_D {
             get {
@@ -1404,7 +1404,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 提示语颜色.
+        ///   Looks up a localized string similar to 鎻愮ず璇鑹?
         /// </summary>
         public static string S_ReminderTextColor {
             get {
@@ -1413,7 +1413,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 提示语文字颜色.
+        ///   Looks up a localized string similar to 鎻愮ず璇枃瀛楅鑹?
         /// </summary>
         public static string S_ReminderTextColor_D {
             get {
@@ -1422,7 +1422,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 提示语透明度.
+        ///   Looks up a localized string similar to 鎻愮ず璇€忔槑搴?
         /// </summary>
         public static string S_ReminderTextOpacity {
             get {
@@ -1431,7 +1431,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 提示语文字透明度（0-100）.
+        ///   Looks up a localized string similar to 鎻愮ず璇枃瀛楅€忔槑搴︼紙0-100锛?
         /// </summary>
         public static string S_ReminderTextOpacity_D {
             get {
@@ -1440,7 +1440,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 结果音乐.
+        ///   Looks up a localized string similar to 缁撴灉闊充箰.
         /// </summary>
         public static string S_ResultMusic {
             get {
@@ -1449,7 +1449,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 选择抽取结果出现时使用的音乐。.
+        ///   Looks up a localized string similar to 閫夋嫨鎶藉彇缁撴灉鍑虹幇鏃朵娇鐢ㄧ殑闊充箰銆?
         /// </summary>
         public static string S_ResultMusic_D {
             get {
@@ -1458,7 +1458,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 结果音乐淡入和淡出.
+        ///   Looks up a localized string similar to 缁撴灉闊充箰娣″叆鍜屾贰鍑?
         /// </summary>
         public static string S_ResultMusicFade {
             get {
@@ -1467,7 +1467,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 上方滑块控制淡入，下方滑块控制淡出，单位为毫秒。.
+        ///   Looks up a localized string similar to 涓婃柟婊戝潡鎺у埗娣″叆锛屼笅鏂规粦鍧楁帶鍒舵贰鍑猴紝鍗曚綅涓烘绉掋€?
         /// </summary>
         public static string S_ResultMusicFade_D {
             get {
@@ -1476,7 +1476,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 结果音乐音量.
+        ///   Looks up a localized string similar to 缁撴灉闊充箰闊抽噺.
         /// </summary>
         public static string S_ResultMusicVolume {
             get {
@@ -1485,7 +1485,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置抽取结果音乐的音量。.
+        ///   Looks up a localized string similar to 璁剧疆鎶藉彇缁撴灉闊充箰鐨勯煶閲忋€?
         /// </summary>
         public static string S_ResultMusicVolume_D {
             get {
@@ -1494,7 +1494,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 显示标签.
+        ///   Looks up a localized string similar to 鏄剧ず鏍囩.
         /// </summary>
         public static string S_ShowTags {
             get {
@@ -1503,7 +1503,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽取结果中展示学生或奖品标签.
+        ///   Looks up a localized string similar to 鎶藉彇缁撴灉涓睍绀哄鐢熸垨濂栧搧鏍囩.
         /// </summary>
         public static string S_ShowTags_D {
             get {
@@ -1512,7 +1512,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 权重透明化.
+        ///   Looks up a localized string similar to 鏉冮噸閫忔槑鍖?
         /// </summary>
         public static string S_ShowWeightTransparency {
             get {
@@ -1521,7 +1521,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 在结果展示中显示权重透明信息.
+        ///   Looks up a localized string similar to 鍦ㄧ粨鏋滃睍绀轰腑鏄剧ず鏉冮噸閫忔槑淇℃伅.
         /// </summary>
         public static string S_ShowWeightTransparency_D {
             get {
@@ -1530,7 +1530,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 显示头像.
+        ///   Looks up a localized string similar to 鏄剧ず澶村儚.
         /// </summary>
         public static string S_StudentImage {
             get {
@@ -1539,7 +1539,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 在抽取结果中显示学生头像.
+        ///   Looks up a localized string similar to 鍦ㄦ娊鍙栫粨鏋滀腑鏄剧ず瀛︾敓澶村儚.
         /// </summary>
         public static string S_StudentImage_D {
             get {
@@ -1548,7 +1548,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 头像位置.
+        ///   Looks up a localized string similar to 澶村儚浣嶇疆.
         /// </summary>
         public static string S_StudentImagePosition {
             get {
@@ -1557,7 +1557,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 学生头像相对文字的位置.
+        ///   Looks up a localized string similar to 瀛︾敓澶村儚鐩稿鏂囧瓧鐨勪綅缃?
         /// </summary>
         public static string S_StudentImagePosition_D {
             get {
@@ -1566,7 +1566,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 头像大小.
+        ///   Looks up a localized string similar to 澶村儚澶у皬.
         /// </summary>
         public static string S_StudentImageSize {
             get {
@@ -1575,7 +1575,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽取结果中头像的显示边长，单位为像素.
+        ///   Looks up a localized string similar to 鎶藉彇缁撴灉涓ご鍍忕殑鏄剧ず杈归暱锛屽崟浣嶄负鍍忕礌.
         /// </summary>
         public static string S_StudentImageSize_D {
             get {
@@ -1584,7 +1584,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 启用语音播报.
+        ///   Looks up a localized string similar to 鍚敤璇煶鎾姤.
         /// </summary>
         public static string S_VoiceAnnouncementEnabled {
             get {
@@ -1593,7 +1593,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 抽取完成后播报结果；全局语音播报开关关闭时，此设置不会生效。.
+        ///   Looks up a localized string similar to 鎶藉彇瀹屾垚鍚庢挱鎶ョ粨鏋滐紱鍏ㄥ眬璇煶鎾姤寮€鍏冲叧闂椂锛屾璁剧疆涓嶄細鐢熸晥銆?
         /// </summary>
         public static string S_VoiceAnnouncementEnabled_D {
             get {
@@ -1602,7 +1602,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画设置.
+        ///   Looks up a localized string similar to 鍔ㄧ敾璁剧疆.
         /// </summary>
         public static string Section_Animation {
             get {
@@ -1611,7 +1611,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 颜色设置.
+        ///   Looks up a localized string similar to 棰滆壊璁剧疆.
         /// </summary>
         public static string Section_Color {
             get {
@@ -1620,7 +1620,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 显示设置.
+        ///   Looks up a localized string similar to 鏄剧ず璁剧疆.
         /// </summary>
         public static string Section_Display {
             get {
@@ -1629,7 +1629,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽取设置.
+        ///   Looks up a localized string similar to 鎶藉彇璁剧疆.
         /// </summary>
         public static string Section_Draw {
             get {
@@ -1638,7 +1638,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 奖品图片设置.
+        ///   Looks up a localized string similar to 濂栧搧鍥剧墖璁剧疆.
         /// </summary>
         public static string Section_LotteryImage {
             get {
@@ -1647,7 +1647,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 音乐设置.
+        ///   Looks up a localized string similar to 闊充箰璁剧疆.
         /// </summary>
         public static string Section_Music {
             get {
@@ -1656,7 +1656,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 可覆盖的设置.
+        ///   Looks up a localized string similar to 鍙鐩栫殑璁剧疆.
         /// </summary>
         public static string Section_Overridable {
             get {
@@ -1665,7 +1665,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 提示语设置.
+        ///   Looks up a localized string similar to 鎻愮ず璇缃?
         /// </summary>
         public static string Section_Reminder {
             get {
@@ -1674,7 +1674,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 学生头像设置.
+        ///   Looks up a localized string similar to 瀛︾敓澶村儚璁剧疆.
         /// </summary>
         public static string Section_StudentImage {
             get {
@@ -1683,7 +1683,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 语音播报.
+        ///   Looks up a localized string similar to 璇煶鎾姤.
         /// </summary>
         public static string Section_VoiceAnnouncement {
             get {
@@ -1691,7 +1691,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
             }
         }
         /// <summary>
-        ///   Looks up a localized string similar to 记录组.
+        ///   Looks up a localized string similar to 璁板綍缁?
         /// </summary>
         public static string S_QuickDrawHistoryGroup {
             get {
@@ -1700,7 +1700,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 选中后闪抽只按该组的历史计算权重，本次记录也只写进该组；不需要时选「不使用记录组」.
+        ///   Looks up a localized string similar to 閫変腑鍚庨棯鎶藉彧鎸夎缁勭殑鍘嗗彶璁＄畻鏉冮噸锛屾湰娆¤褰曚篃鍙啓杩涜缁勶紱涓嶉渶瑕佹椂閫夈€屼笉浣跨敤璁板綍缁勩€?
         /// </summary>
         public static string S_QuickDrawHistoryGroup_D {
             get {
@@ -1709,7 +1709,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 不使用记录组.
+        ///   Looks up a localized string similar to 涓嶄娇鐢ㄨ褰曠粍.
         /// </summary>
         public static string O_QuickDrawHistoryGroupNone {
             get {
@@ -1718,7 +1718,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 历史记录组功能未启用，可在「默认抽取设置」里打开.
+        ///   Looks up a localized string similar to 鍘嗗彶璁板綍缁勫姛鑳芥湭鍚敤锛屽彲鍦ㄣ€岄粯璁ゆ娊鍙栬缃€嶉噷鎵撳紑.
         /// </summary>
         public static string S_QuickDrawHistoryGroup_Disabled {
             get {
@@ -1726,5 +1726,50 @@ namespace SecRandom.Langs.SettingsPages.Picking {
             }
         }
 
+        public static string O_NoList {
+            get {
+                return ResourceManager.GetString("O_NoList", resourceCulture);
+            }
+        }
+        public static string S_ShowDrawingStatus {
+            get {
+                return ResourceManager.GetString("S_ShowDrawingStatus", resourceCulture);
+            }
+        }
+        public static string S_ShowDrawingStatus_D {
+            get {
+                return ResourceManager.GetString("S_ShowDrawingStatus_D", resourceCulture);
+            }
+        }
+        public static string S_RollCallHistoryGroup {
+            get {
+                return ResourceManager.GetString("S_RollCallHistoryGroup", resourceCulture);
+            }
+        }
+        public static string S_RollCallHistoryGroup_D {
+            get {
+                return ResourceManager.GetString("S_RollCallHistoryGroup_D", resourceCulture);
+            }
+        }
+        public static string S_LotteryHistoryGroup {
+            get {
+                return ResourceManager.GetString("S_LotteryHistoryGroup", resourceCulture);
+            }
+        }
+        public static string S_LotteryHistoryGroup_D {
+            get {
+                return ResourceManager.GetString("S_LotteryHistoryGroup_D", resourceCulture);
+            }
+        }
+        public static string O_HistoryGroupDefault {
+            get {
+                return ResourceManager.GetString("O_HistoryGroupDefault", resourceCulture);
+            }
+        }
+        public static string S_HistoryGroup_Disabled {
+            get {
+                return ResourceManager.GetString("S_HistoryGroup_Disabled", resourceCulture);
+            }
+        }
     }
 }

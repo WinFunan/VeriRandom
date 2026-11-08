@@ -136,6 +136,76 @@ public sealed class ClassIslandScheduleSourceTests
     }
 
     [Fact]
+    public async Task Unavailable_WithRestrictWhenUnavailable_IsRestricted()
+    {
+        var harness = new LinkageHarness(restrictWhenUnavailable: true);
+        harness.Lessons.IsTimerRunning = false;
+        await harness.RefreshAsync();
+
+        Assert.False(harness.Snapshot.IsAvailable);
+        Assert.True(harness.RestrictionActive);
+    }
+
+    [Fact]
+    public async Task Unavailable_WithRestrictWhenUnavailable_IgnoresEnableWindow()
+    {
+        // 快照不可用时没有倒计时，课前解禁窗口无从计算：只能按完全受限处理。
+        var harness = new LinkageHarness(preClassEnableSeconds: 300, restrictWhenUnavailable: true);
+        harness.Lessons.IsClassPlanLoaded = false;
+        harness.Lessons.OnClassLeftTime = TimeSpan.FromSeconds(10);
+        await harness.RefreshAsync();
+
+        Assert.False(harness.Snapshot.IsAvailable);
+        Assert.True(harness.RestrictionActive);
+    }
+
+    [Fact]
+    public async Task Unavailable_WithoutRestrictWhenUnavailable_StaysPermissive()
+    {
+        var harness = new LinkageHarness();
+        harness.Lessons.IsTimerRunning = false;
+        await harness.RefreshAsync();
+
+        Assert.False(harness.Snapshot.IsAvailable);
+        Assert.False(harness.RestrictionActive);
+    }
+
+    [Fact]
+    public async Task RestrictWhenUnavailable_RequiresMasterSwitch()
+    {
+        var harness = new LinkageHarness(instantDrawDisable: false, restrictWhenUnavailable: true);
+        harness.Lessons.IsTimerRunning = false;
+        await harness.RefreshAsync();
+
+        Assert.False(harness.Snapshot.IsAvailable);
+        Assert.False(harness.RestrictionActive);
+    }
+
+    [Fact]
+    public async Task DataSourceOff_IsNeverRestricted()
+    {
+        var harness = new LinkageHarness(
+            restrictWhenUnavailable: true,
+            dataSource: LinkageDataSource.Off);
+        await harness.RefreshAsync();
+
+        Assert.False(harness.Snapshot.IsAvailable);
+        Assert.False(harness.RestrictionActive);
+    }
+
+    [Fact]
+    public async Task CsesMissing_WithRestrictWhenUnavailable_IsRestricted()
+    {
+        var harness = new LinkageHarness(
+            restrictWhenUnavailable: true,
+            dataSource: LinkageDataSource.Cses);
+        await harness.RefreshAsync();
+
+        Assert.False(harness.Snapshot.IsAvailable);
+        Assert.True(harness.RestrictionActive);
+    }
+
+    [Fact]
     public async Task Refresh_WhenOnlyCountdownChanges_UpdatesSnapshotWithoutNotifying()
     {
         var harness = new LinkageHarness();
@@ -149,6 +219,58 @@ public sealed class ClassIslandScheduleSourceTests
 
         Assert.Equal(notifications, harness.StateChangedCount);
         Assert.Equal(TimeSpan.FromMinutes(10), harness.Snapshot.TimeUntilNextCourse);
+    }
+
+    [Fact]
+    public async Task OnClass_OutdoorSubject_RestrictsWhenEnabled()
+    {
+        var harness = new LinkageHarness(instantDrawDisable: false, disableOnOutdoorCourse: true);
+        harness.Lessons.CurrentState = TimeState.OnClass;
+        harness.Lessons.CurrentSubject = new Subject { Name = "体育", IsOutDoor = true };
+        await harness.RefreshAsync();
+
+        Assert.True(harness.Snapshot.IsAvailable, $"error={harness.Snapshot.Error}");
+        Assert.True(harness.Snapshot.IsOutdoorCourse);
+        Assert.True(harness.OutdoorRestricted);
+        // 非上课时段限制与户外课程限制是两个独立开关
+        Assert.False(harness.Restricted);
+    }
+
+    [Fact]
+    public async Task OnClass_IndoorSubject_NotRestricted()
+    {
+        var harness = new LinkageHarness(instantDrawDisable: false, disableOnOutdoorCourse: true);
+        harness.Lessons.CurrentState = TimeState.OnClass;
+        harness.Lessons.CurrentSubject = new Subject { Name = "数学", IsOutDoor = false };
+        await harness.RefreshAsync();
+
+        Assert.False(harness.Snapshot.IsOutdoorCourse);
+        Assert.False(harness.OutdoorRestricted);
+    }
+
+    [Fact]
+    public async Task OnClass_OutdoorSubject_SettingOff_NotRestricted()
+    {
+        var harness = new LinkageHarness();
+        harness.Lessons.CurrentState = TimeState.OnClass;
+        harness.Lessons.CurrentSubject = new Subject { Name = "体育", IsOutDoor = true };
+        await harness.RefreshAsync();
+
+        Assert.True(harness.Snapshot.IsOutdoorCourse);
+        Assert.False(harness.OutdoorRestricted);
+    }
+
+    [Fact]
+    public async Task Break_OutdoorFlagFromBreakLabel_NotRestricted()
+    {
+        var harness = new LinkageHarness(instantDrawDisable: false, disableOnOutdoorCourse: true);
+        harness.Lessons.CurrentState = TimeState.Breaking;
+        harness.Lessons.CurrentSubject = new Subject { Name = "课间休息", IsOutDoor = true };
+        await harness.RefreshAsync();
+
+        // 课间的 CurrentSubject 是课间标签而非科目，户外标记必须忽略
+        Assert.False(harness.Snapshot.IsOutdoorCourse);
+        Assert.False(harness.OutdoorRestricted);
     }
 
     [Fact]
@@ -180,11 +302,16 @@ public sealed class ClassIslandScheduleSourceTests
         public LinkageHarness(
             int preClassEnableSeconds = 0,
             int postClassDelaySeconds = 0,
-            bool instantDrawDisable = true)
+            bool instantDrawDisable = true,
+            bool restrictWhenUnavailable = false,
+            bool disableOnOutdoorCourse = false,
+            LinkageDataSource dataSource = LinkageDataSource.ClassIsland)
         {
             var config = new MainConfigModel();
-            config.LinkageSettings.DataSource = LinkageDataSource.ClassIsland;
+            config.LinkageSettings.DataSource = dataSource;
             config.LinkageSettings.InstantDrawDisable = instantDrawDisable;
+            config.LinkageSettings.DisableOnOutdoorCourse = disableOnOutdoorCourse;
+            config.LinkageSettings.RestrictWhenUnavailable = restrictWhenUnavailable;
             config.LinkageSettings.PreClassEnableTime = preClassEnableSeconds;
             config.LinkageSettings.PostClassDisableDelay = postClassDelaySeconds;
 
@@ -215,6 +342,8 @@ public sealed class ClassIslandScheduleSourceTests
         public int StateChangedCount { get; private set; }
         public CourseScheduleSnapshot Snapshot => Service.Snapshot;
         public bool Restricted => Service.IsConfirmedNonClassTime;
+        public bool RestrictionActive => Service.IsClassTimeRestrictionActive;
+        public bool OutdoorRestricted => Service.IsConfirmedOutdoorCourse;
 
         public Task RefreshAsync() => Service.RefreshAsync();
     }

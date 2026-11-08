@@ -33,17 +33,15 @@ public sealed class UpdateCenterService(
     HttpClient httpClient)
     : INotifyPropertyChanged
 {
-    private const string Product = "VeriRandom";
-    // Update discovery is disabled for this fork (GlobalConstants.UpdatesEnabled), so these stay pointed at
-    // this repository's own metadata rather than upstream's.
-    private const string Repository = "WinFunan/VeriRandom";
-    private const string ManifestFileName = "VeriRandom-update-manifest.json";
-    private const string SignatureFileName = "VeriRandom-update-manifest.sig";
+    private const string Product = "SecRandom";
+    private const string Repository = "SECTL/SecRandom";
+    private const string ManifestFileName = "SecRandom-update-manifest.json";
+    private const string SignatureFileName = "SecRandom-update-manifest.sig";
     private const int MaxMetadataBytes = 256 * 1024;
     private const int MaxManifestBytes = 4 * 1024 * 1024;
     private const int MaxSignatureBytes = 64;
     private const int MaxArtifactBytes = 512 * 1024 * 1024;
-    private static readonly Uri GitHubRawMetadataUri = new("https://raw.githubusercontent.com/WinFunan/VeriRandom/master/metadata.yaml");
+    private static readonly Uri GitHubRawMetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
     private static readonly Uri GitHubMirrorPrefix = new("https://ghproxy.sectl.cn/");
     private readonly HttpClient _httpClient = httpClient;
     private readonly IDeserializer _yamlDeserializer = new DeserializerBuilder()
@@ -51,7 +49,7 @@ public sealed class UpdateCenterService(
         .Build();
     private CancellationTokenSource? _operationCancellation;
     private UpdateOperationPhase _phase;
-    private string _statusMessage = Text(GlobalConstants.UpdatesEnabled ? "M_StatusNotChecked" : "M_UpdatesDisabled");
+    private string _statusMessage = Text("M_StatusNotChecked");
     private UpdateManifest? _manifest;
     private UpdateArtifact? _selectedArtifact;
     private UpdateSource _activeSource;
@@ -96,31 +94,15 @@ public sealed class UpdateCenterService(
     }
 
     public bool IsBusy => Phase is UpdateOperationPhase.Checking or UpdateOperationPhase.Downloading or UpdateOperationPhase.Verifying or UpdateOperationPhase.Installing;
-    public bool IsSupported => GlobalConstants.UpdatesEnabled;
-    public bool CanCheck => GlobalConstants.UpdatesEnabled && !IsBusy;
-    public bool CanDownloadAndInstall => GlobalConstants.UpdatesEnabled && Phase == UpdateOperationPhase.UpdateAvailable && SelectedArtifact is not null;
-    public bool CanApplyUpdate => GlobalConstants.UpdatesEnabled && Phase == UpdateOperationPhase.ReadyToInstall && SelectedArtifact is not null;
+    public bool CanCheck => !IsBusy;
+    public bool CanDownloadAndInstall => Phase == UpdateOperationPhase.UpdateAvailable && SelectedArtifact is not null;
+    public bool CanApplyUpdate => Phase == UpdateOperationPhase.ReadyToInstall && SelectedArtifact is not null;
     public bool HasAvailableArtifacts => AvailableArtifacts.Count > 0;
     public string PrimaryActionText => CanDownloadAndInstall ? Text("C_DownloadAndInstall") : Text("C_CheckUpdates");
 
-    /// <summary>
-    ///     Returns true while this fork has updates disabled, in which case every update entry point must
-    ///     no-op instead of reaching the upstream release channel. The capability is preserved: flipping
-    ///     <see cref="GlobalConstants.UpdatesEnabled" /> restores the full flow.
-    /// </summary>
-    private bool UpdatesDisabled()
-    {
-        if (GlobalConstants.UpdatesEnabled)
-            return false;
-
-        Phase = UpdateOperationPhase.Idle;
-        StatusMessage = Text("M_UpdatesDisabled");
-        return true;
-    }
-
     public async Task CheckAsync(bool force = false)
     {
-        if (UpdatesDisabled() || IsBusy)
+        if (IsBusy)
             return;
 
         CancelCurrentOperation();
@@ -182,7 +164,7 @@ public sealed class UpdateCenterService(
 
     public async Task DownloadAsync(bool installAfterDownload)
     {
-        if (UpdatesDisabled() || _manifest is null || SelectedArtifact is null || IsBusy)
+        if (_manifest is null || SelectedArtifact is null || IsBusy)
             return;
 
         CancelCurrentOperation();
@@ -237,7 +219,7 @@ public sealed class UpdateCenterService(
 
     public async Task ApplyDownloadedUpdateAsync()
     {
-        if (UpdatesDisabled() || _downloadedPackagePath is null || SelectedArtifact is null || IsBusy)
+        if (_downloadedPackagePath is null || SelectedArtifact is null || IsBusy)
             return;
 
         try
@@ -363,7 +345,7 @@ public sealed class UpdateCenterService(
 
     private static UpdatePackageMarker? ReadCurrentPackageMarker()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "VeriRandom.package.json");
+        var path = Path.Combine(AppContext.BaseDirectory, "SecRandom.package.json");
         if (!File.Exists(path))
             return null;
         try
@@ -389,7 +371,7 @@ public sealed class UpdateCenterService(
         if (appDirectory is null)
             throw new InvalidDataException(Text("M_ZipAppDirectoryMissing"));
 
-        var marker = JsonSerializer.Deserialize<UpdatePackageMarker>(File.ReadAllText(Path.Combine(appDirectory, "VeriRandom.package.json")), JsonOptions)
+        var marker = JsonSerializer.Deserialize<UpdatePackageMarker>(File.ReadAllText(Path.Combine(appDirectory, "SecRandom.package.json")), JsonOptions)
                      ?? throw new InvalidDataException(Text("M_ZipMarkerMissing"));
         if (marker.SchemaVersion != 1 || !string.Equals(marker.Product, Product, StringComparison.Ordinal)
             || !string.Equals(marker.Rid, GetCurrentRid(), StringComparison.OrdinalIgnoreCase)
@@ -404,7 +386,7 @@ public sealed class UpdateCenterService(
         Directory.Move(appDirectory, targetDirectory);
         File.Delete(Path.Combine(targetDirectory, ".partial"));
 
-        var launcherName = OperatingSystem.IsWindows() ? "VeriRandomLauncher.exe" : "VeriRandomLauncher";
+        var launcherName = Utils.LauncherFileName;
         var stagedLauncher = Path.Combine(stagingRoot, launcherName);
         if (!File.Exists(stagedLauncher))
             throw new InvalidDataException(Text("M_ZipLauncherMissing"));
@@ -528,11 +510,7 @@ public sealed class UpdateCenterService(
 
     private static IEnumerable<UpdateSource> GetSources()
     {
-        // ghproxy.sectl.cn is SECTL-hosted, so the device refusal drops it and the update path goes straight to
-        // GitHub. Updates themselves are already disabled in this fork; this keeps the rule true if that changes.
-        return SecRandom.Services.Consent.SectlTrafficPolicy.IsEgressSwitchOff()
-            ? [UpdateSource.GitHub]
-            : [UpdateSource.GitHubMirror, UpdateSource.GitHub];
+        return [UpdateSource.GitHubMirror, UpdateSource.GitHub];
     }
 
     private async Task<byte[]> DownloadAssetWithFallbackAsync(string tag, string assetName, int maxBytes, CancellationToken cancellationToken)

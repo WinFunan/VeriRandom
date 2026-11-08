@@ -529,5 +529,10 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Feat_Starting", resourceCulture);
             }
         }
+        public static string MultiInstance_Unreachable {
+            get {
+                return ResourceManager.GetString("MultiInstance_Unreachable", resourceCulture);
+            }
+        }
     }
 }

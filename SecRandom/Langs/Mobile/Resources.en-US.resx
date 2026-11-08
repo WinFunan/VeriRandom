@@ -1104,4 +1104,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
   <data name="RD_EndpointInvalid" xml:space="preserve">
     <value>The control platform address is not valid</value>
   </data>
+  <data name="RD_SiteId" xml:space="preserve">
+    <value>Site ID (SC-XXXXXX)</value>
+  </data>
 </root>

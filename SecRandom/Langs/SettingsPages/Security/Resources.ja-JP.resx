@@ -561,4 +561,43 @@
   <data name="C_Acknowledge" xml:space="preserve">
     <value>了解しました</value>
   </data>
+  <data name="M_PasswordStrength" xml:space="preserve">
+    <value>強度</value>
+  </data>
+  <data name="M_StrengthPlaceholder" xml:space="preserve">
+    <value>新しいパスワードを入力すると強度を表示します</value>
+  </data>
+  <data name="M_Strength_0" xml:space="preserve">
+    <value>非常に弱い</value>
+  </data>
+  <data name="M_Strength_1" xml:space="preserve">
+    <value>弱い</value>
+  </data>
+  <data name="M_Strength_2" xml:space="preserve">
+    <value>ふつう</value>
+  </data>
+  <data name="M_Strength_3" xml:space="preserve">
+    <value>強い</value>
+  </data>
+  <data name="M_Strength_4" xml:space="preserve">
+    <value>非常に強い</value>
+  </data>
+  <data name="M_StrengthEstimateFormat" xml:space="preserve">
+    <value>約 10^{0} 回の試行</value>
+  </data>
+  <data name="M_StrengthHint_TooShort" xml:space="preserve">
+    <value>6 文字以上、できればさらに長く</value>
+  </data>
+  <data name="M_StrengthHint_Common" xml:space="preserve">
+    <value>よくあるパスワードなので別の言い回しに変えてください</value>
+  </data>
+  <data name="M_StrengthHint_Pattern" xml:space="preserve">
+    <value>連続文字やキーボード配列、繰り返しは避けてください</value>
+  </data>
+  <data name="M_StrengthHint_Length" xml:space="preserve">
+    <value>長さがいちばん効果的、短い文にするとさらに安全</value>
+  </data>
+  <data name="M_StrengthHint_Variety" xml:space="preserve">
+    <value>大文字と小文字、数字、記号を混ぜるか、さらに長くしてください</value>
+  </data>
 </root>

@@ -108,4 +108,10 @@
   <data name="S_Performance_LowSpecMode_D">
     <value>ページとポップアップのアニメーションを無効にし、画像の拡大縮小品質を下げ、メインウィンドウと設定ウィンドウの半透明背景を停止します；抽選アニメーションと浮動ウィンドウには影響せず、再起動が必要です</value>
   </data>
+  <data name="S_SimpleMode_Enabled">
+    <value>シンプルモード</value>
+  </data>
+  <data name="S_SimpleMode_Enabled_D">
+    <value>抽選の本質に立ち返り、点名のみを主要機能として残します；その他の機能と設定項目は非表示になり既定の設定で動作します；再起動後に反映</value>
+  </data>
 </root>

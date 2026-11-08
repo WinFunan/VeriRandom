@@ -71,4 +71,24 @@ namespace SecRandom.Langs.MainPages.RollCall {
 
         public static string O_HistoryGroup => ResourceManager.GetString("O_HistoryGroup", resourceCulture);
         public static string O_HistoryGroupDefault => ResourceManager.GetString("O_HistoryGroupDefault", resourceCulture);
-}
+
+        public static string M_NumberCountSummary {
+            get {
+                return ResourceManager.GetString("M_NumberCountSummary", resourceCulture);
+            }
+        }
+        public static string M_NumberRangeStart {
+            get {
+                return ResourceManager.GetString("M_NumberRangeStart", resourceCulture);
+            }
+        }
+        public static string M_NumberRangeEnd {
+            get {
+                return ResourceManager.GetString("M_NumberRangeEnd", resourceCulture);
+            }
+        }
+        public static string O_NoList {
+            get {
+                return ResourceManager.GetString("O_NoList", resourceCulture);
+            }
+        }}

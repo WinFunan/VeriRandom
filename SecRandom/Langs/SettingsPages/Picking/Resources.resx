@@ -1,147 +1,425 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-  <resheader name="version"><value>2.0</value></resheader>
-  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Page_Default" xml:space="preserve"><value>默认抽取设置</value></data>
-  <data name="Page_RollCall" xml:space="preserve"><value>点名抽取设置</value></data>
-  <data name="Page_QuickDraw" xml:space="preserve"><value>闪抽抽取设置</value></data>
-  <data name="Page_Lottery" xml:space="preserve"><value>抽奖抽取设置</value></data>
-  <data name="Section_Draw" xml:space="preserve"><value>抽取设置</value></data>
-  <data name="Section_Display" xml:space="preserve"><value>显示设置</value></data>
-  <data name="Section_Animation" xml:space="preserve"><value>动画设置</value></data>
-  <data name="Section_Color" xml:space="preserve"><value>颜色设置</value></data>
-  <data name="Section_StudentImage" xml:space="preserve"><value>成员头像设置</value></data>
-  <data name="Section_Reminder" xml:space="preserve"><value>提示语设置</value></data>
-  <data name="C_EnableOverride" xml:space="preserve"><value>启用覆盖</value></data>
-  <data name="S_DrawMode" xml:space="preserve"><value>抽取模式</value></data>
-  <data name="S_DrawMode_D" xml:space="preserve"><value>控制重复抽取记录的处理方式</value></data>
-  <data name="S_HalfRepeat" xml:space="preserve"><value>半重复阈值</value></data>
-  <data name="S_HalfRepeat_D" xml:space="preserve"><value>抽中次数达到该值后不会再次进入候选池</value></data>
-  <data name="S_ClearRecord" xml:space="preserve"><value>清除记录</value></data>
-  <data name="S_ClearRecord_D" xml:space="preserve"><value>控制抽取记录何时清除</value></data>
-  <data name="S_DrawType" xml:space="preserve"><value>抽取方式</value></data>
-  <data name="S_DrawType_D" xml:space="preserve"><value>设置使用随机抽取或公平抽取</value></data>
-  <data name="S_LotteryDrawType" xml:space="preserve"><value>抽奖方式</value></data>
-  <data name="S_LotteryDrawType_D" xml:space="preserve"><value>设置按奖盘或按剩余数量抽奖</value></data>
-  <data name="S_LotteryAlgorithm" xml:space="preserve"><value>抽奖算法</value></data>
-  <data name="S_LotteryAlgorithm_D" xml:space="preserve"><value>选择用于生成奖品候选池的算法</value></data>
-  <data name="S_RollCallAlgorithm" xml:space="preserve"><value>点名算法</value></data>
-  <data name="S_RollCallAlgorithm_D" xml:space="preserve"><value>选择用于生成成员候选池的算法</value></data>
-  <data name="S_QuickDrawAlgorithm" xml:space="preserve"><value>点名算法</value></data>
-  <data name="S_QuickDrawAlgorithm_D" xml:space="preserve"><value>选择闪抽使用的点名算法</value></data>
-  <data name="O_AlgorithmFair" xml:space="preserve"><value>公平抽取</value></data>
-  <data name="O_AlgorithmRandom" xml:space="preserve"><value>随机抽取</value></data>
-  <data name="O_AlgorithmNewAlgorithm" xml:space="preserve"><value>均衡抽取</value></data>
-  <data name="O_AlgorithmInventory" xml:space="preserve"><value>按剩余数量</value></data>
-  <data name="O_AlgorithmWeighted" xml:space="preserve"><value>加权抽奖</value></data>
-  <data name="S_DefaultClass" xml:space="preserve"><value>默认抽取名单</value></data>
-  <data name="S_DefaultClass_D" xml:space="preserve"><value>打开页面或执行闪抽时默认使用的名单</value></data>
-  <data name="S_DefaultPool" xml:space="preserve"><value>默认抽奖名单</value></data>
-  <data name="S_DefaultPool_D" xml:space="preserve"><value>打开抽奖页时默认使用的奖池</value></data>
-  <data name="S_DisableAfterClick" xml:space="preserve"><value>点击后禁用时间</value></data>
-  <data name="S_DisableAfterClick_D" xml:space="preserve"><value>点击一次闪抽后禁用按钮的秒数</value></data>
-  <data name="S_FontSource" xml:space="preserve"><value>字体来源</value></data>
-  <data name="S_FontSource_D" xml:space="preserve"><value>跟随全局字体或为抽取结果单独指定字体</value></data>
-  <data name="S_CustomFont" xml:space="preserve"><value>自定义字体</value></data>
-  <data name="S_CustomFont_D" xml:space="preserve"><value>字体族名称，留空时使用默认字体</value></data>
-  <data name="S_FontSize" xml:space="preserve"><value>字体大小</value></data>
-  <data name="S_FontSize_D" xml:space="preserve"><value>抽取结果文字大小</value></data>
-  <data name="S_DisplayFormat" xml:space="preserve"><value>显示格式</value></data>
-  <data name="S_DisplayFormat_D" xml:space="preserve"><value>控制结果中显示名称、编号或两者</value></data>
-  <data name="S_DisplayStyle" xml:space="preserve"><value>显示样式</value></data>
-  <data name="S_DisplayStyle_D" xml:space="preserve"><value>控制抽取结果的整体样式</value></data>
-  <data name="S_LotteryShowRandom" xml:space="preserve"><value>抽奖过程显示</value></data>
-  <data name="S_LotteryShowRandom_D" xml:space="preserve"><value>抽奖过程中候选结果的展示格式</value></data>
-  <data name="S_LotteryShowRandomFormat" xml:space="preserve"><value>自定义显示格式</value></data>
-  <data name="S_LotteryShowRandomFormat_D" xml:space="preserve"><value>设置抽奖过程的自定义展示格式</value></data>
-  <data name="C_LotteryShowRandomFormatTokens" xml:space="preserve"><value>插入格式变量</value></data>
-  <data name="C_LotteryShowRandomFormatIntro" xml:space="preserve"><value>支持使用以下格式化变量，点按变量即可插入：</value></data>
-  <data name="C_LotteryShowRandomFormatId" xml:space="preserve"><value>序号</value></data>
-  <data name="C_LotteryShowRandomFormatPrize" xml:space="preserve"><value>奖项</value></data>
-  <data name="C_LotteryShowRandomFormatPrizeId" xml:space="preserve"><value>奖项 ID</value></data>
-  <data name="C_LotteryShowRandomFormatPrizeName" xml:space="preserve"><value>奖项名称</value></data>
-  <data name="C_LotteryShowRandomFormatMember" xml:space="preserve"><value>成员</value></data>
-  <data name="C_LotteryShowRandomFormatMemberId" xml:space="preserve"><value>成员 ID</value></data>
-  <data name="C_LotteryShowRandomFormatMemberName" xml:space="preserve"><value>成员名字</value></data>
-  <data name="C_LotteryShowRandomFormatGroup" xml:space="preserve"><value>成员分组</value></data>
-  <data name="C_LotteryShowRandomFormatFormat" xml:space="preserve"><value>格式</value></data>
-  <data name="C_LotteryShowRandomFormatLineBreak" xml:space="preserve"><value>换行</value></data>
-  <data name="C_LotteryShowRandomFormatDirectSeparators" xml:space="preserve"><value>除换行符以外，其他分隔符可直接输入</value></data>
-  <data name="S_ShowTags" xml:space="preserve"><value>显示标签</value></data>
-  <data name="S_ShowTags_D" xml:space="preserve"><value>抽取结果中展示成员或奖品标签</value></data>
-  <data name="S_ShowWeightTransparency" xml:space="preserve"><value>权重透明化</value></data>
-  <data name="S_ShowWeightTransparency_D" xml:space="preserve"><value>在结果展示中显示权重透明信息</value></data>
-  <data name="S_ReminderText" xml:space="preserve"><value>提示语</value></data>
-  <data name="S_ReminderText_D" xml:space="preserve"><value>抽取页结果区域旁显示的提示文字</value></data>
-  <data name="S_ReminderFontSize" xml:space="preserve"><value>提示语字体大小</value></data>
-  <data name="S_ReminderFontSize_D" xml:space="preserve"><value>提示语文字大小</value></data>
-  <data name="S_ReminderTextColor" xml:space="preserve"><value>提示语颜色</value></data>
-  <data name="S_ReminderTextColor_D" xml:space="preserve"><value>提示语文字颜色</value></data>
-  <data name="S_ReminderTextOpacity" xml:space="preserve"><value>提示语透明度</value></data>
-  <data name="S_ReminderTextOpacity_D" xml:space="preserve"><value>提示语文字透明度（0-100）</value></data>
-  <data name="S_Animation" xml:space="preserve"><value>动画模式</value></data>
-  <data name="S_Animation_D" xml:space="preserve"><value>设置抽取动画播放方式</value></data>
-  <data name="S_AnimationInterval" xml:space="preserve"><value>动画间隔</value></data>
-  <data name="S_AnimationInterval_D" xml:space="preserve"><value>抽取动画每次切换的间隔（毫秒）</value></data>
-  <data name="S_AutoplayCount" xml:space="preserve"><value>自动播放次数</value></data>
-  <data name="S_AutoplayCount_D" xml:space="preserve"><value>自动播放模式下滚动候选结果的次数</value></data>
-  <data name="S_AnimationStyle" xml:space="preserve"><value>动画样式</value></data>
-  <data name="S_AnimationStyle_D" xml:space="preserve"><value>设置抽取过程和最终定格时使用的统一动画效果</value></data>
-  <data name="S_ColorTheme" xml:space="preserve"><value>颜色主题</value></data>
-  <data name="S_ColorTheme_D" xml:space="preserve"><value>设置抽取动画和结果颜色来源</value></data>
-  <data name="S_FixedColor" xml:space="preserve"><value>固定颜色</value></data>
-  <data name="S_FixedColor_D" xml:space="preserve"><value>颜色主题为固定颜色时使用</value></data>
-  <data name="S_StudentImage" xml:space="preserve"><value>显示头像</value></data>
-  <data name="S_StudentImage_D" xml:space="preserve"><value>在抽取结果中显示成员头像</value></data>
-  <data name="S_StudentImagePosition" xml:space="preserve"><value>头像位置</value></data>
-  <data name="S_StudentImagePosition_D" xml:space="preserve"><value>成员头像相对文字的位置</value></data>
-  <data name="S_StudentImageSize" xml:space="preserve"><value>头像大小</value></data>
-  <data name="S_StudentImageSize_D" xml:space="preserve"><value>抽取结果中头像的显示边长，单位为像素</value></data>
-  <data name="O_Repeat" xml:space="preserve"><value>允许重复</value></data>
-  <data name="O_NoRepeat" xml:space="preserve"><value>不重复</value></data>
-  <data name="O_HalfRepeat" xml:space="preserve"><value>半重复</value></data>
-  <data name="O_Restarted" xml:space="preserve"><value>重启后清除</value></data>
-  <data name="O_Cleared" xml:space="preserve"><value>手动清除</value></data>
-  <data name="O_Random" xml:space="preserve"><value>随机抽取</value></data>
-  <data name="O_NoMusic" xml:space="preserve"><value>不开启音乐</value></data>
-  <data name="O_RandomMusic" xml:space="preserve"><value>随机播放</value></data>
-  <data name="O_MusicExternal" xml:space="preserve"><value>外部文件：{0}</value></data>
-  <data name="O_MusicUnavailable" xml:space="preserve"><value>不可用：{0}</value></data>
-  <data name="O_Fair" xml:space="preserve"><value>公平抽取</value></data>
-  <data name="O_Pan" xml:space="preserve"><value>按奖盘</value></data>
-  <data name="O_Count" xml:space="preserve"><value>按剩余数量</value></data>
-  <data name="O_FollowGlobal" xml:space="preserve"><value>跟随全局</value></data>
-  <data name="O_Custom" xml:space="preserve"><value>自定义</value></data>
-  <data name="O_Both" xml:space="preserve"><value>编号和名称</value></data>
-  <data name="O_Name" xml:space="preserve"><value>仅名称</value></data>
-  <data name="O_Id" xml:space="preserve"><value>仅编号</value></data>
-  <data name="O_Default" xml:space="preserve"><value>默认</value></data>
-  <data name="O_Card" xml:space="preserve"><value>卡片</value></data>
-  <data name="O_ManualStop" xml:space="preserve"><value>手动停止</value></data>
-  <data name="O_AutoPlay" xml:space="preserve"><value>自动播放</value></data>
-  <data name="O_NoAnimation" xml:space="preserve"><value>无动画</value></data>
-  <data name="O_AnimationDirectRotate" xml:space="preserve"><value>直接轮换</value></data>
-  <data name="O_AnimationFadeFloat" xml:space="preserve"><value>淡入上浮</value></data>
-  <data name="O_AnimationHorizontalShake" xml:space="preserve"><value>左右晃动</value></data>
-
-
-  <data name="O_NoColor" xml:space="preserve"><value>无</value></data>
-  <data name="O_RandomColor" xml:space="preserve"><value>随机</value></data>
-  <data name="O_FixedColor" xml:space="preserve"><value>固定颜色</value></data>
-  <data name="O_Left" xml:space="preserve"><value>左侧</value></data>
-  <data name="O_Top" xml:space="preserve"><value>上方</value></data>
-  <data name="O_Right" xml:space="preserve"><value>右侧</value></data>
-  <data name="O_Bottom" xml:space="preserve"><value>下方</value></data>
-  <data name="O_PrizeBreakGroupHyphenName" xml:space="preserve"><value>奖品/分组-名称</value></data>
-  <data name="O_PrizeIdPrizeBreakGroupHyphenMember" xml:space="preserve"><value>序号 奖品/分组-名称</value></data>
-  <data name="O_PrizeBreakGroupBreakName" xml:space="preserve"><value>奖品/分组/名称</value></data>
-  <data name="O_PrizeHyphenGroupHyphenName" xml:space="preserve"><value>奖品-分组-名称</value></data>
-  <data name="O_PrizeBreakName" xml:space="preserve"><value>奖品/名称</value></data>
-  <data name="O_PrizeHyphenName" xml:space="preserve"><value>奖品-名称</value></data>
-  <data name="O_PrizeBreakGroup" xml:space="preserve"><value>奖品/分组</value></data>
-  <data name="O_PrizeHyphenGroup" xml:space="preserve"><value>奖品-分组</value></data>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Default" xml:space="preserve">
+    <value>默认抽取设置</value>
+  </data>
+  <data name="Page_RollCall" xml:space="preserve">
+    <value>点名抽取设置</value>
+  </data>
+  <data name="Page_QuickDraw" xml:space="preserve">
+    <value>闪抽抽取设置</value>
+  </data>
+  <data name="Page_Lottery" xml:space="preserve">
+    <value>抽奖抽取设置</value>
+  </data>
+  <data name="Section_Draw" xml:space="preserve">
+    <value>抽取设置</value>
+  </data>
+  <data name="Section_Display" xml:space="preserve">
+    <value>显示设置</value>
+  </data>
+  <data name="Section_Animation" xml:space="preserve">
+    <value>动画设置</value>
+  </data>
+  <data name="Section_Color" xml:space="preserve">
+    <value>颜色设置</value>
+  </data>
+  <data name="Section_StudentImage" xml:space="preserve">
+    <value>成员头像设置</value>
+  </data>
+  <data name="Section_Reminder" xml:space="preserve">
+    <value>提示语设置</value>
+  </data>
+  <data name="C_EnableOverride" xml:space="preserve">
+    <value>启用覆盖</value>
+  </data>
+  <data name="S_DrawMode" xml:space="preserve">
+    <value>抽取模式</value>
+  </data>
+  <data name="S_DrawMode_D" xml:space="preserve">
+    <value>控制重复抽取记录的处理方式</value>
+  </data>
+  <data name="S_HalfRepeat" xml:space="preserve">
+    <value>半重复阈值</value>
+  </data>
+  <data name="S_HalfRepeat_D" xml:space="preserve">
+    <value>抽中次数达到该值后不会再次进入候选池</value>
+  </data>
+  <data name="S_ClearRecord" xml:space="preserve">
+    <value>清除记录</value>
+  </data>
+  <data name="S_ClearRecord_D" xml:space="preserve">
+    <value>控制抽取记录何时清除</value>
+  </data>
+  <data name="S_DrawType" xml:space="preserve">
+    <value>抽取方式</value>
+  </data>
+  <data name="S_DrawType_D" xml:space="preserve">
+    <value>设置使用随机抽取或公平抽取</value>
+  </data>
+  <data name="S_LotteryDrawType" xml:space="preserve">
+    <value>抽奖方式</value>
+  </data>
+  <data name="S_LotteryDrawType_D" xml:space="preserve">
+    <value>设置按奖盘或按剩余数量抽奖</value>
+  </data>
+  <data name="S_LotteryAlgorithm" xml:space="preserve">
+    <value>抽奖算法</value>
+  </data>
+  <data name="S_LotteryAlgorithm_D" xml:space="preserve">
+    <value>选择用于生成奖品候选池的算法</value>
+  </data>
+  <data name="S_RollCallAlgorithm" xml:space="preserve">
+    <value>点名算法</value>
+  </data>
+  <data name="S_RollCallAlgorithm_D" xml:space="preserve">
+    <value>选择用于生成成员候选池的算法</value>
+  </data>
+  <data name="S_QuickDrawAlgorithm" xml:space="preserve">
+    <value>点名算法</value>
+  </data>
+  <data name="S_QuickDrawAlgorithm_D" xml:space="preserve">
+    <value>选择闪抽使用的点名算法</value>
+  </data>
+  <data name="O_AlgorithmFair" xml:space="preserve">
+    <value>公平抽取</value>
+  </data>
+  <data name="O_AlgorithmRandom" xml:space="preserve">
+    <value>随机抽取</value>
+  </data>
+  <data name="O_AlgorithmNewAlgorithm" xml:space="preserve">
+    <value>均衡抽取</value>
+  </data>
+  <data name="O_AlgorithmInventory" xml:space="preserve">
+    <value>按剩余数量</value>
+  </data>
+  <data name="O_AlgorithmWeighted" xml:space="preserve">
+    <value>加权抽奖</value>
+  </data>
+  <data name="S_DefaultClass" xml:space="preserve">
+    <value>默认抽取名单</value>
+  </data>
+  <data name="S_DefaultClass_D" xml:space="preserve">
+    <value>打开页面或执行闪抽时默认使用的名单</value>
+  </data>
+  <data name="S_DefaultPool" xml:space="preserve">
+    <value>默认抽奖名单</value>
+  </data>
+  <data name="S_DefaultPool_D" xml:space="preserve">
+    <value>打开抽奖页时默认使用的奖池</value>
+  </data>
+  <data name="S_DisableAfterClick" xml:space="preserve">
+    <value>点击后禁用时间</value>
+  </data>
+  <data name="S_DisableAfterClick_D" xml:space="preserve">
+    <value>点击一次闪抽后禁用按钮的秒数</value>
+  </data>
+  <data name="S_FontSource" xml:space="preserve">
+    <value>字体来源</value>
+  </data>
+  <data name="S_FontSource_D" xml:space="preserve">
+    <value>跟随全局字体或为抽取结果单独指定字体</value>
+  </data>
+  <data name="S_CustomFont" xml:space="preserve">
+    <value>自定义字体</value>
+  </data>
+  <data name="S_CustomFont_D" xml:space="preserve">
+    <value>字体族名称，留空时使用默认字体</value>
+  </data>
+  <data name="S_FontSize" xml:space="preserve">
+    <value>字体大小</value>
+  </data>
+  <data name="S_FontSize_D" xml:space="preserve">
+    <value>抽取结果文字大小</value>
+  </data>
+  <data name="S_DisplayFormat" xml:space="preserve">
+    <value>显示格式</value>
+  </data>
+  <data name="S_DisplayFormat_D" xml:space="preserve">
+    <value>控制结果中显示名称、编号或两者</value>
+  </data>
+  <data name="S_DisplayStyle" xml:space="preserve">
+    <value>显示样式</value>
+  </data>
+  <data name="S_DisplayStyle_D" xml:space="preserve">
+    <value>控制抽取结果的整体样式</value>
+  </data>
+  <data name="S_LotteryShowRandom" xml:space="preserve">
+    <value>抽奖过程显示</value>
+  </data>
+  <data name="S_LotteryShowRandom_D" xml:space="preserve">
+    <value>抽奖过程中候选结果的展示格式</value>
+  </data>
+  <data name="S_LotteryShowRandomFormat" xml:space="preserve">
+    <value>自定义显示格式</value>
+  </data>
+  <data name="S_LotteryShowRandomFormat_D" xml:space="preserve">
+    <value>设置抽奖过程的自定义展示格式</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatTokens" xml:space="preserve">
+    <value>插入格式变量</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatIntro" xml:space="preserve">
+    <value>支持使用以下格式化变量，点按变量即可插入：</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatId" xml:space="preserve">
+    <value>序号</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatPrize" xml:space="preserve">
+    <value>奖项</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatPrizeId" xml:space="preserve">
+    <value>奖项 ID</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatPrizeName" xml:space="preserve">
+    <value>奖项名称</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatMember" xml:space="preserve">
+    <value>成员</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatMemberId" xml:space="preserve">
+    <value>成员 ID</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatMemberName" xml:space="preserve">
+    <value>成员名字</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatGroup" xml:space="preserve">
+    <value>成员分组</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatFormat" xml:space="preserve">
+    <value>格式</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatLineBreak" xml:space="preserve">
+    <value>换行</value>
+  </data>
+  <data name="C_LotteryShowRandomFormatDirectSeparators" xml:space="preserve">
+    <value>除换行符以外，其他分隔符可直接输入</value>
+  </data>
+  <data name="S_ShowTags" xml:space="preserve">
+    <value>显示标签</value>
+  </data>
+  <data name="S_ShowTags_D" xml:space="preserve">
+    <value>抽取结果中展示成员或奖品标签</value>
+  </data>
+  <data name="S_ShowWeightTransparency" xml:space="preserve">
+    <value>权重透明化</value>
+  </data>
+  <data name="S_ShowWeightTransparency_D" xml:space="preserve">
+    <value>在结果展示中显示权重透明信息</value>
+  </data>
+  <data name="S_ReminderText" xml:space="preserve">
+    <value>提示语</value>
+  </data>
+  <data name="S_ReminderText_D" xml:space="preserve">
+    <value>抽取页结果区域旁显示的提示文字</value>
+  </data>
+  <data name="S_ReminderFontSize" xml:space="preserve">
+    <value>提示语字体大小</value>
+  </data>
+  <data name="S_ReminderFontSize_D" xml:space="preserve">
+    <value>提示语文字大小</value>
+  </data>
+  <data name="S_ReminderTextColor" xml:space="preserve">
+    <value>提示语颜色</value>
+  </data>
+  <data name="S_ReminderTextColor_D" xml:space="preserve">
+    <value>提示语文字颜色</value>
+  </data>
+  <data name="S_ReminderTextOpacity" xml:space="preserve">
+    <value>提示语透明度</value>
+  </data>
+  <data name="S_ReminderTextOpacity_D" xml:space="preserve">
+    <value>提示语文字透明度（0-100）</value>
+  </data>
+  <data name="S_Animation" xml:space="preserve">
+    <value>动画模式</value>
+  </data>
+  <data name="S_Animation_D" xml:space="preserve">
+    <value>设置抽取动画播放方式</value>
+  </data>
+  <data name="S_AnimationInterval" xml:space="preserve">
+    <value>动画间隔</value>
+  </data>
+  <data name="S_AnimationInterval_D" xml:space="preserve">
+    <value>抽取动画每次切换的间隔（毫秒）</value>
+  </data>
+  <data name="S_AutoplayCount" xml:space="preserve">
+    <value>自动播放次数</value>
+  </data>
+  <data name="S_AutoplayCount_D" xml:space="preserve">
+    <value>自动播放模式下滚动候选结果的次数</value>
+  </data>
+  <data name="S_AnimationStyle" xml:space="preserve">
+    <value>动画样式</value>
+  </data>
+  <data name="S_AnimationStyle_D" xml:space="preserve">
+    <value>设置抽取过程和最终定格时使用的统一动画效果</value>
+  </data>
+  <data name="S_ColorTheme" xml:space="preserve">
+    <value>颜色主题</value>
+  </data>
+  <data name="S_ColorTheme_D" xml:space="preserve">
+    <value>设置抽取动画和结果颜色来源</value>
+  </data>
+  <data name="S_FixedColor" xml:space="preserve">
+    <value>固定颜色</value>
+  </data>
+  <data name="S_FixedColor_D" xml:space="preserve">
+    <value>颜色主题为固定颜色时使用</value>
+  </data>
+  <data name="S_StudentImage" xml:space="preserve">
+    <value>显示头像</value>
+  </data>
+  <data name="S_StudentImage_D" xml:space="preserve">
+    <value>在抽取结果中显示成员头像</value>
+  </data>
+  <data name="S_StudentImagePosition" xml:space="preserve">
+    <value>头像位置</value>
+  </data>
+  <data name="S_StudentImagePosition_D" xml:space="preserve">
+    <value>成员头像相对文字的位置</value>
+  </data>
+  <data name="S_StudentImageSize" xml:space="preserve">
+    <value>头像大小</value>
+  </data>
+  <data name="S_StudentImageSize_D" xml:space="preserve">
+    <value>抽取结果中头像的显示边长，单位为像素</value>
+  </data>
+  <data name="O_Repeat" xml:space="preserve">
+    <value>允许重复</value>
+  </data>
+  <data name="O_NoRepeat" xml:space="preserve">
+    <value>不重复</value>
+  </data>
+  <data name="O_HalfRepeat" xml:space="preserve">
+    <value>半重复</value>
+  </data>
+  <data name="O_Restarted" xml:space="preserve">
+    <value>重启后清除</value>
+  </data>
+  <data name="O_Cleared" xml:space="preserve">
+    <value>手动清除</value>
+  </data>
+  <data name="O_Random" xml:space="preserve">
+    <value>随机抽取</value>
+  </data>
+  <data name="O_NoMusic" xml:space="preserve">
+    <value>不开启音乐</value>
+  </data>
+  <data name="O_RandomMusic" xml:space="preserve">
+    <value>随机播放</value>
+  </data>
+  <data name="O_MusicExternal" xml:space="preserve">
+    <value>外部文件：{0}</value>
+  </data>
+  <data name="O_MusicUnavailable" xml:space="preserve">
+    <value>不可用：{0}</value>
+  </data>
+  <data name="O_Fair" xml:space="preserve">
+    <value>公平抽取</value>
+  </data>
+  <data name="O_Pan" xml:space="preserve">
+    <value>按奖盘</value>
+  </data>
+  <data name="O_Count" xml:space="preserve">
+    <value>按剩余数量</value>
+  </data>
+  <data name="O_FollowGlobal" xml:space="preserve">
+    <value>跟随全局</value>
+  </data>
+  <data name="O_Custom" xml:space="preserve">
+    <value>自定义</value>
+  </data>
+  <data name="O_Both" xml:space="preserve">
+    <value>编号和名称</value>
+  </data>
+  <data name="O_Name" xml:space="preserve">
+    <value>仅名称</value>
+  </data>
+  <data name="O_Id" xml:space="preserve">
+    <value>仅编号</value>
+  </data>
+  <data name="O_Default" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="O_Card" xml:space="preserve">
+    <value>卡片</value>
+  </data>
+  <data name="O_ManualStop" xml:space="preserve">
+    <value>手动停止</value>
+  </data>
+  <data name="O_AutoPlay" xml:space="preserve">
+    <value>自动播放</value>
+  </data>
+  <data name="O_NoAnimation" xml:space="preserve">
+    <value>无动画</value>
+  </data>
+  <data name="O_AnimationDirectRotate" xml:space="preserve">
+    <value>直接轮换</value>
+  </data>
+  <data name="O_AnimationFadeFloat" xml:space="preserve">
+    <value>淡入上浮</value>
+  </data>
+  <data name="O_AnimationHorizontalShake" xml:space="preserve">
+    <value>左右晃动</value>
+  </data>
+  <data name="O_NoColor" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="O_RandomColor" xml:space="preserve">
+    <value>随机</value>
+  </data>
+  <data name="O_FixedColor" xml:space="preserve">
+    <value>固定颜色</value>
+  </data>
+  <data name="O_Left" xml:space="preserve">
+    <value>左侧</value>
+  </data>
+  <data name="O_Top" xml:space="preserve">
+    <value>上方</value>
+  </data>
+  <data name="O_Right" xml:space="preserve">
+    <value>右侧</value>
+  </data>
+  <data name="O_Bottom" xml:space="preserve">
+    <value>下方</value>
+  </data>
+  <data name="O_PrizeBreakGroupHyphenName" xml:space="preserve">
+    <value>奖品/分组-名称</value>
+  </data>
+  <data name="O_PrizeIdPrizeBreakGroupHyphenMember" xml:space="preserve">
+    <value>序号 奖品/分组-名称</value>
+  </data>
+  <data name="O_PrizeBreakGroupBreakName" xml:space="preserve">
+    <value>奖品/分组/名称</value>
+  </data>
+  <data name="O_PrizeHyphenGroupHyphenName" xml:space="preserve">
+    <value>奖品-分组-名称</value>
+  </data>
+  <data name="O_PrizeBreakName" xml:space="preserve">
+    <value>奖品/名称</value>
+  </data>
+  <data name="O_PrizeHyphenName" xml:space="preserve">
+    <value>奖品-名称</value>
+  </data>
+  <data name="O_PrizeBreakGroup" xml:space="preserve">
+    <value>奖品/分组</value>
+  </data>
+  <data name="O_PrizeHyphenGroup" xml:space="preserve">
+    <value>奖品-分组</value>
+  </data>
   <data name="Section_Overridable" xml:space="preserve">
     <value>可覆盖设置</value>
   </data>
@@ -163,8 +441,12 @@
   <data name="S_AnimationMusic_D" xml:space="preserve">
     <value>选择抽取动画播放时使用的音乐</value>
   </data>
-  <data name="S_AnimationMusicLoop" xml:space="preserve"><value>循环播放动画音乐</value></data>
-  <data name="S_AnimationMusicLoop_D" xml:space="preserve"><value>动画持续期间重复播放动画音乐</value></data>
+  <data name="S_AnimationMusicLoop" xml:space="preserve">
+    <value>循环播放动画音乐</value>
+  </data>
+  <data name="S_AnimationMusicLoop_D" xml:space="preserve">
+    <value>动画持续期间重复播放动画音乐</value>
+  </data>
   <data name="S_ResultMusic" xml:space="preserve">
     <value>结果音乐</value>
   </data>
@@ -183,16 +465,36 @@
   <data name="S_MusicFadeInOut_D" xml:space="preserve">
     <value>依次设置动画音乐淡入、动画音乐淡出、结果音乐淡入和结果音乐淡出时间（毫秒）</value>
   </data>
-  <data name="S_AnimationMusicVolume" xml:space="preserve"><value>动画音乐音量</value></data>
-  <data name="S_AnimationMusicVolume_D" xml:space="preserve"><value>设置抽取动画音乐的音量</value></data>
-  <data name="S_ResultMusicVolume" xml:space="preserve"><value>结果音乐音量</value></data>
-  <data name="S_ResultMusicVolume_D" xml:space="preserve"><value>设置抽取结果音乐的音量</value></data>
-  <data name="S_AnimationMusicFade" xml:space="preserve"><value>动画音乐淡入和淡出</value></data>
-  <data name="S_AnimationMusicFade_D" xml:space="preserve"><value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒</value></data>
-  <data name="S_ResultMusicFade" xml:space="preserve"><value>结果音乐淡入和淡出</value></data>
-  <data name="S_ResultMusicFade_D" xml:space="preserve"><value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒</value></data>
-  <data name="C_FadeIn" xml:space="preserve"><value>淡入</value></data>
-  <data name="C_FadeOut" xml:space="preserve"><value>淡出</value></data>
+  <data name="S_AnimationMusicVolume" xml:space="preserve">
+    <value>动画音乐音量</value>
+  </data>
+  <data name="S_AnimationMusicVolume_D" xml:space="preserve">
+    <value>设置抽取动画音乐的音量</value>
+  </data>
+  <data name="S_ResultMusicVolume" xml:space="preserve">
+    <value>结果音乐音量</value>
+  </data>
+  <data name="S_ResultMusicVolume_D" xml:space="preserve">
+    <value>设置抽取结果音乐的音量</value>
+  </data>
+  <data name="S_AnimationMusicFade" xml:space="preserve">
+    <value>动画音乐淡入和淡出</value>
+  </data>
+  <data name="S_AnimationMusicFade_D" xml:space="preserve">
+    <value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒</value>
+  </data>
+  <data name="S_ResultMusicFade" xml:space="preserve">
+    <value>结果音乐淡入和淡出</value>
+  </data>
+  <data name="S_ResultMusicFade_D" xml:space="preserve">
+    <value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒</value>
+  </data>
+  <data name="C_FadeIn" xml:space="preserve">
+    <value>淡入</value>
+  </data>
+  <data name="C_FadeOut" xml:space="preserve">
+    <value>淡出</value>
+  </data>
   <data name="Section_LotteryImage" xml:space="preserve">
     <value>奖品图片设置</value>
   </data>
@@ -294,5 +596,32 @@
   </data>
   <data name="S_QuickDrawHistoryGroup_Disabled" xml:space="preserve">
     <value>历史记录组功能未启用，可在「默认抽取设置」里打开</value>
+  </data>
+  <data name="O_NoList" xml:space="preserve">
+    <value>不使用名单</value>
+  </data>
+  <data name="S_ShowDrawingStatus" xml:space="preserve">
+    <value>显示抽取中状态</value>
+  </data>
+  <data name="S_ShowDrawingStatus_D" xml:space="preserve">
+    <value>在闪抽窗口显示“正在抽取”，关闭后抽取期间画面保持上一轮内容，结果落定才刷新</value>
+  </data>
+  <data name="S_RollCallHistoryGroup" xml:space="preserve">
+    <value>记录组</value>
+  </data>
+  <data name="S_RollCallHistoryGroup_D" xml:space="preserve">
+    <value>选中后点名页默认按该组的历史计算权重，本次记录也只写进该组；选「默认记录组」表示只算未分组的记录</value>
+  </data>
+  <data name="S_LotteryHistoryGroup" xml:space="preserve">
+    <value>记录组</value>
+  </data>
+  <data name="S_LotteryHistoryGroup_D" xml:space="preserve">
+    <value>选中后抽奖页默认按该组的历史计算权重，本次记录也只写进该组；选「默认记录组」表示只算未分组的记录</value>
+  </data>
+  <data name="O_HistoryGroupDefault" xml:space="preserve">
+    <value>默认记录组</value>
+  </data>
+  <data name="S_HistoryGroup_Disabled" xml:space="preserve">
+    <value>历史记录组功能未启用，可在「历史记录管理」里打开</value>
   </data>
 </root>

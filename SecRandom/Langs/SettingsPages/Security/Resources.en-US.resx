@@ -561,4 +561,43 @@ The app will restart automatically in a few seconds</value>
   <data name="C_Acknowledge" xml:space="preserve">
     <value>Got it</value>
   </data>
+  <data name="M_PasswordStrength" xml:space="preserve">
+    <value>Strength</value>
+  </data>
+  <data name="M_StrengthPlaceholder" xml:space="preserve">
+    <value>Enter a new password to see the estimate</value>
+  </data>
+  <data name="M_Strength_0" xml:space="preserve">
+    <value>Very weak</value>
+  </data>
+  <data name="M_Strength_1" xml:space="preserve">
+    <value>Weak</value>
+  </data>
+  <data name="M_Strength_2" xml:space="preserve">
+    <value>Fair</value>
+  </data>
+  <data name="M_Strength_3" xml:space="preserve">
+    <value>Strong</value>
+  </data>
+  <data name="M_Strength_4" xml:space="preserve">
+    <value>Very strong</value>
+  </data>
+  <data name="M_StrengthEstimateFormat" xml:space="preserve">
+    <value>About 10^{0} guesses</value>
+  </data>
+  <data name="M_StrengthHint_TooShort" xml:space="preserve">
+    <value>At least 6 characters; a few more helps</value>
+  </data>
+  <data name="M_StrengthHint_Common" xml:space="preserve">
+    <value>This is a common password, use an uncommon phrase</value>
+  </data>
+  <data name="M_StrengthHint_Pattern" xml:space="preserve">
+    <value>Avoid runs, keyboard walks and repeats</value>
+  </data>
+  <data name="M_StrengthHint_Length" xml:space="preserve">
+    <value>Length pays off most, try a short sentence</value>
+  </data>
+  <data name="M_StrengthHint_Variety" xml:space="preserve">
+    <value>Mix cases, digits and symbols, or make it longer</value>
+  </data>
 </root>

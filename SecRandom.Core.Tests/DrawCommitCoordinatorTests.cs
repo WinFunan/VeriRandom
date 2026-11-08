@@ -2,9 +2,11 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.HistoryStore;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.Profiles;
 using SecRandom.Shared;
@@ -56,7 +58,7 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
 
         var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
         Assert.Equal(1, temporary.GetPrizeCounts(profile.PrizeListConfig!.Name)[prize.RecordId.ToString("D")]);
-        Assert.Equal(1, temporary.GetStudentCounts(profile.StudentListConfig!.Name, string.Empty, string.Empty)[student.RecordId.ToString("D")]);
+        Assert.Equal(1, temporary.GetStudentCounts(profile.StudentListConfig!.Name, null, null)[student.RecordId.ToString("D")]);
     }
 
     [Fact]
@@ -79,7 +81,7 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
         Assert.Equal(roundId, prizeItem.DrawRoundId);
         Assert.Empty(profile.CurrentStudentHistory!.Students);
         Assert.Empty(provider.GetRequiredService<IDrawTemporaryRecordService>().GetStudentCounts(
-            profile.StudentListConfig!.Name, string.Empty, string.Empty));
+            profile.StudentListConfig!.Name, null, null));
     }
 
     [Fact]
@@ -92,7 +94,7 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
         profile.SaveProfile();
 
         // 用同名目录阻断历史文件写入，让第二步（历史提交）在临时记录写入之后失败。
-        var historyPath = profile.CurrentStudentHistory!.ConfigFilePath;
+        var historyPath = ProfileHistoryPaths.DatabasePath(profile.CurrentStudentHistory!.Name, HistoryGroupKind.RollCall);
         File.Delete(historyPath);
         Directory.CreateDirectory(historyPath);
 
@@ -104,7 +106,7 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
             profile.StudentListConfig!.Name)));
 
         var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
-        Assert.Empty(temporary.GetStudentCounts(profile.StudentListConfig!.Name, string.Empty, string.Empty));
+        Assert.Empty(temporary.GetStudentCounts(profile.StudentListConfig!.Name, null, null));
         Assert.Equal(0, profile.CurrentStudentHistory!.TotalRounds);
         Assert.Equal(0, profile.CurrentStudentHistory.TotalStats);
         Assert.Empty(profile.CurrentStudentHistory.Students);
@@ -132,7 +134,7 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
             null!,
             null!,
             null!,
-            new ProfileQueryService(),
+            new ProfileQueryService(provider.GetRequiredService<IHistoryQueryService>()),
             null!,
             provider.GetRequiredService<IFeatureAvailabilityService>());
 

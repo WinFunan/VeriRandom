@@ -519,4 +519,31 @@
   <data name="S_QuickDrawHistoryGroup_Disabled" xml:space="preserve">
     <value>Record groups are not enabled; turn them on in Default draw settings</value>
   </data>
+  <data name="O_NoList" xml:space="preserve">
+    <value>No roster</value>
+  </data>
+  <data name="S_ShowDrawingStatus" xml:space="preserve">
+    <value>Show drawing status</value>
+  </data>
+  <data name="S_ShowDrawingStatus_D" xml:space="preserve">
+    <value>Show the drawing status line while a Quick Draw is running; when off the window stays steady until the result lands</value>
+  </data>
+  <data name="S_RollCallHistoryGroup" xml:space="preserve">
+    <value>Record group</value>
+  </data>
+  <data name="S_RollCallHistoryGroup_D" xml:space="preserve">
+    <value>When a group is picked, the roll-call page starts on that group and computes weights from its history alone; pick Default record group to count only ungrouped records</value>
+  </data>
+  <data name="S_LotteryHistoryGroup" xml:space="preserve">
+    <value>Record group</value>
+  </data>
+  <data name="S_LotteryHistoryGroup_D" xml:space="preserve">
+    <value>When a group is picked, the lottery page starts on that group and computes weights from its history alone; pick Default record group to count only ungrouped records</value>
+  </data>
+  <data name="O_HistoryGroupDefault" xml:space="preserve">
+    <value>Default record group</value>
+  </data>
+  <data name="S_HistoryGroup_Disabled" xml:space="preserve">
+    <value>Record groups are not enabled; turn them on in History management</value>
+  </data>
 </root>

@@ -87,7 +87,7 @@ public sealed class ControlRosterPushHandler(
             return ControlCommandOutcome.Failure("invalid_list_name", new { list_name = request.ListName });
 
         // 备份要按名单类型取源文件：奖池在 lottery_list 下、点名名单在 roll_call_list 下，
-        // 但备份目录与文件名规则两条通道共用（docs/client-protocol.md §4.5.6）。
+        // 但备份目录与文件名规则两条通道共用（../SECTL-auth/docs/control-center-protocol-v4.md §4.5.6）。
         var backupPath = BackupExistingList(request.ListName, request.IsPrizeRoster);
 
         return request.IsPrizeRoster

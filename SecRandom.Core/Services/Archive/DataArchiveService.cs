@@ -15,6 +15,7 @@ using SecRandom.Core.Helpers;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
 
@@ -52,7 +53,7 @@ public sealed class DataArchiveService(
     private static readonly string[] AllDataRoots =
     [
         "config/settings.json", "config/device-uuid.json", "list", "history", "TEMP", "proofs", "audio", "CSES", "images",
-        "Language", "logs"
+        "Language", "logs", "texts"
     ];
 
     /// <summary>
@@ -65,7 +66,7 @@ public sealed class DataArchiveService(
     /// </summary>
     public static readonly string[] CloudBackupRoots =
     [
-        "config/settings.json", "list", "history", "TEMP", "audio/music", "CSES", "images", "Language", "proofs"
+        "config/settings.json", "list", "history", "TEMP", "audio/music", "CSES", "images", "Language", "proofs", "texts"
     ];
 
     /// <summary>Cloud roots whose content has no row in the cloud backup-content selection.</summary>
@@ -112,6 +113,9 @@ public sealed class DataArchiveService(
         ArgumentNullException.ThrowIfNull(backup);
         var selection = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (backup.CloudIncludeConfig) selection.Add("config/settings.json");
+        // 全屏渠道的文案库跟着「配置」一起上云：它是一份小的文本清单，属于通知与外观配置的一部分，
+        // 而且没为它单开一行勾选——单开一行会把云备份内容选择从 7 行变成 8 行，属于另一件事。
+        if (backup.CloudIncludeConfig) selection.Add("texts");
         if (backup.CloudIncludeList) selection.Add("list");
         if (backup.CloudIncludeHistory) selection.Add("history");
         if (backup.CloudIncludeAudio) selection.Add("audio");
@@ -235,6 +239,8 @@ public sealed class DataArchiveService(
         {
             roots.Add("config/settings.json");
             roots.Add("config/device-uuid.json");
+            // 全屏渠道的文案库跟「配置」一起备份：数据量很小，且用户把它当成通知配置的一部分。
+            roots.Add("texts");
         }
         if (backup.IncludeList) roots.Add("list");
         if (backup.IncludeHistory) roots.Add("history");
@@ -571,8 +577,12 @@ public sealed class DataArchiveService(
 
     private void ReloadConfiguredProfiles()
     {
-        profileService.LoadStudentProfile(configHandler.Data.RollCallSettings.DefaultClass, saveCurrent: false);
-        profileService.LoadPrizeProfile(configHandler.Data.LotterySettings.DefaultPool, saveCurrent: false);
+        var defaultClass = configHandler.Data.RollCallSettings.DefaultClass;
+        var defaultPool = configHandler.Data.LotterySettings.DefaultPool;
+        if (!RosterSelection.IsNone(defaultClass))
+            profileService.LoadStudentProfile(defaultClass, saveCurrent: false);
+        if (!RosterSelection.IsNone(defaultPool))
+            profileService.LoadPrizeProfile(defaultPool, saveCurrent: false);
     }
 
     /// <summary>
@@ -676,7 +686,7 @@ public sealed class DataArchiveService(
                      candidate.LotterySettings.DefaultPool
                  })
         {
-            if (name == string.Empty)
+            if (name == string.Empty || RosterSelection.IsNone(name))
                 continue;
             if (!ProfileConfigBase.IsValidProfileName(name))
                 throw new InvalidDataException(SecRandom.Core.Langs.Common.Resources.M_InvalidProfileDefault);

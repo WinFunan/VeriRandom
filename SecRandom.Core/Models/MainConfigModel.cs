@@ -4,12 +4,14 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using BackupConfig = SecRandom.Core.Models.SubConfigs.General.BackupConfig;
 using BasicSettingsConfig = SecRandom.Core.Models.SubConfigs.General.BasicSettingsConfig;
 using GeneralSettingsConfig = SecRandom.Core.Models.SubConfigs.General.GeneralSettingsConfig;
+using HistoryGroupSettingsConfig = SecRandom.Core.Models.SubConfigs.General.HistoryGroupSettingsConfig;
 using DefaultDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.DefaultDrawSettingsConfig;
 using DrawSettingsConfigBase = SecRandom.Core.Models.SubConfigs.Picking.DrawSettingsConfigBase;
 using FairDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FairDrawSettingsConfig;
@@ -63,6 +65,65 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
     }
 
     [JsonIgnore] public override string ConfigFilePath => Utils.GetFilePath("config", "settings.json");
+
+    /// <summary>
+    ///     简洁模式开关。开启后隐藏掉的功能在运行时按默认配置读取，用户已存设置不会被改写。
+    /// </summary>
+    [JsonIgnore]
+    public bool SimpleModeEnabled => General.SimpleMode.Enabled;
+
+    // 简洁模式：隐藏功能在运行时按默认配置读取。这里只提供读取入口，绝不改写用户存下的真实设置。
+    // 需要区分「主流程状态」（例如上次选中的名单/奖池）时，调用方仍然读取真实配置的那一个字段。
+    [JsonIgnore]
+    public MoreSettingsConfig EffectiveMoreSettings => SimpleModeEnabled ? SimpleModeDefaults.MoreSettings : MoreSettings;
+
+    [JsonIgnore]
+    public DefaultDrawSettingsConfig EffectiveDefaultDrawSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.DefaultDrawSettings : DefaultDrawSettings;
+
+    [JsonIgnore]
+    public RollCallSettingsConfig EffectiveRollCallSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.RollCallSettings : RollCallSettings;
+
+    [JsonIgnore]
+    public QuickDrawSettingsConfig EffectiveQuickDrawSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.QuickDrawSettings : QuickDrawSettings;
+
+    [JsonIgnore]
+    public LotterySettingsConfig EffectiveLotterySettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.LotterySettings : LotterySettings;
+
+    [JsonIgnore]
+    public FairDrawSettingsConfig EffectiveFairDrawSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.FairDrawSettings : FairDrawSettings;
+
+    [JsonIgnore]
+    public FloatingWindowSettingsConfig EffectiveFloatingWindowSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.FloatingWindowSettings : FloatingWindowSettings;
+
+    [JsonIgnore]
+    public LinkageSettingsConfig EffectiveLinkageSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.LinkageSettings : LinkageSettings;
+
+    [JsonIgnore]
+    public VoiceSettingsConfig EffectiveVoiceSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.VoiceSettings : VoiceSettings;
+
+    [JsonIgnore]
+    public NotificationSettingsConfig EffectiveNotificationSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.NotificationSettings : NotificationSettings;
+
+    [JsonIgnore]
+    public HistoryManagementSettingsConfig EffectiveHistoryManagementSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.HistoryManagementSettings : HistoryManagementSettings;
+
+    [JsonIgnore]
+    public TimerSettingsConfig EffectiveTimerSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.TimerSettings : TimerSettings;
+
+    [JsonIgnore]
+    public HistoryGroupSettingsConfig EffectiveHistoryGroups =>
+        SimpleModeEnabled ? SimpleModeDefaults.HistoryGroups : General.HistoryGroups;
 
     [JsonIgnore]
     public BasicSettingsConfig Basic
@@ -119,6 +180,10 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
     public DrawSettingsConfigBase GetOverrideDrawSettings(
         DrawSettingsType drawSettingsType, OverridableDrawSettingsType settingsType)
     {
+        // 简洁模式：抽取页面的显示/动画/音乐/语音等设置按默认值读取，隐藏的设置页不生效。
+        if (SimpleModeEnabled)
+            return SimpleModeDefaults.GetOverrideDrawSettings(drawSettingsType, settingsType);
+
         OverridableDrawSettings settings = drawSettingsType switch
         {
             DrawSettingsType.RollCall => RollCallSettings,
@@ -147,6 +212,9 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
 
     public string GetLotteryProcessDisplayTemplate()
     {
+        if (SimpleModeEnabled)
+            return SimpleModeDefaults.Model.GetLotteryProcessDisplayTemplate();
+
         return LotterySettings.OverrideDisplaySettings
             ? LotteryProcessDisplayFormatter.ResolveTemplate(
                 LotterySettings.LotteryShowRandom,
@@ -156,6 +224,9 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
 
     public NotificationChannelSettings GetNotificationChannelSettings(NotificationSettingsType notificationSettingsType)
     {
+        if (SimpleModeEnabled)
+            return SimpleModeDefaults.Model.GetNotificationChannelSettings(notificationSettingsType);
+
         return notificationSettingsType switch
         {
             NotificationSettingsType.RollCall => NotificationSettings.RollCall,
@@ -170,6 +241,9 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
         NotificationSettingsType notificationSettingsType,
         OverridableNotificationSettingsType settingsType)
     {
+        if (SimpleModeEnabled)
+            return SimpleModeDefaults.Model.GetOverrideNotificationSettings(notificationSettingsType, settingsType);
+
         var settings = (OverridableNotificationChannelSettings)GetNotificationChannelSettings(notificationSettingsType);
         return settingsType switch
         {

@@ -37,4 +37,6 @@ public sealed class LinuxPlatformServiceRoot : IPlatformServiceRoot
         new LinuxRemovableStorageBindingMarker();
 
     public IPlatformCameraDeviceCatalog CameraDevices { get; } = new LinuxCameraDeviceCatalog();
+
+    public IPlatformApplicationIconExtractor ApplicationIcons { get; } = new LinuxApplicationIconExtractor();
 }

@@ -114,4 +114,16 @@ This badge can be turned off in More settings</value>
   <data name="O_HistoryGroupDefault" xml:space="preserve">
      <value>Default record group</value>
   </data>
+  <data name="O_NoList" xml:space="preserve">
+     <value>No roster</value>
+  </data>
+  <data name="M_NumberCountSummary" xml:space="preserve">
+     <value>Remaining {0}/{1}</value>
+  </data>
+  <data name="M_NumberRangeStart" xml:space="preserve">
+     <value>Start</value>
+  </data>
+  <data name="M_NumberRangeEnd" xml:space="preserve">
+     <value>End</value>
+  </data>
 </root>

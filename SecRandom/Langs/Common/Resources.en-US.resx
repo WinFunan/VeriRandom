@@ -268,4 +268,7 @@ Move the entire portable package to a writable location, or adjust the directory
   <data name="Feat_Starting" xml:space="preserve">
         <value>Starting</value>
     </data>
+  <data name="MultiInstance_Unreachable" xml:space="preserve">
+        <value>Could not open the running SecRandom instance. Find it in the taskbar or the system tray</value>
+    </data>
 </root>

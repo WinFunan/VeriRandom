@@ -255,6 +255,7 @@ public sealed class RosterSyncTransferService(HttpClient httpClient, MainConfigH
         SyncTransferContentType.Roster => "roster",
         SyncTransferContentType.Settings => "settings",
         SyncTransferContentType.AllData => "all-data",
+        SyncTransferContentType.TextLibrary => "text-library",
         _ => throw new ArgumentOutOfRangeException(nameof(contentType))
     };
 
@@ -479,9 +480,10 @@ public sealed class RosterSyncTransferService(HttpClient httpClient, MainConfigH
             "roster" => SyncTransferContentType.Roster,
             "settings" => SyncTransferContentType.Settings,
             "all-data" => SyncTransferContentType.AllData,
+            "text-library" => SyncTransferContentType.TextLibrary,
             _ => default
         };
-        return value is "roster" or "settings" or "all-data";
+        return value is "roster" or "settings" or "all-data" or "text-library";
     }
 
     private static string SanitizeFileName(string value)

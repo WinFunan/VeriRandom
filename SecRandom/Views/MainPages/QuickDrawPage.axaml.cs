@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Behaviors;
 using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Helpers;
@@ -36,12 +37,18 @@ public partial class QuickDrawPage : UserControl
         InitializeComponent();
         _resultPresenter = this.FindControl<ItemsControl>("ResultPresenter");
         ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
-        ViewModel.Config.FloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
+        ViewModel.Config.EffectiveFloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
         UpdateFloatingWindowOpacity();
         Unloaded += OnUnloaded;
     }
 
     public QuickDrawPageViewModel ViewModel { get; }
+
+    /// <summary>
+    /// 结果区完成一次排版（预览/揭晓/通知）后触发，宿主窗口据此按最新尺寸重新居中。
+    /// 事件本身不含尺寸：窗口尺寸由宿主读取，避免页面耦合窗口实现。
+    /// </summary>
+    public event EventHandler? ResultLayoutChanged;
 
     public void StartDraw()
     {
@@ -55,7 +62,7 @@ public partial class QuickDrawPage : UserControl
         CancelAutoClose();
         CancelClickSequence();
         ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
-        ViewModel.Config.FloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
+        ViewModel.Config.EffectiveFloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
     }
 
     private void FloatingWindowSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -67,7 +74,7 @@ public partial class QuickDrawPage : UserControl
     private void UpdateFloatingWindowOpacity()
     {
         RootBorder.Opacity = System.Math.Clamp(
-            ViewModel.NotificationOpacity ?? ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity,
+            ViewModel.NotificationOpacity ?? ViewModel.Config.EffectiveFloatingWindowSettings.FloatingWindowOpacity,
             20,
             100) / 100.0;
     }
@@ -200,6 +207,15 @@ public partial class QuickDrawPage : UserControl
         catch
         {
         }
+        finally
+        {
+            RaiseResultLayoutChanged();
+        }
+    }
+
+    private void RaiseResultLayoutChanged()
+    {
+        ResultLayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private Task<bool> TryPresentAsync(DrawPresentationPhase phase)
@@ -218,7 +234,7 @@ public partial class QuickDrawPage : UserControl
         for (var i = 0; i < 2; i++)
         {
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
-            await Task.Delay(16);
+            await Task.Delay(AnimationFramePolicy.FrameIntervalMs);
         }
     }
 

@@ -1104,4 +1104,7 @@
   <data name="RD_EndpointInvalid" xml:space="preserve">
     <value>集控のアドレスが正しくありません</value>
   </data>
+  <data name="RD_SiteId" xml:space="preserve">
+    <value>サイト ID（SC-XXXXXX）</value>
+  </data>
 </root>

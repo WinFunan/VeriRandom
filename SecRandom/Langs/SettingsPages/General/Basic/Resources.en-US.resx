@@ -108,4 +108,10 @@
   <data name="S_Performance_LowSpecMode_D">
     <value>Disable page and popup animations, lower bitmap scaling quality, and turn off the translucent background of the main and settings windows; draw animation and the floating window are unaffected, restart required</value>
   </data>
+  <data name="S_SimpleMode_Enabled">
+    <value>Simple mode</value>
+  </data>
+  <data name="S_SimpleMode_Enabled_D">
+    <value>Get back to the essence of drawing with roll call as the only main feature; other features and their settings are hidden and run with default settings; restart required</value>
+  </data>
 </root>

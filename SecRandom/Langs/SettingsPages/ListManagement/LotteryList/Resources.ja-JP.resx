@@ -237,4 +237,57 @@
   <data name="K_TagsColumns">
     <value>标签|tag|tags|类别|分类|category</value>
   </data>
+  <data name="M_AddPrizeConflictTitle">
+    <value>番号が既に使われています</value>
+  </data>
+  <data name="M_AddPrizeConflictContent">
+    <value>番号 {0} は「{1}」が使用しています
+この位置に挿入：「{1}」以降の {2} 件の番号を 1 つずつ繰り下げ、新しい賞品は {0} を使用します
+末尾に追加：ほかの賞品の番号は変わらず、新しい賞品は {3} を使用します
+
+{4}
+
+番号の繰り下げは表示上の番号だけを変更し、抽選履歴や公平抽選の重みには影響しません</value>
+  </data>
+  <data name="M_AddPrizeConflictNotNumericContent">
+    <value>番号 {0} は「{1}」が使用しています
+数字のみの番号ではないため、以降の番号を自動で繰り下げできません</value>
+  </data>
+  <data name="M_AddPrizeConflictDuplicatedContent">
+    <value>番号 {0} はすでに {1} 件が使用しています
+自動で繰り下げても重複が残るため実行できません</value>
+  </data>
+  <data name="M_AddPrizeConflictPreviewHeader">
+    <value>影響を受ける賞品</value>
+  </data>
+  <data name="M_AddPrizeConflictPreviewLine">
+    <value>{0} {1} → {2}</value>
+  </data>
+  <data name="M_AddPrizeConflictPreviewEllipsis">
+    <value>……</value>
+  </data>
+  <data name="M_AddPrizeConflictPrimary">
+    <value>繰り下げて挿入</value>
+  </data>
+  <data name="M_AddPrizeConflictSecondary">
+    <value>末尾に追加</value>
+  </data>
+  <data name="M_AddPrizeConflictKeepDuplicate">
+    <value>重複を残して追加</value>
+  </data>
+  <data name="M_AddPrizeConflictClose">
+    <value>戻って編集</value>
+  </data>
+  <data name="M_AddPrizeConflictUnnamed">
+    <value>名前のない賞品</value>
+  </data>
+  <data name="M_AddPrizeShiftedSuccess">
+    <value>賞品を追加しました。{0} 件の番号を繰り下げました</value>
+  </data>
+  <data name="M_AddPrizeAppendedSuccess">
+    <value>賞品を追加しました。番号は {0} です</value>
+  </data>
+  <data name="M_AddPrizeDuplicateSuccess">
+    <value>賞品を追加しました。番号が重複しています</value>
+  </data>
 </root>

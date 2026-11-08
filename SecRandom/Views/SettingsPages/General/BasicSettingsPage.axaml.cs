@@ -36,6 +36,7 @@ public partial class BasicSettingsPage : UserControl
     public BasicSettingsConfig Settings { get; }
     public CrashRecoverySettingsConfig CrashRecoverySettings => ViewModel.Config.General.CrashRecovery;
     public PerformanceSettingsConfig PerformanceSettings => ViewModel.Config.General.PerformanceSettings;
+    public SimpleModeSettingsConfig SimpleMode => ViewModel.Config.General.SimpleMode;
     public bool IsUiAccessSupported => OperatingSystem.IsWindows();
     public string MainWindowTopmostModeDescription => IsUiAccessSupported
         ? LR.S_Behavior_MainWindowTopmostMode_D
@@ -52,6 +53,7 @@ public partial class BasicSettingsPage : UserControl
         Settings.PropertyChanged += SettingsOnPropertyChanged;
         CrashRecoverySettings.PropertyChanged += CrashRecoverySettingsOnPropertyChanged;
         PerformanceSettings.PropertyChanged += PerformanceSettingsOnPropertyChanged;
+        SimpleMode.PropertyChanged += SimpleModeOnPropertyChanged;
         _isSubscribed = true;
     }
 
@@ -63,6 +65,7 @@ public partial class BasicSettingsPage : UserControl
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
         CrashRecoverySettings.PropertyChanged -= CrashRecoverySettingsOnPropertyChanged;
         PerformanceSettings.PropertyChanged -= PerformanceSettingsOnPropertyChanged;
+        SimpleMode.PropertyChanged -= SimpleModeOnPropertyChanged;
         _isSubscribed = false;
     }
 
@@ -227,6 +230,16 @@ public partial class BasicSettingsPage : UserControl
     private void CrashRecoverySettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         ConfigHandler.Save();
+    }
+
+    private void SimpleModeOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isApplyingProgrammaticChange)
+            return;
+
+        // 简洁模式会改变主窗口/设置窗口的导航形态，无法在原地热切换，保存后要求重启生效
+        ConfigHandler.Save();
+        SettingsView.Current?.RequestRestartApp();
     }
 
 }

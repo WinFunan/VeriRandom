@@ -1833,5 +1833,31 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 **CI 密钥审计（本次同步）**：`build_publish.yml` 的 `secrets.*` 集合在合并前后**完全一致**，上游没有新增任何密钥引用；本分支只是多了一条注释形式的 `NEWALGORITHM_TOKEN`（私有算法仓库才需要）。各密钥缺失时的行为仍是本分支既有的降级策略——Android 四个签名密钥缺失时打 debug 签名并 `::warning::`（`ANDROID_SIGNED=false`），Windows/macOS 签名按空值跳过，NuGet 发布步骤被 `if: ${{ false }}` 挡住，`NEWALGORITHM` 检出 `continue-on-error: true`。上游新增的治理型闸门（CLA Assistant、CODEOWNERS、每次 push 的 iOS 作业）都没有进入本分支。唯一的行为性变化是上游从 `NuGet.config` 删掉了 `globalPackagesFolder=.nuget/packages`，本仓库 CI 没有缓存该路径，因此只是本机还原位置回到用户全局缓存。
 
 **顺带发现（非本次回归）**：`ListManagement/{RollCall,LotteryList}`、`Picking`、`Update`、`Debug` 等目录的 `en-US`/`ja-JP` 早于本次同步就缺 42/26/2 条中文键的译文，本次并集合并只是把它们原样保留，未扩大缺口。
+---
 
+## 63. 同步上游 2026-11-08 树（`2024f3a9`）：集控 v4、SQLite 历史、OIDC 退场
 
+**目标**：把上游 39 个提交并进本分支。这一轮上游改了三处"地基"，必须以台账形式钉住，否则下次同步会被误当成普通合并且回退：
+
+| 领域 | 上游改了什么 | 本分支处置 |
+|---|---|---|
+| 集控（集控节点） | 从 `control-v1` 整体换成 **v4.1/v4.2**：`wss://sectl.cn/control/ws`、首帧 `hello.payload` 带凭据、`req`/`res`/`evt` 三分信封、`cmd.ack` + `cmd.result` 两帧回执、`desired_state` 单调 `revision`、双因子接入（地点ID + 配对码）、`class.select`/`class.release` 占班；并删除了 `docs/client-protocol.md` | **采用上游 v4**（本分支上一轮同步时用的本来就是上游 v1，未再改），AGENTS 的集控行、`SecRandom/AGENTS.md` 的集控说明、`SecRandom.Core/AGENTS.md` 的协议行同步改为 v4；协议事实源改为 `../SECTL-auth/docs/control-center-protocol-v4.md`。本分支原有的出网闸门、设备级总开关与"节点不上报班级名"的约定继续有效 |
+| 历史存储 | 档案历史从 JSON 改成 **SQLite**（`data/history/{roll_call_history,lottery_history}/{name}.srhdb`，`ProfileHistoryDatabase`/`ProfileHistoryPaths`；首次读取导入旧 JSON 并改名为 `{name}.json.migrated`；按 `row_hash` 增量写入） | 采用上游；新增包 `Microsoft.Data.Sqlite`。档案包仍能读到旧文件（`.migrated` 不匹配 `*.json`），保留一次性回滚副本 |
+| 认证 | 上游**删除 OIDC 分支**（`SectlIdTokenValidator`、`SectlOAuthMetadata` 及其测试），新增 `SectlTokenIntrospection`（`/api/oauth/introspect`，`active:false` 才清会话）；令牌仍不按时间过期 | 采用上游；AGENTS 中上一轮记录的 OIDC 条目已删除，introspection 的文件路径改为 `SecRandom/Services/Auth/SectlTokenIntrospection.cs`。本分支的出网闸门（登录 / `SendAuthorizedAsync` / 令牌刷新）在自动合并后复核仍在 |
+
+**其余采用的上游内容**：密码强度评估（`PasswordStrengthEvaluator`，仅供提示、绝不作为保存门槛）、全屏结果通知与文案库、悬浮窗左右两侧同时显示/自定义文字/字号、简洁模式、历史记录组按组独立计重复上限与持久化默认组、预览动画不污染公平计数（`PreviewAnimationFairnessTests`）、档案序号、平台层 `IPlatformApplicationIconExtractor`、便携包开机启动改指向 `Utils.LauncherFileName`。
+
+**本分支必须保留的改动（本轮复核过）**：
+
+| 位置 | 保留内容 |
+|---|---|
+| `SecRandom.Shared/Utils.cs` | 采用上游新实现，但把产品标识改回本分支：`VERIRANDOM_PACKAGE_ROOT`、`VeriRandomLauncher(.exe)`、`LocalApplicationData/VeriRandom/data`、`VeriRandom.package.json` |
+| `SecRandom.Core/SecRandom.Core.csproj` | 采用上游（SQLite、密码表嵌入资源），保留 `<Company>WinFunan</Company>` 与**可选的 NewAlgorithm 条件引用**（`NEWALGORITHM` 符号、`PrivateAssets="all"`） |
+| `SecRandom/App.axaml.cs` | 采用上游的悬浮窗尺寸/居中/不抢焦点逻辑，保留窗口标题 `VeriRandom` 与 `Utils.LauncherFileName` 用法 |
+| `SecRandom/Langs/**` | 仍按键名并集合并（本轮 26 个 `.resx` + 3 个 designer），共 132 个 `.resx` 全部通过严格 UTF-8 + XML 校验、无重复键 |
+| `SecRandom/Services/Updates/UpdateCenterService.cs` | 采用上游的 `Utils.LauncherFileName`，本分支的 `UpdatesEnabled = false` 策略不变 |
+| 根 / 子 `AGENTS.md` | 以本分支版本为底，替换为上游的新事实（集控 v4、SQLite 历史、密码强度、悬浮窗两侧、历史组按组计数、预览公平、档案序号），删除已退场的 OIDC 条目 |
+
+**删除的文件**：`docs/client-protocol.md`（上游已删，v4 协议文档在上游的另一仓库）；仓库内所有对它的引用已改为 `../SECTL-auth/docs/control-center-protocol-v4.md`。
+
+**照旧不做**：iOS 构建、CLAUDE 助手工作流、上游 CODEOWNERS、上游频道 tag；见 §62。

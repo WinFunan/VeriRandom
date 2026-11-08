@@ -17,7 +17,7 @@ public class SettingsSearchService
             ["FloatingWindow"] = new HashSet<string>
             {
                 "S_Buttons_RollCall", "S_Buttons_QuickDraw", "S_Buttons_Lottery",
-                "S_Interaction_DoNotStealFocus", "S_Interaction_HideOnForeground",
+                "S_Interaction_HideOnForeground",
                 "S_Interaction_HideOnForegroundProcessNames", "S_Interaction_HideOnForegroundWindowTitles",
                 "S_Interaction_LongPressDuration"
             },
@@ -26,7 +26,7 @@ public class SettingsSearchService
                 "S_Verification", "S_Verification_Password", "S_Verification_Totp", "S_Verification_UsbBinding",
                 "S_Protection_SensitiveOperations", "S_Protection_LinkageOperations"
             },
-            ["General.Verification"] = new HashSet<string> { "S_Verification", "S_ProofTrust" },
+            ["General.Verification"] = new HashSet<string> { "S_Verification" },
             ["HistoryManagement"] = new HashSet<string>
             {
                 "S_History", "S_History_ShowRollCall", "S_History_ShowLottery", "S_History_SelectWeight",
@@ -76,7 +76,8 @@ public class SettingsSearchService
             },
             ["settings.picking.rollCall"] = new HashSet<string>
             {
-                "S_DrawMode", "S_HalfRepeat", "S_DrawType", "S_DefaultClass", "S_ClearRecord", "S_FontSource",
+                "S_DrawMode", "S_HalfRepeat", "S_DrawType", "S_DefaultClass", "S_RollCallHistoryGroup",
+                "S_ClearRecord", "S_FontSource",
                 "S_CustomFont", "S_FontSize", "S_DisplayFormat", "S_DisplayStyle", "S_ShowWeightTransparency",
                 "S_ShowTags", "S_Animation", "S_AnimationInterval", "S_AutoplayCount", "S_AnimationStyle",
                 "S_ColorTheme", "S_FixedColor", "S_StudentImage", "S_StudentImagePosition", "S_StudentImageSize",
@@ -88,7 +89,7 @@ public class SettingsSearchService
             ["settings.picking.quickDraw"] = new HashSet<string>
             {
                 "S_DrawMode", "S_HalfRepeat", "S_DrawType", "S_DefaultClass", "S_DisableAfterClick",
-                "S_QuickDrawHistoryGroup", "S_FontSource",
+                "S_ShowDrawingStatus", "S_QuickDrawHistoryGroup", "S_FontSource",
                 "S_CustomFont", "S_FontSize", "S_DisplayFormat", "S_ShowTags", "S_Animation", "S_AnimationInterval",
                 "S_AutoplayCount", "S_AnimationStyle", "S_ColorTheme", "S_FixedColor", "S_StudentImage",
                 "S_StudentImagePosition", "S_StudentImageSize", "S_AnimationMusic", "S_ResultMusic",
@@ -98,7 +99,8 @@ public class SettingsSearchService
             },
             ["settings.picking.lottery"] = new HashSet<string>
             {
-                "S_DrawMode", "S_HalfRepeat", "S_LotteryDrawType", "S_DefaultPool", "S_ClearRecord", "S_FontSource",
+                "S_DrawMode", "S_HalfRepeat", "S_LotteryDrawType", "S_DefaultPool", "S_LotteryHistoryGroup",
+                "S_ClearRecord", "S_FontSource",
                 "S_CustomFont", "S_FontSize", "S_DisplayStyle", "S_LotteryShowRandom", "S_LotteryShowRandomFormat", "S_ShowTags",
                 "S_ShowWeightTransparency", "S_Animation", "S_AnimationInterval", "S_AutoplayCount",
                 "S_AnimationStyle", "S_ColorTheme", "S_FixedColor", "S_LotteryImage", "S_LotteryImagePosition",
@@ -253,7 +255,12 @@ public class SettingsSearchService
 
     private static string GetControlId(string resourcePageId, string settingId, bool category)
     {
+        if (resourcePageId == @"Notification.Texts") return settingId;
+
         if (resourcePageId != @"Notification") return settingId;
+
+        // 全屏结果渠道的设置与文案库在各自页面上，控件名与资源键同名，不能再改写成浮窗的 S_Default_*。
+        if (settingId.StartsWith(@"S_Fullscreen", StringComparison.Ordinal)) return settingId;
 
         if (category || settingId == @"S_Default") return settingId;
         return @"S_Default_" + settingId[(settingId.IndexOf('_') + 1)..];
@@ -261,7 +268,11 @@ public class SettingsSearchService
 
     private static string GetCategoryControlId(string resourcePageId, string settingId)
     {
+        if (resourcePageId == @"Notification.Texts") return settingId;
+
         if (resourcePageId != @"Notification") return settingId;
+
+        if (settingId.StartsWith(@"S_Fullscreen", StringComparison.Ordinal)) return settingId;
 
         return settingId.EndsWith("_WindowPosition", StringComparison.Ordinal)
                || settingId.EndsWith("_EnabledMonitor", StringComparison.Ordinal)
@@ -299,6 +310,13 @@ public class SettingsSearchService
 
     private static IEnumerable<string> BuildPageClassNameCandidates(string settingsPageResourceId, string? rootSettingId)
     {
+        if (settingsPageResourceId == @"Notification.Texts")
+        {
+            // 文案库是隐藏页：条目仍要能搜到并跳到该页，导航里则看不到它。
+            yield return @"SecRandom.Views.SettingsPages.Notification.TextLibrarySettingsPage";
+            yield break;
+        }
+
         if (settingsPageResourceId == @"Notification" && rootSettingId != null)
         {
             var notificationPageName = rootSettingId switch
@@ -306,6 +324,8 @@ public class SettingsSearchService
                 @"S_RollCall" => @"RollCallNotificationSettingsPage",
                 @"S_QuickDraw" => @"QuickDrawNotificationSettingsPage",
                 @"S_Lottery" => @"LotteryNotificationSettingsPage",
+                _ when rootSettingId.StartsWith(@"S_Fullscreen", StringComparison.Ordinal) =>
+                    @"FullscreenNotificationSettingsPage",
                 _ => @"DefaultNotificationSettingsPage"
             };
 

@@ -268,4 +268,7 @@
   <data name="Feat_Starting" xml:space="preserve">
         <value>启动中</value>
     </data>
+  <data name="MultiInstance_Unreachable" xml:space="preserve">
+        <value>无法打开正在运行的 SecRandom 实例，请在任务栏或托盘中找到它</value>
+    </data>
 </root>

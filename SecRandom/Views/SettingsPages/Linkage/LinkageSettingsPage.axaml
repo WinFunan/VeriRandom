@@ -37,6 +37,26 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_External_RestrictWhenUnavailable"
+                                   Header="{x:Static lsp:Resources.S_External_RestrictWhenUnavailable}"
+                                   Description="{x:Static lsp:Resources.S_External_RestrictWhenUnavailable_D}"
+                                   IsVisible="{Binding Settings.InstantDrawDisable}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldErrorFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.RestrictWhenUnavailable}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_External_OutdoorCourse"
+                                   Header="{x:Static lsp:Resources.S_External_OutdoorCourse}"
+                                   Description="{x:Static lsp:Resources.S_External_OutdoorCourse_D}"
+                                   IsVisible="{Binding IsOutdoorCourseRowVisible}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi RunFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.DisableOnOutdoorCourse}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_External_DataSource"
                                    Header="{x:Static lsp:Resources.S_External_DataSource}"
                                    Description="{x:Static lsp:Resources.S_External_DataSource_D}"
@@ -75,6 +95,16 @@
                                    IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.HideFloatingWindowOnClassEnd}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_ClassTime_HideFloatingWindowOnOutdoorCourse"
+                                   Header="{x:Static lsp:Resources.S_ClassTime_HideFloatingWindowOnOutdoorCourse}"
+                                   Description="{x:Static lsp:Resources.S_ClassTime_HideFloatingWindowOnOutdoorCourse_D}"
+                                   IsVisible="{Binding IsOutdoorCourseRowVisible}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.HideFloatingWindowOnOutdoorCourse}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

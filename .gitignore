@@ -478,3 +478,4 @@ $RECYCLE.BIN/
 # tracked by this repository, so its own history, tags and releases stay in WinFunan/VeriRandom.NewAlgorithm.
 /vendors/NewAlgorithm/
 /.taskman
+/.plans

@@ -20,7 +20,7 @@ public enum LinkageDrawGate
     /// <summary>本机会拉起密码/TOTP/USB 验证框。<b>集控远程命令不能用这种路径</b>（教室机可能没人）。</summary>
     RequiresLocalVerification,
 
-    /// <summary>已确认非上课时间，而联动设置不允许这时候抽取。</summary>
+    /// <summary>课程联动判定为受限（确认非上课，或数据源不可用且要求维持限制），而联动设置不允许这时候抽取。</summary>
     BlockedByClassTime,
 
     /// <summary>集控期望状态锁定了抽取。</summary>
@@ -49,11 +49,16 @@ public sealed class LinkageDrawCoordinator(
         if (controlDrawGate.IsDrawLocked)
             return false;
 
-        if (!linkageService.IsConfirmedNonClassTime)
+        if (!IsLinkageRestricted)
             return await securityService.AuthorizeAsync(operations, action, cancellationToken).ConfigureAwait(false);
 
         if (!linkageService.Settings.VerificationRequired)
+        {
+            // 不允许验证绕过时这里是课程联动唯一的人机拒绝点：页面调用方拿到 false 只会静默收手，
+            // 所以提示必须在这里发，否则用户点了按钮毫无反应。
+            ClassTimeDrawRestrictionNotice.Show(linkageService.Snapshot);
             return false;
+        }
 
         return await securityService.AuthorizeAsync(
             [.. operations, SecurityOperation.BypassClassTimeRestriction],
@@ -79,7 +84,7 @@ public sealed class LinkageDrawCoordinator(
         if (controlDrawGate.IsDrawLocked)
             return LinkageDrawGate.BlockedByRemoteLock;
 
-        if (!linkageService.IsConfirmedNonClassTime)
+        if (!IsLinkageRestricted)
             return operations.Any(securityService.RequiresVerification)
                 ? LinkageDrawGate.RequiresLocalVerification
                 : LinkageDrawGate.Allowed;
@@ -87,9 +92,18 @@ public sealed class LinkageDrawCoordinator(
         if (!linkageService.Settings.VerificationRequired)
             return LinkageDrawGate.BlockedByClassTime;
 
-        // 确认非上课时间后的抽取要额外过 BypassClassTimeRestriction，而它永远需要当场验证。
+        // 联动限制后的抽取要额外过 BypassClassTimeRestriction，而它永远需要当场验证。
+        // 户外课程限制沿用 BlockedByClassTime：它本就发生在上课时段，远程控制台的
+        // "上课时间"文案仍然准确。
         return LinkageDrawGate.RequiresLocalVerification;
     }
+
+    /// <summary>
+    ///     联动闸门是否在当前时刻限制抽取：非上课时段限制与上课时段户外课程限制共用同一套
+    ///     验证例外（<see cref="SecurityOperation.BypassClassTimeRestriction" />）。
+    /// </summary>
+    private bool IsLinkageRestricted => linkageService.IsClassTimeRestrictionActive
+        || linkageService.IsConfirmedOutdoorCourse;
 
     public string GetCourseName() => linkageService.GetSubjectFilter();
 }

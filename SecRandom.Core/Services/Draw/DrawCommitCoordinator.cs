@@ -148,6 +148,51 @@ internal sealed class DrawCommitCoordinator(
         }
     }
 
+    public string CommitNumberDraw(NumberDrawCommit commit)
+    {
+        ArgumentNullException.ThrowIfNull(commit);
+        var roundId = ResolveRoundId(commit.DrawRoundId);
+        var hasStudents = commit.Students is { Count: > 0 } && !string.IsNullOrWhiteSpace(commit.StudentScopeName);
+        var hasPrizes = commit.Prizes is { Count: > 0 } && !string.IsNullOrWhiteSpace(commit.PrizeScopeName);
+        if (!hasStudents && !hasPrizes)
+            return roundId;
+
+        lock (_gate)
+        {
+            var recordCompensation = temporaryRecordService as IDrawTemporaryRecordCompensation;
+            var studentSnapshot = hasStudents
+                ? recordCompensation?.CaptureStudentScopeSnapshot(
+                    commit.StudentScopeName!, commit.StudentGenderScope, commit.StudentGroupScope)
+                : null;
+            var prizeSnapshot = hasPrizes
+                ? recordCompensation?.CapturePrizeScopeSnapshot(commit.PrizeScopeName!)
+                : null;
+
+            try
+            {
+                if (hasStudents)
+                    temporaryRecordService.RecordStudents(commit.StudentScopeName!, commit.StudentGenderScope,
+                        commit.StudentGroupScope, commit.Students!);
+                if (hasPrizes)
+                    temporaryRecordService.RecordPrizes(commit.PrizeScopeName!, commit.Prizes!);
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(exception, "数字抽取提交失败，执行补偿回滚：DrawRoundId={DrawRoundId}。", roundId);
+                if (hasStudents && recordCompensation is not null)
+                    TryCompensate(() => recordCompensation.RestoreStudentScopeSnapshot(
+                        commit.StudentScopeName!, commit.StudentGenderScope, commit.StudentGroupScope,
+                        studentSnapshot), roundId);
+                if (hasPrizes && recordCompensation is not null)
+                    TryCompensate(() => recordCompensation.RestorePrizeScopeSnapshot(
+                        commit.PrizeScopeName!, prizeSnapshot), roundId);
+                throw;
+            }
+
+            return roundId;
+        }
+    }
+
     private static string ResolveRoundId(string? drawRoundId) =>
         string.IsNullOrWhiteSpace(drawRoundId) ? Guid.NewGuid().ToString("N") : drawRoundId;
 

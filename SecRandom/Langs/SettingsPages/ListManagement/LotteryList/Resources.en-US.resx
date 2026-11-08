@@ -237,4 +237,57 @@ You can keep duplicate names and continue. Internal identifiers distinguish the 
   <data name="K_TagsColumns">
     <value>标签|tag|tags|类别|分类|category</value>
   </data>
+  <data name="M_AddPrizeConflictTitle">
+    <value>Number already in use</value>
+  </data>
+  <data name="M_AddPrizeConflictContent">
+    <value>Number {0} is already used by “{1}”
+Insert here: “{1}” and the {2} prizes from that position on shift their number by one, and the new prize takes {0}
+Append: no other number changes, and the new prize takes {3}
+
+{4}
+
+Renumbering changes only the displayed number, not prizes' draw history or fair-draw weights</value>
+  </data>
+  <data name="M_AddPrizeConflictNotNumericContent">
+    <value>Number {0} is already used by “{1}”
+The number is not a plain number, so later numbers cannot be shifted automatically</value>
+  </data>
+  <data name="M_AddPrizeConflictDuplicatedContent">
+    <value>{1} prizes already use number {0}
+Shifting would still leave duplicate numbers, so it cannot be done automatically</value>
+  </data>
+  <data name="M_AddPrizeConflictPreviewHeader">
+    <value>Affected prizes</value>
+  </data>
+  <data name="M_AddPrizeConflictPreviewLine">
+    <value>{0} {1} → {2}</value>
+  </data>
+  <data name="M_AddPrizeConflictPreviewEllipsis">
+    <value>…</value>
+  </data>
+  <data name="M_AddPrizeConflictPrimary">
+    <value>Insert and shift</value>
+  </data>
+  <data name="M_AddPrizeConflictSecondary">
+    <value>Append at the end</value>
+  </data>
+  <data name="M_AddPrizeConflictKeepDuplicate">
+    <value>Keep duplicate and add</value>
+  </data>
+  <data name="M_AddPrizeConflictClose">
+    <value>Go back and edit</value>
+  </data>
+  <data name="M_AddPrizeConflictUnnamed">
+    <value>Unnamed prize</value>
+  </data>
+  <data name="M_AddPrizeShiftedSuccess">
+    <value>Prize added. {0} prizes were renumbered</value>
+  </data>
+  <data name="M_AddPrizeAppendedSuccess">
+    <value>Prize added with number {0}</value>
+  </data>
+  <data name="M_AddPrizeDuplicateSuccess">
+    <value>Prize added with a duplicate number</value>
+  </data>
 </root>

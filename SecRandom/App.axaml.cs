@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -36,6 +37,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Notification;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services;
@@ -45,6 +47,7 @@ using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Core.Abstraction.Services.Capabilities;
 using SecRandom.Core.Abstraction.Services.Data;
 using SecRandom.Core.Abstraction.Services.Diagnostics;
@@ -65,7 +68,6 @@ using SecRandom.Core.Services.Threading;
 using SecRandom.Core.Views;
 using SecRandom.Shared.Models.Ipc;
 using SecRandom.Shared;
-using SecRandom.Dialogs;
 using SecRandom.Helpers;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using PerformanceSettingsConfig = SecRandom.Core.Models.SubConfigs.General.PerformanceSettingsConfig;
@@ -80,6 +82,7 @@ using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Notification;
+using SecRandom.Services.Platform;
 using SecRandom.Services.Profiles;
 using SecRandom.Services.RosterTransfer;
 using SecRandom.Services.Ipc;
@@ -128,9 +131,12 @@ using SecRandom.Views.SettingsPages.Update;
 using SecRandom.Views.SettingsPages.Plugins;
 using DefaultNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage;
 using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage;
+using FloatingWindowButtonsSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowButtonsSettingsPage;
+using FullscreenNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.FullscreenNotificationSettingsPage;
 using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.LotteryNotificationSettingsPage;
 using QuickDrawNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.QuickDrawNotificationSettingsPage;
 using RollCallNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.RollCallNotificationSettingsPage;
+using TextLibrarySettingsPage = SecRandom.Views.SettingsPages.Notification.TextLibrarySettingsPage;
 using SecuritySettingsPage = SecRandom.Views.SettingsPages.General.SecuritySettingsPage;
 using VoiceSettingsPage = SecRandom.Views.SettingsPages.Notification.VoiceSettingsPage;
 using CR = SecRandom.Langs.Common.Resources;
@@ -141,8 +147,10 @@ namespace SecRandom;
 public partial class App : Application
 {
     private static FloatingWindow? _floatingWindow;
+    private static FloatingWindow? _secondaryFloatingWindow;
     private static Window? _quickDrawWindow;
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
+    private static bool _positioningQuickDrawWindow;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
     private static Task? _runtimeServicesStartupTask;
@@ -163,6 +171,8 @@ public partial class App : Application
     private bool _settingsIntegrityConfirmationPending;
     private SettingsIntegrityService? _settingsIntegrity;
     private StyleInclude? _reducedMotionStyles;
+    private FloatingWindowSettingsConfig? _observedFloatingWindowSettings;
+    private bool _observesFloatingWindowConfigHandler;
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
     public static bool IsDesktop;
@@ -172,7 +182,7 @@ public partial class App : Application
         if (_desktopLifetime?.Windows
                 .Where(window => window.GetType().Name != "TrayPopupRoot"
                                  && window is { IsActive: true, IsVisible: true, PlatformImpl: not null })
-                .OrderBy(window => ReferenceEquals(window, _floatingWindow) ? 1 : 0)
+                .OrderBy(window => window is FloatingWindow ? 1 : 0)
                 .FirstOrDefault() is TopLevel desktopRoot)
             return desktopRoot;
 
@@ -219,7 +229,7 @@ public partial class App : Application
         // 初始化 Avalonia App
         AvaloniaXamlLoader.Load(this);
 
-        // 在 XAML 资源加载完成后立即应用外观设置（早于 BuildHost，确保重复实例对话框也能跟随主题）
+        // 在 XAML 资源加载完成后立即应用外观设置（早于 BuildHost，确保启动期窗口——例如重复实例提示、便携目录故障提示——也能跟随主题）
         ApplyStartupAppearance(settings.Appearance);
 
         // 低配模式必须早于任何视图创建：入场动画策略要在面板首次附加到可视树之前生效
@@ -273,8 +283,9 @@ public partial class App : Application
             // ===== 多实例检测（仅 Desktop Lifetime）=====
             if (!SingleInstanceService.Instance.TryAcquire())
             {
-                // 已有实例在运行：创建临时宿主窗口显示对话框，跳过 BuildHost
-                desktop.MainWindow = CreateDuplicateInstanceDialogHost(desktop, startupProtocolUri);
+                // 已有实例在运行：不再弹窗询问，直接把已运行实例的主窗口/协议 URL 转交给它，
+                // 本进程只做临时宿主并退出（跳过 BuildHost）。
+                desktop.MainWindow = CreateDuplicateInstanceActivationHost(startupProtocolUri);
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
@@ -596,10 +607,9 @@ public partial class App : Application
         _runtimeServicesStartupTask = StartRuntimeServicesAsync();
         ObserveTask(_runtimeServicesStartupTask, "Runtime service startup failed.");
         WriteDesktopStartupDiagnostic("Creating floating window.");
-        _floatingWindow = new FloatingWindow();
-        _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
-        _floatingWindow.Closed += (_, _) => _floatingWindow = null;
+        _floatingWindow = CreateFloatingWindow(isSecondary: false);
         desktop.MainWindow = _floatingWindow;
+        ApplyFloatingWindowLayout();
         ApplyFloatingWindowStartupVisibility();
 
         WriteDesktopStartupDiagnostic("Initializing desktop application chrome.");
@@ -639,8 +649,8 @@ public partial class App : Application
         if (_floatingWindow is not { } window)
             return;
 
-        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
-            window.SetUserVisibilityIntent(false);
+        if (!IAppHost.GetService<MainConfigHandler>().Data.EffectiveFloatingWindowSettings.StartupDisplayFloatingWindow)
+            SetFloatingWindowsVisibilityIntent(false);
 
         Dispatcher.UIThread.Post(
             () =>
@@ -650,14 +660,205 @@ public partial class App : Application
 
                 if (!current.UserWantsVisible)
                 {
-                    current.Hide();
+                    HideFloatingWindows();
                     return;
                 }
 
-                if (!current.IsHiddenByCourseLinkage)
-                    RestoreWithoutActivating(current);
+                RestoreFloatingWindowsWithoutActivating();
             },
             DispatcherPriority.Loaded);
+    }
+
+    /// <summary>创建主窗或右侧副窗，并接好托盘菜单与字段回收。</summary>
+    private static FloatingWindow CreateFloatingWindow(bool isSecondary)
+    {
+        var window = new FloatingWindow(isSecondary);
+        window.Opened += (_, _) => Current.RefreshTrayWindowMenuItems();
+        if (isSecondary)
+            window.Closed += (_, _) => _secondaryFloatingWindow = null;
+        else
+            window.Closed += (_, _) => _floatingWindow = null;
+        return window;
+    }
+
+    /// <summary>当前存在的悬浮窗（主窗在前，副窗在后）。</summary>
+    private static IEnumerable<FloatingWindow> FloatingWindows()
+    {
+        if (_floatingWindow is { } primary)
+            yield return primary;
+
+        if (_secondaryFloatingWindow is { } secondary)
+            yield return secondary;
+    }
+
+    /// <summary>
+    ///     按"左右两侧同时显示"设置布置悬浮窗：开启时主窗钉右、副窗钉左；关闭时收起副窗并解除钉边，
+    ///     主窗留在右侧（右侧才是主浮窗，关掉两侧显示后不该让窗口跳到另一边）。
+    /// </summary>
+    private void ApplyFloatingWindowLayout()
+    {
+        if (_floatingWindow is not { } primary)
+            return;
+
+        var showOnBothSides = IAppHost.GetService<MainConfigHandler>().Data.EffectiveFloatingWindowSettings.ShowOnBothSides;
+        primary.SetEdgePinned(showOnBothSides, onLeft: false);
+
+        if (!showOnBothSides)
+        {
+            if (_secondaryFloatingWindow is not { } closing)
+                return;
+
+            // Closed 处理器负责清空静态字段，这里只放行关闭。
+            closing.CanClose = true;
+            closing.Close();
+            return;
+        }
+
+        if (_secondaryFloatingWindow is not { } secondary)
+        {
+            secondary = CreateFloatingWindow(isSecondary: true);
+            _secondaryFloatingWindow = secondary;
+            secondary.SetEdgePinned(true, onLeft: true);
+
+            // 两侧高度统一时，副窗的纵向锚点跟着主窗走；先在它打开之前把锚点对齐，
+            // 副窗自己的启动定位就会落在与主窗相同的高度上。
+            if (IAppHost.GetService<MainConfigHandler>().Data.EffectiveFloatingWindowSettings.SyncBothSidesAnchor
+                && !IsSimpleModeEnabled())
+            {
+                IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.SecondaryAnchorCenterY =
+                    primary.AnchorCenterY;
+            }
+
+            // 副窗是"跟随主窗"的可见性：主窗此刻藏着的（托盘/启动设置/课程联动）就不该单独露面。
+            var visible = primary is { IsVisible: true } && primary.UserWantsVisible;
+            secondary.SetUserVisibilityIntent(visible);
+            if (visible && !primary.IsHiddenByCourseLinkage)
+                RestoreWithoutActivating(secondary);
+
+            Dispatcher.UIThread.Post(AlignFloatingWindowAnchors, DispatcherPriority.Loaded);
+            return;
+        }
+
+        secondary.SetEdgePinned(true, onLeft: true);
+        Dispatcher.UIThread.Post(AlignFloatingWindowAnchors, DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    ///     把一侧悬浮窗的纵向锚点同步给另一侧（"两侧高度统一"开启时由拖动中的窗口调用）。
+    /// </summary>
+    public static void SyncFloatingWindowAnchor(FloatingWindow source, int anchorCenterY)
+    {
+        foreach (var window in FloatingWindows())
+        {
+            if (ReferenceEquals(window, source))
+                continue;
+
+            window.ApplyUnifiedAnchor(anchorCenterY);
+        }
+    }
+
+    /// <summary>让两侧悬浮窗落到同一纵向高度；"两侧高度统一"关闭时什么也不做。</summary>
+    private static void AlignFloatingWindowAnchors()
+    {
+        if (_floatingWindow is not { } primary)
+            return;
+
+        var settings = IAppHost.GetService<MainConfigHandler>().Data.EffectiveFloatingWindowSettings;
+        if (!settings.ShowOnBothSides || !settings.SyncBothSidesAnchor)
+            return;
+
+        foreach (var window in FloatingWindows())
+        {
+            if (!ReferenceEquals(window, primary))
+                window.ApplyUnifiedAnchor(primary.AnchorCenterY);
+        }
+    }
+
+    private static void SetFloatingWindowsVisibilityIntent(bool visible)
+    {
+        foreach (var window in FloatingWindows())
+            window.SetUserVisibilityIntent(visible);
+    }
+
+    private static void RestoreFloatingWindowsWithoutActivating()
+    {
+        foreach (var window in FloatingWindows())
+        {
+            if (!window.IsHiddenByCourseLinkage)
+                RestoreWithoutActivating(window);
+        }
+    }
+
+    private static void HideFloatingWindows()
+    {
+        foreach (var window in FloatingWindows())
+            window.Hide();
+    }
+
+    /// <summary>
+    ///     订阅悬浮窗设置（并跟踪配置重载），用于实时响应"左右两侧同时显示"的开关。
+    /// </summary>
+    /// <remarks>
+    ///     <see cref="ConfigHandlerBase{TModel}.Reload" />（设置导入/恢复后）会换掉 <c>Data</c> 实例，
+    ///     旧订阅会失效，所以这里同时盯住 <c>Reloaded</c> 并重新挂到新实例上。
+    /// </remarks>
+    private void ObserveFloatingWindowSettings(MainConfigHandler handler)
+    {
+        var settings = handler.Data.FloatingWindowSettings;
+        if (!ReferenceEquals(_observedFloatingWindowSettings, settings))
+        {
+            if (_observedFloatingWindowSettings is not null)
+                _observedFloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
+
+            _observedFloatingWindowSettings = settings;
+            settings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
+        }
+
+        if (_observesFloatingWindowConfigHandler)
+            return;
+
+        handler.Reloaded += MainConfigHandler_OnReloaded;
+        _observesFloatingWindowConfigHandler = true;
+    }
+
+    private void UnobserveFloatingWindowSettings()
+    {
+        if (_observedFloatingWindowSettings is not null)
+        {
+            _observedFloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
+            _observedFloatingWindowSettings = null;
+        }
+
+        if (!_observesFloatingWindowConfigHandler)
+            return;
+
+        if (IAppHost.TryGetService<MainConfigHandler>() is { } handler)
+            handler.Reloaded -= MainConfigHandler_OnReloaded;
+
+        _observesFloatingWindowConfigHandler = false;
+    }
+
+    private void MainConfigHandler_OnReloaded(object? sender, EventArgs e)
+    {
+        if (sender is MainConfigHandler handler)
+            ObserveFloatingWindowSettings(handler);
+
+        Dispatcher.UIThread.Post(ApplyFloatingWindowLayout);
+    }
+
+    private void FloatingWindowSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // "两侧高度统一"只影响两扇窗的相对高度：开关一变就把它们对齐一次，不需要重建窗格。
+        if (e.PropertyName == nameof(FloatingWindowSettingsConfig.SyncBothSidesAnchor))
+        {
+            Dispatcher.UIThread.Post(AlignFloatingWindowAnchors);
+            return;
+        }
+
+        if (e.PropertyName != nameof(FloatingWindowSettingsConfig.ShowOnBothSides))
+            return;
+
+        Dispatcher.UIThread.Post(ApplyFloatingWindowLayout);
     }
 
     private void ShowFirstRunOobe(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
@@ -880,59 +1081,56 @@ public partial class App : Application
     };
 
     /// <summary>
-    ///     创建多实例对话框宿主窗口。
-    ///     宿主窗口本身不可见；对话框在 <see cref="Window.Opened"/> 异步事件中弹出，
-    ///     避免在同步的 <see cref="OnFrameworkInitializationCompleted"/> 中阻塞 UI 线程。
+    ///     重复实例的收尾宿主窗口。
+    ///     宿主窗口本身不可见；转交动作在 <see cref="Window.Opened"/> 异步事件里执行，
+    ///     避免在同步的 <see cref="OnFrameworkInitializationCompleted"/> 中阻塞 UI 线程，
+    ///     同时保证异步转交期间桌面生命周期仍然存活。
     /// </summary>
-    private static Window CreateDuplicateInstanceDialogHost(
-        IClassicDesktopStyleApplicationLifetime _,
-        string? startupProtocolUri = null)
+    private static Window CreateDuplicateInstanceActivationHost(string? startupProtocolUri = null)
     {
         var host = CreateStartupGateWindow();
 
         // Opened 事件在 Dispatcher 事件循环内异步运行，不会死锁 UI 线程
         host.Opened += async (_, _) =>
         {
-            if (startupProtocolUri is not null)
+            if (!await ForwardToRunningInstanceAsync(startupProtocolUri))
             {
-                var sent = await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.UrlPrefix +
-                                                                        startupProtocolUri);
-                if (sent)
+                // 管道打不通（通常是已运行实例卡死）：不能静默退出，给一条明确提示再结束。
+                var dialog = new FATaskDialog
                 {
-                    host.Close();
-                    RequestDesktopShutdown();
-                    return;
-                }
+                    XamlRoot = host,
+                    Title = CR.MultiInstance_Title,
+                    Header = CR.MultiInstance_Title,
+                    Content = new TextBlock
+                    {
+                        TextWrapping = TextWrapping.Wrap,
+                        Text = CR.MultiInstance_Unreachable
+                    }
+                };
+                dialog.Buttons.Add(new FATaskDialogButton(CR.C_Close, "close") { IsDefault = true });
+                await dialog.ShowAsync();
             }
 
-            var action = await DuplicateInstanceDialog.ShowAsync(host);
-
-            switch (action)
-            {
-                case DuplicateInstanceAction.OpenExisting:
-                    // 协议启动首发失败后仍优先重试原始命令，避免丢失 URL 激活。
-                    await SingleInstanceService.SendCommandAsync(startupProtocolUri is null
-                        ? SingleInstanceCommand.ShowMainWindow
-                        : SingleInstanceCommand.UrlPrefix + startupProtocolUri);
-                    break;
-
-                case DuplicateInstanceAction.Restart:
-                    // 通知第一个实例重启，稍作等待以确保对方有时间响应
-                    await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.Restart);
-                    await Task.Delay(300);
-                    break;
-
-                case DuplicateInstanceAction.Cancel:
-                default:
-                    break;
-            }
-
-            // 所有分支最终都退出当前（重复）实例
             host.Close();
             RequestDesktopShutdown();
         };
 
         return host;
+    }
+
+    /// <summary>
+    ///     把本次启动转交给已在运行的实例：带启动协议 URL 时优先转交 URL（由它完成该 URL 的打开），
+    ///     否则直接请求显示已运行实例的主窗口。重启入口在托盘菜单里，不再作为多开时的提问选项。
+    /// </summary>
+    /// <returns>true 表示命令已送达；false 表示管道不可用。</returns>
+    private static async Task<bool> ForwardToRunningInstanceAsync(string? startupProtocolUri)
+    {
+        if (startupProtocolUri is not null && await SingleInstanceService.SendCommandAsync(
+                SingleInstanceCommand.UrlPrefix + startupProtocolUri).ConfigureAwait(true))
+            return true;
+
+        return await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.ShowMainWindow)
+            .ConfigureAwait(true);
     }
 
     private static Window CreatePortableDataRootFailureHost(
@@ -1102,11 +1300,15 @@ public partial class App : Application
                 // 日志
                 services.AddLogging(builder =>
                 {
+#if DEBUG
+                    // 控制台 Provider 只在 Debug 构建启用：Release 是 WinExe，没有控制台可写，
+                    // 保留它只会让每条日志多一次格式化与 stdout 写入。
                     if (!isMobile)
                     {
                         builder.AddConsoleFormatter<LoggingConsoleFormatter, ConsoleFormatterOptions>();
                         builder.AddConsole(console => { console.FormatterName = @"secrandom"; });
                     }
+#endif
 
                     builder.AddSentry(options =>
                     {
@@ -1296,6 +1498,10 @@ public partial class App : Application
                 services.AddSingleton<IVoiceAnnouncementService>(serviceProvider =>
                     serviceProvider.GetRequiredService<VoiceAnnouncementService>());
                 services.AddSingleton<NotificationService>();
+                // 全屏结果渠道的展示服务。窗口本身是桌面专属能力，注册在共享块里但只有桌面会真正开窗
+                // （NotificationService 在移动端把渠道值 3 降级成内置浮窗）。
+                services.AddSingleton<TextLibraryService>();
+                services.AddSingleton<FullscreenNotificationPresenter>();
                 services.AddSingleton(serviceProvider => new MusicLibraryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
@@ -1311,7 +1517,7 @@ public partial class App : Application
                 services.AddSingleton<LinkageDrawCoordinator>();
                 services.AddHostedService<CourseLinkageHostedService>();
 
-                // 集控节点（control-v1，见 docs/client-protocol.md）：出站长连接 + 本机开关 + 远程抽取。
+                // 集控节点（control-v1，见 ../SECTL-auth/docs/control-center-protocol-v4.md）：出站长连接 + 本机开关 + 远程抽取。
                 // **桌面与平板**都是被控端（平板用的是桌面主界面，教室里同样需要被控制）；
                 // 手机端只是控制台侧（往节点下发 draw.trigger），本机没有节点，因此只注册一个永不开锁的闸门
                 // ——LinkageDrawCoordinator 桌面与手机共用，少了这条注册整台 Host 都起不来
@@ -1330,6 +1536,13 @@ public partial class App : Application
                             : mobilePlatform!.DeviceName!
                     });
                     services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();
+                    // v4.2：hello 携带的设置 schema。取当前配置现算，revision/哈希回写节点状态文件，
+                    // 因此同一份 schema 重连/重启复用同一个 revision（服务端按设备记录最高值）。
+                    services.AddSingleton<IControlSettingsReportSource>(provider =>
+                        new ControlSettingsReportSource(
+                            () => provider.GetRequiredService<MainConfigHandler>().Data,
+                            provider.GetRequiredService<IControlNodeStateStore>(),
+                            provider.GetRequiredService<ILogger<ControlSettingsReportSource>>()));
                     services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
                     services.AddSingleton<IControlNodeCredentialProvider>(provider => new ControlNodeCredentialProvider(
                         provider.GetRequiredService<SectlAuthService>(),
@@ -1338,6 +1551,13 @@ public partial class App : Application
                     // 三个能力执行器各自独立：它们依赖的界面/配置/名单服务互不相同，
                     // 拆开才能在测试里单独替换，也避免分发器变成一个巨大的文件。
                     services.AddSingleton<ControlMediaPlayHandler>();
+                    // v4 新增的四条动作命令：广播、锁屏、切页、重启。
+                    services.AddSingleton<ControlBroadcastPresenter>();
+                    services.AddSingleton<ControlLockScreenService>();
+                    services.AddSingleton<ControlBroadcastHandler>();
+                    services.AddSingleton<ControlLockScreenHandler>();
+                    services.AddSingleton<ControlSwitchPageHandler>();
+                    services.AddSingleton<ControlRestartHandler>();
                     services.AddSingleton<ControlSettingsPatchHandler>();
                     services.AddSingleton<ControlRosterPushHandler>();
                     services.AddSingleton<ControlRosterReadHandler>();
@@ -1358,7 +1578,8 @@ public partial class App : Application
                         provider.GetRequiredService<ControlNodeClientOptions>(),
                         provider.GetRequiredService<ILogger<ControlNodeClient>>(),
                         provider.GetRequiredService<ILogger<ControlNodeSession>>(),
-                        provider.GetRequiredService<INodeEnrollmentStore>()));
+                        provider.GetRequiredService<INodeEnrollmentStore>(),
+                        provider.GetRequiredService<IControlSettingsReportSource>()));
                     // 显式泛型注册：构造函数里的 SectlAuthService / INodeEnrollmentStore 是可选参数，
                     // 容器两者都能解析，所以这里不需要（也不该）写工厂——守卫测试会盯住这一行。
                     services.AddHostedService<ControlNodeHostedService>();
@@ -1582,6 +1803,9 @@ public partial class App : Application
                     // 手机没有浮窗
                     services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources
                         .Settings_FloatingWindow);
+                    // 自定义按钮页不在侧栏显示，只从浮窗管理的设置卡跳转进来
+                    services.AddSettingsPage<FloatingWindowButtonsSettingsPage>(
+                        Langs.SettingsPages.Personalized.FloatingWindowButtons.Resources.Page_Title);
                     // 计时器页紧随浮窗页：计时器的入口就在浮窗上，且两者都只有桌面端有
                     services.AddSettingsPage<TimerSettingsPage>(Langs.SettingsPages.Personalized.Timer
                         .Resources.Page_Title);
@@ -1631,6 +1855,12 @@ public partial class App : Application
                         .Settings_QuickDrawNotification);
                     services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.Common.Resources
                         .Settings_LotteryNotification);
+                    // 全屏渠道的两页：外观/动画设置 + 文案库管理。分开放是因为文案库是一张会一直在长的
+                    // 清单（导入、编辑、统计），而设置页只该放"外观与行为"。
+                    services.AddSettingsPage<FullscreenNotificationSettingsPage>(
+                        Langs.SettingsPages.Notification.Resources.Page_Fullscreen);
+                    services.AddSettingsPage<TextLibrarySettingsPage>(
+                        Langs.SettingsPages.Notification.Texts.Resources.Page_Title);
                 }
 
                 services.AddGroup(new PageGroupInfo(
@@ -1664,6 +1894,7 @@ public partial class App : Application
                     services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
                     services.AddSingleton<IPluginDrawService, PluginDrawService>();
                     services.AddSingleton<IFloatingWindowButtonRegistry, FloatingWindowButtonRegistry>();
+                    services.AddSingleton<SecRandom.Services.FloatingWindow.FloatingWindowIconService>();
 
                     // 插件扩展点：结果呈现 / 叠加层 / 界面插槽 / 界面样式
                     services.AddSingleton<IResultPresentationService, ResultPresentationService>();
@@ -1694,7 +1925,9 @@ public partial class App : Application
                         provider.GetRequiredService<ILogger<PluginMarketService>>(),
                         provider.GetRequiredService<IHttpClientFactory>().CreateClient("plugin-market"),
                         provider.GetRequiredService<IPluginManager>()));
-                    pluginManager.Initialize(context, services);
+                    // 简洁模式：插件体系整体关闭（不扫描、不加载、不注册插件页与贡献项）
+                    if (!IsSimpleModeEnabledAtStartup())
+                        pluginManager.Initialize(context, services);
                 }
             })
             .Build();
@@ -1711,7 +1944,9 @@ public partial class App : Application
 
         // 插件被卸载/禁用后，"动画样式"里指向它的那个选择就成了死值：既没有插件接管，
         // 宿主也不会播自己的动画。这里按"贡献项是否还在"把死值退回内置动画。
-        ResetMissingPluginAnimationSelections();
+        // 简洁模式不加载插件，也就没有插件贡献项可清理，跳过以免改写 settings.json。
+        if (!IAppHost.TryGetService<MainConfigHandler>()?.Data.SimpleModeEnabled == true)
+            ResetMissingPluginAnimationSelections();
 
         IAppHost.GetService<IProfileService>();
 
@@ -1721,9 +1956,19 @@ public partial class App : Application
             IAppHost.GetService<SettingsSearchService>().LogTestInformation();
     }
 
+    /// <summary>
+    ///     构建 Host 之前的简洁模式判断：此时 DI 还没起来，直接读 settings.json
+    ///     （插件加载必须在这之前决定，因此不能等 <see cref="MainConfigHandler" />）。
+    /// </summary>
+    private static bool IsSimpleModeEnabledAtStartup()
+        => LoadStartupSettings(new MainConfigModel()).SimpleModeEnabled;
+
+    /// <summary>运行期的简洁模式判断：隐藏功能一律按默认设置运行。</summary>
+    private static bool IsSimpleModeEnabled()
+        => IAppHost.TryGetService<IFeatureAvailabilityService>()?.IsSimpleModeEnabled == true;
+
     private static MainConfigModel LoadStartupSettings(MainConfigModel fallback)
-    {
-        if (!File.Exists(fallback.ConfigFilePath))
+    {        if (!File.Exists(fallback.ConfigFilePath))
             return fallback;
 
         try
@@ -1788,6 +2033,7 @@ public partial class App : Application
         }
         RefreshTrayWindowMenuItems();
         RefreshSudoMenuItem();
+        ObserveFloatingWindowSettings(IAppHost.GetService<MainConfigHandler>());
         
         IAppHost.GetService<ISecurityService>().SudoModeChanged += RefreshSudoMenuItem;
         
@@ -1823,6 +2069,7 @@ public partial class App : Application
         IAppHost.TryGetService<ISecurityService>()?.SudoModeChanged -= RefreshSudoMenuItem;
         _sudoModeRefreshTimer?.Dispose();
         _sudoModeRefreshTimer = null;
+        UnobserveFloatingWindowSettings();
 
         lock (_shutdownGate)
         {
@@ -1892,6 +2139,7 @@ public partial class App : Application
             }
 
             _floatingWindow?.CanClose = true;
+            _secondaryFloatingWindow?.CanClose = true;
             TrySaveConfigForCrashRecovery();
             await ShutdownTelemetryAsync().ConfigureAwait(false);
 
@@ -1967,8 +2215,7 @@ public partial class App : Application
 
     public async Task RestartThroughLauncherAsync()
     {
-        var launcherName = OperatingSystem.IsWindows() ? "VeriRandomLauncher.exe" : "VeriRandomLauncher";
-        var launcherPath = Path.Combine(Utils.PackageRoot, launcherName);
+        var launcherPath = Path.Combine(Utils.PackageRoot, Utils.LauncherFileName);
         if (!File.Exists(launcherPath))
             throw new FileNotFoundException("便携版 Launcher 不存在。", launcherPath);
 
@@ -2212,7 +2459,7 @@ public partial class App : Application
 
     /// <summary>
     ///     在 XAML 资源加载完成后立即应用外观设置（主题色、主题模式），
-    ///     无需 DI，可在 BuildHost 之前调用，确保重复实例对话框也能跟随用户主题。
+    ///     无需 DI，可在 BuildHost 之前调用，确保启动期窗口（重复实例提示、便携目录故障提示等）也能跟随用户主题。
     /// </summary>
     private void ApplyStartupAppearance(AppearanceSettingsConfig settings)
     {
@@ -2260,6 +2507,7 @@ public partial class App : Application
     private void ApplyPerformanceSettings(PerformanceSettingsConfig settings)
     {
         IntroAnimationPolicy.IsEnabled = !settings.LowSpecMode;
+        AnimationFramePolicy.ApplyLowSpecMode(settings.LowSpecMode);
 
         if (settings.LowSpecMode)
         {
@@ -2436,6 +2684,9 @@ public partial class App : Application
                 App.IsDesktop ? DesktopViewIds.Main : GetMobileInitialViewId(),
                 new ViewShowOptions { HostId = App.IsDesktop ? DesktopViewIds.Main : null }).ConfigureAwait(true);
             WriteDesktopStartupDiagnostic("Main window view displayed.");
+            // 简洁模式只有点名主页：任何指向其他主页的请求都归一到点名页
+            if (IsSimpleModeEnabled())
+                pageId = SimpleModePolicy.NormalizeMainPageId(pageId);
             if (!string.IsNullOrWhiteSpace(pageId))
                 MainView.Current?.SelectNavigationItemById(pageId);
             transaction?.Finish(SpanStatus.Ok);
@@ -2451,6 +2702,8 @@ public partial class App : Application
 
     public static void ToggleMainWindow(string? pageId = null)
     {
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeMainPageId(pageId);
         if (pageId == "main.lottery" && !IAppHost.GetService<IFeatureAvailabilityService>().IsLotteryEnabled)
             return;
 
@@ -2466,6 +2719,8 @@ public partial class App : Application
 
     private static async Task SetMainWindowVisibilityCoreAsync(string action, string? pageId)
     {
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeMainPageId(pageId);
         if (pageId == "main.lottery" && !IAppHost.GetService<IFeatureAvailabilityService>().IsLotteryEnabled)
             return;
 
@@ -2502,16 +2757,15 @@ public partial class App : Application
             SecurityOperation.ToggleFloatingWindow,
             () =>
             {
-                if (_floatingWindow is { IsVisible: true })
+                if (FloatingWindows().Any(window => window.IsVisible))
                 {
-                    _floatingWindow.Hide();
-                    _floatingWindow.SetUserVisibilityIntent(false);
+                    HideFloatingWindows();
+                    SetFloatingWindowsVisibilityIntent(false);
                 }
                 else if (_floatingWindow is not null)
                 {
-                    _floatingWindow.SetUserVisibilityIntent(true);
-                    if (!_floatingWindow.IsHiddenByCourseLinkage)
-                        RestoreWithoutActivating(_floatingWindow);
+                    SetFloatingWindowsVisibilityIntent(true);
+                    RestoreFloatingWindowsWithoutActivating();
                 }
 
                 Current.RefreshTrayWindowMenuItems();
@@ -2529,14 +2783,13 @@ public partial class App : Application
         };
         if (shouldShow && _floatingWindow is not null)
         {
-            _floatingWindow.SetUserVisibilityIntent(true);
-            if (!_floatingWindow.IsHiddenByCourseLinkage)
-                RestoreWithoutActivating(_floatingWindow);
+            SetFloatingWindowsVisibilityIntent(true);
+            RestoreFloatingWindowsWithoutActivating();
         }
         else if (!shouldShow)
         {
-            _floatingWindow?.Hide();
-            _floatingWindow?.SetUserVisibilityIntent(false);
+            HideFloatingWindows();
+            SetFloatingWindowsVisibilityIntent(false);
         }
 
         Current.RefreshTrayWindowMenuItems();
@@ -2546,6 +2799,9 @@ public partial class App : Application
 
     public static void ShowSettingsWindow(string? pageId)
     {
+        // 简洁模式设置窗口只保留白名单页，其余请求归一到默认设置页
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeSettingsPageId(pageId);
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
             async () =>
             {
@@ -2567,6 +2823,8 @@ public partial class App : Application
 
     private static async Task ShowSettingsPreviewAsync(string? pageId)
     {
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeSettingsPageId(pageId);
         await ShowSettingsWindowCoreAsync();
         if (!string.IsNullOrWhiteSpace(pageId))
             SettingsView.Current?.NavigateToPreviewPage(pageId);
@@ -2582,6 +2840,8 @@ public partial class App : Application
 
     private static async Task SetSettingsWindowVisibilityCoreAsync(string action, string pageId, bool preview)
     {
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeSettingsPageId(pageId) ?? SimpleModePolicy.DefaultSettingsPageId;
         var shouldShow = action switch
         {
             "show" => true,
@@ -2675,7 +2935,7 @@ public partial class App : Application
             window.Opacity = 1;
             if (!window.IsVisible)
                 window.Show();
-            window.Activate();
+            ApplyQuickDrawWindowFocusFree(window);
             Dispatcher.UIThread.Post(
                 () => PositionQuickDrawNotificationWindow(window, windowSettings),
                 DispatcherPriority.Render);
@@ -2706,7 +2966,7 @@ public partial class App : Application
         window.Opacity = 1;
         if (!window.IsVisible)
             window.Show();
-        window.Activate();
+        ApplyQuickDrawWindowFocusFree(window);
         if (showPreview)
         {
             quickDraw.ShowNotificationPreview(items, preserveQuickDrawResult);
@@ -2791,8 +3051,6 @@ public partial class App : Application
 
             if (!quickDraw.IsDrawing)
                 await quickDraw.StartAuthorizedTriggeredDrawAsync();
-            else if (_quickDrawWindow is { IsVisible: true })
-                _quickDrawWindow.Activate();
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
@@ -2808,14 +3066,16 @@ public partial class App : Application
         if (_quickDrawWindow is { IsLoaded: true })
             return _quickDrawWindow;
 
+        var quickDrawPage = IAppHost.GetService<QuickDrawPage>();
         _quickDrawWindow = new Window
         {
-            Content = IAppHost.GetService<QuickDrawPage>(),
+            Content = quickDrawPage,
             Title = @"VeriRandom",
             MinWidth = 280,
             MinHeight = 160,
             SizeToContent = SizeToContent.WidthAndHeight,
             Topmost = true,
+            ShowActivated = false,
             WindowStartupLocation = WindowStartupLocation.CenterScreen,
             WindowDecorations = WindowDecorations.None,
             CanMinimize = false,
@@ -2829,20 +3089,25 @@ public partial class App : Application
         {
             _quickDrawWindow.Width = 280;
         };
+        // 结果卡片随名字长短变化时窗口会自适应缩放；每次尺寸变化都必须按新尺寸重新居中，
+        // 否则窗口以左上角为锚点扩张，视觉中心就会漂移——这正是"名字长短不一画面就跑偏"的根因。
+        EventHandler resultLayoutChanged = (_, _) => RequestQuickDrawWindowCentering(_quickDrawWindow);
+        quickDrawPage.ResultLayoutChanged += resultLayoutChanged;
         _quickDrawWindow.Opened += (_, _) =>
         {
+            ApplyQuickDrawWindowFocusFree(_quickDrawWindow);
             ApplyQuickDrawWindowBounds(_quickDrawWindow);
-            Dispatcher.UIThread.Post(
-                () => PositionOrCenterQuickDrawWindow(_quickDrawWindow),
-                DispatcherPriority.Render);
+            RequestQuickDrawWindowCentering(_quickDrawWindow);
         };
-        _quickDrawWindow.SizeChanged += (_, _) => Dispatcher.UIThread.Post(
-            () => PositionOrCenterQuickDrawWindow(_quickDrawWindow),
-            DispatcherPriority.Render);
-        _quickDrawWindow.PositionChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
-        _quickDrawWindow.ScalingChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
+        _quickDrawWindow.SizeChanged += (_, e) => RepositionQuickDrawWindow(_quickDrawWindow, e.NewSize);
+        _quickDrawWindow.ScalingChanged += (_, _) =>
+        {
+            ApplyQuickDrawWindowBounds(_quickDrawWindow);
+            RequestQuickDrawWindowCentering(_quickDrawWindow);
+        };
         _quickDrawWindow.Closed += (_, _) =>
         {
+            quickDrawPage.ResultLayoutChanged -= resultLayoutChanged;
             _quickDrawWindow = null;
             _quickDrawNotificationSettings = null;
 
@@ -2859,17 +3124,66 @@ public partial class App : Application
         return _quickDrawWindow;
     }
 
-    private static void PositionOrCenterQuickDrawWindow(Window? window)
+    /// <summary>
+    ///     闪抽结果窗口与内置通知窗口始终无焦点：显示结果时不能把焦点从前台应用抢走，
+    ///     否则正在播放 PPT 的老师用翻页笔就翻不了页（#301）。
+    /// </summary>
+    /// <remarks>
+    ///     <see cref="Window.ShowActivated" /> 只影响首次显示，用户点击窗口时仍会激活，所以这里
+    ///     同时请求平台层的 <see cref="WindowFeatures.NoActivate" />。该窗口只有指针交互
+    ///     （拖动与三连击关闭），没有键盘操作，因此免激活不会影响它自己的使用。
+    /// </remarks>
+    private static void ApplyQuickDrawWindowFocusFree(Window? window)
     {
-        if (_quickDrawNotificationSettings is { } settings)
-            PositionQuickDrawNotificationWindow(window, settings);
-        else
-            CenterQuickDrawWindow(window);
+        if (window is null)
+            return;
+        window.ShowActivated = false;
+        window.ApplyPlatformFeatures(WindowFeatures.NoActivate, enabled: true);
+    }
+
+    /// <summary>
+    ///     结果区布局稳定后请求一次居中：窗口尺寸在动画/换行过程中会分几步落定，
+    ///     单靠 SizeChanged 可能在最后一帧之后还有一次排版变化，因此在 Loaded 优先级补一次。
+    /// </summary>
+    private static void RequestQuickDrawWindowCentering(Window? window)
+    {
+        if (window is null)
+            return;
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (!ReferenceEquals(window, _quickDrawWindow))
+                    return;
+
+                RepositionQuickDrawWindow(window, window.Bounds.Size);
+            },
+            DispatcherPriority.Loaded);
+    }
+
+    private static void RepositionQuickDrawWindow(Window? window, Size logicalSize)
+    {
+        if (window is null || _positioningQuickDrawWindow)
+            return;
+
+        try
+        {
+            _positioningQuickDrawWindow = true;
+            if (_quickDrawNotificationSettings is { } settings)
+                PositionQuickDrawNotificationWindow(window, settings, logicalSize);
+            else
+                CenterQuickDrawWindow(window, logicalSize);
+        }
+        finally
+        {
+            _positioningQuickDrawWindow = false;
+        }
     }
 
     private static void PositionQuickDrawNotificationWindow(
         Window? window,
-        NotificationChannelSettings settings)
+        NotificationChannelSettings settings,
+        Size? logicalSize = null)
     {
         if (window is null)
             return;
@@ -2893,8 +3207,9 @@ public partial class App : Application
             return;
 
         var scale = window.RenderScaling;
-        var width = (int)Math.Round(window.Bounds.Width * scale);
-        var height = (int)Math.Round(window.Bounds.Height * scale);
+        var size = logicalSize ?? window.Bounds.Size;
+        var width = (int)Math.Round(size.Width * scale);
+        var height = (int)Math.Round(size.Height * scale);
         if (width <= 0 || height <= 0)
             return;
 
@@ -2913,9 +3228,11 @@ public partial class App : Application
             3 or 4 => area.Center.Y - height / 2,
             _ => area.Center.Y - height / 2
         };
-        window.Position = new PixelPoint(
+        var target = new PixelPoint(
             Math.Clamp(x + settings.HorizontalOffset, area.X, Math.Max(area.X, area.Right - width)),
             Math.Clamp(y + settings.VerticalOffset, area.Y, Math.Max(area.Y, area.Bottom - height)));
+        if (window.Position != target)
+            window.Position = target;
     }
 
     private static void ApplyQuickDrawWindowBounds(Window? window)
@@ -2933,25 +3250,28 @@ public partial class App : Application
         window.MaxHeight = Math.Max(window.MinHeight, screen.WorkingArea.Height / scale - edgePadding);
     }
 
-    private static void CenterQuickDrawWindow(Window? window)
+    private static void CenterQuickDrawWindow(Window? window, Size? logicalSize = null)
     {
         if (window is null)
             return;
 
-        var screen = window.Screens.ScreenFromWindow(window);
+        var screen = window.Screens.ScreenFromWindow(window) ?? window.Screens.Primary;
         if (screen is null)
             return;
 
         var scale = window.RenderScaling;
-        var width = (int)Math.Round(window.Bounds.Width * scale);
-        var height = (int)Math.Round(window.Bounds.Height * scale);
+        var size = logicalSize ?? window.Bounds.Size;
+        var width = (int)Math.Round(size.Width * scale);
+        var height = (int)Math.Round(size.Height * scale);
         if (width <= 0 || height <= 0)
             return;
 
         var area = screen.WorkingArea;
-        window.Position = new PixelPoint(
+        var target = new PixelPoint(
             area.X + (area.Width - width) / 2,
             area.Y + (area.Height - height) / 2);
+        if (window.Position != target)
+            window.Position = target;
     }
 
     #endregion

@@ -519,4 +519,31 @@
   <data name="S_QuickDrawHistoryGroup_Disabled" xml:space="preserve">
     <value>履歴記録グループ機能が有効になっていません。「既定の抽選設定」で有効にできます</value>
   </data>
+  <data name="O_NoList" xml:space="preserve">
+    <value>名簿なし</value>
+  </data>
+  <data name="S_ShowDrawingStatus" xml:space="preserve">
+    <value>抽選中のステータスを表示</value>
+  </data>
+  <data name="S_ShowDrawingStatus_D" xml:space="preserve">
+    <value>クイック抽選の実行中に「抽選中」を表示します。オフにすると結果が出るまで画面は前回の内容のまま変わりません</value>
+  </data>
+  <data name="S_RollCallHistoryGroup" xml:space="preserve">
+    <value>記録グループ</value>
+  </data>
+  <data name="S_RollCallHistoryGroup_D" xml:space="preserve">
+    <value>グループを選ぶと点名ページはそのグループを初期選択にし、重みはそのグループの記録だけを参照、既定の記録グループなら未分類の記録だけを数えます</value>
+  </data>
+  <data name="S_LotteryHistoryGroup" xml:space="preserve">
+    <value>記録グループ</value>
+  </data>
+  <data name="S_LotteryHistoryGroup_D" xml:space="preserve">
+    <value>グループを選ぶと抽選ページはそのグループを初期選択にし、重みはそのグループの記録だけを参照、既定の記録グループなら未分類の記録だけを数えます</value>
+  </data>
+  <data name="O_HistoryGroupDefault" xml:space="preserve">
+    <value>既定の記録グループ</value>
+  </data>
+  <data name="S_HistoryGroup_Disabled" xml:space="preserve">
+    <value>履歴記録グループ機能が有効になっていません、「履歴記録の管理」で有効にできます</value>
+  </data>
 </root>

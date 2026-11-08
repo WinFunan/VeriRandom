@@ -160,7 +160,13 @@ public static class ControlSettingsCatalog
         "general.basic.accepted_eula_version",
         "general.basic.accepted_privacy_policy_version",
         "general.basic.accepted_gpl_version",
-        "general.basic.accepted_verification_notice_version"
+        "general.basic.accepted_verification_notice_version",
+
+        // 默认记录组：抽取页选择器的初始值。远程改它会让下一节课的点名/抽奖在没人按按钮的情况下
+        // 从"全部历史"静默变成"只算某个组的历史"，现场看到的只是一个更小的权重范围。
+        "roll_call.history_group",
+        "quick_draw.history_group",
+        "lottery.history_group"
     };
 
     /// <summary>这些路径前缀整体只读。</summary>
@@ -361,6 +367,11 @@ public static class ControlSettingsCatalog
 
         foreach (var property in ReadableProperties(categoryType))
         {
+            // 全屏结果渠道的外观、动画与文案开关整条子树不进目录：它们描述的是这台机器上那块
+            // 投屏展板长什么样，远程改既帮不上忙，还会和现场看起来很不一样。
+            if (property.PropertyType == typeof(FullscreenNotificationSettings))
+                continue;
+
             // 通知渠道是唯一"目录里还要再下一层"的特例，而且**只暴露渠道开关与显示时长**：
             // 渠道对象自己还带着窗口位置、透明度这些外观字段，远程改它们只会让这台机器的
             // 通知弹窗位置对不上，它们属于通知窗口自己的设置。

@@ -564,4 +564,43 @@
   <data name="C_Acknowledge" xml:space="preserve">
     <value>我知道了</value>
   </data>
+  <data name="M_PasswordStrength" xml:space="preserve">
+    <value>安全程度</value>
+  </data>
+  <data name="M_StrengthPlaceholder" xml:space="preserve">
+    <value>输入新密码后显示估算</value>
+  </data>
+  <data name="M_Strength_0" xml:space="preserve">
+    <value>非常弱</value>
+  </data>
+  <data name="M_Strength_1" xml:space="preserve">
+    <value>弱</value>
+  </data>
+  <data name="M_Strength_2" xml:space="preserve">
+    <value>一般</value>
+  </data>
+  <data name="M_Strength_3" xml:space="preserve">
+    <value>强</value>
+  </data>
+  <data name="M_Strength_4" xml:space="preserve">
+    <value>非常强</value>
+  </data>
+  <data name="M_StrengthEstimateFormat" xml:space="preserve">
+    <value>约 10^{0} 次尝试</value>
+  </data>
+  <data name="M_StrengthHint_TooShort" xml:space="preserve">
+    <value>至少 6 位，再长一些更安全</value>
+  </data>
+  <data name="M_StrengthHint_Common" xml:space="preserve">
+    <value>这是常见口令，换一个不常见的说法</value>
+  </data>
+  <data name="M_StrengthHint_Pattern" xml:space="preserve">
+    <value>避开连续字母、键盘走位和重复片段</value>
+  </data>
+  <data name="M_StrengthHint_Length" xml:space="preserve">
+    <value>长度最划算，用一句话当口令更好</value>
+  </data>
+  <data name="M_StrengthHint_Variety" xml:space="preserve">
+    <value>混合大小写、数字和符号，或者继续加长</value>
+  </data>
 </root>

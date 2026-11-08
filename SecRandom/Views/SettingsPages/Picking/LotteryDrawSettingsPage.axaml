@@ -58,8 +58,30 @@
                                    Description="{x:Static lp:Resources.S_DefaultPool_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox ItemsSource="{Binding PrizeListNames}" SelectedItem="{Binding Settings.DefaultPool}"
+                    <ComboBox x:Name="DefaultPoolSelector" ItemsSource="{Binding DefaultPoolOptions}"
+                              SelectionChanged="DefaultPoolSelectorOnSelectionChanged"
                               MinWidth="220" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <!-- 默认记录组：抽奖页打开时选择器先落到这里，用户当场换组仍然是纯界面状态、不写配置。
+                 选「默认记录组」表示只算未分组的记录；总开关关闭时不显示选择器，改为说明为什么不可用。 -->
+            <fa:FASettingsExpander x:Name="S_LotteryHistoryGroup"
+                                   Header="{x:Static lp:Resources.S_LotteryHistoryGroup}"
+                                   Description="{x:Static lp:Resources.S_LotteryHistoryGroup_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="4" HorizontalAlignment="Right">
+                        <ComboBox x:Name="HistoryGroupSelector"
+                                  MinWidth="220"
+                                  IsVisible="{Binding HistoryGroup.IsSelectorVisible}"
+                                  ItemsSource="{Binding HistoryGroup.Options}"
+                                  SelectionChanged="HistoryGroupSelectorOnSelectionChanged" />
+                        <TextBlock Text="{x:Static lp:Resources.S_HistoryGroup_Disabled}"
+                                   IsVisible="{Binding !HistoryGroup.IsSelectorVisible}"
+                                   Opacity="0.72" FontSize="12" TextWrapping="Wrap"
+                                   HorizontalAlignment="Right" TextAlignment="Right" MaxWidth="320" />
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

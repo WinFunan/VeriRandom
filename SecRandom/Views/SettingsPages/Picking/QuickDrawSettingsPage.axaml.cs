@@ -19,32 +19,46 @@ using SecRandom.Core.Services.Draw;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
 using SecRandom.Services.Music;
+using PickingResources = SecRandom.Langs.SettingsPages.Picking.Resources;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
 [PageInfo("settings.picking.quickDraw", FluentIcons.FlashFilled, "settings.picking")]
-public partial class QuickDrawSettingsPage : UserControl, INotifyPropertyChanged
+public partial class QuickDrawSettingsPage : UserControl
 {
     private bool _normalizingSettings;
     private bool _isSubscribed;
-    private bool _refreshingHistoryGroupOptions;
-    private string _lastKnownDefaultClass = string.Empty;
+    private bool _syncingHistoryGroupSelection;
 
     public QuickDrawSettingsPage()
     {
         Settings = ViewModel.Config.QuickDrawSettings;
-        _lastKnownDefaultClass = Settings.DefaultClass;
-        RefreshHistoryGroupOptions();
+        DefaultClassSource = new DefaultRosterSettingSource(
+            "roll_call_list",
+            PickingResources.O_NoList,
+            () => Settings.DefaultClass,
+            value => Settings.DefaultClass = value,
+            () => SettingsView.Current?.IsPreviewMode == true);
+        HistoryGroup = new DrawHistoryGroupSetting(
+            PickingResources.O_HistoryGroupDefault,
+            HistoryGroupKind.RollCall,
+            HistoryGroupCatalog,
+            () => HistoryGroups.Enabled,
+            () => SettingsView.Current?.IsPreviewMode == true,
+            () => Settings.HistoryGroup,
+            value => Settings.HistoryGroup = value);
+        HistoryGroup.Refresh();
         MusicLibrary.Refresh();
-        RefreshStudentLists();
         DataContext = this;
         InitializeComponent();
         SubscribeSettings();
+        RefreshStudentLists();
         NormalizeDrawSettings();
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public QuickDrawSettingsConfig Settings { get; }
+    public DefaultRosterSettingSource DefaultClassSource { get; }
     public IReadOnlyList<RollCallAlgorithmOption> Algorithms { get; } =
         RollCallAlgorithmRegistryService.RegisteredAlgorithms
             .Select(x => new RollCallAlgorithmOption(x.Id, x.Name)).ToArray();
@@ -61,62 +75,74 @@ public partial class QuickDrawSettingsPage : UserControl, INotifyPropertyChanged
             SynchronizeLegacyDrawType();
         }
     }
-    public ObservableCollection<string> StudentListNames { get; } = [];
+    public ObservableCollection<string> DefaultClassOptions => DefaultClassSource.Options;
     public ObservableCollection<MusicSelection> MusicSelections => MusicLibrary.Selections;
 
     /// <summary>
-    ///     「不使用记录组」固定占据列表首项，和点名页的记录组选择器一致。
+    ///     闪抽默认记录组。闪抽没有自己的选择器，所以这一行就是它的默认值：锁定后权重只读该组历史，
+    ///     写出的记录也只进该组；选「默认记录组」表示只算未分组的记录。
     /// </summary>
-    private static string NoneHistoryGroupOption => SecRandom.Langs.SettingsPages.Picking.Resources.O_QuickDrawHistoryGroupNone;
-
-    /// <summary>闪抽默认记录组的候选值：首项永远是「不使用记录组」。</summary>
-    public ObservableCollection<string> HistoryGroupOptions { get; } = [NoneHistoryGroupOption];
-
-    /// <summary>
-    ///     闪抽默认锁定的历史记录组；选「不使用记录组」时把配置写回空串。
-    /// </summary>
-    public string SelectedHistoryGroup
-    {
-        get => string.IsNullOrWhiteSpace(Settings.HistoryGroup) ? NoneHistoryGroupOption : Settings.HistoryGroup;
-        set
-        {
-            // 重建 ItemsSource 时下拉框会先把选中项清成 null 再回写，用户并没有做任何选择：
-            // 这里直接忽略，否则每次进这个页面都会把已经存下的记录组抹掉。
-            if (_refreshingHistoryGroupOptions || value is null)
-                return;
-
-            var resolved = value == NoneHistoryGroupOption ? string.Empty : value.Trim();
-            if (string.Equals(Settings.HistoryGroup, resolved, StringComparison.Ordinal))
-                return;
-            if (SettingsView.Current?.IsPreviewMode == true)
-                return;
-            Settings.HistoryGroup = resolved;
-            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedHistoryGroup)));
-        }
-    }
-
-    /// <summary>历史记录组总开关关闭时整项不可选，只显示为什么不可用。</summary>
-    public bool IsHistoryGroupSelectorVisible => HistoryGroups.Enabled;
+    public DrawHistoryGroupSetting HistoryGroup { get; }
 
     private HistoryGroupSettingsConfig HistoryGroups => ViewModel.Config.General.HistoryGroups;
-
-    private event PropertyChangedEventHandler? NotifyPropertyChanged;
-
-    event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
-    {
-        add => NotifyPropertyChanged += value;
-        remove => NotifyPropertyChanged -= value;
-    }
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private IHistoryGroupCatalog HistoryGroupCatalog { get; } = IAppHost.GetService<IHistoryGroupCatalog>();
     private MusicLibraryService MusicLibrary { get; } = IAppHost.GetService<MusicLibraryService>();
 
+    /// <summary>
+    ///     用户在这一行里换了组：写回配置。重建候选值期间下拉框会先清空选中项，那不是用户选择。
+    /// </summary>
+    private void HistoryGroupSelectorOnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingHistoryGroupSelection || HistoryGroupSelector is null)
+            return;
+
+        if (HistoryGroupSelector.SelectedItem is string selectedGroup)
+            HistoryGroup.Selected = selectedGroup;
+    }
+
+    /// <summary>重建候选值并把选中项重新落回下拉框。</summary>
+    private void RefreshHistoryGroupSelection()
+    {
+        _syncingHistoryGroupSelection = true;
+        try
+        {
+            HistoryGroup.Refresh();
+            ApplyHistoryGroupSelection();
+        }
+        finally
+        {
+            _syncingHistoryGroupSelection = false;
+        }
+    }
+
+    /// <summary>配置里的组名变了（导入、另一页改、组被删），把选中项同步到下拉框。</summary>
+    private void SyncHistoryGroupSelection()
+    {
+        _syncingHistoryGroupSelection = true;
+        try
+        {
+            ApplyHistoryGroupSelection();
+        }
+        finally
+        {
+            _syncingHistoryGroupSelection = false;
+        }
+    }
+
+    private void ApplyHistoryGroupSelection()
+    {
+        if (HistoryGroupSelector is null)
+            return;
+
+        HistoryGroupSelector.SelectedIndex = HistoryGroup.SelectedIndex;
+    }
+
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         MusicLibrary.Refresh();
-        RefreshHistoryGroupOptions();
-        RefreshHistoryGroupVisibility();
+        RefreshHistoryGroupSelection();
         SubscribeSettings();
     }
 
@@ -135,63 +161,8 @@ public partial class QuickDrawSettingsPage : UserControl, INotifyPropertyChanged
         if (e.PropertyName is not (nameof(HistoryGroupSettingsConfig.Enabled) or null or ""))
             return;
 
-        RefreshHistoryGroupVisibility();
-        RefreshHistoryGroupOptions();
-    }
-
-    /// <summary>
-    ///     重建记录组候选值；读取失败时只降级成「不使用记录组」，闪抽仍然可用。
-    /// </summary>
-    private void RefreshHistoryGroupOptions()
-    {
-        _refreshingHistoryGroupOptions = true;
-        try
-        {
-            HistoryGroupOptions.Clear();
-            HistoryGroupOptions.Add(NoneHistoryGroupOption);
-
-            // 总开关关闭时不去读记录组：此时配置里那个组名要原样留着，等开关重新打开就能接着用。
-            IReadOnlyList<string>? groups = null;
-            if (HistoryGroups.Enabled)
-            {
-                try
-                {
-                    groups = HistoryGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall);
-                }
-                catch (Exception)
-                {
-                    // 读不到组只降级成「不使用记录组」，这一页和闪抽本身都还能用。
-                    groups = null;
-                }
-            }
-
-            if (groups is not null)
-            {
-                foreach (var group in groups)
-                {
-                    if (!string.IsNullOrWhiteSpace(group) && !HistoryGroupOptions.Contains(group))
-                        HistoryGroupOptions.Add(group);
-                }
-
-                // 组可能已被删除或改名：选中项回落为「不使用记录组」，绝不把一个不存在的组名留在界面上。
-                var configured = Settings.HistoryGroup;
-                if (!string.IsNullOrWhiteSpace(configured)
-                    && !groups.Contains(configured, StringComparer.Ordinal)
-                    && SettingsView.Current?.IsPreviewMode != true)
-                    Settings.HistoryGroup = string.Empty;
-            }
-        }
-        finally
-        {
-            _refreshingHistoryGroupOptions = false;
-        }
-
-        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedHistoryGroup)));
-    }
-
-    private void RefreshHistoryGroupVisibility()
-    {
-        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsHistoryGroupSelectorVisible)));
+        HistoryGroup.Refresh();
+        ApplyHistoryGroupSelection();
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -200,21 +171,13 @@ public partial class QuickDrawSettingsPage : UserControl, INotifyPropertyChanged
             SynchronizeLegacyDrawType();
 
         if (e.PropertyName == nameof(QuickDrawSettingsConfig.HistoryGroup))
-            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedHistoryGroup)));
+        {
+            HistoryGroup.NotifySelectionChanged();
+            SyncHistoryGroupSelection();
+        }
 
         if (e.PropertyName == nameof(QuickDrawSettingsConfig.DefaultClass))
-        {
-            if (string.IsNullOrWhiteSpace(Settings.DefaultClass))
-            {
-                // 下拉框在 ItemsSource 刷新时会先清空选中项并回写空值，恢复用户之前的选择
-                // 而不是清空或回退到第一项，避免默认名单被瞬时空掉后又被兜底逻辑覆盖。
-                if (!string.IsNullOrWhiteSpace(_lastKnownDefaultClass))
-                    Settings.DefaultClass = _lastKnownDefaultClass;
-                return;
-            }
-
-            _lastKnownDefaultClass = Settings.DefaultClass;
-        }
+            DefaultClassSource.Sync(DefaultClassSelector);
 
         NormalizeDrawSettings();
         ConfigHandler.Save();
@@ -230,21 +193,11 @@ public partial class QuickDrawSettingsPage : UserControl, INotifyPropertyChanged
         _isSubscribed = true;
     }
 
-    private void RefreshStudentLists()
-    {
-        StudentListNames.Clear();
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
-                     .OrderBy(Path.GetFileName))
-            StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
+    /// <summary>重建默认名单候选值，并把选中项落回配置（未配置过时落到第一份并写回）。</summary>
+    private void RefreshStudentLists() => DefaultClassSource.Refresh(DefaultClassSelector);
 
-        if (StudentListNames.Count > 0
-            && string.IsNullOrWhiteSpace(Settings.DefaultClass)
-            && SettingsView.Current?.IsPreviewMode != true)
-        {
-            Settings.DefaultClass = StudentListNames[0];
-            ConfigHandler.Save();
-        }
-    }
+    private void DefaultClassSelectorOnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        => DefaultClassSource.OnSelectionChanged(sender, e);
 
     private void NormalizeDrawSettings()
     {

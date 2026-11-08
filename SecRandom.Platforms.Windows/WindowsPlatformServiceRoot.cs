@@ -39,4 +39,6 @@ public sealed class WindowsPlatformServiceRoot : IPlatformServiceRoot
         new WindowsRemovableStorageBindingMarker();
 
     public IPlatformCameraDeviceCatalog CameraDevices { get; } = new WindowsCameraDeviceCatalog();
+
+    public IPlatformApplicationIconExtractor ApplicationIcons { get; } = new WindowsApplicationIconExtractor();
 }

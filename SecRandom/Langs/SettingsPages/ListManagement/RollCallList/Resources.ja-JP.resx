@@ -249,4 +249,57 @@
   <data name="K_TagsColumns">
     <value>标签|tag|tags|类别|分类|category</value>
   </data>
+  <data name="M_AddMemberConflictTitle">
+    <value>番号が既に使われています</value>
+  </data>
+  <data name="M_AddMemberConflictContent">
+    <value>番号 {0} は「{1}」が使用しています
+この位置に挿入：「{1}」以降の {2} 名の番号を 1 つずつ繰り下げ、新しいメンバーは {0} を使用します
+末尾に追加：ほかのメンバーの番号は変わらず、新しいメンバーは {3} を使用します
+
+{4}
+
+番号の繰り下げは表示上の番号だけを変更し、抽選履歴や公平抽選の重みには影響しません</value>
+  </data>
+  <data name="M_AddMemberConflictNotNumericContent">
+    <value>番号 {0} は「{1}」が使用しています
+数字のみの番号ではないため、以降の番号を自動で繰り下げできません</value>
+  </data>
+  <data name="M_AddMemberConflictDuplicatedContent">
+    <value>番号 {0} はすでに {1} 名が使用しています
+自動で繰り下げても重複が残るため実行できません</value>
+  </data>
+  <data name="M_AddMemberConflictPreviewHeader">
+    <value>影響を受けるメンバー</value>
+  </data>
+  <data name="M_AddMemberConflictPreviewLine">
+    <value>{0} {1} → {2}</value>
+  </data>
+  <data name="M_AddMemberConflictPreviewEllipsis">
+    <value>……</value>
+  </data>
+  <data name="M_AddMemberConflictPrimary">
+    <value>繰り下げて挿入</value>
+  </data>
+  <data name="M_AddMemberConflictSecondary">
+    <value>末尾に追加</value>
+  </data>
+  <data name="M_AddMemberConflictKeepDuplicate">
+    <value>重複を残して追加</value>
+  </data>
+  <data name="M_AddMemberConflictClose">
+    <value>戻って編集</value>
+  </data>
+  <data name="M_AddMemberConflictUnnamed">
+    <value>名前のないメンバー</value>
+  </data>
+  <data name="M_AddMemberShiftedSuccess">
+    <value>メンバーを追加しました。{0} 名の番号を繰り下げました</value>
+  </data>
+  <data name="M_AddMemberAppendedSuccess">
+    <value>メンバーを追加しました。番号は {0} です</value>
+  </data>
+  <data name="M_AddMemberDuplicateSuccess">
+    <value>メンバーを追加しました。番号が重複しています</value>
+  </data>
 </root>

@@ -19,6 +19,7 @@ public static class PlatformServiceCollectionExtensions
         services.AddSingleton<IRemovableStorageBindingMarker>(root.RemovableStorageBindingMarker);
         services.AddSingleton<IPlatformCameraDeviceCatalog>(root.CameraDevices);
         services.AddSingleton<IForegroundWindowService>(root.ForegroundWindow);
+        services.AddSingleton<IPlatformApplicationIconExtractor>(root.ApplicationIcons);
         return services;
     }
 }

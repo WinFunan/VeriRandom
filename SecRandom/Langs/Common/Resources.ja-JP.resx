@@ -268,4 +268,7 @@
   <data name="Feat_Starting" xml:space="preserve">
         <value>起動中</value>
     </data>
+  <data name="MultiInstance_Unreachable" xml:space="preserve">
+        <value>実行中の SecRandom を開けませんでした。タスクバーまたはトレイから探してください</value>
+    </data>
 </root>

@@ -1,4 +1,4 @@
-﻿# SecRandom 启动流程、配置系统和服务注册架构总结
+# SecRandom 启动流程、配置系统和服务注册架构总结
 
 ## 1. 启动流程概览
 
@@ -134,10 +134,17 @@ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 - OnlineStatusService 使用 SemaphoreSlim 防止并发刷新 IP 缓存
 - 配置保存使用锁保护（在 ConfigHandlerBase 中）
 
+### 单实例
+- Mutex + 命名管道：`SecRandom.Core/Services/SingleInstance/SingleInstanceService.cs`
+- 第二个进程不再询问用户：启动 URL 存在时转发该 `secrandom://` URL，否则向已运行实例发送 `ShowMainWindow` 让它显示主窗口，然后本进程直接退出（跳过 BuildHost）
+- 仅当管道不通（已运行实例卡死或不可达）才显示单按钮提示 `MultiInstance_Unreachable`；重启入口在托盘菜单，不作为多开时的提问选项
+
 ### 启动选项
 - 自动启动: BasicSettings.Autostart (需平台特定实现)
 - 后台常驻: BasicSettings.BackgroundResident
 - URL协议: BasicSettings.UrlProtocol
+
+自动启动与 URL 协议注册由 `DesktopIntegrationService` 负责，条目会长期留在系统里，因此便携版必须指向包根目录的 `SecRandomLauncher`（`Utils.TryGetPortableLauncherPath`），而不是当前 `app-*` 版本目录里的 `SecRandom.Desktop`——更新会替换该目录，旧路径随即失效。安装版目录不随更新变化，继续直接指向应用可执行文件；应用内重启与崩溃恢复始终重启当前正在运行的版本，不复用这条启动命令。
 
 ## 5. 关键架构决策
 

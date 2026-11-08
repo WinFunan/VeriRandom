@@ -20,6 +20,13 @@ public static class Utils
         string? ErrorMessage);
 
     public static string PackageRoot => ResolvePackageRoot();
+
+    /// <summary>
+    ///     File name of the stable portable-package launcher kept beside the version directories.
+    /// </summary>
+    public static string LauncherFileName =>
+        OperatingSystem.IsWindows() ? "VeriRandomLauncher.exe" : "VeriRandomLauncher";
+
     public static string DataRoot
     {
         get
@@ -221,6 +228,41 @@ public static class Utils
         }
     }
 
+    /// <summary>
+    ///     Resolves the launcher executable of the portable package this process runs from.
+    ///     Installed packages have no launcher; callers then keep using the application executable
+    ///     that lives beside this build.
+    /// </summary>
+    public static bool TryGetPortableLauncherPath(out string launcherPath)
+    {
+        return TryGetPortableLauncherPath(PackageRoot, AppContext.BaseDirectory, out launcherPath);
+    }
+
+    private static bool TryGetPortableLauncherPath(
+        string? packageRoot,
+        string? appBaseDirectory,
+        out string launcherPath)
+    {
+        launcherPath = string.Empty;
+        if (string.IsNullOrWhiteSpace(packageRoot) || string.IsNullOrWhiteSpace(appBaseDirectory))
+            return false;
+
+        var appDirectory = Path.GetFullPath(appBaseDirectory);
+
+        // An integration entry that outlives this build must only point at the launcher when that
+        // launcher will accept the payload beside it, so both the app-* package layout and the
+        // portable-zip marker are required.
+        if (!IsPortablePackageRoot(packageRoot, appDirectory) || !HasPortablePayloadKind(appDirectory))
+            return false;
+
+        var candidate = Path.Combine(Path.GetFullPath(packageRoot), LauncherFileName);
+        if (!File.Exists(candidate))
+            return false;
+
+        launcherPath = candidate;
+        return true;
+    }
+
     private static string ResolvePackageRoot()
     {
         var appDirectory = Path.GetFullPath(AppContext.BaseDirectory);
@@ -244,9 +286,12 @@ public static class Utils
     private static bool IsPortablePackage(string packageRoot)
     {
         var appDirectory = Path.GetFullPath(AppContext.BaseDirectory);
-        if (!IsPortablePackageRoot(packageRoot, appDirectory))
-            return false;
+        return IsPortablePackageRoot(packageRoot, appDirectory)
+               && HasPortablePayloadKind(appDirectory);
+    }
 
+    private static bool HasPortablePayloadKind(string appDirectory)
+    {
         var markerPath = Path.Combine(appDirectory, "VeriRandom.package.json");
         try
         {
@@ -258,6 +303,10 @@ public static class Utils
         {
             return false;
         }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
         catch (JsonException)
         {
             return false;
@@ -266,7 +315,7 @@ public static class Utils
 
     private static bool TryVerifyWritable(string directory, out string? errorMessage)
     {
-        var testFile = Path.Combine(directory, $".verirandom-write-test-{Guid.NewGuid():N}.tmp");
+        var testFile = Path.Combine(directory, $".secrandom-write-test-{Guid.NewGuid():N}.tmp");
         try
         {
             Directory.CreateDirectory(directory);
@@ -330,4 +379,17 @@ public static class Utils
         }
     }
 
+    /// <summary>
+    ///     Suffix of a profile history database. History records live in this file rather than in JSON, because a
+    ///     large history was rewritten in full on every save; the suffix is deliberately not <c>.json</c> so the
+    ///     JSON readers (archive validation, the pre-database snapshot reader) can never pick a database up as one.
+    /// </summary>
+    public const string HistoryDatabaseExtension = ".srhdb";
+
+    /// <summary>
+    ///     Suffix an untouched legacy history JSON is renamed to after its records have been imported into
+    ///     <see cref="HistoryDatabaseExtension" />. It is kept for one-way rollback and is not read again, because the
+    ///     extension no longer matches a <c>*.json</c> enumeration.
+    /// </summary>
+    public const string HistoryLegacyBackupExtension = ".json.migrated";
 }

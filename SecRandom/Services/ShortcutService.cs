@@ -115,6 +115,7 @@ public sealed class ShortcutService(
         if (!_settings.EnableShortcut)
             return;
 
+        // 简洁模式回归抽取本身：保留点名与闪抽快捷键，抽奖动作仍由抽奖开关决定
         var bindings = new List<(ShortcutAction Action, string Gesture)>
         {
             (ShortcutAction.OpenRollCallPage, _settings.OpenRollCallPageShortcut),
@@ -123,6 +124,7 @@ public sealed class ShortcutService(
             (ShortcutAction.DecreaseRollCallCount, _settings.DecreaseRollCallCountShortcut),
             (ShortcutAction.StartRollCall, _settings.StartRollCallShortcut)
         };
+
         if (featureAvailability.IsLotteryEnabled)
         {
             bindings.Add((ShortcutAction.OpenLotteryPage, _settings.OpenLotteryPageShortcut));

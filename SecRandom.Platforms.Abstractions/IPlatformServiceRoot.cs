@@ -21,4 +21,6 @@ public interface IPlatformServiceRoot
     ///     empty sampler, because "the feature is off here" and "no marker was found" must not look alike.
     /// </summary>
     ISlideTriggerScreenProbe ScreenProbe { get; }
+    /// <summary>从本机应用文件读取图标的能力。</summary>
+    IPlatformApplicationIconExtractor ApplicationIcons { get; }
 }

@@ -9,6 +9,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Linkage;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.SimpleMode;
 
 namespace SecRandom.Services.Linkage;
 
@@ -41,7 +42,14 @@ public sealed class CourseLinkageService
 
     public event EventHandler? StateChanged;
     public CourseScheduleSnapshot Snapshot => _snapshot;
-    public LinkageSettingsConfig Settings => _configHandler.Data.LinkageSettings;
+
+    /// <summary>
+    ///     简洁模式隐藏了课程联动设置页，因此这里改读默认联动设置（数据源关闭、不阻止抽取），
+    ///     用户原来的联动配置不会被改写。
+    /// </summary>
+    public LinkageSettingsConfig Settings => _configHandler.Data.SimpleModeEnabled
+        ? SimpleModeDefaults.LinkageSettings
+        : _configHandler.Data.LinkageSettings;
 
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
@@ -95,6 +103,7 @@ public sealed class CourseLinkageService
             && a.State == b.State
             && a.Source == b.Source
             && a.Version == b.Version
+            && a.IsOutdoorCourse == b.IsOutdoorCourse
             && a.CurrentCourse?.Name == b.CurrentCourse?.Name
             && a.PreviousCourse?.Name == b.PreviousCourse?.Name
             && a.NextCourse?.Name == b.NextCourse?.Name
@@ -107,6 +116,43 @@ public sealed class CourseLinkageService
 
     public bool IsConfirmedNonClassTime => Settings.InstantDrawDisable
         && IsConfirmedBreakTime;
+
+    /// <summary>
+    ///     数据源已经选择，但当前拿不到可靠状态（未连接、未导入课程表、读取失败……）。
+    /// </summary>
+    /// <remarks>
+    ///     数据源为「关闭」时快照同样不可用，但那表示用户没有启用联动，不能算作数据源异常。
+    ///     应用刚启动、第一次刷新尚未完成时也落在这里：既然拿不到信息，就只能按拿不到处理。
+    /// </remarks>
+    public bool IsSourceUnavailable =>
+        Settings.DataSource != LinkageDataSource.Off && !_snapshot.IsAvailable;
+
+    /// <summary>
+    ///     抽取与重置当前是否应被课程联动限制。
+    /// </summary>
+    /// <remarks>
+    ///     除了明确确认的非上课时段，开启「数据源不可用时维持限制」后，拿不到课程信息同样算受限：
+    ///     宁可挡住，也不因为数据源异常而静默放行（fail-closed）。快照不可用时没有倒计时，
+    ///     因此不存在课前解禁/课后延迟窗口，受限就是完全受限。
+    /// </remarks>
+    public bool IsClassTimeRestrictionActive => Settings.InstantDrawDisable
+        && (IsConfirmedBreakTime || (Settings.RestrictWhenUnavailable && IsSourceUnavailable));
+
+    /// <summary>
+    ///     户外课程上课时段禁用：只有 ClassIsland 数据源携带科目的户外课程标记。开启后当前
+    ///     课程被标记为户外课程时，即使处于上课时段也限制抽取和重置，验证例外与
+    ///     <see cref="IsConfirmedNonClassTime" /> 共用。
+    /// </summary>
+    public bool IsConfirmedOutdoorCourse => Settings.DisableOnOutdoorCourse
+        && IsOutdoorCourseOnClass;
+
+    /// <summary>
+    ///     当前处于上课时段且课程被标记为户外课程的纯状态判断，不依赖任何开关；
+    ///     抽取限制看 <see cref="IsConfirmedOutdoorCourse" />，悬浮窗隐藏由调用方结合自己的开关判断。
+    /// </summary>
+    public bool IsOutdoorCourseOnClass => _snapshot.IsAvailable
+        && _snapshot.State == CourseTimeState.OnClass
+        && _snapshot.IsOutdoorCourse;
 
     public string GetSubjectFilter()
     {

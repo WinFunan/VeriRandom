@@ -249,4 +249,57 @@ Clearing history before fair drawing helps keep the new member chance from becom
   <data name="K_TagsColumns">
     <value>标签|tag|tags|类别|分类|category</value>
   </data>
+  <data name="M_AddMemberConflictTitle">
+    <value>Number already in use</value>
+  </data>
+  <data name="M_AddMemberConflictContent">
+    <value>Number {0} is already used by “{1}”
+Insert here: “{1}” and the {2} members from that position on shift their number by one, and the new member takes {0}
+Append: no other number changes, and the new member takes {3}
+
+{4}
+
+Renumbering changes only the displayed number, not members' draw history or fair-draw weights</value>
+  </data>
+  <data name="M_AddMemberConflictNotNumericContent">
+    <value>Number {0} is already used by “{1}”
+The number is not a plain number, so later numbers cannot be shifted automatically</value>
+  </data>
+  <data name="M_AddMemberConflictDuplicatedContent">
+    <value>{1} members already use number {0}
+Shifting would still leave duplicate numbers, so it cannot be done automatically</value>
+  </data>
+  <data name="M_AddMemberConflictPreviewHeader">
+    <value>Affected members</value>
+  </data>
+  <data name="M_AddMemberConflictPreviewLine">
+    <value>{0} {1} → {2}</value>
+  </data>
+  <data name="M_AddMemberConflictPreviewEllipsis">
+    <value>…</value>
+  </data>
+  <data name="M_AddMemberConflictPrimary">
+    <value>Insert and shift</value>
+  </data>
+  <data name="M_AddMemberConflictSecondary">
+    <value>Append at the end</value>
+  </data>
+  <data name="M_AddMemberConflictKeepDuplicate">
+    <value>Keep duplicate and add</value>
+  </data>
+  <data name="M_AddMemberConflictClose">
+    <value>Go back and edit</value>
+  </data>
+  <data name="M_AddMemberConflictUnnamed">
+    <value>Unnamed member</value>
+  </data>
+  <data name="M_AddMemberShiftedSuccess">
+    <value>Member added. {0} members were renumbered</value>
+  </data>
+  <data name="M_AddMemberAppendedSuccess">
+    <value>Member added with number {0}</value>
+  </data>
+  <data name="M_AddMemberDuplicateSuccess">
+    <value>Member added with a duplicate number</value>
+  </data>
 </root>
