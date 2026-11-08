@@ -1889,3 +1889,23 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 | `Microsoft.SourceLink.GitHub`（`Global.props`，`PrivateAssets=All`） | 10.0.301 | 10.0.403 | 传递依赖 `Microsoft.Build.Tasks.Git` 10.0.301 的 GHSA-23fw-v26w-5fgq（中）；新版本与 CI 使用的 SDK 10.0.403 同一发行带 |
 
 两者都是构建期/运行期补丁升级，不改变代码行为与公共接口。
+---
+
+## 66. 合并后的编译修复（本地 .NET SDK 10.0.403 实证）
+
+上游把 `Edge_tts_sharp/EdgeTtsGecToken.cs` 移进子模块后，本次合并的 gitlink 仍停在旧提交，CI 报 `CS2001`。本地装好 SDK 后逐项修完，并顺手修掉几处只有编译才能发现的并集损伤：
+
+| 问题 | 修复 |
+|---|---|
+| `CS2001` 找不到 `EdgeTtsGecToken.cs` | 子模块指针跟到上游 `5dd3b232`（新增 GEC v2 令牌与 `CreateSynthesisUri`）；应用层的 `EdgeTtsSharpCompatibility` 只补 `ConnectionId`，不再重复改写令牌 |
+| `RollCall/HistoryManagement/More` 的 `Resources.Designer.cs` 结构损坏（多余 `}`、缺属性） | 按各自的 `.resx` 键表重新生成 designer（表达式体属性），保证每个键都有属性且类只闭合一次 |
+| `PlatformVersionReportService` / `PlatformUsageReportService` 缺 `MainConfigHandler`、`SectlTrafficPolicy` 的 using | 补 `SecRandom.Core.Services.Config` / `SecRandom.Services.Consent` |
+| `UpdateCenterService` 被上游版本覆盖，丢失本分支"更新关闭"策略 | 恢复 `IsSupported`、`CanCheck`/`CanDownloadAndInstall`/`CanApplyUpdate` 的 `UpdatesEnabled` 前置，并在 `CheckAsync` 直接返回 `M_UpdatesDisabled` |
+| `UpdateVersionComparer` 被上游简化版覆盖，`Mu` 序号不再参与排序 | 恢复 `ReleaseVersion` 版本的比较器 |
+| 测试编译：`GateReplay` 命名空间、`BeaconEntropyProvider` 新构造参数 | 补 using；用一个 `ExternalEntropySourceClient` 包装原有 NIST 桩 |
+| 测试语义：跨境同意只签了一半 | 测试辅助同时写入 `AcceptedSecRandomServicesVersion`（闸门要求两个都签） |
+| 测试语义：证明保留默认值 | `ProofRetentionConfigTests` 改为断言本分支的 0 天 / 0 字节 |
+
+**ImageSharp 的处理结论**：3.1.12 的六条公告在 3.2.0 修复，但 **3.2.0 起加了构建期许可证校验**（`Six Labors license found` 缺失即编译失败），没有许可证 key 就无法升级。因此保持 3.1.12，公告以 NU1902/NU1903 警告形式存在。可选后续：向 Six Labors 申请 OSS 许可证并配置 `$(SixLaborsLicenseKey)`、替换该库（仅 `FloatingWindowIconService` 与 `RosterTransferService` 使用）、或用 `NuGetAuditSuppress` 显式登记接受风险——三者都需要维护者决定。
+
+**本地验证结果**：`SecRandom`、`SecRandom.Desktop`、`SecRandom.Core.Tests` 全部编译通过；测试 1934 项中 1908 通过、26 失败；其中 `ConfigSignatureTests` 的 7 项失败在本机是 `CngKey.Create`/`ECDsaCng` 的加密提供程序不可用（环境限制），其余分别属于上游测试与本次 API 变更的滞后对齐，待逐组处理（CI 不跑测试，不影响构建）。
