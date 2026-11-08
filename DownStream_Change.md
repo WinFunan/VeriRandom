@@ -1861,3 +1861,17 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 **删除的文件**：`docs/client-protocol.md`（上游已删，v4 协议文档在上游的另一仓库）；仓库内所有对它的引用已改为 `../SECTL-auth/docs/control-center-protocol-v4.md`。
 
 **照旧不做**：iOS 构建、CLAUDE 助手工作流、上游 CODEOWNERS、上游频道 tag；见 §62。
+---
+
+## 64. 发布工作流的两个手动开关（只构建 / 是否带 NewAlgorithm）
+
+**目的**：`build_publish.yml` 的 `workflow_dispatch` 原先只有 `release_tag`，任何一次手动派发都会走到 `publish` 作业（创建 GitHub Release、上传资产、签 manifest），而 NewAlgorithm 每次都会检出。现在给维护者两个布尔开关：
+
+| 输入 | 类型 | 默认 | 作用 |
+|---|---|---|---|
+| `publish_release` | boolean | true | 关闭时 `validate_release` 与 `publish` 两个作业一并跳过：不校验 `metadata.yaml`、不创建 Release、不上传资产、不签 manifest；其余作业照常构建并把产物留在工作流页 |
+| `include_newalgorithm` | boolean | true | 关闭时三个编译作业都跳过 `Checkout NewAlgorithm`；`SecRandom.Core` 的条件引用因目录不存在而只编译内置的公平/随机两档。探测步以 `steps.newalgorithm.outcome != 'skipped'` 为条件，所以检出**失败**时仍会执行并删掉不可用的目录（关掉开关时才跳过） |
+
+**为什么 `validate_release` 也受 `publish_release` 约束**：该预检的唯一职责是拦住"频道 tag 与发布 tag 不一致"的发布；只构建、不发布时它没有意义，若仍然运行，一个不在 `metadata.yaml` 里的测试 tag 会让预检失败，而构建作业只接受 `success` 或 `skipped`，于是整条流水线什么都不建。
+
+**非手动派发不受影响**：检出步写成 `github.event_name != 'workflow_dispatch' || inputs.include_newalgorithm`，push / PR 构建恒为真；`publish` 作业保持 `github.event_name == 'workflow_dispatch'` 前置，只有手动派发才可能发布。`release_tag` 仍然必填——它同时是构建版本号的来源，即使不发布也要用它决定产物版本。

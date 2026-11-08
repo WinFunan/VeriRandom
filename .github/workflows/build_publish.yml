@@ -11,6 +11,20 @@ on:
         required: true
         type: string
 
+      # 发布开关：关闭时只构建并产出工作流产物，不创建 GitHub Release、不上传资产。
+      publish_release:
+        description: "发布新版本（创建 GitHub Release 并上传产物）；关闭则只构建"
+        required: false
+        type: boolean
+        default: true
+
+      # 算法档位开关：关闭时跳过 NewAlgorithm 检出，只构建内置的公平/随机两档。
+      include_newalgorithm:
+        description: "包含 NewAlgorithm（均衡抽取）算法仓库；关闭则只构建内置两档"
+        required: false
+        type: boolean
+        default: true
+
 permissions:
   contents: read
 
@@ -28,7 +42,7 @@ jobs:
   # why the build jobs below gate on "success or skipped" instead of a bare needs: dependency.
   validate_release:
     name: Validate_Release_Metadata
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release && github.event.inputs.release_tag != '' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -75,6 +89,7 @@ jobs:
       - name: Checkout NewAlgorithm
         id: newalgorithm
         continue-on-error: true
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.include_newalgorithm }}
         uses: actions/checkout@v6
         with:
           repository: ${{ env.NEWALGORITHM_REPOSITORY }}
@@ -91,6 +106,7 @@ jobs:
       # this pipeline. SecRandom.Core's project reference is conditional on the file existing, so the main build then
       # compiles without the extra algorithm tier and the tier simply does not appear in the list.
       - name: Validate NewAlgorithm checkout
+        if: ${{ !cancelled() && steps.newalgorithm.outcome != 'skipped' }}
         shell: pwsh
         run: |
           $project = 'vendors/NewAlgorithm/SecRandom.NewAlgorithm/SecRandom.NewAlgorithm.csproj'
@@ -601,6 +617,7 @@ jobs:
       - name: Checkout NewAlgorithm
         id: newalgorithm
         continue-on-error: true
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.include_newalgorithm }}
         uses: actions/checkout@v6
         with:
           repository: ${{ env.NEWALGORITHM_REPOSITORY }}
@@ -617,6 +634,7 @@ jobs:
       # this pipeline. SecRandom.Core's project reference is conditional on the file existing, so the main build then
       # compiles without the extra algorithm tier and the tier simply does not appear in the list.
       - name: Validate NewAlgorithm checkout
+        if: ${{ !cancelled() && steps.newalgorithm.outcome != 'skipped' }}
         shell: pwsh
         run: |
           $project = 'vendors/NewAlgorithm/SecRandom.NewAlgorithm/SecRandom.NewAlgorithm.csproj'
@@ -734,6 +752,7 @@ jobs:
       - name: Checkout NewAlgorithm
         id: newalgorithm
         continue-on-error: true
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.include_newalgorithm }}
         uses: actions/checkout@v6
         with:
           repository: ${{ env.NEWALGORITHM_REPOSITORY }}
@@ -750,6 +769,7 @@ jobs:
       # this pipeline. SecRandom.Core's project reference is conditional on the file existing, so the main build then
       # compiles without the extra algorithm tier and the tier simply does not appear in the list.
       - name: Validate NewAlgorithm checkout
+        if: ${{ !cancelled() && steps.newalgorithm.outcome != 'skipped' }}
         shell: pwsh
         run: |
           $project = 'vendors/NewAlgorithm/SecRandom.NewAlgorithm/SecRandom.NewAlgorithm.csproj'
@@ -934,7 +954,7 @@ jobs:
     # workflow is present but inert here, so the platform set is desktop + Android only.
 
     needs: [build_desktop, build_android, build_pluginsdk]
-    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && inputs.publish_release && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
     permissions:
       contents: write
       id-token: write
