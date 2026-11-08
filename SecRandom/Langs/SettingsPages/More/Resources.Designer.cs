@@ -45,353 +45,65 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string C_LotteryGenderSelector {
-            get {
-                return ResourceManager.GetString("C_LotteryGenderSelector", resourceCulture);
-            }
-        }
-        
-        public static string C_LotteryListSelector {
-            get {
-                return ResourceManager.GetString("C_LotteryListSelector", resourceCulture);
-            }
-        }
-        
-        public static string C_LotteryQuantityControl {
-            get {
-                return ResourceManager.GetString("C_LotteryQuantityControl", resourceCulture);
-            }
-        }
-        
-        public static string C_LotteryQuantityLabel {
-            get {
-                return ResourceManager.GetString("C_LotteryQuantityLabel", resourceCulture);
-            }
-        }
-        
-        public static string C_LotteryRangeSelector {
-            get {
-                return ResourceManager.GetString("C_LotteryRangeSelector", resourceCulture);
-            }
-        }
-        
-        public static string C_LotteryRemainingButton {
-            get {
-                return ResourceManager.GetString("C_LotteryRemainingButton", resourceCulture);
-            }
-        }
-        
-        public static string C_LotteryResetButton {
-            get {
-                return ResourceManager.GetString("C_LotteryResetButton", resourceCulture);
-            }
-        }
-        
-        public static string C_LotteryStartButton {
-            get {
-                return ResourceManager.GetString("C_LotteryStartButton", resourceCulture);
-            }
-        }
-        
-        public static string C_LotteryStudentListSelector {
-            get {
-                return ResourceManager.GetString("C_LotteryStudentListSelector", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallGenderSelector {
-            get {
-                return ResourceManager.GetString("C_RollCallGenderSelector", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallListSelector {
-            get {
-                return ResourceManager.GetString("C_RollCallListSelector", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallQuantityControl {
-            get {
-                return ResourceManager.GetString("C_RollCallQuantityControl", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallQuantityLabel {
-            get {
-                return ResourceManager.GetString("C_RollCallQuantityLabel", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallRangeSelector {
-            get {
-                return ResourceManager.GetString("C_RollCallRangeSelector", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallRemainingButton {
-            get {
-                return ResourceManager.GetString("C_RollCallRemainingButton", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallResetButton {
-            get {
-                return ResourceManager.GetString("C_RollCallResetButton", resourceCulture);
-            }
-        }
-        
-        public static string C_RollCallStartButton {
-            get {
-                return ResourceManager.GetString("C_RollCallStartButton", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutCapture {
-            get {
-                return ResourceManager.GetString("C_ShortcutCapture", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutClear {
-            get {
-                return ResourceManager.GetString("C_ShortcutClear", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutConflict {
-            get {
-                return ResourceManager.GetString("C_ShortcutConflict", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutExampleLottery {
-            get {
-                return ResourceManager.GetString("C_ShortcutExampleLottery", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutExampleQuickDraw {
-            get {
-                return ResourceManager.GetString("C_ShortcutExampleQuickDraw", resourceCulture);
-            }
-        }
-        
-        public static string C_ShortcutExampleRollCall {
-            get {
-                return ResourceManager.GetString("C_ShortcutExampleRollCall", resourceCulture);
-            }
-        }
-        
-        public static string M_ShortcutDuplicated {
-            get {
-                return ResourceManager.GetString("M_ShortcutDuplicated", resourceCulture);
-            }
-        }
-        
-        public static string O_Left {
-            get {
-                return ResourceManager.GetString("O_Left", resourceCulture);
-            }
-        }
-        
-        public static string O_Right {
-            get {
-                return ResourceManager.GetString("O_Right", resourceCulture);
-            }
-        }
-        
-        public static string Page_Title {
-            get {
-                return ResourceManager.GetString("Page_Title", resourceCulture);
-            }
-        }
-        
-        public static string S_LotteryControls {
-            get {
-                return ResourceManager.GetString("S_LotteryControls", resourceCulture);
-            }
-        }
-        
-        public static string S_LotteryControls_D {
-            get {
-                return ResourceManager.GetString("S_LotteryControls_D", resourceCulture);
-            }
-        }
-        
-        public static string S_LotteryEnabled {
-            get {
-                return ResourceManager.GetString("S_LotteryEnabled", resourceCulture);
-            }
-        }
-        
-        public static string S_LotteryEnabled_D {
-            get {
-                return ResourceManager.GetString("S_LotteryEnabled_D", resourceCulture);
-            }
-        }
-        
-        public static string S_LotteryPanelPosition {
-            get {
-                return ResourceManager.GetString("S_LotteryPanelPosition", resourceCulture);
-            }
-        }
-        
-        public static string S_LotteryPanelPosition_D {
-            get {
-                return ResourceManager.GetString("S_LotteryPanelPosition_D", resourceCulture);
-            }
-        }
-        
-        public static string S_PageManagement {
-            get {
-                return ResourceManager.GetString("S_PageManagement", resourceCulture);
-            }
-        }
-        
-        public static string S_RawRandomAdvanced {
-            get {
-                return ResourceManager.GetString("S_RawRandomAdvanced", resourceCulture);
-            }
-        }
-        
-        public static string S_RawRandomAdvanced_D {
-            get {
-                return ResourceManager.GetString("S_RawRandomAdvanced_D", resourceCulture);
-            }
-        }
-        
-        public static string S_RollCallControls {
-            get {
-                return ResourceManager.GetString("S_RollCallControls", resourceCulture);
-            }
-        }
-        
-        public static string S_RollCallControls_D {
-            get {
-                return ResourceManager.GetString("S_RollCallControls_D", resourceCulture);
-            }
-        }
-        
-        public static string S_RollCallPanelPosition {
-            get {
-                return ResourceManager.GetString("S_RollCallPanelPosition", resourceCulture);
-            }
-        }
-        
-        public static string S_RollCallPanelPosition_D {
-            get {
-                return ResourceManager.GetString("S_RollCallPanelPosition_D", resourceCulture);
-            }
-        }
-        
-        public static string S_SettingsDigestBadge {
-            get {
-                return ResourceManager.GetString("S_SettingsDigestBadge", resourceCulture);
-            }
-        }
-        
-        public static string S_SettingsDigestBadge_D {
-            get {
-                return ResourceManager.GetString("S_SettingsDigestBadge_D", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut {
-            get {
-                return ResourceManager.GetString("S_Shortcut", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_D {
-            get {
-                return ResourceManager.GetString("S_Shortcut_D", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_DecreaseLotteryCount {
-            get {
-                return ResourceManager.GetString("S_Shortcut_DecreaseLotteryCount", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_DecreaseRollCallCount {
-            get {
-                return ResourceManager.GetString("S_Shortcut_DecreaseRollCallCount", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_Enable {
-            get {
-                return ResourceManager.GetString("S_Shortcut_Enable", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_Enable_D {
-            get {
-                return ResourceManager.GetString("S_Shortcut_Enable_D", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_IncreaseLotteryCount {
-            get {
-                return ResourceManager.GetString("S_Shortcut_IncreaseLotteryCount", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_IncreaseRollCallCount {
-            get {
-                return ResourceManager.GetString("S_Shortcut_IncreaseRollCallCount", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_OpenLotteryPage {
-            get {
-                return ResourceManager.GetString("S_Shortcut_OpenLotteryPage", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_OpenLotteryPage_D {
-            get {
-                return ResourceManager.GetString("S_Shortcut_OpenLotteryPage_D", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_OpenRollCallPage {
-            get {
-                return ResourceManager.GetString("S_Shortcut_OpenRollCallPage", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_OpenRollCallPage_D {
-            get {
-                return ResourceManager.GetString("S_Shortcut_OpenRollCallPage_D", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_QuickDraw {
-            get {
-                return ResourceManager.GetString("S_Shortcut_QuickDraw", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_QuickDraw_D {
-            get {
-                return ResourceManager.GetString("S_Shortcut_QuickDraw_D", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_StartLottery {
-            get {
-                return ResourceManager.GetString("S_Shortcut_StartLottery", resourceCulture);
-            }
-        }
-        
-        public static string S_Shortcut_StartRollCall {
-            get {
-                return ResourceManager.GetString("S_Shortcut_StartRollCall", resourceCulture);
-            }
-        }
-        
+        public static string Page_Title => ResourceManager.GetString("Page_Title", resourceCulture);
+        public static string S_PageManagement => ResourceManager.GetString("S_PageManagement", resourceCulture);
+        public static string S_LotteryEnabled => ResourceManager.GetString("S_LotteryEnabled", resourceCulture);
+        public static string S_LotteryEnabled_D => ResourceManager.GetString("S_LotteryEnabled_D", resourceCulture);
+        public static string S_RollCallPanelPosition => ResourceManager.GetString("S_RollCallPanelPosition", resourceCulture);
+        public static string S_RollCallPanelPosition_D => ResourceManager.GetString("S_RollCallPanelPosition_D", resourceCulture);
+        public static string O_Right => ResourceManager.GetString("O_Right", resourceCulture);
+        public static string O_Left => ResourceManager.GetString("O_Left", resourceCulture);
+        public static string S_RollCallControls => ResourceManager.GetString("S_RollCallControls", resourceCulture);
+        public static string S_RollCallControls_D => ResourceManager.GetString("S_RollCallControls_D", resourceCulture);
+        public static string C_RollCallResetButton => ResourceManager.GetString("C_RollCallResetButton", resourceCulture);
+        public static string C_RollCallQuantityControl => ResourceManager.GetString("C_RollCallQuantityControl", resourceCulture);
+        public static string C_RollCallStartButton => ResourceManager.GetString("C_RollCallStartButton", resourceCulture);
+        public static string C_RollCallListSelector => ResourceManager.GetString("C_RollCallListSelector", resourceCulture);
+        public static string C_RollCallRangeSelector => ResourceManager.GetString("C_RollCallRangeSelector", resourceCulture);
+        public static string C_RollCallGenderSelector => ResourceManager.GetString("C_RollCallGenderSelector", resourceCulture);
+        public static string C_RollCallRemainingButton => ResourceManager.GetString("C_RollCallRemainingButton", resourceCulture);
+        public static string C_RollCallQuantityLabel => ResourceManager.GetString("C_RollCallQuantityLabel", resourceCulture);
+        public static string S_LotteryPanelPosition => ResourceManager.GetString("S_LotteryPanelPosition", resourceCulture);
+        public static string S_LotteryPanelPosition_D => ResourceManager.GetString("S_LotteryPanelPosition_D", resourceCulture);
+        public static string S_LotteryControls => ResourceManager.GetString("S_LotteryControls", resourceCulture);
+        public static string S_LotteryControls_D => ResourceManager.GetString("S_LotteryControls_D", resourceCulture);
+        public static string C_LotteryResetButton => ResourceManager.GetString("C_LotteryResetButton", resourceCulture);
+        public static string C_LotteryQuantityControl => ResourceManager.GetString("C_LotteryQuantityControl", resourceCulture);
+        public static string C_LotteryStartButton => ResourceManager.GetString("C_LotteryStartButton", resourceCulture);
+        public static string C_LotteryListSelector => ResourceManager.GetString("C_LotteryListSelector", resourceCulture);
+        public static string C_LotteryStudentListSelector => ResourceManager.GetString("C_LotteryStudentListSelector", resourceCulture);
+        public static string C_LotteryRangeSelector => ResourceManager.GetString("C_LotteryRangeSelector", resourceCulture);
+        public static string C_LotteryGenderSelector => ResourceManager.GetString("C_LotteryGenderSelector", resourceCulture);
+        public static string C_LotteryRemainingButton => ResourceManager.GetString("C_LotteryRemainingButton", resourceCulture);
+        public static string C_LotteryQuantityLabel => ResourceManager.GetString("C_LotteryQuantityLabel", resourceCulture);
+        public static string S_Shortcut => ResourceManager.GetString("S_Shortcut", resourceCulture);
+        public static string S_Shortcut_Enable => ResourceManager.GetString("S_Shortcut_Enable", resourceCulture);
+        public static string S_Shortcut_Enable_D => ResourceManager.GetString("S_Shortcut_Enable_D", resourceCulture);
+        public static string S_Shortcut_D => ResourceManager.GetString("S_Shortcut_D", resourceCulture);
+        public static string S_Shortcut_OpenRollCallPage => ResourceManager.GetString("S_Shortcut_OpenRollCallPage", resourceCulture);
+        public static string S_Shortcut_OpenRollCallPage_D => ResourceManager.GetString("S_Shortcut_OpenRollCallPage_D", resourceCulture);
+        public static string S_Shortcut_QuickDraw => ResourceManager.GetString("S_Shortcut_QuickDraw", resourceCulture);
+        public static string S_Shortcut_QuickDraw_D => ResourceManager.GetString("S_Shortcut_QuickDraw_D", resourceCulture);
+        public static string S_Shortcut_OpenLotteryPage => ResourceManager.GetString("S_Shortcut_OpenLotteryPage", resourceCulture);
+        public static string S_Shortcut_OpenLotteryPage_D => ResourceManager.GetString("S_Shortcut_OpenLotteryPage_D", resourceCulture);
+        public static string S_Shortcut_IncreaseRollCallCount => ResourceManager.GetString("S_Shortcut_IncreaseRollCallCount", resourceCulture);
+        public static string S_Shortcut_DecreaseRollCallCount => ResourceManager.GetString("S_Shortcut_DecreaseRollCallCount", resourceCulture);
+        public static string S_Shortcut_IncreaseLotteryCount => ResourceManager.GetString("S_Shortcut_IncreaseLotteryCount", resourceCulture);
+        public static string S_Shortcut_DecreaseLotteryCount => ResourceManager.GetString("S_Shortcut_DecreaseLotteryCount", resourceCulture);
+        public static string S_Shortcut_StartRollCall => ResourceManager.GetString("S_Shortcut_StartRollCall", resourceCulture);
+        public static string S_Shortcut_StartLottery => ResourceManager.GetString("S_Shortcut_StartLottery", resourceCulture);
+        public static string C_ShortcutCapture => ResourceManager.GetString("C_ShortcutCapture", resourceCulture);
+        public static string C_ShortcutClear => ResourceManager.GetString("C_ShortcutClear", resourceCulture);
+        public static string C_ShortcutConflict => ResourceManager.GetString("C_ShortcutConflict", resourceCulture);
+        public static string M_ShortcutDuplicated => ResourceManager.GetString("M_ShortcutDuplicated", resourceCulture);
+        public static string C_ShortcutExampleRollCall => ResourceManager.GetString("C_ShortcutExampleRollCall", resourceCulture);
+        public static string C_ShortcutExampleQuickDraw => ResourceManager.GetString("C_ShortcutExampleQuickDraw", resourceCulture);
+        public static string C_ShortcutExampleLottery => ResourceManager.GetString("C_ShortcutExampleLottery", resourceCulture);
+        public static string S_RawRandomAdvanced => ResourceManager.GetString("S_RawRandomAdvanced", resourceCulture);
+        public static string S_RawRandomAdvanced_D => ResourceManager.GetString("S_RawRandomAdvanced_D", resourceCulture);
+        public static string S_SettingsDigestBadge => ResourceManager.GetString("S_SettingsDigestBadge", resourceCulture);
+        public static string S_SettingsDigestBadge_D => ResourceManager.GetString("S_SettingsDigestBadge_D", resourceCulture);
+        public static string C_RollCallHistoryGroupSelector => ResourceManager.GetString("C_RollCallHistoryGroupSelector", resourceCulture);
+        public static string C_LotteryHistoryGroupSelector => ResourceManager.GetString("C_LotteryHistoryGroupSelector", resourceCulture);
     }
 }

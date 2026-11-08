@@ -47,532 +47,112 @@ namespace SecRandom.Langs.SettingsPages.HistoryManagement {
         /// <summary>
         ///   Looks up a localized string similar to 历史记录管理.
         /// </summary>
-        public static string Page_Title {
-            get {
-                return ResourceManager.GetString("Page_Title", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 筛选.
-        /// </summary>
-        public static string S_Filter {
-            get {
-                return ResourceManager.GetString("S_Filter", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 默认班级筛选.
-        /// </summary>
-        public static string S_Filter_SelectedClassName {
-            get {
-                return ResourceManager.GetString("S_Filter_SelectedClassName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 进入历史页时默认选择的班级。.
-        /// </summary>
-        public static string S_Filter_SelectedClassName_D {
-            get {
-                return ResourceManager.GetString("S_Filter_SelectedClassName_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 默认奖池筛选.
-        /// </summary>
-        public static string S_Filter_SelectedPoolName {
-            get {
-                return ResourceManager.GetString("S_Filter_SelectedPoolName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 进入历史页时默认选择的奖池。.
-        /// </summary>
-        public static string S_Filter_SelectedPoolName_D {
-            get {
-                return ResourceManager.GetString("S_Filter_SelectedPoolName_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 历史记录.
-        /// </summary>
-        public static string S_History {
-            get {
-                return ResourceManager.GetString("S_History", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 显示权重信息.
-        /// </summary>
-        public static string S_History_SelectWeight {
-            get {
-                return ResourceManager.GetString("S_History_SelectWeight", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 查看历史记录时显示参与抽取的权重信息。.
-        /// </summary>
-        public static string S_History_SelectWeight_D {
-            get {
-                return ResourceManager.GetString("S_History_SelectWeight_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 显示抽奖历史.
-        /// </summary>
-        public static string S_History_ShowLottery {
-            get {
-                return ResourceManager.GetString("S_History_ShowLottery", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 在历史页中显示抽奖记录。.
-        /// </summary>
-        public static string S_History_ShowLottery_D {
-            get {
-                return ResourceManager.GetString("S_History_ShowLottery_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 显示点名历史.
-        /// </summary>
-        public static string S_History_ShowRollCall {
-            get {
-                return ResourceManager.GetString("S_History_ShowRollCall", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 在历史页中显示点名记录。.
-        /// </summary>
-        public static string S_History_ShowRollCall_D {
-            get {
-                return ResourceManager.GetString("S_History_ShowRollCall_D", resourceCulture);
-            }
-        }
-
-        public static string S_ClearHistory {
-            get {
-                return ResourceManager.GetString("S_ClearHistory", resourceCulture);
-            }
-        }
-
-        public static string S_ClearHistory_RollCall {
-            get {
-                return ResourceManager.GetString("S_ClearHistory_RollCall", resourceCulture);
-            }
-        }
-
-        public static string S_ClearHistory_RollCall_D {
-            get {
-                return ResourceManager.GetString("S_ClearHistory_RollCall_D", resourceCulture);
-            }
-        }
-
-        public static string S_ClearHistory_Lottery {
-            get {
-                return ResourceManager.GetString("S_ClearHistory_Lottery", resourceCulture);
-            }
-        }
-
-        public static string S_ClearHistory_Lottery_D {
-            get {
-                return ResourceManager.GetString("S_ClearHistory_Lottery_D", resourceCulture);
-            }
-        }
-
-        public static string C_Clear {
-            get {
-                return ResourceManager.GetString("C_Clear", resourceCulture);
-            }
-        }
-
-        public static string C_Cancel {
-            get {
-                return ResourceManager.GetString("C_Cancel", resourceCulture);
-            }
-        }
-
-        public static string C_Close {
-            get {
-                return ResourceManager.GetString("C_Close", resourceCulture);
-            }
-        }
-
-        public static string M_ClearConfirm_Title {
-            get {
-                return ResourceManager.GetString("M_ClearConfirm_Title", resourceCulture);
-            }
-        }
-
-        public static string M_ClearConfirm_Content {
-            get {
-                return ResourceManager.GetString("M_ClearConfirm_Content", resourceCulture);
-            }
-        }
-
-        public static string M_ClearSuccess {
-            get {
-                return ResourceManager.GetString("M_ClearSuccess", resourceCulture);
-            }
-        }
-
-        public static string M_ClearFailed {
-            get {
-                return ResourceManager.GetString("M_ClearFailed", resourceCulture);
-            }
-        }
-
-        public static string M_SelectFirst {
-            get {
-                return ResourceManager.GetString("M_SelectFirst", resourceCulture);
-            }
-        }
-
-        public static string S_ExportHistory {
-            get {
-                return ResourceManager.GetString("S_ExportHistory", resourceCulture);
-            }
-        }
-
-        public static string S_ExportHistory_RollCall {
-            get {
-                return ResourceManager.GetString("S_ExportHistory_RollCall", resourceCulture);
-            }
-        }
-
-        public static string S_ExportHistory_RollCall_D {
-            get {
-                return ResourceManager.GetString("S_ExportHistory_RollCall_D", resourceCulture);
-            }
-        }
-
-        public static string S_ExportHistory_Lottery {
-            get {
-                return ResourceManager.GetString("S_ExportHistory_Lottery", resourceCulture);
-            }
-        }
-
-        public static string S_ExportHistory_Lottery_D {
-            get {
-                return ResourceManager.GetString("S_ExportHistory_Lottery_D", resourceCulture);
-            }
-        }
-
-        public static string C_Export {
-            get {
-                return ResourceManager.GetString("C_Export", resourceCulture);
-            }
-        }
-
-        public static string C_ExportRollCallName {
-            get {
-                return ResourceManager.GetString("C_ExportRollCallName", resourceCulture);
-            }
-        }
-
-        public static string C_ExportLotteryName {
-            get {
-                return ResourceManager.GetString("C_ExportLotteryName", resourceCulture);
-            }
-        }
-
-        public static string O_AllLists {
-            get {
-                return ResourceManager.GetString("O_AllLists", resourceCulture);
-            }
-        }
-
-        public static string O_AllPools {
-            get {
-                return ResourceManager.GetString("O_AllPools", resourceCulture);
-            }
-        }
-
-        public static string M_SelectExportFirst {
-            get {
-                return ResourceManager.GetString("M_SelectExportFirst", resourceCulture);
-            }
-        }
-
-        public static string M_ExportSuccess {
-            get {
-                return ResourceManager.GetString("M_ExportSuccess", resourceCulture);
-            }
-        }
-
-        public static string M_ExportFailed {
-            get {
-                return ResourceManager.GetString("M_ExportFailed", resourceCulture);
-            }
-        }
-
-        public static string M_NoHistoryToExport {
-            get {
-                return ResourceManager.GetString("M_NoHistoryToExport", resourceCulture);
-            }
-        }
-
-        public static string E_ProfileRollCall {
-            get {
-                return ResourceManager.GetString("E_ProfileRollCall", resourceCulture);
-            }
-        }
-
-        public static string E_ProfileLottery {
-            get {
-                return ResourceManager.GetString("E_ProfileLottery", resourceCulture);
-            }
-        }
-
-        public static string E_DrawTime {
-            get {
-                return ResourceManager.GetString("E_DrawTime", resourceCulture);
-            }
-        }
-
-        public static string E_RecordNumber {
-            get {
-                return ResourceManager.GetString("E_RecordNumber", resourceCulture);
-            }
-        }
-
-        public static string E_RecordName {
-            get {
-                return ResourceManager.GetString("E_RecordName", resourceCulture);
-            }
-        }
-
-        public static string E_Gender {
-            get {
-                return ResourceManager.GetString("E_Gender", resourceCulture);
-            }
-        }
-
-        public static string E_Group {
-            get {
-                return ResourceManager.GetString("E_Group", resourceCulture);
-            }
-        }
-
-        public static string E_DrawMethod {
-            get {
-                return ResourceManager.GetString("E_DrawMethod", resourceCulture);
-            }
-        }
-
-        public static string E_DrawCount {
-            get {
-                return ResourceManager.GetString("E_DrawCount", resourceCulture);
-            }
-        }
-
-        public static string E_DrawGender {
-            get {
-                return ResourceManager.GetString("E_DrawGender", resourceCulture);
-            }
-        }
-
-        public static string E_DrawGroup {
-            get {
-                return ResourceManager.GetString("E_DrawGroup", resourceCulture);
-            }
-        }
-
-        public static string E_Subject {
-            get {
-                return ResourceManager.GetString("E_Subject", resourceCulture);
-            }
-        }
-
-        public static string E_Weight {
-            get {
-                return ResourceManager.GetString("E_Weight", resourceCulture);
-            }
-        }
-
-        public static string E_TotalCount {
-            get {
-                return ResourceManager.GetString("E_TotalCount", resourceCulture);
-            }
-        }
-
-        public static string E_LastDrawTime {
-            get {
-                return ResourceManager.GetString("E_LastDrawTime", resourceCulture);
-            }
-        }
-
-        public static string E_MethodRandom {
-            get {
-                return ResourceManager.GetString("E_MethodRandom", resourceCulture);
-            }
-        }
-
-        public static string E_MethodWeight {
-            get {
-                return ResourceManager.GetString("E_MethodWeight", resourceCulture);
-            }
-        }
-
-        public static string E_AllGenders {
-            get {
-                return ResourceManager.GetString("E_AllGenders", resourceCulture);
-            }
-        }
-
-        public static string E_AllGroups {
-            get {
-                return ResourceManager.GetString("E_AllGroups", resourceCulture);
-            }
-        }
-
-        public static string E_BreakSubject {
-            get {
-                return ResourceManager.GetString("E_BreakSubject", resourceCulture);
-            }
-        }
-
-        public static string E_SheetRollCallRecords {
-            get {
-                return ResourceManager.GetString("E_SheetRollCallRecords", resourceCulture);
-            }
-        }
-
-        public static string E_SheetRollCallSummary {
-            get {
-                return ResourceManager.GetString("E_SheetRollCallSummary", resourceCulture);
-            }
-        }
-
-        public static string E_SheetLotteryRecords {
-            get {
-                return ResourceManager.GetString("E_SheetLotteryRecords", resourceCulture);
-            }
-        }
-
-        public static string E_SheetLotterySummary {
-            get {
-                return ResourceManager.GetString("E_SheetLotterySummary", resourceCulture);
-            }
-        }
-
-        public static string C_ExportProfiles {
-            get {
-                return ResourceManager.GetString("C_ExportProfiles", resourceCulture);
-            }
-        }
-
-        public static string C_ExportSubject {
-            get {
-                return ResourceManager.GetString("C_ExportSubject", resourceCulture);
-            }
-        }
-
-        public static string C_ExportTimeRange {
-            get {
-                return ResourceManager.GetString("C_ExportTimeRange", resourceCulture);
-            }
-        }
-
-        public static string C_ExportStartDate {
-            get {
-                return ResourceManager.GetString("C_ExportStartDate", resourceCulture);
-            }
-        }
-
-        public static string C_ExportEndDate {
-            get {
-                return ResourceManager.GetString("C_ExportEndDate", resourceCulture);
-            }
-        }
-
-        public static string C_ExportSort {
-            get {
-                return ResourceManager.GetString("C_ExportSort", resourceCulture);
-            }
-        }
-
-        public static string C_ExportFormat {
-            get {
-                return ResourceManager.GetString("C_ExportFormat", resourceCulture);
-            }
-        }
-
-        public static string O_AllSubjects {
-            get {
-                return ResourceManager.GetString("O_AllSubjects", resourceCulture);
-            }
-        }
-
-        public static string O_TimeAll {
-            get {
-                return ResourceManager.GetString("O_TimeAll", resourceCulture);
-            }
-        }
-
-        public static string O_TimeLast7Days {
-            get {
-                return ResourceManager.GetString("O_TimeLast7Days", resourceCulture);
-            }
-        }
-
-        public static string O_TimeLast30Days {
-            get {
-                return ResourceManager.GetString("O_TimeLast30Days", resourceCulture);
-            }
-        }
-
-        public static string O_TimeCustom {
-            get {
-                return ResourceManager.GetString("O_TimeCustom", resourceCulture);
-            }
-        }
-
-        public static string O_SortTimeDesc {
-            get {
-                return ResourceManager.GetString("O_SortTimeDesc", resourceCulture);
-            }
-        }
-
-        public static string O_SortTimeAsc {
-            get {
-                return ResourceManager.GetString("O_SortTimeAsc", resourceCulture);
-            }
-        }
-
-        public static string O_FormatXlsx {
-            get {
-                return ResourceManager.GetString("O_FormatXlsx", resourceCulture);
-            }
-        }
-
-        public static string O_FormatCsv {
-            get {
-                return ResourceManager.GetString("O_FormatCsv", resourceCulture);
-            }
-        }
-
-        public static string M_SelectExportProfiles {
-            get {
-                return ResourceManager.GetString("M_SelectExportProfiles", resourceCulture);
-            }
-        }
-
-        public static string M_ExportInvalidRange {
-            get {
-                return ResourceManager.GetString("M_ExportInvalidRange", resourceCulture);
-            }
-        }
+        public static string Page_Title => ResourceManager.GetString("Page_Title", resourceCulture);
+        public static string S_History => ResourceManager.GetString("S_History", resourceCulture);
+        public static string S_History_ShowRollCall => ResourceManager.GetString("S_History_ShowRollCall", resourceCulture);
+        public static string S_History_ShowRollCall_D => ResourceManager.GetString("S_History_ShowRollCall_D", resourceCulture);
+        public static string S_History_ShowLottery => ResourceManager.GetString("S_History_ShowLottery", resourceCulture);
+        public static string S_History_ShowLottery_D => ResourceManager.GetString("S_History_ShowLottery_D", resourceCulture);
+        public static string S_History_SelectWeight => ResourceManager.GetString("S_History_SelectWeight", resourceCulture);
+        public static string S_History_SelectWeight_D => ResourceManager.GetString("S_History_SelectWeight_D", resourceCulture);
+        public static string S_Filter => ResourceManager.GetString("S_Filter", resourceCulture);
+        public static string S_Filter_SelectedClassName => ResourceManager.GetString("S_Filter_SelectedClassName", resourceCulture);
+        public static string S_Filter_SelectedClassName_D => ResourceManager.GetString("S_Filter_SelectedClassName_D", resourceCulture);
+        public static string S_Filter_SelectedPoolName => ResourceManager.GetString("S_Filter_SelectedPoolName", resourceCulture);
+        public static string S_Filter_SelectedPoolName_D => ResourceManager.GetString("S_Filter_SelectedPoolName_D", resourceCulture);
+        public static string S_ClearHistory => ResourceManager.GetString("S_ClearHistory", resourceCulture);
+        public static string S_ClearHistory_RollCall => ResourceManager.GetString("S_ClearHistory_RollCall", resourceCulture);
+        public static string S_ClearHistory_RollCall_D => ResourceManager.GetString("S_ClearHistory_RollCall_D", resourceCulture);
+        public static string S_ClearHistory_Lottery => ResourceManager.GetString("S_ClearHistory_Lottery", resourceCulture);
+        public static string S_ClearHistory_Lottery_D => ResourceManager.GetString("S_ClearHistory_Lottery_D", resourceCulture);
+        public static string C_Clear => ResourceManager.GetString("C_Clear", resourceCulture);
+        public static string C_Cancel => ResourceManager.GetString("C_Cancel", resourceCulture);
+        public static string C_Close => ResourceManager.GetString("C_Close", resourceCulture);
+        public static string M_ClearConfirm_Title => ResourceManager.GetString("M_ClearConfirm_Title", resourceCulture);
+        public static string M_ClearConfirm_Content => ResourceManager.GetString("M_ClearConfirm_Content", resourceCulture);
+        public static string M_ClearSuccess => ResourceManager.GetString("M_ClearSuccess", resourceCulture);
+        public static string M_ClearFailed => ResourceManager.GetString("M_ClearFailed", resourceCulture);
+        public static string M_SelectFirst => ResourceManager.GetString("M_SelectFirst", resourceCulture);
+        public static string S_ExportHistory => ResourceManager.GetString("S_ExportHistory", resourceCulture);
+        public static string S_ExportHistory_RollCall => ResourceManager.GetString("S_ExportHistory_RollCall", resourceCulture);
+        public static string S_ExportHistory_RollCall_D => ResourceManager.GetString("S_ExportHistory_RollCall_D", resourceCulture);
+        public static string S_ExportHistory_Lottery => ResourceManager.GetString("S_ExportHistory_Lottery", resourceCulture);
+        public static string S_ExportHistory_Lottery_D => ResourceManager.GetString("S_ExportHistory_Lottery_D", resourceCulture);
+        public static string C_Export => ResourceManager.GetString("C_Export", resourceCulture);
+        public static string C_ExportRollCallName => ResourceManager.GetString("C_ExportRollCallName", resourceCulture);
+        public static string C_ExportLotteryName => ResourceManager.GetString("C_ExportLotteryName", resourceCulture);
+        public static string O_AllLists => ResourceManager.GetString("O_AllLists", resourceCulture);
+        public static string O_AllPools => ResourceManager.GetString("O_AllPools", resourceCulture);
+        public static string M_SelectExportFirst => ResourceManager.GetString("M_SelectExportFirst", resourceCulture);
+        public static string M_ExportSuccess => ResourceManager.GetString("M_ExportSuccess", resourceCulture);
+        public static string M_ExportFailed => ResourceManager.GetString("M_ExportFailed", resourceCulture);
+        public static string M_NoHistoryToExport => ResourceManager.GetString("M_NoHistoryToExport", resourceCulture);
+        public static string E_ProfileRollCall => ResourceManager.GetString("E_ProfileRollCall", resourceCulture);
+        public static string E_ProfileLottery => ResourceManager.GetString("E_ProfileLottery", resourceCulture);
+        public static string E_DrawTime => ResourceManager.GetString("E_DrawTime", resourceCulture);
+        public static string E_RecordNumber => ResourceManager.GetString("E_RecordNumber", resourceCulture);
+        public static string E_RecordName => ResourceManager.GetString("E_RecordName", resourceCulture);
+        public static string E_Gender => ResourceManager.GetString("E_Gender", resourceCulture);
+        public static string E_Group => ResourceManager.GetString("E_Group", resourceCulture);
+        public static string E_DrawMethod => ResourceManager.GetString("E_DrawMethod", resourceCulture);
+        public static string E_DrawCount => ResourceManager.GetString("E_DrawCount", resourceCulture);
+        public static string E_DrawGender => ResourceManager.GetString("E_DrawGender", resourceCulture);
+        public static string E_DrawGroup => ResourceManager.GetString("E_DrawGroup", resourceCulture);
+        public static string E_Subject => ResourceManager.GetString("E_Subject", resourceCulture);
+        public static string E_Weight => ResourceManager.GetString("E_Weight", resourceCulture);
+        public static string E_TotalCount => ResourceManager.GetString("E_TotalCount", resourceCulture);
+        public static string E_LastDrawTime => ResourceManager.GetString("E_LastDrawTime", resourceCulture);
+        public static string E_MethodRandom => ResourceManager.GetString("E_MethodRandom", resourceCulture);
+        public static string E_MethodWeight => ResourceManager.GetString("E_MethodWeight", resourceCulture);
+        public static string E_AllGenders => ResourceManager.GetString("E_AllGenders", resourceCulture);
+        public static string E_AllGroups => ResourceManager.GetString("E_AllGroups", resourceCulture);
+        public static string E_BreakSubject => ResourceManager.GetString("E_BreakSubject", resourceCulture);
+        public static string E_SheetRollCallRecords => ResourceManager.GetString("E_SheetRollCallRecords", resourceCulture);
+        public static string E_SheetRollCallSummary => ResourceManager.GetString("E_SheetRollCallSummary", resourceCulture);
+        public static string E_SheetLotteryRecords => ResourceManager.GetString("E_SheetLotteryRecords", resourceCulture);
+        public static string E_SheetLotterySummary => ResourceManager.GetString("E_SheetLotterySummary", resourceCulture);
+        public static string C_ExportProfiles => ResourceManager.GetString("C_ExportProfiles", resourceCulture);
+        public static string C_ExportSubject => ResourceManager.GetString("C_ExportSubject", resourceCulture);
+        public static string C_ExportTimeRange => ResourceManager.GetString("C_ExportTimeRange", resourceCulture);
+        public static string C_ExportStartDate => ResourceManager.GetString("C_ExportStartDate", resourceCulture);
+        public static string C_ExportEndDate => ResourceManager.GetString("C_ExportEndDate", resourceCulture);
+        public static string C_ExportSort => ResourceManager.GetString("C_ExportSort", resourceCulture);
+        public static string C_ExportFormat => ResourceManager.GetString("C_ExportFormat", resourceCulture);
+        public static string O_AllSubjects => ResourceManager.GetString("O_AllSubjects", resourceCulture);
+        public static string O_TimeAll => ResourceManager.GetString("O_TimeAll", resourceCulture);
+        public static string O_TimeLast7Days => ResourceManager.GetString("O_TimeLast7Days", resourceCulture);
+        public static string O_TimeLast30Days => ResourceManager.GetString("O_TimeLast30Days", resourceCulture);
+        public static string O_TimeCustom => ResourceManager.GetString("O_TimeCustom", resourceCulture);
+        public static string O_SortTimeDesc => ResourceManager.GetString("O_SortTimeDesc", resourceCulture);
+        public static string O_SortTimeAsc => ResourceManager.GetString("O_SortTimeAsc", resourceCulture);
+        public static string O_FormatXlsx => ResourceManager.GetString("O_FormatXlsx", resourceCulture);
+        public static string O_FormatCsv => ResourceManager.GetString("O_FormatCsv", resourceCulture);
+        public static string M_SelectExportProfiles => ResourceManager.GetString("M_SelectExportProfiles", resourceCulture);
+        public static string M_ExportInvalidRange => ResourceManager.GetString("M_ExportInvalidRange", resourceCulture);
+        public static string E_HistoryGroup => ResourceManager.GetString("E_HistoryGroup", resourceCulture);
+        public static string S_HistoryGroups => ResourceManager.GetString("S_HistoryGroups", resourceCulture);
+        public static string S_HistoryGroups_Enabled => ResourceManager.GetString("S_HistoryGroups_Enabled", resourceCulture);
+        public static string S_HistoryGroups_Enabled_D => ResourceManager.GetString("S_HistoryGroups_Enabled_D", resourceCulture);
+        public static string S_HistoryGroups_Manage => ResourceManager.GetString("S_HistoryGroups_Manage", resourceCulture);
+        public static string S_HistoryGroups_Manage_D => ResourceManager.GetString("S_HistoryGroups_Manage_D", resourceCulture);
+        public static string S_HistoryGroups_Existing => ResourceManager.GetString("S_HistoryGroups_Existing", resourceCulture);
+        public static string S_HistoryGroups_Add => ResourceManager.GetString("S_HistoryGroups_Add", resourceCulture);
+        public static string S_HistoryGroups_Rename => ResourceManager.GetString("S_HistoryGroups_Rename", resourceCulture);
+        public static string S_HistoryGroups_Delete => ResourceManager.GetString("S_HistoryGroups_Delete", resourceCulture);
+        public static string S_HistoryGroups_ConfirmDelete => ResourceManager.GetString("S_HistoryGroups_ConfirmDelete", resourceCulture);
+        public static string S_HistoryGroups_DeleteHint => ResourceManager.GetString("S_HistoryGroups_DeleteHint", resourceCulture);
+        public static string S_HistoryGroups_Save => ResourceManager.GetString("S_HistoryGroups_Save", resourceCulture);
+        public static string S_HistoryGroups_Cancel => ResourceManager.GetString("S_HistoryGroups_Cancel", resourceCulture);
+        public static string S_HistoryGroups_Empty => ResourceManager.GetString("S_HistoryGroups_Empty", resourceCulture);
+        public static string S_HistoryGroups_RecordCount => ResourceManager.GetString("S_HistoryGroups_RecordCount", resourceCulture);
+        public static string S_HistoryGroups_Error_NameEmpty => ResourceManager.GetString("S_HistoryGroups_Error_NameEmpty", resourceCulture);
+        public static string S_HistoryGroups_Error_NameTooLong => ResourceManager.GetString("S_HistoryGroups_Error_NameTooLong", resourceCulture);
+        public static string S_HistoryGroups_Error_NameControlChars => ResourceManager.GetString("S_HistoryGroups_Error_NameControlChars", resourceCulture);
+        public static string S_HistoryGroups_Error_NameReserved => ResourceManager.GetString("S_HistoryGroups_Error_NameReserved", resourceCulture);
+        public static string S_HistoryGroups_Error_AlreadyExists => ResourceManager.GetString("S_HistoryGroups_Error_AlreadyExists", resourceCulture);
+        public static string S_HistoryGroups_Error_NotFound => ResourceManager.GetString("S_HistoryGroups_Error_NotFound", resourceCulture);
+        public static string S_HistoryGroups_Error_NameUnchanged => ResourceManager.GetString("S_HistoryGroups_Error_NameUnchanged", resourceCulture);
+        public static string S_HistoryGroups_Error_ProfileUnavailable => ResourceManager.GetString("S_HistoryGroups_Error_ProfileUnavailable", resourceCulture);
+        public static string S_HistoryGroups_Error_SaveFailed => ResourceManager.GetString("S_HistoryGroups_Error_SaveFailed", resourceCulture);
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Services.Stats;
+using SecRandom.Core.Services.Config;
 using SecRandom.Services.Config;
 using SecRandom.Services.Consent;
 

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Stats;
+using SecRandom.Services.Consent;
 using SecRandom.Shared;
 
 namespace SecRandom.Services;

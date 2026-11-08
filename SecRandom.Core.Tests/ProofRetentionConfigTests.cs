@@ -8,11 +8,13 @@ namespace SecRandom.Core.Tests;
 public class ProofRetentionConfigTests
 {
     [Fact]
-    public void MainConfig_DefaultProofRetentionIsThirtyDays()
+    public void MainConfig_DefaultProofRetentionKeepsEveryProof()
     {
+        // Fork policy: deleting evidence is the only cost of retention, so both limits default to "unlimited"
+        // (0 days, 0 bytes) and the first-run guide asks the user explicitly.
         var retention = new MainConfigModel().General.ProofRetention;
-        Assert.Equal(30, retention.RetentionDays);
-        Assert.Equal(64L * 1024 * 1024, retention.MaximumStorageBytes);
+        Assert.Equal(0, retention.RetentionDays);
+        Assert.Equal(0L, retention.MaximumStorageBytes);
     }
 
     [Fact]

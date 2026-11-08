@@ -163,6 +163,8 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
         }));
         // The fork's cross-border consent gates this SECTL path; the test exercises the enabled behaviour.
         configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
+        // The fork gate also requires upstream's online-services acknowledgement.
+        configHandler.Data.General.Basic.AcceptedSecRandomServicesVersion = 1;
         return new PlatformVersionReportService(
             deviceUuidStore,
             new StubHttpClientFactory(client),

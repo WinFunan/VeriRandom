@@ -229,6 +229,8 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
         // and these tests exercise the enabled behaviour.
         var configHandler = provider.GetRequiredService<MainConfigHandler>();
         configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
+        // The fork gate also requires upstream's online-services acknowledgement.
+        configHandler.Data.General.Basic.AcceptedSecRandomServicesVersion = 1;
         configHandler.Data.General.Verification.AttestationUpload = AttestationUploadMode.Enabled;
         return provider;
     }

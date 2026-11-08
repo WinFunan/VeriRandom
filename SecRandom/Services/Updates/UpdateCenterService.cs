@@ -94,14 +94,24 @@ public sealed class UpdateCenterService(
     }
 
     public bool IsBusy => Phase is UpdateOperationPhase.Checking or UpdateOperationPhase.Downloading or UpdateOperationPhase.Verifying or UpdateOperationPhase.Installing;
-    public bool CanCheck => !IsBusy;
-    public bool CanDownloadAndInstall => Phase == UpdateOperationPhase.UpdateAvailable && SelectedArtifact is not null;
-    public bool CanApplyUpdate => Phase == UpdateOperationPhase.ReadyToInstall && SelectedArtifact is not null;
+    /// <summary>Fork policy: the whole update channel is off (GlobalConstants.UpdatesEnabled).</summary>
+    public bool IsSupported => GlobalConstants.UpdatesEnabled;
+
+    public bool CanCheck => GlobalConstants.UpdatesEnabled && !IsBusy;
+    public bool CanDownloadAndInstall => GlobalConstants.UpdatesEnabled && Phase == UpdateOperationPhase.UpdateAvailable && SelectedArtifact is not null;
+    public bool CanApplyUpdate => GlobalConstants.UpdatesEnabled && Phase == UpdateOperationPhase.ReadyToInstall && SelectedArtifact is not null;
     public bool HasAvailableArtifacts => AvailableArtifacts.Count > 0;
     public string PrimaryActionText => CanDownloadAndInstall ? Text("C_DownloadAndInstall") : Text("C_CheckUpdates");
 
     public async Task CheckAsync(bool force = false)
     {
+        // Fork policy: update discovery still points at the upstream release channel, so it stays off.
+        if (!GlobalConstants.UpdatesEnabled)
+        {
+            StatusMessage = Text("M_UpdatesDisabled");
+            return;
+        }
+
         if (IsBusy)
             return;
 

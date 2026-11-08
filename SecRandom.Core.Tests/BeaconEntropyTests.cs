@@ -117,7 +117,7 @@ public sealed class BeaconEntropyTests : IDisposable
     public async Task Provider_ReservesSequentialSeedsWithinOnePulseAndResetsOnANewPulse()
     {
         var client = new StubBeaconClient(CreatePulse(2000));
-        var provider = new BeaconEntropyProvider(client, CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
+        var provider = new BeaconEntropyProvider(CreateSourceClient(client), CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
 
         var first = await provider.ReserveAsync(CancellationToken.None);
         var second = await provider.ReserveAsync(CancellationToken.None);
@@ -138,10 +138,10 @@ public sealed class BeaconEntropyTests : IDisposable
     public async Task Provider_PersistsTheSequenceAnchorAcrossInstances()
     {
         var client = new StubBeaconClient(CreatePulse(3000));
-        var firstProvider = new BeaconEntropyProvider(client, CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
+        var firstProvider = new BeaconEntropyProvider(CreateSourceClient(client), CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
         _ = await firstProvider.ReserveAsync(CancellationToken.None);
 
-        var secondProvider = new BeaconEntropyProvider(client, CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
+        var secondProvider = new BeaconEntropyProvider(CreateSourceClient(client), CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
         var resumed = await secondProvider.ReserveAsync(CancellationToken.None);
 
         Assert.Equal(1, resumed.Beacon.Sequence);
@@ -152,7 +152,7 @@ public sealed class BeaconEntropyTests : IDisposable
     public async Task Provider_RefusesToMoveBackwardsInsteadOfSubstitutingLocalEntropy()
     {
         var client = new StubBeaconClient(CreatePulse(4000));
-        var provider = new BeaconEntropyProvider(client, CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
+        var provider = new BeaconEntropyProvider(CreateSourceClient(client), CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
         _ = await provider.ReserveAsync(CancellationToken.None);
 
         client.Pulse = CreatePulse(3999);
@@ -163,7 +163,7 @@ public sealed class BeaconEntropyTests : IDisposable
     public async Task Provider_SurfacesBeaconFailuresWithoutAFallbackSeed()
     {
         var client = new StubBeaconClient(CreatePulse(5000), new HttpRequestException("offline"));
-        var provider = new BeaconEntropyProvider(client, CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
+        var provider = new BeaconEntropyProvider(CreateSourceClient(client), CreateConfigHandler(), NullLogger<BeaconEntropyProvider>.Instance);
 
         await Assert.ThrowsAsync<HttpRequestException>(() => provider.ReserveAsync(CancellationToken.None));
         Assert.False(File.Exists(Utils.GetFilePath("proofs", "beacon-state.json")));
@@ -221,6 +221,17 @@ public sealed class BeaconEntropyTests : IDisposable
         => typeof(Utils).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)
            ?? throw new InvalidOperationException($"Utils.{name} was not found.");
 
+    private static ExternalEntropySourceClient CreateSourceClient(INistBeaconClient nist) =>
+        new(nist,
+            new RandomOrgCredentialStore(NullLogger<RandomOrgCredentialStore>.Instance),
+            new RandomOrgApiClient(new StubHttpClientFactory(), NullLogger<RandomOrgApiClient>.Instance),
+            new StubHttpClientFactory(),
+            NullLogger<ExternalEntropySourceClient>.Instance);
+
+    private sealed class StubHttpClientFactory : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new();
+    }
     private sealed class StubBeaconClient(BeaconPulse pulse, Exception? failure = null) : INistBeaconClient
     {
         public BeaconPulse Pulse { get; set; } = pulse;

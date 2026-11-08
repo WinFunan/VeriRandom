@@ -539,6 +539,8 @@ public sealed class CloudBackupServiceTests : IDisposable
             new TestConfigService(config));
         // The fork's cross-border consent gates every SECTL call; the test exercises the enabled behaviour.
         configHandler.Data.General.Basic.AcceptedCrossBorderTransferVersion = 1;
+        // The fork gate also requires upstream's online-services acknowledgement.
+        configHandler.Data.General.Basic.AcceptedSecRandomServicesVersion = 1;
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
         var authService = new SectlAuthService(TestTokenStore.Create(), factory, deviceUuidStore,
             NullLogger<SectlAuthService>.Instance, configHandler, new LoopbackAuthRedirectBrokerFactory());
