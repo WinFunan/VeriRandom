@@ -1875,3 +1875,17 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 **为什么 `validate_release` 也受 `publish_release` 约束**：该预检的唯一职责是拦住"频道 tag 与发布 tag 不一致"的发布；只构建、不发布时它没有意义，若仍然运行，一个不在 `metadata.yaml` 里的测试 tag 会让预检失败，而构建作业只接受 `success` 或 `skipped`，于是整条流水线什么都不建。
 
 **非手动派发不受影响**：检出步写成 `github.event_name != 'workflow_dispatch' || inputs.include_newalgorithm`，push / PR 构建恒为真；`publish` 作业保持 `github.event_name == 'workflow_dispatch'` 前置，只有手动派发才可能发布。`release_tag` 仍然必填——它同时是构建版本号的来源，即使不发布也要用它决定产物版本。
+---
+
+## 65. 修复合并后的 XAML 结构 + 两个依赖的安全版本
+
+**XAML**：上一轮合并 `FloatingWindowSettingsPage.axaml` 时，本分支的「闪抽结束后还原焦点」与上游的「不抢焦点」两行在同一个位置，按并集拼接后少了第一个 `FASettingsExpander.Footer`/`FASettingsExpander` 的闭合标签，Avalonia 编译期报 `AVLN1001`。已改回两个平级的完整 `FASettingsExpander`，并用严格的 XML 解析复核了仓库内全部 `.axaml`（0 个不合法）。
+
+**依赖**：CI 的 NU1902/NU1903 指出两个已知漏洞，均为同一发行带内的补丁版本，直接升级：
+
+| 包 | 原版本 | 新版本 | 说明 |
+|---|---|---|---|
+| `System.Security.Cryptography.Pkcs`（`SecRandom/SecRandom.csproj`） | 10.0.0 | 10.0.14 | GHSA-2fmv-rv2c-59x7（中）与 GHSA-846f-f764-76mx（高）都在 10.0.x 补丁带内修复 |
+| `Microsoft.SourceLink.GitHub`（`Global.props`，`PrivateAssets=All`） | 10.0.301 | 10.0.403 | 传递依赖 `Microsoft.Build.Tasks.Git` 10.0.301 的 GHSA-23fw-v26w-5fgq（中）；新版本与 CI 使用的 SDK 10.0.403 同一发行带 |
+
+两者都是构建期/运行期补丁升级，不改变代码行为与公共接口。
