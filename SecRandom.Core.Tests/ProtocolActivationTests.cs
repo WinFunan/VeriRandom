@@ -24,6 +24,24 @@ public class ProtocolActivationTests
     }
 
     [Fact]
+    public void StartupArguments_ExtractsTheForkScheme()
+    {
+        // The fork registers verirandom:// as its primary scheme; treating only secrandom:// as a startup URI
+        // made a second instance drop the link and surface the duplicate-instance prompt instead.
+        ProtocolActivation.SetStartupArguments(["--url", "verirandom://window/settings"]);
+
+        Assert.Equal("verirandom://window/settings", ProtocolActivation.ConsumeStartupUri());
+    }
+
+    [Fact]
+    public void StartupArguments_ExtractsTheForkSchemeWhenPassedDirectly()
+    {
+        ProtocolActivation.SetStartupArguments(["verirandom://window/main?name=class"]);
+
+        Assert.Equal("verirandom://window/main?name=class", ProtocolActivation.ConsumeStartupUri());
+    }
+
+    [Fact]
     public void StartupArguments_RejectsOtherUriSchemes()
     {
         ProtocolActivation.SetStartupArguments(["https://example.com"]);

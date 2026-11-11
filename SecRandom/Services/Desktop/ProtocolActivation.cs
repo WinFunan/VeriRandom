@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SecRandom.Core.Services.Ipc;
 
 namespace SecRandom.Services.Desktop;
 
@@ -38,8 +39,11 @@ public static class ProtocolActivation
 
     private static string? Validate(string value)
     {
+        // Both the fork's own scheme and upstream's compatibility scheme must survive here: dropping
+        // `verirandom://` leaves the second instance with no URI to forward, so it falls back to "show the
+        // main window" and can surface the duplicate-instance prompt instead of opening the link.
         return Uri.TryCreate(value, UriKind.Absolute, out var uri)
-               && string.Equals(uri.Scheme, "secrandom", StringComparison.OrdinalIgnoreCase)
+               && ProtocolRequestParser.IsSupportedScheme(uri.Scheme)
                && !value.Contains('\r')
                && !value.Contains('\n')
             ? uri.AbsoluteUri

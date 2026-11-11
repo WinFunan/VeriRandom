@@ -1909,3 +1909,12 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 **ImageSharp 的处理结论**：3.1.12 的六条公告在 3.2.0 修复，但 **3.2.0 起加了构建期许可证校验**（`Six Labors license found` 缺失即编译失败），没有许可证 key 就无法升级。因此保持 3.1.12，公告以 NU1902/NU1903 警告形式存在。可选后续：向 Six Labors 申请 OSS 许可证并配置 `$(SixLaborsLicenseKey)`、替换该库（仅 `FloatingWindowIconService` 与 `RosterTransferService` 使用）、或用 `NuGetAuditSuppress` 显式登记接受风险——三者都需要维护者决定。
 
 **本地验证结果**：`SecRandom`、`SecRandom.Desktop`、`SecRandom.Core.Tests` 全部编译通过；测试 1934 项中 1908 通过、26 失败；其中 `ConfigSignatureTests` 的 7 项失败在本机是 `CngKey.Create`/`ECDsaCng` 的加密提供程序不可用（环境限制），其余分别属于上游测试与本次 API 变更的滞后对齐，待逐组处理（CI 不跑测试，不影响构建）。
+---
+
+## 67. 修复 `verirandom://` 链接被启动参数过滤掉
+
+**症状**：`secrandom://` 正常，但 `verirandom://` 第二次启动时弹「已有实例」提示、目标链接不打开。
+
+**根因**：`SecRandom/Services/Desktop/ProtocolActivation.cs` 的 `Validate` 把可用 scheme 写死成 `"secrandom"`。两个 scheme 的注册命令都是 `--url "%1"`，所以第二次启动能拿到 `verirandom://…` 参数，却被这个过滤器丢弃 → `startupProtocolUri` 为 null → 转交逻辑退化成「只请求显示已运行实例的主窗口」；管道不通时就会走 `MultiInstance_Unreachable` 提示。协议解析器（`ProtocolRequestParser`）本身早就接受两个 scheme，缺的只是启动阶段的这一处判断。
+
+**修复**：改用 `ProtocolRequestParser.IsSupportedScheme(uri.Scheme)`（主 scheme `verirandom` + 兼容 scheme `secrandom` 都接受），并在 `ProtocolActivationTests` 补两条 `verirandom://` 用例（`--url` 形式与直接传参形式）。这是本分支自有代码，`secrandom://` 的兼容行为不变。
