@@ -2000,3 +2000,31 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 - `SecRandom.Core.Tests/SecurityServiceTests.cs`：新增 3 项因子级用例（安全密钥单独通过、旧 challenge 被拒、同一份断言不能重放），并把 fixture 扩展出 `Fido2Store` 与 `ScriptedPrompt.ResponseFactory`（按请求里的 challenge 现场构造响应）。
 
 本机 `ECDsa.Create(ECCurve)` 的 CNG 提供程序不可用，因此这些用例全部用 RSA（RS256）合成认证器；ES256 路径仍由 `WebAuthnVerifierTests` 在正常机器/CI 上覆盖。
+---
+
+## 70. 新增「优先保障课堂进行」（熵源降级）
+
+开关 `VerificationSettingsConfig.PrioritizeClassProgress`（设置 · 抽取验证，默认关闭）。开启后，当**正式公证或信标不可用**、或**任一阶段超过 1 秒**时，抽取不再失败，而是按 **正式公证 → 信标 → random.org → 本地熵** 回退；界面在开关打开时用 `FAInfoBar` 明确写出「可信度可能受影响」。
+
+### 实现
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom.Core/Services/Verification/ClassProgressEntropyPolicy.cs` | 新增纯策略：`StageBudget = 1s`、`FallbackAfter(start, randomOrgAvailable)` 给出后续阶段、`ClassProgressFallback(Abandoned, Used)` 记录被放弃与实际使用的来源 |
+| `SecRandom/Services/Verification/BeaconEntropyProvider.cs` | 新增 `ReserveAsync(BeaconSource, CancellationToken)`：按指定来源预留，供回退链在不改配置的情况下尝试 random.org |
+| `SecRandom/Services/Verification/VerificationDrawCoordinator.cs` | 正式分支走 `TryNotarizeWithinClassBudgetAsync`（1 秒预算，超时即回退）；普通模式 + 信标开启时分阶段回退；回退后的证明一律是 `OfflineReproducible`，`beacon` 只在真的取到脉冲时写入；`VerificationDrawOutcome.ClassProgressFallback` 暴露降级信息 |
+| `SecRandom/Services/Draw/SharedDrawServices.cs` | 四个 `*DrawResult` 增加 `ClassProgressFallback`，供界面/插件读取 |
+| `SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml(.cs)` | 新开关 + 警告条（仅开启时显示）；该控件计入 `ConfigPolicyLock` 覆盖范围 |
+| `SecRandom/Langs/SettingsPages/General/Verification/Resources*.resx` + Designer | `S_PrioritizeClass`、`S_PrioritizeClass_D`、`M_PrioritizeClassWarning`（三语） |
+| `SecRandom.Core/Services/Security/ConfigPolicyDigest.cs` | `ScopeId` 升到 `verirandom-config-policy/v7`：新增的开关属于被签名的策略范围，否则抽签机可以自行降低证据强度还继续通过签名 |
+
+### 语义边界（重要）
+
+- **降级不冒充强模式**：正式公证回退后写的是 `OfflineReproducible`，不会出现「看似正式、实则本地」的证明；回退到本地熵时证明里没有任何外部熵源记录，与默认普通抽取等价。
+- **random.org 只在配置了 API 密钥时参与回退**：该服务拒绝匿名请求；没有密钥时直接跳到本地熵，不会每次都抛一次失败。
+- **formal 的 1 秒超时不等于服务端没有锁定**：服务端可能仍完成了锁定并留下记录，但本地不使用该结果，因此两侧不会互相声称一致。
+- **新增开关让已有的分离签名失效**：作用域升级是既有约定（v6 同理），升级后需要在可信设备（或插入安全密钥）重新签发；`ChangeLog.md` 的「需要注意」已写明。
+
+### 测试
+
+`SecRandom.Core.Tests/ClassProgressEntropyPolicyTests.cs`：预算固定为 1 秒；正式公证/信标各自的后续顺序；无 random.org 密钥时跳过该级；random.org 不会被重试；来源 id 稳定。

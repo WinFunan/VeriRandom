@@ -26,8 +26,11 @@ public static class ConfigPolicyDigest
     ///     v4 added the periodic beacon-prefetch switch, and v5 the entropy-source id, to the same subtree;
     ///     v6 added the four per-draw-type setting trees, which decide how a draw samples and were previously outside
     ///     the signature — a signed policy that ignored "默认抽取设置" was not locking what it claimed to lock.
+    ///     v7 added the class-progress priority switch: it trades the configured entropy source for a local one, so a
+    ///     signed policy has to cover it — otherwise a draw machine could weaken its own evidence while still
+    ///     verifying against the signature.
     /// </summary>
-    public const string ScopeId = "verirandom-config-policy/v6";
+    public const string ScopeId = "verirandom-config-policy/v7";
 
     /// <summary>
     ///     Security fields that describe the integrity check itself. Covering them would make switching the

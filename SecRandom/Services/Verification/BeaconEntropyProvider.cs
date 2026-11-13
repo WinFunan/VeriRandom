@@ -178,12 +178,19 @@ public sealed class BeaconEntropyProvider(
         return sourceClient.FetchLatestAsync(source, ResolveEndpoint(source), cancellationToken);
     }
 
-    public async Task<BeaconSeedReservation> ReserveAsync(CancellationToken cancellationToken)
+    public Task<BeaconSeedReservation> ReserveAsync(CancellationToken cancellationToken) =>
+        ReserveAsync(ResolveSource(), cancellationToken);
+
+    /// <summary>
+    ///     Reserves a seed from one named source. The class-progress fallback uses this to try the configured
+    ///     beacon first and random.org second, in the same ceremony, without changing the configured source.
+    /// </summary>
+    public async Task<BeaconSeedReservation> ReserveAsync(BeaconSource source, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(source);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var source = ResolveSource();
             var endpoint = ResolveEndpoint(source);
             var pulse = await TakePrefetchedPulseAsync(source, endpoint, cancellationToken).ConfigureAwait(false);
 

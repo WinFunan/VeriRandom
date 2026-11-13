@@ -107,7 +107,7 @@ public partial class VerificationSettingsPage : UserControl
         InitializeComponent();
         // 有签名在生效时，抽取验证设置整体属于被覆盖范围：改动它等于让签名失效，故禁用这些输入
         ConfigPolicyLock.Apply(
-            S_VerificationMode, S_BeaconEntropy, S_TimestampAuthority, S_BeaconEndpoint, S_AttestationUpload);
+            S_VerificationMode, S_PrioritizeClass, S_BeaconEntropy, S_TimestampAuthority, S_BeaconEndpoint, S_AttestationUpload);
         _restoringTimestampAuthority = true;
         TimestampAuthorityToggle.IsChecked = ConfigHandler.Data.General.Verification.TimestampAuthorityEnabled;
         _restoringTimestampAuthority = false;
@@ -234,6 +234,23 @@ public partial class VerificationSettingsPage : UserControl
         FontWeight = bold ? Avalonia.Media.FontWeight.SemiBold : Avalonia.Media.FontWeight.Normal,
         Margin = new Avalonia.Thickness(0, topMargin, 0, 0)
     };
+
+    /// <summary>
+    ///     优先保障课堂进行：正式公证或信标不可用（或任一阶段超过 1 秒）时按 信标 → random.org → 本地熵 回退，
+    ///     而不是让这次抽取失败。它是明确用证据换流程的开关，所以界面上必须同时显示代价。
+    /// </summary>
+    public bool PrioritizeClassProgress
+    {
+        get => ConfigHandler.Data.General.Verification.PrioritizeClassProgress;
+        set
+        {
+            if (ConfigHandler.Data.General.Verification.PrioritizeClassProgress == value)
+                return;
+
+            ConfigHandler.Data.General.Verification.PrioritizeClassProgress = value;
+            ConfigHandler.Save();
+        }
+    }
 
     public bool BeaconEntropyEnabled
     {

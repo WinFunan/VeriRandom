@@ -240,4 +240,7 @@ public class Resources
     public static string M_BeaconFetching => Get(nameof(M_BeaconFetching));
     public static string M_BeaconFetched => Get(nameof(M_BeaconFetched));
     public static string M_BeaconFailed => Get(nameof(M_BeaconFailed));
+    public static string S_PrioritizeClass => Get(nameof(S_PrioritizeClass));
+    public static string S_PrioritizeClass_D => Get(nameof(S_PrioritizeClass_D));
+    public static string M_PrioritizeClassWarning => Get(nameof(M_PrioritizeClassWarning));
 }

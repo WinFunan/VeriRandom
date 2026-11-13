@@ -7,6 +7,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Services.Verification;
@@ -35,7 +36,8 @@ public sealed record RollCallDrawResult(
     string DrawRoundId,
     IReadOnlyDictionary<Guid, double> FrozenWeights,
     string? Note = null,
-    bool SuppressPresentation = false);
+    bool SuppressPresentation = false,
+    ClassProgressFallback? ClassProgressFallback = null);
 
 /// <summary>One "no roster" number draw for the roll-call page (inclusive integer range).</summary>
 public sealed record RollCallNumberDrawRequest(
@@ -51,7 +53,8 @@ public sealed record RollCallNumberDrawResult(
     string DrawRoundId,
     IReadOnlyDictionary<Guid, double> FrozenWeights,
     string? Note = null,
-    bool SuppressPresentation = false);
+    bool SuppressPresentation = false,
+    ClassProgressFallback? ClassProgressFallback = null);
 
 public sealed record RollCallNumberSnapshot(int RangeStart, int RangeEnd, IReadOnlyList<Student> Remaining)
 {
@@ -178,7 +181,7 @@ public sealed class RollCallDrawService(
             DateTime.Now,
             count));
         return new RollCallDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights,
-            edit?.Note, edit?.SuppressPresentation ?? false);
+            edit?.Note, edit?.SuppressPresentation ?? false, outcome.ClassProgressFallback);
     }
 
     public void Reset(string group, string gender) => temporaryRecords.ClearStudentScope(GetListName(), gender, group);
@@ -248,7 +251,8 @@ public sealed class RollCallDrawService(
             drawRoundId,
             DateTime.Now,
             count));
-        return new RollCallNumberDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights);
+        return new RollCallNumberDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights,
+            ClassProgressFallback: outcome.ClassProgressFallback);
     }
 
     public void ResetNumbers() => temporaryRecords.ClearStudentScope(NumberListName, string.Empty, string.Empty);
@@ -304,7 +308,8 @@ public sealed record LotteryDrawResult(
     Guid PrizeProofId,
     string DrawRoundId,
     string? Note = null,
-    bool SuppressPresentation = false);
+    bool SuppressPresentation = false,
+    ClassProgressFallback? ClassProgressFallback = null);
 
 /// <summary>One "no roster" number draw for the lottery page; members may still be assigned from a roster.</summary>
 public sealed record LotteryNumberDrawRequest(
@@ -323,7 +328,8 @@ public sealed record LotteryNumberDrawResult(
     Guid PrizeProofId,
     string DrawRoundId,
     string? Note = null,
-    bool SuppressPresentation = false);
+    bool SuppressPresentation = false,
+    ClassProgressFallback? ClassProgressFallback = null);
 
 public sealed record LotteryNumberSnapshot(int RangeStart, int RangeEnd, IReadOnlyList<Prize> Remaining)
 {
@@ -478,7 +484,7 @@ public sealed class LotteryDrawService(
             DateTime.Now,
             count));
         return new LotteryDrawResult(prizes.Winners, assigned, prizes.Proof.ProofId, roundId,
-            edit?.Note, edit?.SuppressPresentation ?? false);
+            edit?.Note, edit?.SuppressPresentation ?? false, prizes.ClassProgressFallback);
     }
 
     public void Reset(string studentListName, string group, string gender)
@@ -567,7 +573,8 @@ public sealed class LotteryDrawService(
             drawRoundId,
             DateTime.Now,
             count));
-        return new LotteryNumberDrawResult(prizes.Winners, assigned, prizes.Proof.ProofId, drawRoundId);
+        return new LotteryNumberDrawResult(prizes.Winners, assigned, prizes.Proof.ProofId, drawRoundId,
+            ClassProgressFallback: prizes.ClassProgressFallback);
     }
 
     public void ResetNumbers(string studentListName, string group, string gender)

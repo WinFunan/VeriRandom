@@ -696,4 +696,13 @@ It prevents replacement of local draw code, random seeds, or result files during
   <data name="O_Storage_Unlimited" xml:space="preserve">
     <value>Unlimited</value>
   </data>
+  <data name="S_PrioritizeClass" xml:space="preserve">
+    <value>Keep the class running</value>
+  </data>
+  <data name="S_PrioritizeClass_D" xml:space="preserve">
+    <value>When formal notarization or the beacon is unavailable, or any stage takes longer than one second, fall back in order beacon → random.org → local entropy instead of failing the draw</value>
+  </data>
+  <data name="M_PrioritizeClassWarning" xml:space="preserve">
+    <value>Trustworthiness may be affected: a draw that fell back is no longer a server-locked formal notarization, and a draw that reached local entropy cannot show its entropy was not substituted. The proof records the source actually used, but it may be weaker than the mode you selected</value>
+  </data>
 </root>

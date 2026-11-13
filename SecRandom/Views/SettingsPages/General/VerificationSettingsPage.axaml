@@ -29,6 +29,23 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_PrioritizeClass"
+                                    Header="{x:Static lv:Resources.S_PrioritizeClass}"
+                                    Description="{x:Static lv:Resources.S_PrioritizeClass_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ClockFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch x:Name="PrioritizeClassToggle"
+                                  IsChecked="{Binding PrioritizeClassProgress, Mode=TwoWay}" />
+                </fa:FASettingsExpander.Footer>
+
+                <fa:FAInfoBar Severity="Warning"
+                              IsOpen="True"
+                              IsClosable="False"
+                              IsVisible="{Binding #PrioritizeClassToggle.IsChecked}"
+                              Title="{x:Static lv:Resources.S_PrioritizeClass}"
+                              Message="{x:Static lv:Resources.M_PrioritizeClassWarning}" />
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_BeaconEntropy"
                                     Header="{x:Static lv:Resources.S_BeaconEntropy}"
                                     Description="{x:Static lv:Resources.S_BeaconEntropy_D}"

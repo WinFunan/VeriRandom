@@ -19,6 +19,13 @@ public partial class VerificationSettingsConfig : ObservableObject
     // that ages past its period before the draw costs the usual half of the trust score, nothing more.
     [ObservableProperty] private bool _beaconPrefetchEnabled;
 
+    // Off by default, and it trades evidence for classroom flow: when the configured source (formal
+    // notarization or the beacon) reports unavailability, or any stage takes longer than one second, the draw
+    // falls back beacon → random.org → local CSPRNG instead of failing. The proof always records the source
+    // that was really used, so a degraded draw is visible; what it cannot do is preserve the guarantee the
+    // original source would have given.
+    [ObservableProperty] private bool _prioritizeClassProgress;
+
     // Which external entropy source supplies the ordinary-mode seed. An unknown id falls back to the official
     // NIST beacon rather than to "no entropy", so a hand-edited settings file can never quietly turn the
     // external source off.

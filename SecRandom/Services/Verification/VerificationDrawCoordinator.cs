@@ -29,7 +29,8 @@ public sealed class VerificationDrawCoordinator(
     MainConfigHandler configHandler,
     IWitnessClient witnessClient,
     ILogger<VerificationDrawCoordinator> logger,
-    BeaconEntropyProvider beaconEntropy)
+    BeaconEntropyProvider beaconEntropy,
+    RandomOrgCredentialStore randomOrgCredentials)
 {
     public bool IsEnabled => true;
 
@@ -185,6 +186,8 @@ public sealed class VerificationDrawCoordinator(
         VerificationKernelResult result;
         // Declared at method scope: the ordinary branch fills it, and Complete(...) needs it either way.
         DrawProofBeacon? beacon = null;
+        ClassProgressFallback? classProgressFallback = null;
+        var prioritizeClassProgress = configHandler.Data.General.Verification.PrioritizeClassProgress;
         if (verificationMode == VerificationMode.FormalNotarized)
         {
             var head = chainStore.Read();
@@ -199,12 +202,31 @@ public sealed class VerificationDrawCoordinator(
                 ChainIndex = head.HeadIndex,
                 ChainHash = head.HeadHash
             };
-            proof = await witnessClient.NotarizeAsync(request, cancellationToken).ConfigureAwait(false);
-            result = VerificationWireCodec.DecodeDrawResponse(GetResponse(proof));
-            var replay = kernel.Draw(input, WitnessClient.DeriveFormalSeed(proof));
-            if (!replay.Winners.SequenceEqual(result.Winners)
-                || !result.Winners.Select(winner => winner.RecordId).SequenceEqual(proof.Result.WinnerRecordIds))
-                throw new InvalidDataException("Formal notarization result does not replay from its locked evidence.");
+            var notarized = prioritizeClassProgress
+                ? await TryNotarizeWithinClassBudgetAsync(request, cancellationToken).ConfigureAwait(false)
+                : await witnessClient.NotarizeAsync(request, cancellationToken).ConfigureAwait(false);
+            if (notarized is not null)
+            {
+                proof = notarized;
+                result = VerificationWireCodec.DecodeDrawResponse(GetResponse(proof));
+                var replay = kernel.Draw(input, WitnessClient.DeriveFormalSeed(proof));
+                if (!replay.Winners.SequenceEqual(result.Winners)
+                    || !result.Winners.Select(winner => winner.RecordId).SequenceEqual(proof.Result.WinnerRecordIds))
+                    throw new InvalidDataException("Formal notarization result does not replay from its locked evidence.");
+            }
+            else
+            {
+                // The switch is on and the strongest source did not answer in time. The world moves on with a
+                // weaker source, and the proof says so by being OfflineReproducible with the recorded source.
+                var entropy = await AcquireClassProgressEntropyAsync(
+                    ClassProgressEntropySource.FormalNotarization, cancellationToken).ConfigureAwait(false);
+                result = kernel.Draw(input, entropy.Seed);
+                proof = CreateProof(input, inputHash, entropy.Seed, result, VerificationProofMode.OfflineReproducible,
+                    parentProofId, null);
+                beacon = entropy.Beacon;
+                classProgressFallback = new ClassProgressFallback(
+                    ClassProgressEntropySource.FormalNotarization, entropy.Source);
+            }
         }
         else
         {
@@ -214,9 +236,21 @@ public sealed class VerificationDrawCoordinator(
             byte[] seed;
             if (verificationMode == VerificationMode.Ordinary && beaconEntropy.IsEnabled)
             {
-                var reservation = await beaconEntropy.ReserveAsync(cancellationToken).ConfigureAwait(false);
-                seed = reservation.Seed;
-                beacon = reservation.Beacon;
+                if (prioritizeClassProgress)
+                {
+                    var entropy = await AcquireClassProgressEntropyAsync(
+                        ClassProgressEntropySource.Beacon, cancellationToken).ConfigureAwait(false);
+                    seed = entropy.Seed;
+                    beacon = entropy.Beacon;
+                    if (entropy.Source != ClassProgressEntropySource.Beacon)
+                        classProgressFallback = new ClassProgressFallback(ClassProgressEntropySource.Beacon, entropy.Source);
+                }
+                else
+                {
+                    var reservation = await beaconEntropy.ReserveAsync(cancellationToken).ConfigureAwait(false);
+                    seed = reservation.Seed;
+                    beacon = reservation.Beacon;
+                }
             }
             else
             {
@@ -227,7 +261,7 @@ public sealed class VerificationDrawCoordinator(
             proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null);
         }
         return Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input), beacon,
-            input.GateEvidence);
+            input.GateEvidence, classProgressFallback);
     }
 
     public void Publish<TCandidate>(VerificationDrawOutcome<TCandidate> outcome)
@@ -237,6 +271,90 @@ public sealed class VerificationDrawCoordinator(
         var exported = proofExporter.Save(outcome.Proof, outcome.ExportContext, outcome.Beacon, outcome.GateEvidence);
         if (outcome.Proof.Mode == VerificationProofMode.OfflineReproducible)
             attestationService.Request(exported.Proof, exported.Path);
+    }
+
+    private sealed record ClassProgressEntropy(
+        byte[] Seed,
+        DrawProofBeacon? Beacon,
+        ClassProgressEntropySource Source);
+
+    /// <summary>
+    ///     One formal notarization attempt bounded by the class-progress budget. A timeout is not an error the
+    ///     caller sees: it means "fall back". The abandoned request may still complete on the server, but the
+    ///     draw does not use that result, so nothing locally claims the two match.
+    /// </summary>
+    private async Task<DrawProof?> TryNotarizeWithinClassBudgetAsync(
+        FormalNotarizationRequest request,
+        CancellationToken cancellationToken)
+    {
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(ClassProgressEntropyPolicy.StageBudget);
+        try
+        {
+            return await witnessClient.NotarizeAsync(request, budget.Token).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning(exception,
+                "「优先保障课堂进行」：正式公证在 {BudgetMs} 毫秒内没有完成，本次抽取改用外部熵源",
+                ClassProgressEntropyPolicy.StageBudget.TotalMilliseconds);
+            return null;
+        }
+    }
+
+    /// <summary>
+    ///     Walks the class-progress ladder. Every external stage gets its own one-second budget; the local
+    ///     CSPRNG is last and cannot fail, so this method always returns. The proof records only the source that
+    ///     really produced the seed — a degraded draw must not read like a beacon-sourced one.
+    /// </summary>
+    private async Task<ClassProgressEntropy> AcquireClassProgressEntropyAsync(
+        ClassProgressEntropySource start,
+        CancellationToken cancellationToken)
+    {
+        // random.org needs an API key, so it is offered only when one is configured.
+        var randomOrgAvailable = randomOrgCredentials.Load() is not null;
+        var configuredBeacon = beaconEntropy.CurrentSource;
+
+        foreach (var stage in ClassProgressEntropyPolicy.FallbackAfter(start, randomOrgAvailable))
+        {
+            if (stage == ClassProgressEntropySource.Beacon
+                && configuredBeacon.Kind == BeaconSourceKind.RandomOrgEntropy)
+            {
+                // The configured beacon already *is* random.org; trying it twice would only spend the quota twice.
+                continue;
+            }
+
+            if (stage == ClassProgressEntropySource.LocalCsprng)
+            {
+                logger.LogWarning(
+                    "「优先保障课堂进行」：外部熵源都不可用，本次抽取使用本地随机数种子，可信度可能受影响");
+                return new ClassProgressEntropy(VerificationSeedDerivation.CreateCsprngSeed(), null, stage);
+            }
+
+            using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            budget.CancelAfter(ClassProgressEntropyPolicy.StageBudget);
+            try
+            {
+                var source = stage == ClassProgressEntropySource.Beacon
+                    ? configuredBeacon
+                    : BeaconSourceCatalog.RandomOrg;
+                var reservation = await beaconEntropy.ReserveAsync(source, budget.Token).ConfigureAwait(false);
+                logger.LogInformation("「优先保障课堂进行」：本次抽取已回退到 {Source}",
+                    ClassProgressEntropyPolicy.IdOf(stage));
+                return new ClassProgressEntropy(reservation.Seed, reservation.Beacon, stage);
+            }
+            catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+            {
+                logger.LogWarning(exception,
+                    "「优先保障课堂进行」：{Source} 在 {BudgetMs} 毫秒内不可用，继续回退",
+                    ClassProgressEntropyPolicy.IdOf(stage),
+                    ClassProgressEntropyPolicy.StageBudget.TotalMilliseconds);
+            }
+        }
+
+        // Unreachable with today's policy (it always ends with the local source), kept so the method is total.
+        return new ClassProgressEntropy(
+            VerificationSeedDerivation.CreateCsprngSeed(), null, ClassProgressEntropySource.LocalCsprng);
     }
 
     private static IReadOnlyDictionary<Guid, double> FreezeWeights(VerificationDrawInput input)
@@ -255,14 +373,16 @@ public sealed class VerificationDrawCoordinator(
         DrawProofExportContext exportContext,
         IReadOnlyDictionary<Guid, double> frozenWeights,
         DrawProofBeacon? beacon,
-        GateEvidenceSnapshot? gateEvidence)
+        GateEvidenceSnapshot? gateEvidence,
+        ClassProgressFallback? classProgressFallback)
         where TCandidate : class
     {
         var winners = result.Winners.Select(winner => recordLookup.TryGetValue(winner.RecordId, out var record)
             ? record
             : throw new InvalidDataException("Verification kernel returned a record outside the frozen pool."))
             .ToList();
-        return new VerificationDrawOutcome<TCandidate>(winners, proof, frozenWeights, exportContext, beacon, gateEvidence);
+        return new VerificationDrawOutcome<TCandidate>(
+            winners, proof, frozenWeights, exportContext, beacon, gateEvidence, classProgressFallback);
     }
 
     private static DrawProof CreateProof(
@@ -335,4 +455,5 @@ public sealed record VerificationDrawOutcome<TCandidate>(
     IReadOnlyDictionary<Guid, double> FrozenWeights,
     DrawProofExportContext ExportContext,
     DrawProofBeacon? Beacon = null,
-    GateEvidenceSnapshot? GateEvidence = null);
+    GateEvidenceSnapshot? GateEvidence = null,
+    ClassProgressFallback? ClassProgressFallback = null);

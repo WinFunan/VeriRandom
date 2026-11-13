@@ -317,4 +317,13 @@
   <data name="M_SelfCheckGateRemovalIncomplete" xml:space="preserve"><value>门槛证据漏掉了规则本应移除的人（已按记录复算）</value></data>
   <data name="O_Retention_365" xml:space="preserve"><value>一年</value></data>
   <data name="O_Storage_Unlimited" xml:space="preserve"><value>不限</value></data>
+  <data name="S_PrioritizeClass" xml:space="preserve">
+    <value>优先保障课堂进行</value>
+  </data>
+  <data name="S_PrioritizeClass_D" xml:space="preserve">
+    <value>正式公证或信标不可用、或任一阶段超过 1 秒时，按 信标 → random.org → 本地熵 依次回退，不让本次抽取失败</value>
+  </data>
+  <data name="M_PrioritizeClassWarning" xml:space="preserve">
+    <value>可信度可能受影响：回退后的这次抽取不再是服务器锁定的正式公证；如果一直回退到本地熵，证明也无法说明熵源没有被替换。证明会记录实际使用的来源，但它可能弱于你选择的模式</value>
+  </data>
 </root>
