@@ -13,6 +13,7 @@ using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
+using SecRandom.Services.Security.Fido2;
 using SR = SecRandom.Langs.SettingsPages.Security.Resources;
 
 namespace SecRandom.Services.Security;
@@ -42,8 +43,19 @@ internal static class SecurityVerificationDialog
         var usbPresent = false;
         var usbProbeRunning = false;
         var usbDialogClosed = false;
+        // 安全密钥的断言由对话框触发，VerifyAsync 只校验结果；所以这里必须把 proof 原样带回。
+        var fido2Required = request.RequiredFactors.Contains(SecurityFactor.Fido2);
+        Fido2AssertionProof? fido2Proof = null;
+        var fido2Busy = false;
+        var fido2Status = new TextBlock
+        {
+            Text = SR.M_Fido2NotVerified,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center
+        };
         var verifyAvailability = new VerificationAvailabilityCommand(() =>
-            SecurityVerificationEligibility.CanSubmit(request, password.Text, totp.Text, usbPresent));
+            SecurityVerificationEligibility.CanSubmit(
+                request, password.Text, totp.Text, usbPresent, fido2Proof is not null));
 
         password.TextChanged += (_, _) => verifyAvailability.RaiseCanExecuteChanged();
         totp.TextChanged += (_, _) => verifyAvailability.RaiseCanExecuteChanged();
@@ -158,6 +170,58 @@ internal static class SecurityVerificationDialog
             panel.Children.Add(usbStatusPanel);
         }
 
+        if (fido2Required)
+        {
+            var fido2Button = new Button { Content = SR.C_UseSecurityKey };
+            fido2Button.Click += async (_, _) =>
+            {
+                if (fido2Busy)
+                    return;
+
+                var service = IAppHost.TryGetService<Fido2SecurityKeyService>();
+                if (service is null || string.IsNullOrEmpty(request.Fido2Challenge))
+                {
+                    fido2Status.Text = SR.M_Fido2Unavailable;
+                    return;
+                }
+
+                fido2Busy = true;
+                fido2Button.IsEnabled = false;
+                fido2Status.Text = SR.M_Fido2Waiting;
+                try
+                {
+                    var outcome = await service.AssertAsync(null, request.Fido2Challenge, cancellationToken);
+                    if (outcome.Status == Fido2OperationStatus.Succeeded && outcome.Proof is not null)
+                    {
+                        fido2Proof = outcome.Proof;
+                        fido2Status.Text = SR.M_Fido2Verified;
+                    }
+                    else
+                    {
+                        fido2Proof = null;
+                        fido2Status.Text = outcome.Status switch
+                        {
+                            Fido2OperationStatus.NotEnrolled => SR.M_Fido2NotEnrolled,
+                            Fido2OperationStatus.Cancelled => SR.M_Fido2Cancelled,
+                            Fido2OperationStatus.TimedOut => SR.M_Fido2TimedOut,
+                            Fido2OperationStatus.VerificationFailed when outcome.CloneSuspected => SR.M_Fido2CloneSuspected,
+                            Fido2OperationStatus.BrowserFailed => SR.M_Fido2Unavailable,
+                            _ => SR.M_Fido2Failed
+                        };
+                    }
+                }
+                finally
+                {
+                    fido2Busy = false;
+                    fido2Button.IsEnabled = true;
+                    verifyAvailability.RaiseCanExecuteChanged();
+                }
+            };
+
+            panel.Children.Add(new TextBlock { Text = SR.S_Fido2 });
+            panel.Children.Add(new StackPanel { Spacing = 8, Children = { fido2Button, fido2Status } });
+        }
+
         var dialog = new FATaskDialog
         {
             XamlRoot = xamlRoot,
@@ -189,7 +253,8 @@ internal static class SecurityVerificationDialog
                 var response = new SecurityVerificationResponse(
                     password.Text ?? string.Empty,
                     totp.Text ?? string.Empty,
-                    UsbPresent: usbPresent);
+                    UsbPresent: usbPresent,
+                    Fido2: fido2Proof);
                 var result = await Task.Run(() => verify(response, cancellationToken));
                 if (result.IsAuthorized)
                 {

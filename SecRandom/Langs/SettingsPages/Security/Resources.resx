@@ -603,4 +603,79 @@
   <data name="M_StrengthHint_Variety" xml:space="preserve">
     <value>混合大小写、数字和符号，或者继续加长</value>
   </data>
+  <data name="S_Fido2" xml:space="preserve">
+    <value>安全密钥</value>
+  </data>
+  <data name="S_Fido2_D" xml:space="preserve">
+    <value>用 FIDO2 安全密钥（如 YubiKey）验证身份；登记与验证都在系统浏览器里完成，密钥本身不会被导出，本机只保存公钥与签名计数</value>
+  </data>
+  <data name="C_Fido2_Register" xml:space="preserve">
+    <value>登记安全密钥</value>
+  </data>
+  <data name="C_Fido2_Remove" xml:space="preserve">
+    <value>移除所选</value>
+  </data>
+  <data name="C_Fido2_None" xml:space="preserve">
+    <value>尚未登记安全密钥</value>
+  </data>
+  <data name="C_Fido2_KeyList" xml:space="preserve">
+    <value>已登记的安全密钥</value>
+  </data>
+  <data name="C_UseSecurityKey" xml:space="preserve">
+    <value>使用安全密钥</value>
+  </data>
+  <data name="M_Fido2Registered" xml:space="preserve">
+    <value>已登记安全密钥</value>
+  </data>
+  <data name="M_Fido2RegisterFailed" xml:space="preserve">
+    <value>登记失败：{0}</value>
+  </data>
+  <data name="M_Fido2Removed" xml:space="preserve">
+    <value>已移除安全密钥</value>
+  </data>
+  <data name="M_Fido2NotVerified" xml:space="preserve">
+    <value>尚未验证</value>
+  </data>
+  <data name="M_Fido2Waiting" xml:space="preserve">
+    <value>请在浏览器中完成安全密钥操作</value>
+  </data>
+  <data name="M_Fido2Verified" xml:space="preserve">
+    <value>安全密钥已验证</value>
+  </data>
+  <data name="M_Fido2NotEnrolled" xml:space="preserve">
+    <value>本机还没有登记安全密钥</value>
+  </data>
+  <data name="M_Fido2Cancelled" xml:space="preserve">
+    <value>已取消安全密钥操作</value>
+  </data>
+  <data name="M_Fido2TimedOut" xml:space="preserve">
+    <value>等待安全密钥超时</value>
+  </data>
+  <data name="M_Fido2CloneSuspected" xml:space="preserve">
+    <value>该密钥的签名计数器没有前进，可能已被复制，本次验证被拒绝</value>
+  </data>
+  <data name="M_Fido2Unavailable" xml:space="preserve">
+    <value>无法打开系统浏览器完成安全密钥操作</value>
+  </data>
+  <data name="M_Fido2Failed" xml:space="preserve">
+    <value>安全密钥验证失败</value>
+  </data>
+  <data name="C_SignedPolicy_SignWithKey" xml:space="preserve">
+    <value>用安全密钥签发</value>
+  </data>
+  <data name="C_SignedPolicy_KeyCredential" xml:space="preserve">
+    <value>签发用安全密钥</value>
+  </data>
+  <data name="C_SignedPolicy_KeySignHint" xml:space="preserve">
+    <value>私钥不在这台机器上也可以签发：插入已登记的安全密钥，由它直接对配置摘要签名</value>
+  </data>
+  <data name="M_SignedPolicy_KeySigned" xml:space="preserve">
+    <value>已用安全密钥签发分离配置：{0}</value>
+  </data>
+  <data name="M_SignedPolicy_KeySignFailed" xml:space="preserve">
+    <value>用安全密钥签发失败：{0}</value>
+  </data>
+  <data name="M_Fido2DefaultLabel" xml:space="preserve">
+    <value>安全密钥 {0}</value>
+  </data>
 </root>

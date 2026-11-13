@@ -600,4 +600,79 @@
   <data name="M_StrengthHint_Variety" xml:space="preserve">
     <value>大文字と小文字、数字、記号を混ぜるか、さらに長くしてください</value>
   </data>
+  <data name="S_Fido2" xml:space="preserve">
+    <value>セキュリティキー</value>
+  </data>
+  <data name="S_Fido2_D" xml:space="preserve">
+    <value>YubiKey などの FIDO2 セキュリティキーで本人確認します。登録と検証はシステムのブラウザーで行われ、キー自体は書き出されず、この端末には公開鍵と署名カウンターだけを保存します</value>
+  </data>
+  <data name="C_Fido2_Register" xml:space="preserve">
+    <value>セキュリティキーを登録</value>
+  </data>
+  <data name="C_Fido2_Remove" xml:space="preserve">
+    <value>選択した項目を削除</value>
+  </data>
+  <data name="C_Fido2_None" xml:space="preserve">
+    <value>まだセキュリティキーが登録されていません</value>
+  </data>
+  <data name="C_Fido2_KeyList" xml:space="preserve">
+    <value>登録済みのセキュリティキー</value>
+  </data>
+  <data name="C_UseSecurityKey" xml:space="preserve">
+    <value>セキュリティキーを使用</value>
+  </data>
+  <data name="M_Fido2Registered" xml:space="preserve">
+    <value>セキュリティキーを登録しました</value>
+  </data>
+  <data name="M_Fido2RegisterFailed" xml:space="preserve">
+    <value>登録に失敗しました：{0}</value>
+  </data>
+  <data name="M_Fido2Removed" xml:space="preserve">
+    <value>セキュリティキーを削除しました</value>
+  </data>
+  <data name="M_Fido2NotVerified" xml:space="preserve">
+    <value>まだ検証していません</value>
+  </data>
+  <data name="M_Fido2Waiting" xml:space="preserve">
+    <value>ブラウザーでセキュリティキーの操作を完了してください</value>
+  </data>
+  <data name="M_Fido2Verified" xml:space="preserve">
+    <value>セキュリティキーを検証しました</value>
+  </data>
+  <data name="M_Fido2NotEnrolled" xml:space="preserve">
+    <value>この端末にはセキュリティキーが登録されていません</value>
+  </data>
+  <data name="M_Fido2Cancelled" xml:space="preserve">
+    <value>セキュリティキーの操作をキャンセルしました</value>
+  </data>
+  <data name="M_Fido2TimedOut" xml:space="preserve">
+    <value>セキュリティキーの応答がタイムアウトしました</value>
+  </data>
+  <data name="M_Fido2CloneSuspected" xml:space="preserve">
+    <value>このキーの署名カウンターが進んでいないため、複製の可能性があります。検証を拒否しました</value>
+  </data>
+  <data name="M_Fido2Unavailable" xml:space="preserve">
+    <value>セキュリティキー操作のためにシステムのブラウザーを開けませんでした</value>
+  </data>
+  <data name="M_Fido2Failed" xml:space="preserve">
+    <value>セキュリティキーの検証に失敗しました</value>
+  </data>
+  <data name="C_SignedPolicy_SignWithKey" xml:space="preserve">
+    <value>セキュリティキーで署名</value>
+  </data>
+  <data name="C_SignedPolicy_KeyCredential" xml:space="preserve">
+    <value>署名に使うセキュリティキー</value>
+  </data>
+  <data name="C_SignedPolicy_KeySignHint" xml:space="preserve">
+    <value>秘密鍵がこの端末になくても署名できます。登録済みのセキュリティキーを挿すと、設定のダイジェストに直接署名します</value>
+  </data>
+  <data name="M_SignedPolicy_KeySigned" xml:space="preserve">
+    <value>セキュリティキーで分離設定に署名しました：{0}</value>
+  </data>
+  <data name="M_SignedPolicy_KeySignFailed" xml:space="preserve">
+    <value>セキュリティキーでの署名に失敗しました：{0}</value>
+  </data>
+  <data name="M_Fido2DefaultLabel" xml:space="preserve">
+    <value>セキュリティキー {0}</value>
+  </data>
 </root>

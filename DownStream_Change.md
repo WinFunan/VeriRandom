@@ -1956,3 +1956,47 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 `SecRandom.Core.Tests/WebAuthnVerifierTests.cs` 用合成认证器覆盖：登记成功、challenge/origin/rpId/UP 标志/不支持算法各自拒绝、断言成功、签名被篡改拒绝、计数器回退判为复制、零计数器不算复制、clientData 类型不符拒绝、RS256 全流程。`WebAuthnOptionsBuilderTests.cs` 固定线格式字段名与 base64url 形状。`Fido2CredentialStoreTests.cs` 固定持久化、按两种 id 查找、重登记不重复、计数器只增不减、损坏文件保留。
 
 本机 `ECDsa.Create(ECCurve)` 的 CNG 提供程序不可用（与既有 `ConfigSignatureTests` 同因），11 条 ES256 用例在本机 `Assert.Skip`，CI/正常 Windows 上会真实执行；RS256 用例在本机已通过。
+---
+
+## 69. 接入 FIDO2 安全因子 + 用安全密钥本地签发分离配置
+
+§68 只交付了能力层（Core 校验内核、浏览器回环运输、凭据文件），没有接任何界面。本轮把它接成真正的验证因子，并让同一把密钥可以在**不受信任的机器**上对当前配置签发分离签名——那台机器不需要、也不会留下 ECDSA 私钥。
+
+### 安全因子接入
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom/Services/Security/SecurityContracts.cs` | `SecurityFactor.Fido2`；`SecurityVerificationRequest.Fido2Challenge`（一次性 challenge）；`SecurityVerificationResponse.Fido2`；新记录 `Fido2AssertionProof(CredentialId, ClientDataJson, AuthenticatorData, Signature, Origin)`；`SecuritySettingsUiState.HasFido2Key`（追加在末尾，保持位置参数兼容） |
+| `SecRandom.Core/Models/SubConfigs/SecuritySettingsConfig.cs` | `Fido2Enabled`（随安全设置一起存进加密文件，属于受保护开关） |
+| `SecRandom/Services/Security/SecurityService.cs` | 注入 `Fido2CredentialStore`；`GetRequiredFactors` 两处按「已启用且至少登记一把密钥」加入；`NormalizeSettings` 两处在没有密码或没有密钥时强制关闭；`VerifyAsync` 先算 `fido2Passed`，并在「任意已选验证方式」的提前放行分支里算一项；`IssueFido2Challenge`/`VerifyFido2` 负责一次性 challenge 的发放与校验；`SecuritySettingsSnapshot` 增加 `Fido2Enabled`，关闭该因子按「放宽防护」处理（要一次专门的新鲜验证） |
+| `SecRandom/Services/Security/SecurityVerificationWindow.cs` | 验证对话框新增安全密钥行：按钮触发浏览器断言，状态行显示等待/通过/失败；`VerifyAsync` 只校验带回的 proof，不再触发第二次浏览器操作 |
+| `SecRandom/Services/Security/SecurityVerificationEligibility.cs` | `CanSubmit` 增加 `fido2Asserted` |
+| `SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml(.cs)` | 新增「安全密钥」卡片（列表、登记、移除）与验证方式里的「安全密钥」选项；移除最后一把密钥时同时关闭该因子并保存 |
+| `SecRandom/Langs/SettingsPages/Security/Resources*.resx` + Designer | 新增 28 个键（三语），覆盖登记/移除/等待/超时/复制嫌疑/浏览器不可用等状态 |
+
+**密码仍是基础因子**：`NormalizeSettings` 在没有主密码时依旧关闭 TOTP、USB 与 FIDO2。这与既有模型一致，避免本轮顺手引入「无密码保护」这一更大的策略变更；FIDO2 的独立性体现在「任意已选验证方式」模式下它可以单独通过（不需要解锁信封），和 USB 一样。安全页的登记/移除按钮**不要求先设主密码**：否则在不受信任的机器上登记一把用于签发分离配置的密钥，会先被迫在那边建立一整套密码保护；有保护时 `AuthorizeAsync` 仍会要求一次验证，没有保护时登记只写公钥与计数器，不影响任何判定。
+
+**challenge 只发一次**：`IssueFido2Challenge` 在构建验证请求时生成并存入服务，`ClearFido2Challenge` 在这一次提示结束时（`prompt.RequestAsync` 返回后）清空它。同一个对话框里密码输错可以继续用已经做好的断言重试，但下一次授权请求会拿到新 challenge，把上一次的断言重放过去一定失败——`SecurityServiceTests.Fido2Factor_CannotReuseOneProofForTwoVerifications` 钉住这一点；`Fido2Factor_RejectsAnAssertionForAnotherChallenge` 钉住「用旧 challenge 的断言也不行」。
+
+### 分离配置的安全密钥签发
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom.Core/Services/Security/ConfigSignature.cs` | 新算法 id `webauthn-es256-v1`；`ConfigSignatureDocument` 增加 `CredentialId`/`ClientDataJson`/`AuthenticatorData`/`Origin`/`SignCount`（仅该算法使用，写成 null 时省略）；`CreateConfigChallenge(digest)` 是**域分离**的确定性 challenge；`VerifyWebAuthn` 校验 origin 是回环、challenge 绑定了配置摘要、并用文档里的 COSE 公钥验签；`IsDocumentWellFormed` 按算法分支校验字段 |
+| `SecRandom/Services/Security/ConfigPolicySignatureService.cs` | `Verify()` 按算法分派（ECDSA 与安全密钥两种文档并存）；新增 `SignWithSecurityKeyAsync`：计算摘要 → 派生 challenge → 走浏览器断言 → 原子写出文档 |
+| `SecRandom/Services/Security/Fido2/Fido2SecurityKeyService.cs` | `AssertAsync(id, challenge, ct)` 重载；`Fido2AssertionOutcome` 增加 `Proof` 与 `Origin` |
+| `SecRandom.Core/Services/Security/Fido2/WebAuthnOriginPolicy.cs` | 新增：origin 必须是回环页面（`http(s)://localhost|127.0.0.1|::1`，无路径/查询/片段）；两个校验入口共用 |
+| 安全设置页「分离签名」卡片 | 新增「用安全密钥签发」：选择已登记密钥 → 授权 → 签名 → 刷新状态 |
+
+**为什么可以这样签**：WebAuthn 断言签的是 `authenticatorData ‖ SHA256(clientDataJSON)`，而 challenge 由我们决定。把 challenge 定义成 `Base64Url(SHA256("VeriRandom/ConfigSignature/webauthn-v1\0" ‖ digest))` 后，签名就等价于「对这份配置摘要的签名」，且不能挪到另一份配置上（challenge 变了）。域分离前缀保证同一个 challenge 不会被当成验证提示的 challenge 复用。私钥永不离开密钥，因此签发可以发生在任何一台机器上；抽取机只需要文档里的 COSE 公钥就能验证。
+
+**验证端不比较计数器**：这份文档是我们持有的唯一一次断言，没有「上一次计数」可比；新鲜性由一次性 challenge 保证，所以 `VerifyWebAuthn` 传 `storedSignCount: 0`。因子验证路径（`SecurityService.VerifyFido2`）则用凭据文件里的计数判断复制嫌疑。
+
+**格式兼容性**：`ConfigSignatureDocument.CurrentFormatVersion` 仍为 1；ECDSA 文档的字段与校验一字未改，旧文档继续通过；旧版本客户端读到安全密钥文档会因算法 id 不认识被判为格式不符（而不是误判为已签名），这是正确的降级行为。
+
+### 新增/修改的测试
+
+- `SecRandom.Core.Tests/ConfigSignatureWebAuthnTests.cs`（6 项）：challenge 确定性与域分离、按摘要验证通过、摘要换掉即失败、非回环 origin 失败、签名篡改失败、字段完整性按算法分支。
+- `SecRandom.Core.Tests/SecurityServiceTests.cs`：新增 3 项因子级用例（安全密钥单独通过、旧 challenge 被拒、同一份断言不能重放），并把 fixture 扩展出 `Fido2Store` 与 `ScriptedPrompt.ResponseFactory`（按请求里的 challenge 现场构造响应）。
+
+本机 `ECDsa.Create(ECCurve)` 的 CNG 提供程序不可用，因此这些用例全部用 RSA（RS256）合成认证器；ES256 路径仍由 `WebAuthnVerifierTests` 在正常机器/CI 上覆盖。

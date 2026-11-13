@@ -1,7 +1,9 @@
 using System;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Serialization;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Services.Security.Fido2;
 
 namespace SecRandom.Core.Services.Security;
 
@@ -13,6 +15,13 @@ namespace SecRandom.Core.Services.Security;
 public sealed record ConfigSignatureDocument
 {
     public const string AlgorithmId = "ecdsa-p256-sha256";
+
+    /// <summary>
+    ///     Signing key held by a FIDO2 authenticator instead of a local ECDSA private key. The document carries
+    ///     the whole WebAuthn assertion (client data, authenticator data, signature) plus the credential's COSE
+    ///     public key, so any machine can verify it later without the key and without a private key file.
+    /// </summary>
+    public const string WebAuthnAlgorithmId = "webauthn-es256-v1";
 
     /// <summary>Bumped when the canonical projection changes, so an old signature is refused instead of
     /// silently verifying a different set of fields.</summary>
@@ -40,6 +49,26 @@ public sealed record ConfigSignatureDocument
 
     [JsonPropertyName("signedAtUtc")]
     public DateTimeOffset SignedAtUtc { get; init; } = DateTimeOffset.UtcNow;
+
+    // WebAuthn fields. Only meaningful for WebAuthnAlgorithmId; they stay null for a local ECDSA signature.
+    [JsonPropertyName("credentialId")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CredentialId { get; init; }
+
+    [JsonPropertyName("clientDataJson")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ClientDataJson { get; init; }
+
+    [JsonPropertyName("authenticatorData")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AuthenticatorData { get; init; }
+
+    [JsonPropertyName("origin")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Origin { get; init; }
+
+    [JsonPropertyName("signCount")]
+    public uint SignCount { get; init; }
 
     /// <summary>Free-form host label, so an operator can tell which trusted device signed this.</summary>
     [JsonPropertyName("signerLabel")]
@@ -122,12 +151,78 @@ public static class ConfigSignature
         return Convert.ToHexString(hash)[..32];
     }
 
+    /// <summary>
+    ///     The deterministic challenge a security-key signature must cover. Domain separated so an assertion
+    ///     produced for a configuration digest can never be replayed as a verification prompt, and vice versa.
+    /// </summary>
+    public static string CreateConfigChallenge(ReadOnlySpan<byte> digest)
+    {
+        var prefix = Encoding.UTF8.GetBytes("VeriRandom/ConfigSignature/webauthn-v1\0");
+        var buffer = new byte[prefix.Length + digest.Length];
+        Buffer.BlockCopy(prefix, 0, buffer, 0, prefix.Length);
+        digest.CopyTo(buffer.AsSpan(prefix.Length));
+        try
+        {
+            return Base64Url.Encode(SHA256.HashData(buffer));
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(buffer);
+        }
+    }
+
+    /// <summary>
+    ///     Verifies a document produced by <c>webauthn-es256-v1</c>. The signed challenge binds the configuration
+    ///     digest, so a signature from one configuration cannot be moved to another; the origin must still be a
+    ///     loopback page, which is the only place this app ever runs a ceremony.
+    /// </summary>
+    public static bool VerifyWebAuthn(ConfigSignatureDocument document, ReadOnlySpan<byte> digest)
+    {
+        if (document.Algorithm != ConfigSignatureDocument.WebAuthnAlgorithmId
+            || !WebAuthnOriginPolicy.IsLoopback(document.Origin)
+            || string.IsNullOrWhiteSpace(document.ClientDataJson)
+            || string.IsNullOrWhiteSpace(document.AuthenticatorData)
+            || string.IsNullOrWhiteSpace(document.Signature)
+            || string.IsNullOrWhiteSpace(document.PublicKey))
+            return false;
+
+        if (!Base64Url.TryDecode(document.ClientDataJson, out var clientDataJson)
+            || !Base64Url.TryDecode(document.AuthenticatorData, out var authenticatorData)
+            || !Base64Url.TryDecode(document.Signature, out var signature)
+            || !Base64Url.TryDecode(document.PublicKey, out var publicKeyCose))
+            return false;
+
+        // storedSignCount: 0 on purpose — this document is the only assertion we hold, so there is no previous
+        // counter to compare against, and the one-time challenge is what proves freshness here.
+        var verification = WebAuthnVerifier.VerifyAssertion(
+            clientDataJson,
+            authenticatorData,
+            signature,
+            publicKeyCose,
+            0,
+            CreateConfigChallenge(digest),
+            document.Origin!,
+            Fido2BrowserTransportRelyingPartyId);
+        return verification.Success;
+    }
+
+    /// <summary>
+    ///     The relying-party id the app's browser ceremony runs under. Kept as a constant here so a verifier can
+    ///     check a document without depending on the app layer.
+    /// </summary>
+    public const string Fido2BrowserTransportRelyingPartyId = "localhost";
+
     /// <summary>Validates a deployed document without deciding anything about the covered settings.</summary>
     public static bool IsDocumentWellFormed(ConfigSignatureDocument document) =>
         document.FormatVersion == ConfigSignatureDocument.CurrentFormatVersion
-        && string.Equals(document.Algorithm, ConfigSignatureDocument.AlgorithmId, StringComparison.Ordinal)
         && !string.IsNullOrWhiteSpace(document.Scope)
         && !string.IsNullOrWhiteSpace(document.PublicKey)
         && !string.IsNullOrWhiteSpace(document.Digest)
-        && !string.IsNullOrWhiteSpace(document.Signature);
+        && !string.IsNullOrWhiteSpace(document.Signature)
+        && (string.Equals(document.Algorithm, ConfigSignatureDocument.AlgorithmId, StringComparison.Ordinal)
+            || (string.Equals(document.Algorithm, ConfigSignatureDocument.WebAuthnAlgorithmId, StringComparison.Ordinal)
+                && !string.IsNullOrWhiteSpace(document.CredentialId)
+                && !string.IsNullOrWhiteSpace(document.ClientDataJson)
+                && !string.IsNullOrWhiteSpace(document.AuthenticatorData)
+                && !string.IsNullOrWhiteSpace(document.Origin)));
 }

@@ -8,7 +8,8 @@ internal static class SecurityVerificationEligibility
         SecurityVerificationRequest request,
         string? password,
         string? totpCode,
-        bool usbPresent)
+        bool usbPresent,
+        bool fido2Asserted = false)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -20,6 +21,7 @@ internal static class SecurityVerificationEligibility
             SecurityFactor.Password => !string.IsNullOrEmpty(password),
             SecurityFactor.Totp => IsCompleteTotpCode(totpCode),
             SecurityFactor.Usb => usbPresent,
+            SecurityFactor.Fido2 => fido2Asserted,
             _ => false
         });
 

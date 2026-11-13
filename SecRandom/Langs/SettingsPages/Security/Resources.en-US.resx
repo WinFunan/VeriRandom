@@ -600,4 +600,79 @@ The app will restart automatically in a few seconds</value>
   <data name="M_StrengthHint_Variety" xml:space="preserve">
     <value>Mix cases, digits and symbols, or make it longer</value>
   </data>
+  <data name="S_Fido2" xml:space="preserve">
+    <value>Security key</value>
+  </data>
+  <data name="S_Fido2_D" xml:space="preserve">
+    <value>Verify with a FIDO2 security key such as a YubiKey; enrolment and verification run in the system browser, the key itself is never exported and only its public key and signature counter are stored on this machine</value>
+  </data>
+  <data name="C_Fido2_Register" xml:space="preserve">
+    <value>Enrol security key</value>
+  </data>
+  <data name="C_Fido2_Remove" xml:space="preserve">
+    <value>Remove selected</value>
+  </data>
+  <data name="C_Fido2_None" xml:space="preserve">
+    <value>No security key enrolled yet</value>
+  </data>
+  <data name="C_Fido2_KeyList" xml:space="preserve">
+    <value>Enrolled security keys</value>
+  </data>
+  <data name="C_UseSecurityKey" xml:space="preserve">
+    <value>Use security key</value>
+  </data>
+  <data name="M_Fido2Registered" xml:space="preserve">
+    <value>Security key enrolled</value>
+  </data>
+  <data name="M_Fido2RegisterFailed" xml:space="preserve">
+    <value>Enrolment failed: {0}</value>
+  </data>
+  <data name="M_Fido2Removed" xml:space="preserve">
+    <value>Security key removed</value>
+  </data>
+  <data name="M_Fido2NotVerified" xml:space="preserve">
+    <value>Not verified yet</value>
+  </data>
+  <data name="M_Fido2Waiting" xml:space="preserve">
+    <value>Complete the security key prompt in your browser</value>
+  </data>
+  <data name="M_Fido2Verified" xml:space="preserve">
+    <value>Security key verified</value>
+  </data>
+  <data name="M_Fido2NotEnrolled" xml:space="preserve">
+    <value>No security key is enrolled on this machine</value>
+  </data>
+  <data name="M_Fido2Cancelled" xml:space="preserve">
+    <value>Security key operation cancelled</value>
+  </data>
+  <data name="M_Fido2TimedOut" xml:space="preserve">
+    <value>Timed out waiting for the security key</value>
+  </data>
+  <data name="M_Fido2CloneSuspected" xml:space="preserve">
+    <value>This key's signature counter did not advance, so it may have been cloned; verification was refused</value>
+  </data>
+  <data name="M_Fido2Unavailable" xml:space="preserve">
+    <value>Could not open the system browser for the security key operation</value>
+  </data>
+  <data name="M_Fido2Failed" xml:space="preserve">
+    <value>Security key verification failed</value>
+  </data>
+  <data name="C_SignedPolicy_SignWithKey" xml:space="preserve">
+    <value>Sign with security key</value>
+  </data>
+  <data name="C_SignedPolicy_KeyCredential" xml:space="preserve">
+    <value>Signing security key</value>
+  </data>
+  <data name="C_SignedPolicy_KeySignHint" xml:space="preserve">
+    <value>The private key does not need to exist on this machine: plug in an enrolled key and it signs the configuration digest directly</value>
+  </data>
+  <data name="M_SignedPolicy_KeySigned" xml:space="preserve">
+    <value>Detached configuration signed with the security key: {0}</value>
+  </data>
+  <data name="M_SignedPolicy_KeySignFailed" xml:space="preserve">
+    <value>Signing with the security key failed: {0}</value>
+  </data>
+  <data name="M_Fido2DefaultLabel" xml:space="preserve">
+    <value>Security key {0}</value>
+  </data>
 </root>

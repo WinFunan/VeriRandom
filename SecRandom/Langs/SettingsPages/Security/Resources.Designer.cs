@@ -160,5 +160,31 @@ namespace SecRandom.Langs.SettingsPages.Security {
                 return ResourceManager.GetString("S_Verification_UsbBinding_D", resourceCulture);
             }
         }
+
+        public static string S_Fido2 => ResourceManager.GetString("S_Fido2", resourceCulture);
+        public static string M_Fido2DefaultLabel => ResourceManager.GetString("M_Fido2DefaultLabel", resourceCulture);
+        public static string S_Fido2_D => ResourceManager.GetString("S_Fido2_D", resourceCulture);
+        public static string C_Fido2_Register => ResourceManager.GetString("C_Fido2_Register", resourceCulture);
+        public static string C_Fido2_Remove => ResourceManager.GetString("C_Fido2_Remove", resourceCulture);
+        public static string C_Fido2_None => ResourceManager.GetString("C_Fido2_None", resourceCulture);
+        public static string C_Fido2_KeyList => ResourceManager.GetString("C_Fido2_KeyList", resourceCulture);
+        public static string C_UseSecurityKey => ResourceManager.GetString("C_UseSecurityKey", resourceCulture);
+        public static string M_Fido2Registered => ResourceManager.GetString("M_Fido2Registered", resourceCulture);
+        public static string M_Fido2RegisterFailed => ResourceManager.GetString("M_Fido2RegisterFailed", resourceCulture);
+        public static string M_Fido2Removed => ResourceManager.GetString("M_Fido2Removed", resourceCulture);
+        public static string M_Fido2NotVerified => ResourceManager.GetString("M_Fido2NotVerified", resourceCulture);
+        public static string M_Fido2Waiting => ResourceManager.GetString("M_Fido2Waiting", resourceCulture);
+        public static string M_Fido2Verified => ResourceManager.GetString("M_Fido2Verified", resourceCulture);
+        public static string M_Fido2NotEnrolled => ResourceManager.GetString("M_Fido2NotEnrolled", resourceCulture);
+        public static string M_Fido2Cancelled => ResourceManager.GetString("M_Fido2Cancelled", resourceCulture);
+        public static string M_Fido2TimedOut => ResourceManager.GetString("M_Fido2TimedOut", resourceCulture);
+        public static string M_Fido2CloneSuspected => ResourceManager.GetString("M_Fido2CloneSuspected", resourceCulture);
+        public static string M_Fido2Unavailable => ResourceManager.GetString("M_Fido2Unavailable", resourceCulture);
+        public static string M_Fido2Failed => ResourceManager.GetString("M_Fido2Failed", resourceCulture);
+        public static string C_SignedPolicy_SignWithKey => ResourceManager.GetString("C_SignedPolicy_SignWithKey", resourceCulture);
+        public static string C_SignedPolicy_KeyCredential => ResourceManager.GetString("C_SignedPolicy_KeyCredential", resourceCulture);
+        public static string C_SignedPolicy_KeySignHint => ResourceManager.GetString("C_SignedPolicy_KeySignHint", resourceCulture);
+        public static string M_SignedPolicy_KeySigned => ResourceManager.GetString("M_SignedPolicy_KeySigned", resourceCulture);
+        public static string M_SignedPolicy_KeySignFailed => ResourceManager.GetString("M_SignedPolicy_KeySignFailed", resourceCulture);
     }
 }

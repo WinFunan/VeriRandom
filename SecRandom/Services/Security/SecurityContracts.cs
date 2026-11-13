@@ -29,14 +29,28 @@ public sealed record SecurityVerificationRequest(
     bool RequireAllSelectedFactors,
     TimeSpan? LockoutRemaining,
     bool AllowPreview = false,
-    bool TotpStandaloneReady = true);
+    bool TotpStandaloneReady = true,
+    string? Fido2Challenge = null);
+
+/// <summary>
+///     一次安全密钥断言的原始结果，由对话框在浏览器里完成登记/断言后带回。
+///     <see cref="SecurityService" /> 只验证它，不再触发第二次浏览器操作——验证必须可重入、可测试，
+///     而且同一个 challenge 只能被使用一次。
+/// </summary>
+public sealed record Fido2AssertionProof(
+    string CredentialId,
+    string ClientDataJson,
+    string AuthenticatorData,
+    string Signature,
+    string Origin);
 
 public sealed record SecurityVerificationResponse(
     string Password,
     string TotpCode,
     bool UsbPresent,
     bool Cancelled = false,
-    bool PreviewRequested = false);
+    bool PreviewRequested = false,
+    Fido2AssertionProof? Fido2 = null);
 
 public sealed record SecurityVerificationResult(
     bool IsAuthorized,
@@ -56,13 +70,15 @@ public sealed record SecuritySettingsUiState(
     bool CanConfigureAdditionalFactors,
     bool CanEditFactorSelection,
     bool CanEditProtectedOperations,
-    TimeSpan? LockoutRemaining);
+    TimeSpan? LockoutRemaining,
+    bool HasFido2Key = false);
 
 public enum SecurityFactor
 {
     Password,
     Totp,
-    Usb
+    Usb,
+    Fido2
 }
 
 public interface ISecurityVerificationPrompt

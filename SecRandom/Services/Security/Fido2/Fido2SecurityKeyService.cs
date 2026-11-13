@@ -42,7 +42,9 @@ public sealed record Fido2AssertionOutcome(
     WebAuthnFailure Failure,
     bool CloneSuspected,
     uint SignCount,
-    string? Detail);
+    string? Detail,
+    Fido2AssertionProof? Proof = null,
+    string? Origin = null);
 
 /// <summary>
 ///     The one entry point for hardware security keys. It owns enrollment, assertion and removal, and it is the
@@ -184,9 +186,28 @@ public sealed class Fido2SecurityKeyService(
     ///     signal a caller must treat as a hard refusal: the key presented a counter that did not advance, which is
     ///     what a copied authenticator looks like.
     /// </summary>
-    public async Task<Fido2AssertionOutcome> AssertAsync(
+    public Task<Fido2AssertionOutcome> AssertAsync(
         string? idOrCredentialId = null,
+        CancellationToken cancellationToken = default) =>
+        AssertCoreAsync(idOrCredentialId, WebAuthnOptionsBuilder.CreateChallenge(), cancellationToken);
+
+    /// <summary>
+    ///     用调用方给定的 challenge 断言。分离配置签名必须走这条重载：签名要覆盖的是配置摘要，
+    ///     而摘要只能通过一个确定的 challenge 绑进断言里。
+    /// </summary>
+    public Task<Fido2AssertionOutcome> AssertAsync(
+        string? idOrCredentialId,
+        string challenge,
         CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(challenge);
+        return AssertCoreAsync(idOrCredentialId, challenge, cancellationToken);
+    }
+
+    private async Task<Fido2AssertionOutcome> AssertCoreAsync(
+        string? idOrCredentialId,
+        string challenge,
+        CancellationToken cancellationToken)
     {
         if (!IsSupported)
             return new Fido2AssertionOutcome(Fido2OperationStatus.Unsupported, WebAuthnFailure.None, false, 0,
@@ -202,7 +223,6 @@ public sealed class Fido2SecurityKeyService(
         await _ceremonyGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var challenge = WebAuthnOptionsBuilder.CreateChallenge();
             var options = WebAuthnOptionsBuilder.BuildRequestOptions(
                 challenge,
                 RelyingPartyId,
@@ -246,8 +266,19 @@ public sealed class Fido2SecurityKeyService(
             if (verification.SignCount > record.SignCount || verification.UserVerified != record.UserVerified)
                 store.RecordAssertion(record.Id, verification.SignCount, verification.UserVerified);
 
-            return new Fido2AssertionOutcome(Fido2OperationStatus.Succeeded, WebAuthnFailure.None, false,
-                verification.SignCount, null);
+            return new Fido2AssertionOutcome(
+                Fido2OperationStatus.Succeeded,
+                WebAuthnFailure.None,
+                false,
+                verification.SignCount,
+                null,
+                new Fido2AssertionProof(
+                    record.CredentialId,
+                    response.ClientDataJson!,
+                    response.AuthenticatorData!,
+                    response.Signature!,
+                    response.Origin),
+                response.Origin);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

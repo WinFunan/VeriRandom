@@ -5,8 +5,14 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Security.Fido2;
 using SecRandom.Services.Security;
+using SecRandom.Services.Security.Fido2;
+using System.Buffers.Binary;
+using System.Formats.Cbor;
 using System.Reflection;
+using System.Text;
+using System.Text.Json;
 using System.Security.Cryptography;
 
 namespace SecRandom.Core.Tests;
@@ -1020,6 +1026,161 @@ public sealed class SecurityServiceTests : IDisposable
         return CreateFixtureCore(response, null, timeProvider);
     }
 
+    [Fact]
+    public async Task Fido2Factor_AuthorizesWithTheKeyAloneInAnyFactorMode()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        using var key = RSA.Create(2048);
+        var credentialId = RandomNumberGenerator.GetBytes(32);
+        fixture.Fido2Store.AddOrReplace(CreateFido2Record(key, credentialId));
+
+        fixture.SecuritySettings.Fido2Enabled = true;
+        fixture.SecuritySettings.RequireAllSelectedFactors = false;
+        fixture.SecuritySettings.ProtectOpenSettings = true;
+        fixture.SecuritySettings.SecurityEnabled = true;
+
+        fixture.Prompt.ResponseFactory = request => new SecurityVerificationResponse(
+            string.Empty,
+            string.Empty,
+            UsbPresent: false,
+            Fido2: CreateFido2Proof(key, credentialId, request.Fido2Challenge!));
+
+        var authorized = await fixture.Service.AuthorizeAsync(
+            SecurityOperation.OpenSettings,
+            () => Task.CompletedTask,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(authorized);
+        Assert.Contains(SecurityFactor.Fido2, fixture.Prompt.Requests[^1].RequiredFactors);
+        Assert.False(string.IsNullOrEmpty(fixture.Prompt.Requests[^1].Fido2Challenge));
+    }
+
+    [Fact]
+    public async Task Fido2Factor_RejectsAnAssertionForAnotherChallenge()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        using var key = RSA.Create(2048);
+        var credentialId = RandomNumberGenerator.GetBytes(32);
+        fixture.Fido2Store.AddOrReplace(CreateFido2Record(key, credentialId));
+
+        fixture.SecuritySettings.Fido2Enabled = true;
+        fixture.SecuritySettings.RequireAllSelectedFactors = false;
+        fixture.SecuritySettings.ProtectOpenSettings = true;
+        fixture.SecuritySettings.SecurityEnabled = true;
+
+        // The proof answers the previous ceremony's challenge instead of the one just issued.
+        var staleChallenge = WebAuthnOptionsBuilder.CreateChallenge();
+        fixture.Prompt.ResponseFactory = _ => new SecurityVerificationResponse(
+            string.Empty,
+            string.Empty,
+            UsbPresent: false,
+            Fido2: CreateFido2Proof(key, credentialId, staleChallenge));
+
+        var authorized = await fixture.Service.AuthorizeAsync(
+            SecurityOperation.OpenSettings,
+            () => Task.CompletedTask,
+            TestContext.Current.CancellationToken);
+
+        Assert.False(authorized);
+    }
+
+    [Fact]
+    public async Task Fido2Factor_CannotReuseOneProofForTwoVerifications()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        using var key = RSA.Create(2048);
+        var credentialId = RandomNumberGenerator.GetBytes(32);
+        fixture.Fido2Store.AddOrReplace(CreateFido2Record(key, credentialId));
+
+        fixture.SecuritySettings.Fido2Enabled = true;
+        fixture.SecuritySettings.RequireAllSelectedFactors = false;
+        fixture.SecuritySettings.ProtectOpenSettings = true;
+        fixture.SecuritySettings.SecurityEnabled = true;
+
+        Fido2AssertionProof? firstProof = null;
+        fixture.Prompt.ResponseFactory = request =>
+        {
+            if (firstProof is null)
+            {
+                firstProof = CreateFido2Proof(key, credentialId, request.Fido2Challenge!);
+                return new SecurityVerificationResponse(string.Empty, string.Empty, UsbPresent: false, Fido2: firstProof);
+            }
+
+            return new SecurityVerificationResponse(string.Empty, string.Empty, UsbPresent: false, Fido2: firstProof);
+        };
+
+        var first = await fixture.Service.AuthorizeAsync(
+            SecurityOperation.OpenSettings, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+        var second = await fixture.Service.AuthorizeAsync(
+            SecurityOperation.OpenSettings, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+
+        Assert.True(first);
+        Assert.False(second);
+    }
+
+    private static Fido2CredentialRecord CreateFido2Record(RSA key, byte[] credentialId) => new()
+    {
+        Id = Guid.NewGuid().ToString("N"),
+        CredentialId = Base64Url.Encode(credentialId),
+        PublicKeyCose = Base64Url.Encode(CreateCoseRsaKey(key)),
+        Algorithm = -257,
+        SignCount = 0,
+        RpId = "localhost",
+        UserHandle = "dXNlcg",
+        Label = "test key",
+        Transports = ["usb"],
+        CreatedAtUtc = DateTimeOffset.UtcNow,
+        LastUsedAtUtc = DateTimeOffset.UtcNow
+    };
+
+    private static Fido2AssertionProof CreateFido2Proof(RSA key, byte[] credentialId, string challenge)
+    {
+        const string origin = "http://localhost:51234";
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            type = "webauthn.get",
+            challenge,
+            origin,
+            crossOrigin = false
+        });
+
+        using var stream = new MemoryStream();
+        stream.Write(SHA256.HashData(Encoding.UTF8.GetBytes("localhost")));
+        stream.WriteByte(0x01 | 0x04);
+        var counter = new byte[4];
+        BinaryPrimitives.WriteUInt32BigEndian(counter, 1);
+        stream.Write(counter);
+        var authenticatorData = stream.ToArray();
+
+        var signed = new byte[authenticatorData.Length + 32];
+        Buffer.BlockCopy(authenticatorData, 0, signed, 0, authenticatorData.Length);
+        Buffer.BlockCopy(SHA256.HashData(clientDataJson), 0, signed, authenticatorData.Length, 32);
+        var signature = key.SignData(signed, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+
+        return new Fido2AssertionProof(
+            Base64Url.Encode(credentialId),
+            Base64Url.Encode(clientDataJson),
+            Base64Url.Encode(authenticatorData),
+            Base64Url.Encode(signature),
+            origin);
+    }
+
+    private static byte[] CreateCoseRsaKey(RSA key)
+    {
+        var parameters = key.ExportParameters(false);
+        var writer = new CborWriter(CborConformanceMode.Lax);
+        writer.WriteStartMap(4);
+        writer.WriteInt32(1);
+        writer.WriteInt32(3);
+        writer.WriteInt32(3);
+        writer.WriteInt32(-257);
+        writer.WriteInt32(-1);
+        writer.WriteByteString(parameters.Modulus ?? []);
+        writer.WriteInt32(-2);
+        writer.WriteByteString(parameters.Exponent ?? []);
+        writer.WriteEndMap();
+        return writer.Encode();
+    }
     private SecurityFixture CreateFixtureCore(
         SecurityVerificationResponse response,
         ThrowOnNthCredentialWrite? writeFault,
@@ -1042,9 +1203,14 @@ public sealed class SecurityServiceTests : IDisposable
             credentialStore,
             NullLogger<SecuritySettingsStore>.Instance);
         var usbCatalog = new TestUsbDeviceCatalog(devices);
+        var fido2Store = new Fido2CredentialStore(NullLogger<Fido2CredentialStore>.Instance)
+        {
+            StorePathOverride = Path.Combine(credentialDirectory, "fido2-keys.json")
+        };
         var service = new SecurityService(
             securitySettings,
             credentialStore,
+            fido2Store,
             prompt,
             usbCatalog,
             NullLogger<SecurityService>.Instance,
@@ -1058,6 +1224,7 @@ public sealed class SecurityServiceTests : IDisposable
             prompt,
             usbCatalog,
             credentialStore,
+            fido2Store,
             credentialDirectory);
     }
 
@@ -1120,6 +1287,7 @@ public sealed class SecurityServiceTests : IDisposable
         ScriptedPrompt Prompt,
         TestUsbDeviceCatalog UsbCatalog,
         SecurityCredentialStore CredentialStore,
+        Fido2CredentialStore Fido2Store,
         string CredentialDirectory)
     {
         public SecuritySettingsConfig SecuritySettings => Store.Data;
@@ -1142,6 +1310,9 @@ public sealed class SecurityServiceTests : IDisposable
         /// <summary>测试可以在同一个 fixture 上替换下一次提示会提交的输入。</summary>
         public SecurityVerificationResponse Response { get; set; } = response;
 
+        /// <summary>When set, builds the response from the issued request (needed to answer a FIDO2 challenge).</summary>
+        public Func<SecurityVerificationRequest, SecurityVerificationResponse>? ResponseFactory { get; set; }
+
         public Task<SecurityVerificationResult> RequestAsync(
             TopLevel xamlRoot,
             SecurityVerificationRequest request,
@@ -1149,7 +1320,7 @@ public sealed class SecurityServiceTests : IDisposable
             CancellationToken cancellationToken = default)
         {
             Requests.Add(request);
-            return verify(Response, cancellationToken);
+            return verify(ResponseFactory?.Invoke(request) ?? Response, cancellationToken);
         }
     }
 

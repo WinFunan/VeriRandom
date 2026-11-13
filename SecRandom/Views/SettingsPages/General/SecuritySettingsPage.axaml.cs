@@ -21,6 +21,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Security;
 using SecRandom.Models;
 using SecRandom.Services.Security;
+using SecRandom.Services.Security.Fido2;
 using SecRandom.ViewModels;
 using SR = SecRandom.Langs.SettingsPages.Security.Resources;
 
@@ -36,6 +37,9 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     /// </summary>
     private readonly ConfigPolicySignatureService _configPolicySignatureService =
         IAppHost.GetService<ConfigPolicySignatureService>();
+
+    private readonly Fido2SecurityKeyService? _fido2Service =
+        IAppHost.TryGetService<Fido2SecurityKeyService>();
     private bool _refreshing;
     private bool _isSettingsSubscribed;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
@@ -48,7 +52,8 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         [
             new(SR.S_Password, () => Settings.PasswordEnabled, value => Settings.PasswordEnabled = value),
             new(SR.S_Totp, () => Settings.TotpEnabled, value => Settings.TotpEnabled = value),
-            new(SR.S_Usb, () => Settings.UsbBindingEnabled, value => Settings.UsbBindingEnabled = value)
+            new(SR.S_Usb, () => Settings.UsbBindingEnabled, value => Settings.UsbBindingEnabled = value),
+            new(SR.S_Fido2, () => Settings.Fido2Enabled, value => Settings.Fido2Enabled = value)
         ];
         SelectedFactorOptions =
             new AvaloniaList<MultiSelectSettingOption>(FactorOptions.Where(option => option.IsSelected));
@@ -88,6 +93,36 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     public SettingOption<ConfigIntegrityMode>? SelectedSignedPolicyModeOption { get; private set; }
     public string SignedPolicyFingerprint { get; private set; } = string.Empty;
     public string SignedPolicyStatus { get; private set; } = string.Empty;
+
+    public AvaloniaList<Fido2KeyOption> Fido2Keys { get; } = [];
+    public bool HasFido2Keys => Fido2Keys.Count > 0;
+
+    public Fido2KeyOption? SelectedFido2Key
+    {
+        get => _selectedFido2Key;
+        set
+        {
+            if (ReferenceEquals(_selectedFido2Key, value))
+                return;
+            _selectedFido2Key = value;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedFido2Key)));
+        }
+    }
+
+    public Fido2KeyOption? SelectedSigningKey
+    {
+        get => _selectedSigningKey;
+        set
+        {
+            if (ReferenceEquals(_selectedSigningKey, value))
+                return;
+            _selectedSigningKey = value;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSigningKey)));
+        }
+    }
+
+    private Fido2KeyOption? _selectedFido2Key;
+    private Fido2KeyOption? _selectedSigningKey;
     public bool IsAutoRestoreSelected => Settings.SettingsIntegrityAction == SettingsIntegrityAction.AutoRestore;
     public bool CanEnableSecurity { get; private set; }
     public bool IsSecurityEnabled { get; private set; }
@@ -204,6 +239,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             SelectedSignedPolicyModeOption = SignedPolicyModeOptions
                 .FirstOrDefault(option => option.Value == Settings.ConfigIntegrityMode) ?? SignedPolicyModeOptions[0];
             RefreshSignedPolicyPresentation();
+            RefreshFido2Keys();
             SynchronizeSelectedFactorOptions();
         }
         finally
@@ -219,7 +255,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
                           nameof(SelectedIntegrityActionOption), nameof(SelectedIntegrityRestoreSourceOption),
                           nameof(IsAutoRestoreSelected),
                           nameof(SelectedSignedPolicyModeOption), nameof(SignedPolicyFingerprint),
-                          nameof(SignedPolicyStatus)
+                          nameof(SignedPolicyStatus), nameof(HasFido2Keys), nameof(SelectedFido2Key), nameof(SelectedSigningKey)
                      })
                 NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
@@ -370,6 +406,127 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             return;
 
         SignedPolicyPrivateKeyBox.Text = string.Empty;
+        RefreshSecurityState();
+    }
+
+    private void RefreshFido2Keys()
+    {
+        var previous = SelectedFido2Key?.Id;
+        var previousSigning = SelectedSigningKey?.Id;
+        Fido2Keys.Clear();
+        foreach (var credential in _fido2Service?.ListCredentials() ?? [])
+        {
+            var algorithm = credential.Algorithm switch
+            {
+                -7 => "ES256",
+                -257 => "RS256",
+                _ => $"alg {credential.Algorithm}"
+            };
+            Fido2Keys.Add(new Fido2KeyOption(
+                credential.Id,
+                $"{credential.Label} · {algorithm} · {credential.CreatedAtUtc.ToLocalTime():yyyy-MM-dd}"));
+        }
+
+        _selectedFido2Key = Fido2Keys.FirstOrDefault(key => key.Id == previous) ?? Fido2Keys.FirstOrDefault();
+        _selectedSigningKey = Fido2Keys.FirstOrDefault(key => key.Id == previousSigning) ?? Fido2Keys.FirstOrDefault();
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasFido2Keys)));
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedFido2Key)));
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSigningKey)));
+    }
+
+    private async void Fido2Register_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_fido2Service is null)
+            return;
+
+        var label = string.Format(SR.M_Fido2DefaultLabel, Fido2Keys.Count + 1);
+        Fido2RegistrationOutcome? outcome = null;
+        var authorized = await _securityService.AuthorizeAsync(
+            SecurityOperation.ChangeSecuritySettings,
+            async () => outcome = await _fido2Service.RegisterAsync(label));
+        if (!authorized || outcome is null)
+            return;
+
+        switch (outcome.Status)
+        {
+            case Fido2OperationStatus.Succeeded:
+                this.ShowSuccessToast(SR.M_Fido2Registered);
+                break;
+            case Fido2OperationStatus.Cancelled:
+                this.ShowWarningToast(SR.M_Fido2Cancelled);
+                break;
+            case Fido2OperationStatus.TimedOut:
+                this.ShowWarningToast(SR.M_Fido2TimedOut);
+                break;
+            case Fido2OperationStatus.BrowserFailed:
+                this.ShowErrorToast(SR.M_Fido2Unavailable);
+                break;
+            default:
+                this.ShowErrorToast(string.Format(SR.M_Fido2RegisterFailed, outcome.Detail ?? outcome.Status.ToString()));
+                break;
+        }
+
+        RefreshSecurityState();
+    }
+
+    private async void Fido2Remove_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_fido2Service is null || SelectedFido2Key is not { } selected)
+        {
+            this.ShowWarningToast(SR.C_Fido2_None);
+            return;
+        }
+
+        var authorized = await _securityService.AuthorizeAsync(
+            SecurityOperation.ChangeSecuritySettings,
+            () =>
+            {
+                _fido2Service.Remove(selected.Id);
+                if (_fido2Service.ListCredentials().Count == 0)
+                {
+                    // No key left: leaving the factor switched on would show a factor that can never pass.
+                    Settings.Fido2Enabled = false;
+                    SettingsStore.Save();
+                }
+                return Task.CompletedTask;
+            });
+        if (!authorized)
+            return;
+
+        this.ShowSuccessToast(SR.M_Fido2Removed);
+        RefreshSecurityState();
+    }
+
+    /// <summary>
+    ///     与私钥签发同一条授权链路，但本机不需要任何私钥：安全密钥直接对配置摘要签名，
+    ///     所以在不受信任的机器上也能当地签发分离配置。
+    /// </summary>
+    private async void SignedPolicySignWithKey_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedSigningKey is not { } selected)
+        {
+            this.ShowWarningToast(SR.C_Fido2_None);
+            return;
+        }
+
+        var signerLabel = SignedPolicySignerBox.Text;
+        var authorized = await _securityService.AuthorizeAsync(
+            SecurityOperation.ChangeSecuritySettings,
+            async () =>
+            {
+                try
+                {
+                    var path = await _configPolicySignatureService.SignWithSecurityKeyAsync(selected.Id, signerLabel);
+                    this.ShowSuccessToast(string.Format(SR.M_SignedPolicy_KeySigned, path));
+                }
+                catch (Exception exception) when (exception is InvalidOperationException or FormatException or CryptographicException)
+                {
+                    this.ShowErrorToast(string.Format(SR.M_SignedPolicy_KeySignFailed, exception.Message));
+                }
+            });
+        if (!authorized)
+            return;
+
         RefreshSecurityState();
     }
 
@@ -652,4 +809,12 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
                 return false;
         }
     }
+}
+
+/// <summary>One row in the security page's enrolled-key list and signing picker.</summary>
+public sealed class Fido2KeyOption(string id, string display)
+{
+    public string Id { get; } = id;
+    public string Display { get; } = display;
+    public override string ToString() => Display;
 }

@@ -1,11 +1,14 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Security;
+using SecRandom.Services.Security.Fido2;
 using SecRandom.Shared;
 
 namespace SecRandom.Services.Security;
@@ -50,6 +53,8 @@ internal sealed class ConfigPolicySignatureService(
     MainConfigHandler configHandler,
     SecuritySettingsStore settingsStore,
     SecRandom.Core.Abstraction.Services.IProfileCatalogManager profileCatalogManager,
+    Fido2CredentialStore fido2Store,
+    Fido2SecurityKeyService fido2Keys,
     ILogger<ConfigPolicySignatureService> logger)
 {
     private EventHandler? _policyChanged;
@@ -147,7 +152,12 @@ internal sealed class ConfigPolicySignatureService(
 
         var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);
         var digest = ConfigPolicyDigest.Compute(configHandler.Data, settingsStore.Data, ComputeRosterDigest());
-        if (!ConfigSignature.Verify(digest, document.Signature, document.PublicKey))
+        // Both algorithms are accepted: a local key file and a security key are two ways to author the same
+        // detached document, and a draw machine must verify either one.
+        var verified = string.Equals(document.Algorithm, ConfigSignatureDocument.WebAuthnAlgorithmId, StringComparison.Ordinal)
+            ? ConfigSignature.VerifyWebAuthn(document, digest)
+            : ConfigSignature.Verify(digest, document.Signature, document.PublicKey);
+        if (!verified)
         {
             logger.LogWarning(
                 "The signed policy does not match this machine's settings. Signer={Signer}, Fingerprint={Fingerprint}",
@@ -201,6 +211,58 @@ internal sealed class ConfigPolicySignatureService(
         // 签发会改变指纹、签名者和签发时间，所以与设置保存走同一条通知。
         _policyChanged?.Invoke(this, EventArgs.Empty);
 
+        return path;
+    }
+
+    /// <summary>
+    ///     Signs the policy with an enrolled FIDO2 credential instead of a private key file. This is what makes a
+    ///     detached configuration issuable on a machine that is not trusted with the ECDSA private key: the user
+    ///     plugs the key in, the key signs the configuration digest through the browser ceremony, and the private
+    ///     key never exists on that machine at all.
+    /// </summary>
+    public async Task<string> SignWithSecurityKeyAsync(
+        string credentialId,
+        string? signerLabel,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(credentialId);
+
+        var record = fido2Store.Find(credentialId)
+                     ?? throw new InvalidOperationException("No enrolled FIDO2 credential matches that id.");
+
+        var digest = ConfigPolicyDigest.Compute(configHandler.Data, settingsStore.Data, ComputeRosterDigest());
+        var challenge = ConfigSignature.CreateConfigChallenge(digest);
+        var outcome = await fido2Keys.AssertAsync(record.Id, challenge, cancellationToken).ConfigureAwait(false);
+        if (outcome.Status != Fido2OperationStatus.Succeeded || outcome.Proof is not { } proof)
+            throw new InvalidOperationException(
+                $"The security key did not sign the policy ({outcome.Status}/{outcome.Failure}).");
+
+        var document = new ConfigSignatureDocument
+        {
+            Algorithm = ConfigSignatureDocument.WebAuthnAlgorithmId,
+            Scope = ConfigPolicyDigest.ScopeId,
+            PublicKey = record.PublicKeyCose,
+            Digest = Convert.ToBase64String(digest),
+            Signature = proof.Signature,
+            CredentialId = record.CredentialId,
+            ClientDataJson = proof.ClientDataJson,
+            AuthenticatorData = proof.AuthenticatorData,
+            Origin = proof.Origin,
+            SignCount = outcome.SignCount,
+            SignedAtUtc = DateTimeOffset.UtcNow,
+            SignerLabel = string.IsNullOrWhiteSpace(signerLabel) ? null : signerLabel.Trim()
+        };
+
+        var path = DocumentPath;
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var temporaryPath = path + $".{Guid.NewGuid():N}.tmp";
+        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(document, JsonOptions));
+        File.Move(temporaryPath, path, true);
+
+        logger.LogInformation(
+            "已用安全密钥签发配置策略。签名者={Signer}，凭据={Credential}，范围={Scope}",
+            document.SignerLabel, record.Id, document.Scope);
+        _policyChanged?.Invoke(this, EventArgs.Empty);
         return path;
     }
 

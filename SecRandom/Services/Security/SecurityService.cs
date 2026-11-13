@@ -11,7 +11,9 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Services.Security.Fido2;
 using SecRandom.Platforms.Abstractions;
+using SecRandom.Services.Security.Fido2;
 using IntegrityAction = SecRandom.Core.Enums.Configs.SettingsIntegrityAction;
 
 namespace SecRandom.Services.Security;
@@ -19,6 +21,7 @@ namespace SecRandom.Services.Security;
 internal sealed class SecurityService(
     SecuritySettingsStore settingsStore,
     SecurityCredentialStore credentialStore,
+    Fido2CredentialStore fido2Store,
     ISecurityVerificationPrompt prompt,
     IUsbDeviceCatalog usbDeviceCatalog,
     ILogger<SecurityService> logger,
@@ -40,6 +43,10 @@ internal sealed class SecurityService(
     // 放宽防护的改动不接受「打开设置」时那一次验证，必须有一次专门为它发生的密码验证；
     // 该验证之后同样按 SudoModeDurationSeconds 计时，避免连续调整时反复弹窗
     private DateTimeOffset? _protectionDowngradeAuthorizationUtc;
+
+    // 一次验证请求一个 challenge：对话框拿着它去浏览器里断言，VerifyAsync 只接受同一个值，
+    // 因此重放的断言无法冒充第二次验证（WebAuthn 的防重放就是靠这个一次性 challenge）。
+    private string? _pendingFido2Challenge;
 
     public event Action? SudoModeChanged;
 
@@ -68,7 +75,8 @@ internal sealed class SecurityService(
                 hasPassword,
                 hasPassword && remaining is null,
                 Settings.SecurityEnabled && hasPassword && remaining is null,
-                remaining);
+                remaining,
+                HasFido2Credentials());
         }
     }
 
@@ -152,12 +160,16 @@ internal sealed class SecurityService(
             }
 
             var metadata = credentialStore.LoadMetadata();
+            var factors = GetRequiredFactors(metadata);
+            var fido2Challenge = IssueFido2Challenge(factors);
             var request = new SecurityVerificationRequest(
-                GetRequiredFactors(metadata),
+                factors,
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(metadata.LockedUntilUtc),
-                TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null);
+                TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null,
+                Fido2Challenge: fido2Challenge);
             var result = await prompt.RequestAsync(VerificationRootWindow, request, VerifyAsync, cancellationToken);
+            ClearFido2Challenge();
             if (!result.IsAuthorized)
             {
                 logger.LogInformation("Security authorization rejected for {Operations}: {Failure}", string.Join(',', operations), result.Failure);
@@ -216,13 +228,17 @@ internal sealed class SecurityService(
             }
 
             var metadata = credentialStore.LoadMetadata();
+            var factors = GetRequiredFactors(metadata);
+            var fido2Challenge = IssueFido2Challenge(factors);
             var request = new SecurityVerificationRequest(
-                GetRequiredFactors(metadata),
+                factors,
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(metadata.LockedUntilUtc),
                 Settings.AllowSettingsPreview,
-                TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null);
+                TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null,
+                Fido2Challenge: fido2Challenge);
             var result = await prompt.RequestAsync(VerificationRootWindow, request, VerifyAsync, cancellationToken);
+            ClearFido2Challenge();
             if (result.Failure == SecurityVerificationFailure.PreviewRequested && request.AllowPreview)
             {
                 await previewAction();
@@ -320,6 +336,7 @@ internal sealed class SecurityService(
                             metadata.UsbBindings.Any(IsBindingPresent);
             // 「任意已选验证方式」模式下 TOTP 能单独通过，靠的是凭据文件旁的免密副本；该副本在本版默认保留，
             // 因此这条路径可用，代价是能读到该文件的人可以直接生成验证码（安全页会在启用时明确提示）
+            var fido2Passed = factors.Contains(SecurityFactor.Fido2) && VerifyFido2(response.Fido2);
             var totpPassed = false;
             if (GlobalConstants.AllowStandaloneTotpVerification
                 && factors.Contains(SecurityFactor.Totp)
@@ -327,7 +344,7 @@ internal sealed class SecurityService(
             {
                 totpPassed = TotpService.Verify(standaloneTotp, response.TotpCode, _timeProvider.GetUtcNow());
             }
-            if (!Settings.RequireAllSelectedFactors && (usbPassed || totpPassed))
+            if (!Settings.RequireAllSelectedFactors && (usbPassed || totpPassed || fido2Passed))
             {
                 metadata.FailedAttempts = 0;
                 metadata.LockedUntilUtc = null;
@@ -360,6 +377,7 @@ internal sealed class SecurityService(
                 {
                     SecurityFactor.Password => true,
                     SecurityFactor.Usb => usbPassed,
+                    SecurityFactor.Fido2 => fido2Passed,
                     _ => VerifyFactor(factor, credentials, response)
                 });
                 var isAuthorized = Settings.RequireAllSelectedFactors
@@ -912,6 +930,8 @@ internal sealed class SecurityService(
             factors.Add(SecurityFactor.Totp);
         if (Settings.UsbBindingEnabled && HasActiveUsbBindings(metadata.UsbBindings))
             factors.Add(SecurityFactor.Usb);
+        if (Settings.Fido2Enabled && HasFido2Credentials())
+            factors.Add(SecurityFactor.Fido2);
         return factors;
     }
 
@@ -924,11 +944,83 @@ internal sealed class SecurityService(
             factors.Add(SecurityFactor.Totp);
         if (Settings.UsbBindingEnabled && HasActiveUsbBindings(credentials.UsbBindings))
             factors.Add(SecurityFactor.Usb);
+        if (Settings.Fido2Enabled && HasFido2Credentials())
+            factors.Add(SecurityFactor.Fido2);
         return factors;
     }
 
     private static bool HasActiveUsbBindings(IEnumerable<UsbBindingCredential> bindings) =>
         bindings.Any(binding => !binding.MarkerCleanupPending);
+
+    private bool HasFido2Credentials() => fido2Store.List().Count > 0;
+
+    /// <summary>
+    ///     每次验证请求发一个一次性 challenge，并通过请求交给对话框。验证时只接受同一个值：
+    ///     WebAuthn 的防重放就靠它，重放旧断言不会通过第二次验证。
+    /// </summary>
+    private string? IssueFido2Challenge(List<SecurityFactor> factors)
+    {
+        var challenge = factors.Contains(SecurityFactor.Fido2)
+            ? WebAuthnOptionsBuilder.CreateChallenge()
+            : null;
+        lock (_gate)
+        {
+            _pendingFido2Challenge = challenge;
+        }
+
+        return challenge;
+    }
+
+    /// <summary>
+    ///     校验对话框带回的断言。这里不触发浏览器、不解锁凭据信封：公钥、签名计数都在独立文件里，
+    ///     所以安全密钥可以像 USB 一样在「任意已选验证方式」模式下单独通过。
+    /// </summary>
+    private bool VerifyFido2(Fido2AssertionProof? proof)
+    {
+        // The challenge stays valid until this prompt finishes (see ClearFido2Challenge), so a mistyped
+        // password inside the same dialog can be retried with the assertion already made. A new prompt
+        // always gets a new challenge, which is what stops replay across prompts.
+        string? challenge;
+        lock (_gate)
+        {
+            challenge = _pendingFido2Challenge;
+        }
+
+        if (string.IsNullOrEmpty(challenge) || proof is null || !WebAuthnOriginPolicy.IsLoopback(proof.Origin))
+            return false;
+
+        var record = fido2Store.Find(proof.CredentialId);
+        if (record is null)
+            return false;
+
+        if (!Base64Url.TryDecode(proof.ClientDataJson, out var clientDataJson) ||
+            !Base64Url.TryDecode(proof.AuthenticatorData, out var authenticatorData) ||
+            !Base64Url.TryDecode(proof.Signature, out var signature) ||
+            !Base64Url.TryDecode(record.PublicKeyCose, out var publicKeyCose))
+            return false;
+
+        var verification = WebAuthnVerifier.VerifyAssertion(
+            clientDataJson,
+            authenticatorData,
+            signature,
+            publicKeyCose,
+            (int)record.SignCount,
+            challenge,
+            proof.Origin,
+            Fido2BrowserTransport.RelyingPartyId);
+        if (!verification.Success)
+        {
+            if (verification.Failure == WebAuthnFailure.CounterRegression)
+                logger.LogError("FIDO2 安全密钥签名计数器未前进，疑似被复制：{Credential}", record.Id);
+            else
+                logger.LogWarning("FIDO2 验证失败：{Failure}", verification.Failure);
+            return false;
+        }
+
+        if (verification.SignCount > record.SignCount || verification.UserVerified != record.UserVerified)
+            fido2Store.RecordAssertion(record.Id, verification.SignCount, verification.UserVerified);
+        return true;
+    }
 
     private bool VerifyFactor(SecurityFactor factor, SecurityCredentials credentials, SecurityVerificationResponse response)
     {
@@ -938,6 +1030,14 @@ internal sealed class SecurityService(
             SecurityFactor.Usb => response.UsbPresent && credentials.UsbBindings.Any(IsBindingPresent),
             _ => false
         };
+    }
+
+    private void ClearFido2Challenge()
+    {
+        lock (_gate)
+        {
+            _pendingFido2Challenge = null;
+        }
     }
 
     private TimeSpan? GetLockoutRemaining(DateTimeOffset? lockedUntilUtc)
@@ -1095,6 +1195,7 @@ internal sealed class SecurityService(
         bool PasswordEnabled,
         bool TotpEnabled,
         bool UsbBindingEnabled,
+        bool Fido2Enabled,
         bool RequireAllSelectedFactors,
         bool AllowSettingsPreview,
         bool ProtectOpenSettings,
@@ -1121,6 +1222,7 @@ internal sealed class SecurityService(
             settings.PasswordEnabled,
             settings.TotpEnabled,
             settings.UsbBindingEnabled,
+            settings.Fido2Enabled,
             settings.RequireAllSelectedFactors,
             settings.AllowSettingsPreview,
             settings.ProtectOpenSettings,
@@ -1147,6 +1249,7 @@ internal sealed class SecurityService(
             settings.PasswordEnabled = PasswordEnabled;
             settings.TotpEnabled = TotpEnabled;
             settings.UsbBindingEnabled = UsbBindingEnabled;
+            settings.Fido2Enabled = Fido2Enabled;
             settings.RequireAllSelectedFactors = RequireAllSelectedFactors;
             settings.AllowSettingsPreview = AllowSettingsPreview;
             settings.ProtectOpenSettings = ProtectOpenSettings;
@@ -1178,6 +1281,7 @@ internal sealed class SecurityService(
             || Removed(PasswordEnabled, after.PasswordEnabled)
             || Removed(TotpEnabled, after.TotpEnabled)
             || Removed(UsbBindingEnabled, after.UsbBindingEnabled)
+            || Removed(Fido2Enabled, after.Fido2Enabled)
             || Removed(RequireAllSelectedFactors, after.RequireAllSelectedFactors)
             || Added(AllowSettingsPreview, after.AllowSettingsPreview)
             || Removed(SettingsIntegrityCheckEnabled, after.SettingsIntegrityCheckEnabled)
@@ -1210,6 +1314,7 @@ internal sealed class SecurityService(
             Settings.PasswordEnabled = false;
             Settings.TotpEnabled = false;
             Settings.UsbBindingEnabled = false;
+            Settings.Fido2Enabled = false;
         }
         else
         {
@@ -1219,6 +1324,8 @@ internal sealed class SecurityService(
                 Settings.TotpEnabled = false;
             if (!HasActiveUsbBindings(credentials.UsbBindings))
                 Settings.UsbBindingEnabled = false;
+            if (!HasFido2Credentials())
+                Settings.Fido2Enabled = false;
         }
 
         if (!GetRequiredFactors(credentials).Any())
@@ -1438,6 +1545,7 @@ internal sealed class SecurityService(
             Settings.PasswordEnabled = false;
             Settings.TotpEnabled = false;
             Settings.UsbBindingEnabled = false;
+            Settings.Fido2Enabled = false;
         }
         else
         {
@@ -1446,6 +1554,8 @@ internal sealed class SecurityService(
                 Settings.TotpEnabled = false;
             if (!HasActiveUsbBindings(metadata.UsbBindings))
                 Settings.UsbBindingEnabled = false;
+            if (!HasFido2Credentials())
+                Settings.Fido2Enabled = false;
         }
 
         if (!GetRequiredFactors(metadata).Any())

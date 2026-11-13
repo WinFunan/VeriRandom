@@ -9,6 +9,13 @@ public partial class SecuritySettingsConfig : ObservableObject
     [ObservableProperty] private bool _passwordEnabled = false;
     [ObservableProperty] private bool _totpEnabled = false;
     [ObservableProperty] private bool _usbBindingEnabled = false;
+
+    /// <summary>
+    ///     FIDO2 安全密钥因子。凭据单独存放在 <c>data/config/security/fido2-keys.json</c>，
+    ///     因此它和 TOTP/USB 一样：配置了主密码之后才能启用，登记由安全页触发。
+    /// </summary>
+    [ObservableProperty] private bool _fido2Enabled = false;
+
     [ObservableProperty] private bool _requireAllSelectedFactors;
     [ObservableProperty] private bool _allowSettingsPreview;
 
