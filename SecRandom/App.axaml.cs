@@ -93,6 +93,7 @@ using SecRandom.Services.Linkage;
 using SecRandom.Services.Music;
 using SecRandom.Services.Settings;
 using SecRandom.Services.Security;
+using SecRandom.Services.Security.Fido2;
 using SecRandom.Services.Telemetry;
 using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
@@ -1598,6 +1599,11 @@ public partial class App : Application
                 services.AddSingleton<SecuritySettingsStore>();
                 services.AddSingleton<SecurityCredentialStore>();
                 services.AddSingleton<IUsbDeviceCatalog, UsbDeviceCatalog>();
+                // 硬件安全密钥（FIDO2）：登记记录不放加密凭据信封，因为“只用安全密钥”的场景没有主密码
+                // 可以打开信封；断言走系统浏览器完成，验证逻辑本身留在 Core 里。
+                services.AddSingleton<Fido2CredentialStore>();
+                services.AddSingleton<Fido2BrowserTransport>();
+                services.AddSingleton<Fido2SecurityKeyService>();
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
                 services.AddSingleton<ISecurityService, SecurityService>();
                 services.AddSingleton(serviceProvider => new SettingsIntegrityService(

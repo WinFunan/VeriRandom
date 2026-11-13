@@ -1918,3 +1918,41 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 **根因**：`SecRandom/Services/Desktop/ProtocolActivation.cs` 的 `Validate` 把可用 scheme 写死成 `"secrandom"`。两个 scheme 的注册命令都是 `--url "%1"`，所以第二次启动能拿到 `verirandom://…` 参数，却被这个过滤器丢弃 → `startupProtocolUri` 为 null → 转交逻辑退化成「只请求显示已运行实例的主窗口」；管道不通时就会走 `MultiInstance_Unreachable` 提示。协议解析器（`ProtocolRequestParser`）本身早就接受两个 scheme，缺的只是启动阶段的这一处判断。
 
 **修复**：改用 `ProtocolRequestParser.IsSupportedScheme(uri.Scheme)`（主 scheme `verirandom` + 兼容 scheme `secrandom` 都接受），并在 `ProtocolActivationTests` 补两条 `verirandom://` 用例（`--url` 形式与直接传参形式）。这是本分支自有代码，`secrandom://` 的兼容行为不变。
+
+---
+
+## 68. 新增 FIDO2 硬件安全密钥能力（基础层，尚未接入验证因子）
+
+本分支新增"用安全密钥证明自己是同一个人"的完整能力，但**刻意不接入**任何界面或验证因子：具体在哪些操作上要求安全密钥仍未决定，所以本轮只交付可被后续因子直接调用的服务与可测试的校验内核。上游没有这一层，属于新增文件，合并上游时不会冲突，但必须保留。
+
+### 交付内容
+
+| 位置 | 作用 |
+|---|---|
+| `SecRandom.Core/Services/Security/Fido2/Base64Url.cs` | WebAuthn 的二进制字段一律是无填充 base64url；比较走解码后的字节，避免填充与 `+/` vs `-_` 差异造成误判 |
+| `SecRandom.Core/Services/Security/Fido2/WebAuthnContracts.cs` | 失败码枚举、登记/断言结果、凭据描述符 |
+| `SecRandom.Core/Services/Security/Fido2/WebAuthnClientData.cs` | 解析浏览器产出的 `clientDataJSON`，校验 type / challenge / origin / `crossOrigin` |
+| `SecRandom.Core/Services/Security/Fido2/AuthenticatorData.cs` | 解析 `authenticatorData`（rpIdHash、flags、signCount、attestedCredentialData、COSE 公钥） |
+| `SecRandom.Core/Services/Security/Fido2/CoseCredentialPublicKey.cs` | 解析 COSE_Key 并用 BCL 验签：ES256/384/512、RS256/384/512、PS256/384/512 |
+| `SecRandom.Core/Services/Security/Fido2/WebAuthnVerifier.cs` | 登记与断言的唯一判定入口；断言签名覆盖 `authData ‖ SHA256(clientDataJSON)`，签名计数器不前进判定为被复制 |
+| `SecRandom.Core/Services/Security/Fido2/WebAuthnOptionsBuilder.cs` | 生成 `navigator.credentials.create/get` 的选项 JSON（字段名按 WebAuthn 线格式直写，不依赖命名策略） |
+| `SecRandom/Services/Security/Fido2/Fido2CredentialStore.cs` | `data/config/security/fido2-keys.json`：原子替换 + 目录属主收紧；文件损坏时改名保留而不是覆盖 |
+| `SecRandom/Services/Security/Fido2/Fido2BrowserTransport.cs` | 回环 `HttpListener` + 系统浏览器页面，把浏览器当作 CTAP2 客户端；一次性会话 nonce、单次完成、CSP/no-store |
+| `SecRandom/Services/Security/Fido2/Fido2SecurityKeyService.cs` | `RegisterAsync` / `AssertAsync` / `Remove` / `ListCredentials`，会话串行化，结果映射到稳定状态码 |
+| SecRandom.Core/SecRandom.Core.csproj | 新增 System.Formats.Cbor 10.0.15：attestation/authData 与 COSE 公钥都是 CBOR；Core 本身被打包给插件作者，因此这是有意扩大的依赖面 |
+
+### 关键设计决定
+
+- **浏览器即 CTAP2 客户端**：不引入 USB/HID 原生依赖，Windows/Linux/macOS 同一套代码；页面本身不写说明文字（浏览器自己的安全密钥提示已本地化），因此本轮没有新增三语资源，界面上线时再补。
+- **RP ID 固定 `localhost`**：WebAuthn 不允许 IP 作为 RP ID，而 `localhost` 在所有浏览器里都是安全上下文。凭据因此绑定到本机的回环源，不能拿去别的 RP 重放。
+- **不校验 attestation**：`fmt` 任意接受、`attStmt` 忽略，只取真实公钥。目标只是"证明持有"而不是"只允许某厂商的密钥"；若未来要做密钥白名单，必须先在服务端/策略层定义信任根。
+- **EdDSA（COSE -8）明确拒绝**：BCL 在各目标框架上没有统一的 Ed25519 实现，宁可在登记时直接报 `UnsupportedAlgorithm`，也不能把它当作已校验。
+- **登记记录不进加密凭据信封**：信封只能用主密码打开，而"只用安全密钥"的场景没有主密码；公钥/计数器不是秘密。代价是能写该文件的人可以回退计数器（掩盖复制检测）或换掉公钥（造成拒绝服务，不构成绕过），与既有的锁定状态同一安全边界。
+- **计数器语义**：`stored > 0 && new > 0 && new <= stored` 判为 `CounterRegression`（`CloneSuspected`）；任一侧为 0 视为"该密钥没有计数器"，是 `CounterReset` 而不是错误。
+- **iOS 暂不支持**：`IsSupported` 在 iOS 返回 false；后续要么复用 `ASAuthorization`，要么由 head 注入原生 seam。
+
+### 验证
+
+`SecRandom.Core.Tests/WebAuthnVerifierTests.cs` 用合成认证器覆盖：登记成功、challenge/origin/rpId/UP 标志/不支持算法各自拒绝、断言成功、签名被篡改拒绝、计数器回退判为复制、零计数器不算复制、clientData 类型不符拒绝、RS256 全流程。`WebAuthnOptionsBuilderTests.cs` 固定线格式字段名与 base64url 形状。`Fido2CredentialStoreTests.cs` 固定持久化、按两种 id 查找、重登记不重复、计数器只增不减、损坏文件保留。
+
+本机 `ECDsa.Create(ECCurve)` 的 CNG 提供程序不可用（与既有 `ConfigSignatureTests` 同因），11 条 ES256 用例在本机 `Assert.Skip`，CI/正常 Windows 上会真实执行；RS256 用例在本机已通过。
