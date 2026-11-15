@@ -97,6 +97,11 @@ public partial class FloatingWindow : Window
         AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(PointerMovedEvent, OnPointerMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(PointerReleasedEvent, OnPointerReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
+        // Capture loss is not a release. Without this reset the window keeps believing a drag is running and
+        // silently swallows the next press — the "frozen until it is deactivated" symptom.
+        AddHandler(PointerCaptureLostEvent, OnPointerCaptureLost,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+        Deactivated += (_, _) => ResetGestureState();
         ViewModel.Config.FloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
         ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettings_OnPropertyChanged;
         _linkageService.StateChanged += LinkageServiceOnStateChanged;
@@ -773,15 +778,18 @@ public partial class FloatingWindow : Window
             Position.Y + height / 2,
             workingArea.Value.Y + height / 2,
             Math.Max(workingArea.Value.Y + height / 2, workingArea.Value.Bottom - height / 2));
-        Opacity = 0;
+        // 停靠/展开的过渡绝不能把**窗口本身**的 Opacity 写成 0：悬浮窗在 Windows 上是分层窗口
+        // （透明背景 + SizeToContent），整窗透明度归零会让它变成点击穿透，而且原生命中区域要等下一帧
+        // 呈现才会跟着尺寸更新——这正是"从缩边展开后点不动、失焦再回焦才恢复"的来源。
+        // 过渡只改内容的可见性与内容透明度，窗口始终保持呈现。
         _isDocked = true;
         ExpandedContent.IsVisible = false;
         DockButton.Opacity = 1;
         UpdateDockButton();
-        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+        await WaitForLayoutPassAsync();
         RepositionDockedWindow();
-        Opacity = 1;
         SavePosition();
+        ReassertNativeTopmost();
     }
 
     /// <summary>
@@ -842,9 +850,11 @@ public partial class FloatingWindow : Window
 
         // 无焦点模式下窗口不会被点击激活，Windows 也就不会在点击时把它抬回置顶窗口带的最上层，
         // 于是别的置顶窗口（任务栏、ClassIsland 主窗、其它常驻置顶工具）会一直压在它上面，
-        // 看起来就像"开了无焦点模式置顶就失效"。这里在按下时手动抬一次：既保留免激活，
-        // 又不丢置顶效果。
-        ReassertNativeTopmost();
+        // 看起来就像"开了无焦点模式置顶就失效"。这里在按下后补一次，但**必须延后**：
+        // 平台层的置顶走 SetWindowPos + SWP_FRAMECHANGED，在 WM_LBUTTONDOWN 里同步执行会让
+        // Windows 丢掉这次指针捕获，配套的 WM_LBUTTONUP 也就到不了，控件会一直停在按下状态，
+        // 直到窗口失活才被系统复位——这正是"点一下之后整个窗口像冻结"的来源。
+        Dispatcher.UIThread.Post(ReassertNativeTopmost, DispatcherPriority.Background);
 
         if (EffectiveFloatingWindowSettings.Draggable
             && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
@@ -995,6 +1005,34 @@ public partial class FloatingWindow : Window
             SavePosition();
     }
 
+    /// <summary>
+    ///     捕获丢失时把拖动状态机复位。Windows 会在原生调用（置顶的 <c>SetWindowPos</c>、窗口被移出屏幕、
+    ///     弹出系统菜单）之后收走捕获，而收走捕获**不会**再补一个 PointerReleased；不复位的话窗口会一直
+    ///     以为自己还在拖动，后续按下与移动都被吞掉，只有失活才由系统把输入状态清掉。
+    /// </summary>
+    private void OnPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e) => ResetGestureState();
+
+    private void ResetGestureState()
+    {
+        _isMovingDockHandle = false;
+        _isMovingWindow = false;
+        _isPendingWindowDrag = false;
+    }
+
+    /// <summary>
+    ///     等布局把 <see cref="Window.SizeToContent" /> 的新尺寸真正落到原生窗口上。
+    ///     <para>
+    ///         <c>InvokeAsync(Render)</c> 只保证这一帧已经排过，尺寸变化（尤其是从缩边小球展开）会触发
+    ///         再一轮 measure/arrange；只等一帧就按 <c>Bounds</c> 取尺寸，会把窗口定位在**旧尺寸**算出的
+    ///         坐标上，视觉与可点击区域因此错开。两帧是这条路径上最小的稳态等待。
+    ///     </para>
+    /// </summary>
+    private static async Task WaitForLayoutPassAsync()
+    {
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+    }
+
     private async Task SnapToNearestEdgeAsync()
     {
         var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
@@ -1139,13 +1177,11 @@ public partial class FloatingWindow : Window
             if (transitionRevision != _dockTransitionRevision)
                 return;
 
-            Opacity = 0;
             ExpandedContent.IsVisible = false;
             DockButton.Opacity = 0;
             UpdateDockButton();
-            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+            await WaitForLayoutPassAsync();
             RepositionDockedWindow();
-            Opacity = 1;
             await AnimateControlAsync(
                 DockButton,
                 0,
@@ -1243,13 +1279,10 @@ public partial class FloatingWindow : Window
                 return;
 
             DockButton.IsVisible = false;
-            Opacity = 0;
-            PositionExpandedWindowAtDockAnchor();
             ExpandedContent.Opacity = 0;
             ExpandedContent.IsVisible = true;
-            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+            await WaitForLayoutPassAsync();
             PositionExpandedWindowAtDockAnchor(useCurrentSize: true);
-            Opacity = 1;
             await AnimateControlAsync(
                 ExpandedContent,
                 0,
@@ -1261,6 +1294,9 @@ public partial class FloatingWindow : Window
             if (transitionRevision != _dockTransitionRevision)
                 return;
 
+            // 展开是这条路径上最容易留下"陈旧命中区域"的时刻：内容从隐藏变成可见、窗口从缩边小球
+            // 长成完整卡片。重呈现一次并补一次原生置顶，让 Windows 按新尺寸重新计算命中区域。
+            InvalidateVisual();
             SavePosition();
             ReassertNativeTopmost();
             shouldScheduleDock = true;

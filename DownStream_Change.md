@@ -2050,3 +2050,33 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 ### 第三方公告
 
 `THIRD-PARTY-NOTICES.md` 增加 `## VeriRandom.NewAlgorithm`：算法核心位于独立仓库、以 tag 检出后作为 `ProjectReference` 使用（源码不复制进屋），该仓库按路径双许可（`SecRandom.NewAlgorithm/`、`SecRandom.Sim/`、`SecRandom.Sim.Console/` 为 MIT，插件/宿主集成路径为 GPL-3.0），本应用只编译 MIT 的算法核心，因此按 MIT 条款转载全文与版权行。
+---
+
+## 72. 修复悬浮窗（及主窗口）偶发交互冻结
+
+**症状**：悬浮窗偶尔整窗失去点击响应，切走再切回来才恢复；主窗口也出现过同样现象，从缩边小球展开后最严重。
+
+### 根因
+
+`SecRandom/Views/FloatingWindow.axaml.cs` 有两条会把输入状态卡死的路径，都集中在"缩边 ↔ 展开"的过渡上：
+
+1. **过渡期间把整个窗口设成 `Opacity = 0`**（`CollapseToDockAsync` / `RestoreFromDock` / 启动停靠），随后靠 `SizeToContent` 改变窗口尺寸再设回 1。悬浮窗在 Windows 上是分层窗口（`Background=Transparent` + `TransparencyLevelHint=Transparent`）：整窗透明度归零时它变成**点击穿透**，而原生命中区域要等下一帧真正呈现才跟着尺寸更新；展开时这一帧没有及时生成，于是"看得见但点不动"，直到窗口失活/重新激活触发一次重呈现。三条路径都踩中同一个写法，所以缩边展开最明显。
+2. **按下瞬间同步补置顶**：`OnPointerPressed`（隧道 + `handledEventsToo`）先调 `ReassertNativeTopmost()` → 平台层 `SetWindowPos(..., SWP_FRAMECHANGED)`。在 `WM_LBUTTONDOWN` 处理中同步改窗口框架会让 Windows 丢掉这次指针捕获，配套的 `WM_LBUTTONUP` 不再送达，控件停在按下状态，后续点击被当成拖动/被吞掉，直到失活时系统复位输入状态。
+
+另外，`PointerCaptureLost` 完全没有处理：捕获被系统收走不等于松手，`_isMovingWindow` / `_isMovingDockHandle` / `_isPendingWindowDrag` 会一直为真。
+
+### 改动
+
+| 位置 | 改动 |
+|---|---|
+| `CollapseToDockAsync` / `RestoreFromDock` / `RestoreStartupPositionAndScheduleDock` | 不再改窗口自身的 `Opacity`，只切换 `ExpandedContent` / `DockButton` 的可见性与内容透明度；窗口全程保持呈现，不会进入点击穿透态 |
+| 同上 | 展开前改用 `WaitForLayoutPassAsync()`（两帧 Render 优先级）等 `SizeToContent` 的新尺寸真正落地，再按当前尺寸定位——只等一帧会拿旧尺寸算坐标，视觉与命中区域对不上 |
+| `RestoreFromDock` | 展开动画结束后补 `InvalidateVisual()` 与一次原生置顶，让 Windows 按新尺寸重新计算命中区域 |
+| `OnPointerPressed` | `ReassertNativeTopmost()` 改为 `Dispatcher.UIThread.Post(..., DispatcherPriority.Background)`：保留"点击后补置顶"的效果，但不再在按下处理里同步调 `SetWindowPos` |
+| 构造 + 手势状态 | 订阅 `PointerCaptureLost` 与 `Deactivated`，统一走 `ResetGestureState()` 复位拖动状态 |
+
+**关于主窗口**：主窗口本身是不透明的 Mica 窗口，不存在分层窗口命中区域问题；它的"冻结"与悬浮窗用的是同一类输入状态——置顶悬浮窗的同步 `SetWindowPos` 与整窗透明态都会让前台窗口的捕获/命中状态失衡。上述两处改动移除了应用内唯一的"输入处理中同步改窗口框架"和"整窗透明过渡"，因此一并覆盖。
+
+### 验证
+
+`SecRandom`、`SecRandom.Desktop`、`SecRandom.Core.Tests` 编译通过；测试集与改动前同一批（无新增失败）。这类窗口状态问题只能在真机交互中复现，因此改动的正确性依据是移除上述两条确定会破坏捕获/命中区域的调用路径，并补上捕获丢失的复位。
