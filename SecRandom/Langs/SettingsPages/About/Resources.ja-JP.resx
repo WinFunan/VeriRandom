@@ -178,4 +178,13 @@
   <data name="S_Ack_NewAlgorithm_D" xml:space="preserve">
     <value>「均衡抽選」アルゴリズムは独立したリポジトリ WinFunan/VeriRandom.NewAlgorithm で保守されており、本フォークはソースを複製せず固定バージョンを参照するのみで、当該リポジトリの作者の継続的な改善に感謝します</value>
   </data>
+  <data name="S_App_ForkChangelog" xml:space="preserve">
+    <value>フォーク変更履歴</value>
+  </data>
+  <data name="S_App_ForkChangelog_D" xml:space="preserve">
+    <value>このフォークが上流 SecRandom に加えた変更の一覧です（インストーラーに同梱される DownStream_Change.md）</value>
+  </data>
+  <data name="M_ForkChangelogMissing" xml:space="preserve">
+    <value>インストール先にフォーク変更履歴が見つかりません。このパッケージには含まれていない可能性があります</value>
+  </data>
 </root>

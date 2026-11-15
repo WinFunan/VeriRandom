@@ -217,6 +217,15 @@
                                            Content="{x:Static lsa:Resources.S_App_ForkNotice}"
                                            Description="{x:Static lsa:Resources.M_App_ForkNotice}" />
 
+                <!-- 外置文件：随发布包一起复制到程序目录，缺失（例如手机端）时整行隐藏 -->
+                <fa:FASettingsExpanderItem x:Name="S_App_ForkChangelog"
+                                           Content="{x:Static lsa:Resources.S_App_ForkChangelog}"
+                                           Description="{x:Static lsa:Resources.S_App_ForkChangelog_D}"
+                                           IsVisible="{Binding IsForkChangelogAvailable}"
+                                           IsClickEnabled="True"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi DocumentTextFilled}}"
+                                           Click="ForkChangelog_OnClick" />
+
                 <fa:FASettingsExpanderItem x:Name="S_App_UsefulLinks"
                                            Content="{x:Static lsa:Resources.S_App_UsefulLinks}">
                     <fa:FASettingsExpanderItem.Footer>

@@ -2028,3 +2028,25 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 ### 测试
 
 `SecRandom.Core.Tests/ClassProgressEntropyPolicyTests.cs`：预算固定为 1 秒；正式公证/信标各自的后续顺序；无 random.org 密钥时跳过该级；random.org 不会被重试；来源 id 稳定。
+---
+
+## 71. 关于页可查看分支变更记录（外置）+ 第三方公告补上 NewAlgorithm
+
+### 关于页入口
+
+`DownStream_Change.md` 是本分支相对上游的**工程台账**，此前只存在于仓库里。现在它随安装包外置发布，并在「关于 · VeriRandom」里多了一行「分支变更记录」：点击后由 `FAContentDialog` + `LiveMarkdown` 直接渲染 Markdown，不依赖系统里有没有 Markdown 关联程序。
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom.Desktop/SecRandom.Desktop.csproj` | 新增 `None Include="..\DownStream_Change.md" Link="DownStream_Change.md"`，并设 `CopyToOutputDirectory` / `CopyToPublishDirectory = PreserveNewest`：本机 `dotnet build`/`dotnet run` 与 `dotnet publish` 都会把它放到程序目录 |
+| `SecRandom/Views/SettingsPages/About/AboutSettingsPage.axaml(.cs)` | 新行 `S_App_ForkChangelog`（`IsClickEnabled` + `DocumentTextFilled` 图标），`IsForkChangelogAvailable` 用 `File.Exists(AppContext.BaseDirectory/DownStream_Change.md)` 决定是否显示；读取失败给警告 toast |
+| `SecRandom/Views/SettingsPages/About/ForkChangeLogContent.axaml(.cs)` | 新增渲染控件：构造时接收 Markdown 文本，沿用公告页同一个 `MarkdownRenderer` + `ValueConverters.ToObservableStringBuilder` 绑定 |
+| `SecRandom/Langs/SettingsPages/About/Resources*.resx` + Designer | `S_App_ForkChangelog`、`S_App_ForkChangelog_D`、`M_ForkChangelogMissing`（三语） |
+
+**发布链路不需要改工作流**：便携 ZIP 与 Windows 安装包都是整体复制发布目录（`Setup.iss` 的 `Source: "{#MyAppOutDir}\*" ... recursesubdirs`），文件随 `CopyToPublishDirectory` 自然进入 `artifacts/release/publish/*` 之后的所有产物。手机端不发布该文件，入口整行隐藏，不会出现点了没反应的按钮。
+
+**为什么外置而不是嵌进程序集**：台账是纯文本、会随每次改动增长，嵌进程序集需要为它维护 `AvaloniaResource` 与读取路径，而且用户无法在安装目录里直接查看；外置文件还能被任何文本工具打开，符合「可核对的公开材料」这一定位。
+
+### 第三方公告
+
+`THIRD-PARTY-NOTICES.md` 增加 `## VeriRandom.NewAlgorithm`：算法核心位于独立仓库、以 tag 检出后作为 `ProjectReference` 使用（源码不复制进屋），该仓库按路径双许可（`SecRandom.NewAlgorithm/`、`SecRandom.Sim/`、`SecRandom.Sim.Console/` 为 MIT，插件/宿主集成路径为 GPL-3.0），本应用只编译 MIT 的算法核心，因此按 MIT 条款转载全文与版权行。

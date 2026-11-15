@@ -115,4 +115,13 @@
     <data name="M_App_ForkNotice" xml:space="preserve">
         <value>此产品是 SecRandom 的一个开源分支，不应视作 SecRandom 本身</value>
     </data>
+  <data name="S_App_ForkChangelog" xml:space="preserve">
+    <value>分支变更记录</value>
+  </data>
+  <data name="S_App_ForkChangelog_D" xml:space="preserve">
+    <value>查看本分支相对于上游 SecRandom 的全部改动（随安装包一起提供的 DownStream_Change.md）</value>
+  </data>
+  <data name="M_ForkChangelogMissing" xml:space="preserve">
+    <value>安装目录里没有找到分支变更记录文件，可能是当前安装方式未携带它</value>
+  </data>
 </root>

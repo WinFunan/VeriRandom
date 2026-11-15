@@ -57,5 +57,14 @@
         <ProjectReference Include="..\SecRandom.Platforms.MacOs\SecRandom.Platforms.MacOs.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <!-- 分支变更台账外置发布：About 页读取程序目录里的这份文件，构建与发布都复制过去。
+             它不在项目目录内，所以显式 Link；随发布目录整体打包，因此便携包与安装包都会带上。 -->
+        <None Include="..\DownStream_Change.md" Link="DownStream_Change.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </None>
+    </ItemGroup>
+
     <Import Project="..\Global.props"/>
 </Project>

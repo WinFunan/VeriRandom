@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -73,6 +74,14 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 
     public bool CanRefreshContributors => !IsRefreshingContributors;
 
+    /// <summary>
+    ///     每次发布随程序复制出来的分支变更台账。它刻意外置而不是嵌进程序集：更新记录属于可读文本，
+    ///     用户不需要打开仓库就能核对这次构建改了什么；缺失时（例如手机安装包）入口整行隐藏。
+    /// </summary>
+    public static string ForkChangelogPath => Path.Combine(AppContext.BaseDirectory, "DownStream_Change.md");
+
+    public bool IsForkChangelogAvailable { get; } = File.Exists(ForkChangelogPath);
+
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
 
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
@@ -137,6 +146,40 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         _lastBannerClickAt = default;
         SettingsView.Current?.ShowDebugNavigationItem();
         this.ShowToast(DebugResources.Get("M_DebugShown"));
+    }
+
+    /// <summary>
+    ///     读取外置文件并就地渲染，而不是调用系统默认程序：发布包里没有 Markdown 关联也能看，
+    ///     而且不会把一份 2000 行的台账丢给用户去猜该用什么打开。
+    /// </summary>
+    private async void ForkChangelog_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not { } owner)
+            return;
+
+        string markdown;
+        try
+        {
+            markdown = await File.ReadAllTextAsync(ForkChangelogPath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            this.ShowWarningToast(LR.M_ForkChangelogMissing);
+            return;
+        }
+
+        var dialog = new FAContentDialog
+        {
+            Title = LR.S_App_ForkChangelog,
+            Content = new ScrollViewer
+            {
+                MaxHeight = 560,
+                MaxWidth = 760,
+                Content = new ForkChangeLogContent(markdown)
+            },
+            CloseButtonText = LR.C_Close
+        };
+        await dialog.ShowAsync(owner);
     }
 
     private void OpenLink(string url)

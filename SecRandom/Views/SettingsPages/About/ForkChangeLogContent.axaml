@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.About"
+             x:Class="SecRandom.Views.SettingsPages.About.ForkChangeLogContent"
+             x:DataType="local:ForkChangeLogContent">
+    <!-- 外置的 DownStream_Change.md 是纯 Markdown，直接交给与公告页相同的渲染器，避免复制一份渲染逻辑 -->
+    <md:MarkdownRenderer
+        MarkdownBuilder="{Binding Markdown, Converter={x:Static md:ValueConverters.ToObservableStringBuilder}}" />
+</UserControl>

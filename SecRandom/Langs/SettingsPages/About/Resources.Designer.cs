@@ -490,5 +490,22 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Ack_NewAlgorithm_D", resourceCulture);
             }
         }
+        public static string S_App_ForkChangelog {
+            get {
+                return ResourceManager.GetString("S_App_ForkChangelog", resourceCulture);
+            }
+        }
+
+        public static string S_App_ForkChangelog_D {
+            get {
+                return ResourceManager.GetString("S_App_ForkChangelog_D", resourceCulture);
+            }
+        }
+
+        public static string M_ForkChangelogMissing {
+            get {
+                return ResourceManager.GetString("M_ForkChangelogMissing", resourceCulture);
+            }
+        }
     }
 }
