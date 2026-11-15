@@ -147,8 +147,28 @@ public static class ConfigSignature
     public static string Fingerprint(string publicKeyBase64)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(publicKeyBase64);
-        var hash = SHA256.HashData(Convert.FromBase64String(publicKeyBase64));
+        var hash = SHA256.HashData(DecodeKeyMaterial(publicKeyBase64));
         return Convert.ToHexString(hash)[..32];
+    }
+
+    /// <summary>
+    ///     Key material reaches this method in two alphabets: the ECDSA document records SubjectPublicKeyInfo as
+    ///     standard Base64, while a WebAuthn-signed document may carry a base64url COSE key (unpadded). A padding
+    ///     or alphabet difference must not turn a readable document into a "not a valid Base-64 string" crash, so
+    ///     both are accepted here and the caller never has to know which signing mode produced the file.
+    /// </summary>
+    private static byte[] DecodeKeyMaterial(string value)
+    {
+        try
+        {
+            return Convert.FromBase64String(value);
+        }
+        catch (FormatException)
+        {
+            if (Base64Url.TryDecode(value, out var decoded))
+                return decoded;
+            throw;
+        }
     }
 
     /// <summary>

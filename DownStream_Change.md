@@ -2080,3 +2080,32 @@ Position = _startPosition + deltaX;                 // 窗口一动，下一帧�
 ### 验证
 
 `SecRandom`、`SecRandom.Desktop`、`SecRandom.Core.Tests` 编译通过；测试集与改动前同一批（无新增失败）。这类窗口状态问题只能在真机交互中复现，因此改动的正确性依据是移除上述两条确定会破坏捕获/命中区域的调用路径，并补上捕获丢失的复位。
+---
+
+## 73. 修复安全密钥签发的分离配置在读取时报「不是 Base64」
+
+**症状**：用登记的安全密钥签发分离配置后，安全设置页刷新（以及任何检查策略锁的页面）直接抛 `FormatException`，提示输入不是有效的 Base64 字符串。
+
+### 根因
+
+`ConfigPolicySignatureService.Verify()` 在读文档时**先**算公钥指纹，再按算法校验：
+
+```
+var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);   // 总是在算法分派之前
+```
+
+`ConfigSignature.Fingerprint` 用 `Convert.FromBase64String` 解析，而安全密钥文档里的 `PublicKey` 是 WebAuthn 侧的 **base64url**（无填充 COSE 公钥，来自 `Fido2CredentialStore`）。base64url 合法的 `-` / `_` 与缺失的 `=` 都会让 `Convert.FromBase64String` 抛 `FormatException`——签发本身是成功的，崩在读取阶段。
+
+### 改动
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom.Core/Services/Security/ConfigSignature.cs` | `Fingerprint` 改为经 `DecodeKeyMaterial`：先按标准 Base64 解析，失败再按 base64url 解析。两种签名模式写出的 `PublicKey` 都能算指纹 |
+| `SecRandom/Services/Security/ConfigPolicySignatureService.cs` | 签发时把 `PublicKey` 统一写成**标准 Base64**（由凭据里的 base64url COSE 键转换），断言字段仍保持 base64url（那是 WebAuthn 线格式）；`Verify()` 对仍无法解析的公钥返回 `DocumentMalformed` 而不是抛异常 |
+| `SecRandom.Core.Tests/ConfigSignatureWebAuthnTests.cs` | 新增：两种字母表算出的指纹相同；早期用 base64url 记录公钥的文档仍能通过 `VerifyWebAuthn` 并算出指纹 |
+
+**兼容性**：已经用出问题的版本签发过的文档**不需要重新签发**——读取端现在接受两种字母表；新签发的文档改用标准 Base64，任何按 Base64 读取的实现都能直接解析。
+
+### 验证
+
+`ConfigSignatureWebAuthnTests` 8 条全部通过；全套 1976 条测试：1939 通过 / 11 跳过 / 26 失败（与改动前同一批既有问题），无新增失败。

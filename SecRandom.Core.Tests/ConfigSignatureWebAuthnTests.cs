@@ -77,6 +77,33 @@ public class ConfigSignatureWebAuthnTests
     }
 
     [Fact]
+    public void Fingerprint_IsTheSameForBothBase64Alphabets()
+    {
+        using var key = RSA.Create(2048);
+        var cose = CreateCoseRsaKey(key);
+
+        Assert.Equal(
+            ConfigSignature.Fingerprint(Convert.ToBase64String(cose)),
+            ConfigSignature.Fingerprint(Base64Url.Encode(cose)));
+    }
+
+    [Fact]
+    public void VerifyWebAuthn_AlsoAcceptsALegacyBase64UrlPublicKey()
+    {
+        using var key = RSA.Create(2048);
+        var digest = SHA256.HashData(Encoding.UTF8.GetBytes("policy"));
+        // Documents written by the first build of the security-key signer stored the COSE key unpadded; they must
+        // still verify and still produce a fingerprint instead of failing with a Base-64 format error.
+        var document = CreateDocument(key, digest) with
+        {
+            PublicKey = Base64Url.Encode(CreateCoseRsaKey(key))
+        };
+
+        Assert.True(ConfigSignature.VerifyWebAuthn(document, digest));
+        Assert.Equal(32, ConfigSignature.Fingerprint(document.PublicKey).Length);
+    }
+
+    [Fact]
     public void IsDocumentWellFormed_RequiresTheWebAuthnFieldsForThatAlgorithm()
     {
         using var key = RSA.Create(2048);
@@ -108,7 +135,9 @@ public class ConfigSignatureWebAuthnTests
         {
             Algorithm = ConfigSignatureDocument.WebAuthnAlgorithmId,
             Scope = "test-scope",
-            PublicKey = Base64Url.Encode(CreateCoseRsaKey(key)),
+            // The signer records the COSE key as standard Base64 (the same alphabet the ECDSA document uses);
+            // only the assertion fields stay base64url.
+            PublicKey = Convert.ToBase64String(CreateCoseRsaKey(key)),
             Digest = Convert.ToBase64String(digest),
             Signature = Base64Url.Encode(signature),
             CredentialId = "credential-1",

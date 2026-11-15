@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Security;
+using SecRandom.Core.Services.Security.Fido2;
 using SecRandom.Services.Security.Fido2;
 using SecRandom.Shared;
 
@@ -150,7 +151,18 @@ internal sealed class ConfigPolicySignatureService(
             return new ConfigPolicyVerification(ConfigPolicyVerificationStatus.DocumentMalformed, null, null, null);
         }
 
-        var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);
+        string fingerprint;
+        try
+        {
+            fingerprint = ConfigSignature.Fingerprint(document.PublicKey);
+        }
+        catch (FormatException)
+        {
+            // A key that cannot be decoded is a malformed document, not a crash: this runs on the settings page's
+            // refresh path and during the policy lock check.
+            logger.LogWarning("The policy signature document carries a public key that is not decodable.");
+            return new ConfigPolicyVerification(ConfigPolicyVerificationStatus.DocumentMalformed, null, null, null);
+        }
         var digest = ConfigPolicyDigest.Compute(configHandler.Data, settingsStore.Data, ComputeRosterDigest());
         // Both algorithms are accepted: a local key file and a security key are two ways to author the same
         // detached document, and a draw machine must verify either one.
@@ -241,7 +253,12 @@ internal sealed class ConfigPolicySignatureService(
         {
             Algorithm = ConfigSignatureDocument.WebAuthnAlgorithmId,
             Scope = ConfigPolicyDigest.ScopeId,
-            PublicKey = record.PublicKeyCose,
+            // Record the key as standard Base64 like the ECDSA document does; the assertion fields below stay
+            // base64url because that is their wire format. The fingerprint and the policy reader then never see
+            // an alphabet they cannot decode.
+            PublicKey = Base64Url.TryDecode(record.PublicKeyCose, out var cose)
+                ? Convert.ToBase64String(cose)
+                : record.PublicKeyCose,
             Digest = Convert.ToBase64String(digest),
             Signature = proof.Signature,
             CredentialId = record.CredentialId,
