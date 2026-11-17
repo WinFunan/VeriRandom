@@ -30,6 +30,14 @@
 
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4">
             <StackPanel x:Name="ExpandedContent">
+                <!-- 拖拽手柄：只在「拖拽手柄」开关打开时显示。按钮区域不再参与窗口拖动，点按就是点按 -->
+                <Border x:Name="DragHandle"
+                        Width="40" Height="10"
+                        Margin="0 0 0 6"
+                        HorizontalAlignment="Center"
+                        CornerRadius="5"
+                        IsVisible="False"
+                        Background="{DynamicResource ControlFillColorSecondaryBrush}" />
                 <!-- 自定义文字：位于按钮上方，不参与命中测试，随 ExpandedContent 一起收纳隐藏 -->
                 <TextBlock x:Name="CustomTextBlock"
                            IsVisible="False"

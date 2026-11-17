@@ -2135,3 +2135,26 @@ var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);   // 总是�
 ### 验证
 
 `SecRandom`、`SecRandom.Desktop` 编译通过；测试集与改动前同一批。界面回归点：基本设置页不再出现「接受 secrandom:// 链接」一行，且设置搜索里搜不到它。
+---
+
+## 75. 悬浮窗新增「拖拽手柄」（默认开启）
+
+**问题**：悬浮窗原来整窗可拖：按下后只要移动超过 4px 就进入窗口拖动，并把事件标记为已处理。教师点按钮时手常常会歪一下，这一步就被判成拖动，按钮的点击被吞掉——表现为「点了没反应」。
+
+### 改动
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom.Core/Models/SubConfigs/FloatingWindowSettingsConfig.cs` | 新增 `DragHandleEnabled`，**默认 `true`**：旧配置文件没有这个键时反序列化即为开启 |
+| `SecRandom/Views/FloatingWindow.axaml` | `ExpandedContent` 顶部新增 `Border#DragHandle`（40×10 圆角条，默认隐藏，由设置决定） |
+| `SecRandom/Views/FloatingWindow.axaml.cs` | `ApplyWindowSettings` 里按 `Draggable && DragHandleEnabled` 控制手柄可见性；`OnPointerPressed` 在停靠小球分支之后增加判定：手柄模式下**只有手柄**能开始窗口拖动，其它区域（按钮）直接返回，不再进入拖动状态机，`IsDragHandleChild` 与 `IsDockButtonChild` 同型 |
+| `SecRandom/Views/SettingsPages/Personalized/FloatingWindowSettingsPage.axaml` | 交互分组新增「拖拽手柄」开关（`S_Interaction_DragHandle`），「可拖动」关闭时该开关置灰 |
+| `SecRandom/Langs/SettingsPages/FloatingWindow/Resources*` + Designer | `S_Interaction_DragHandle` / `_D`（三语） |
+| `SecRandom.Core/Services/ControlNode/ControlSettingsLabels.cs` | `drag_handle_enabled` 标签，集控设置目录因此仍有描述 |
+| `SecRandom.Core.Tests/FloatingWindowSettingsConfigTests.cs` | 旧配置（无该键）默认开启；开关可 JSON 往返 |
+
+**行为**：开启时手柄以外的区域严格按「按下+弹起=点击」处理，手抖不再触发拖动；关掉开关回到原来的整窗可拖（含 4px 阈值），供已经习惯旧操作的用户使用。停靠小球仍是停靠态的拖动/展开入口，不受影响。
+
+### 验证
+
+`FloatingWindowSettingsConfigTests` 7 条通过；`SecRandom`、`SecRandom.Desktop` 编译通过；全套测试与改动前同一批失败。界面回归点：手柄出现在悬浮窗顶部、能拖动窗口，点按钮手抖也不会被吞；关闭「拖拽手柄」后恢复整窗拖动。

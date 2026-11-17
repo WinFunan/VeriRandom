@@ -243,4 +243,10 @@
   <data name="S_Display_CustomTextSize_D">
     <value>Font size of the custom text in pixels, 0 scales with the floating window</value>
   </data>
+  <data name="S_Interaction_DragHandle" xml:space="preserve">
+    <value>Drag handle</value>
+  </data>
+  <data name="S_Interaction_DragHandle_D" xml:space="preserve">
+    <value>Only the small handle at the top of the floating window moves it; a tap on a button stays a click even if your finger drifts, instead of being read as a drag (on by default)</value>
+  </data>
 </root>

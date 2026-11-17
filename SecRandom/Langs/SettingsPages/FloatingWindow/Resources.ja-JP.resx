@@ -243,4 +243,10 @@
   <data name="S_Display_CustomTextSize_D">
     <value>カスタムテキストのピクセル文字サイズで、0 はフローティングウィンドウのサイズに合わせて自動調整します</value>
   </data>
+  <data name="S_Interaction_DragHandle" xml:space="preserve">
+    <value>ドラッグハンドル</value>
+  </data>
+  <data name="S_Interaction_DragHandle_D" xml:space="preserve">
+    <value>浮動ウィンドウ上部の小さなハンドルだけが移動を開始します。ボタンを押すときに指が少しずれてもクリックとして扱い、ドラッグと誤判定しません（既定でオン）</value>
+  </data>
 </root>

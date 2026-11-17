@@ -258,4 +258,10 @@
   <data name="S_Display_CustomTextSize_D" xml:space="preserve">
     <value>自定义文字的像素字号，0 表示跟随悬浮窗尺寸自动缩放</value>
   </data>
+  <data name="S_Interaction_DragHandle" xml:space="preserve">
+    <value>拖拽手柄</value>
+  </data>
+  <data name="S_Interaction_DragHandle_D" xml:space="preserve">
+    <value>只允许从悬浮窗顶部的小手柄拖动；点按按钮时即使手稍微歪一下也会识别为点击，不再被误判成拖动（默认开启）</value>
+  </data>
 </root>

@@ -439,6 +439,7 @@ public static class ControlSettingsLabels
         ["stick_to_edge_display_style"] = R(FloatingWindow, "S_Interaction_StickToEdgeDisplayStyle"),
         ["docked_window_size"] = R(FloatingWindow, "S_Dock_Size"),
         ["draggable"] = R(FloatingWindow, "S_Interaction_Draggable"),
+        ["drag_handle_enabled"] = R(FloatingWindow, "S_Interaction_DragHandle"),
         ["long_press_duration"] = R(FloatingWindow, "S_Interaction_LongPressDuration"),
         ["do_not_steal_focus"] = R(FloatingWindow, "S_Interaction_DoNotStealFocus"),
         ["hide_on_foreground"] = R(FloatingWindow, "S_Interaction_HideOnForeground"),

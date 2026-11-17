@@ -24,6 +24,29 @@ public class FloatingWindowSettingsConfigTests
     }
 
     [Fact]
+    public void DragHandle_IsOnByDefaultForConfigsWrittenBeforeTheSwitchExisted()
+    {
+        // 旧版本的 settings.json 里没有这个键；读回来必须是开启状态，否则升级后手柄不会出现。
+        MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>("{}", ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(restored);
+        Assert.True(restored.FloatingWindowSettings.DragHandleEnabled);
+    }
+
+    [Fact]
+    public void MainConfig_DragHandleSwitchRoundTripsThroughJson()
+    {
+        MainConfigModel config = new();
+        config.FloatingWindowSettings.DragHandleEnabled = false;
+
+        string json = JsonSerializer.Serialize(config, ConfigServiceBase.JsonOptions);
+        MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(restored);
+        Assert.False(restored.FloatingWindowSettings.DragHandleEnabled);
+    }
+
+    [Fact]
     public void MainConfig_PluginButtonSelectionsRoundTripThroughJson()
     {
         MainConfigModel config = new();

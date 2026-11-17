@@ -764,6 +764,18 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         /// <summary>
         ///   Looks up a localized string similar to 无法打开自定义按钮页面.
         /// </summary>
+        public static string S_Interaction_DragHandle {
+            get {
+                return ResourceManager.GetString("S_Interaction_DragHandle", resourceCulture);
+            }
+        }
+
+        public static string S_Interaction_DragHandle_D {
+            get {
+                return ResourceManager.GetString("S_Interaction_DragHandle_D", resourceCulture);
+            }
+        }
+
         public static string M_Buttons_CustomOpenFailed {
             get {
                 return ResourceManager.GetString("M_Buttons_CustomOpenFailed", resourceCulture);

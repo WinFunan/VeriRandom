@@ -62,6 +62,12 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private int _dockedWindowSize = 32;
     [ObservableProperty] private bool _draggable = true;
 
+    /// <summary>
+    ///     只允许从窗口顶部的小手柄拖动，默认开启。原来「移动超过 4px 就算拖动」的判定会把教师点按钮时
+    ///     手部的轻微偏移当成拖动，一次点击因此被吞掉；手柄模式让手柄以外的区域始终按「按下+弹起=点击」处理。
+    /// </summary>
+    [ObservableProperty] private bool _dragHandleEnabled = true;
+
     // Off by default, and Windows-only in practice: the platform contract reports IsSupported=false elsewhere,
     // so on those platforms this switch stays inert. When on, a quick draw records which window owned the
     // foreground before the draw window took it and gives that window the foreground back when the draw window

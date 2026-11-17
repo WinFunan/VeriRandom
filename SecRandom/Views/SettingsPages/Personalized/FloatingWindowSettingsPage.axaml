@@ -183,6 +183,16 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Interaction_DragHandle"
+                                    Header="{x:Static lsp:Resources.S_Interaction_DragHandle}"
+                                    Description="{x:Static lsp:Resources.S_Interaction_DragHandle_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ArrowMoveFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.DragHandleEnabled}"
+                                  IsEnabled="{Binding Settings.Draggable}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_Interaction_RestoreFocusAfterQuickDraw"
                                    Header="{x:Static lsp:Resources.S_Interaction_RestoreFocusAfterQuickDraw}"
                                    Description="{x:Static lsp:Resources.S_Interaction_RestoreFocusAfterQuickDraw_D}"

@@ -351,6 +351,8 @@ public partial class FloatingWindow : Window
             : Orientation.Horizontal;
         ButtonsPanel.Width = double.NaN;
         ApplyCustomText(settings, 0);
+        // 只有「可拖动」且「拖拽手柄」同时开启时才显示手柄；关掉手柄就回到整窗可拖的旧行为
+        DragHandle.IsVisible = settings.Draggable && settings.DragHandleEnabled;
 
         if (!settings.StickToEdge && _isDocked)
             RestoreFromDock();
@@ -872,6 +874,14 @@ public partial class FloatingWindow : Window
                 return;
             }
 
+            // 拖拽手柄模式：手柄以外的区域（也就是所有按钮）只按「按下+弹起=点击」处理。原来只要移动
+            // 超过 4px 就进入窗口拖动，教师点按钮时手歪一下点击就被吞掉——手柄把这层歧义拿掉。
+            if (EffectiveFloatingWindowSettings.DragHandleEnabled && !IsDragHandleChild(source))
+            {
+                ResetGestureState();
+                return;
+            }
+
             ++_snapAnimationRevision;
             _isPendingWindowDrag = true;
             _isMovingWindow = false;
@@ -1241,6 +1251,18 @@ public partial class FloatingWindow : Window
         while (visual != null)
         {
             if (visual is Button { Name: "DockButton" })
+                return true;
+            visual = visual.GetVisualParent();
+        }
+
+        return false;
+    }
+    /// <summary>Whether the pressed element lives inside the small drag handle.</summary>
+    private static bool IsDragHandleChild(Visual? visual)
+    {
+        while (visual != null)
+        {
+            if (visual is Border { Name: "DragHandle" })
                 return true;
             visual = visual.GetVisualParent();
         }
