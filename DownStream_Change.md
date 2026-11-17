@@ -2109,3 +2109,29 @@ var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);   // 总是�
 ### 验证
 
 `ConfigSignatureWebAuthnTests` 8 条全部通过；全套 1976 条测试：1939 通过 / 11 跳过 / 26 失败（与改动前同一批既有问题），无新增失败。
+---
+
+## 74. 隐藏 secrandom:// 兼容协议开关（已启用的继续生效）
+
+上游 `secrandom://` 的兼容注册是早期为了接住旧链接加的开关，配置项 `BasicSettingsConfig.LegacyUrlProtocol`，界面在「设置 · 通用 · 基本 · URL 协议」下面多出一行。现在把它从界面移除：一个 URL scheme 只有一个属主，这个开关本身就会和已安装的上游 SecRandom 抢注册，普通用户很难判断该不该开。
+
+### 改动
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom/Views/SettingsPages/General/BasicSettingsPage.axaml` | 删除 `S_Behavior_LegacyUrlProtocol` 那一行（含开关） |
+| `SecRandom/Views/SettingsPages/General/BasicSettingsPage.axaml.cs` | 删除该属性的变更分支、`ConfirmLegacyUrlProtocolAsync`（带 5 秒确认框的弹窗）、`SetLegacyUrlProtocol`、`ApplyUrlProtocolRegistration`；主 `UrlProtocol` 开关仍通过 `DesktopIntegrationService.TrySetUrlProtocol` 应用全部 scheme |
+| `SecRandom/Services/Settings/SettingsSearchService.cs` | `ExcludedSettingIds["General.Basic"]` 排除 `S_Behavior_LegacyUrlProtocol`，否则搜索仍会列出这个已经没有控件的旧设置 |
+| `SecRandom/Langs/SettingsPages/General/Basic/Resources*` | 文案保留未删：已发布的资源键不回收，避免与旧版本之间的键顺序/审校记录产生无意义 diff |
+
+### 已启用的用户不受影响
+
+`DesktopIntegrationService.ActiveProtocolSchemes` **没有改**：它仍然读 `Settings.LegacyUrlProtocol`，为真时同时注册 `verirandom://` 与 `secrandom://`。启动时 `EnsureConfiguredIntegrations()` 也照旧调用 `TrySetUrlProtocol(true)`，所以：
+
+- 升级前已经开启兼容注册的用户，重启后 `secrandom://` 仍然由本程序接管，不需要任何操作；
+- 升级前没开启的用户，界面上不再有打开的入口，行为保持默认（只注册 `verirandom://`）；
+- 关闭主 `UrlProtocol` 开关时依旧两个 scheme 一起注销（与原来一致）。
+
+### 验证
+
+`SecRandom`、`SecRandom.Desktop` 编译通过；测试集与改动前同一批。界面回归点：基本设置页不再出现「接受 secrandom:// 链接」一行，且设置搜索里搜不到它。

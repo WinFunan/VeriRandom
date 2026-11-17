@@ -37,6 +37,11 @@ public class SettingsSearchService
                 "S_HistoryGroups_ConfirmDelete", "S_HistoryGroups_DeleteHint", "S_HistoryGroups_Save",
                 "S_HistoryGroups_Cancel", "S_HistoryGroups_Empty", "S_HistoryGroups_RecordCount"
             },
+            ["General.Basic"] = new HashSet<string>
+            {
+                // 上游 secrandom:// 兼容开关已从界面移除；老配置仍然生效，但不该再作为可跳转的设置项
+                "S_Behavior_LegacyUrlProtocol"
+            },
             ["General.Backup"] = new HashSet<string>
             {
                 "S_Includes_Audio", "S_Includes_Config", "S_Includes_Cses", "S_Includes_History",
