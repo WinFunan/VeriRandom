@@ -43,10 +43,9 @@
 
         <fa:FANavigationView Grid.Row="1"
                              x:Name="NavigationView"
-                             PaneDisplayMode="Left"
+                             PaneDisplayMode="Top"
                              IsSettingsVisible="False"
                              IsPaneToggleButtonVisible="False"
-                             IsPaneOpen="True"
                              MenuItemsSource="{Binding ViewModel.NavigationViewItems, Mode=OneWay}"
                              FooterMenuItemsSource="{Binding ViewModel.NavigationViewFooterItems, Mode=OneWay}"
                              SelectedItem="{Binding ViewModel.SelectedNavigationViewItem, UpdateSourceTrigger=PropertyChanged}"

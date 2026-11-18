@@ -2216,3 +2216,29 @@ var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);   // 总是�
 ### 验证
 
 `SecRandom`、`SecRandom.Desktop` 编译通过（XAML 在编译期完成类型检查，`CornerRadius` 资源写法与选择器语法若有误会直接失败）。视觉效果只能真机确认：主窗口/设置窗口顶部有 3px 品牌色，侧栏更宽且选中项左侧有指示条，按钮与输入框圆角更明显，页面内容区更宽，点名结果默认是卡片；旧配置升级后强调色与结果样式保持原样。
+
+---
+
+## 78. 主窗口改为顶部导航；设置页顺序按日常教学重排
+
+**背景**：§77 的界面差异化刻意没有动导航形态（顶部模式会把页脚项折进溢出菜单，设置入口会被藏起来）。维护者确认「还是要顶部」，于是把设置项提升为顶部项后启用 `PaneDisplayMode="Top"`，并顺带把设置页顺序按「上课最常用的在前」重排。
+
+### 改动
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom/Views/MainView.axaml` | `FANavigationView.PaneDisplayMode` `Left` → **`Top`**；删掉 `IsPaneOpen="True"`（顶部模式没有可开合的侧栏） |
+| `SecRandom/Views/MainView.axaml.cs` | `BuildNavigationMenuItems()` 改用 `useTopNav`（桌面 / 浏览器 / `UseDesktopUI` 且非简洁模式）：主页面按 `PageLocation` 排序（`Top` 组在前、`Bottom` 组在后，组内保持注册顺序）后**全部**进 `MenuItemsSource`，设置项追加到同一行末尾；`NavigationViewFooterItems` 在顶部模式下保持为空。`PaneDisplayMode` 设为 `Top`、`IsPaneOpen=false`、隐藏标题栏折叠按钮；简洁模式仍是 `LeftMinimal` |
+| `SecRandom.Core/Styles/ForkIdentity.axaml` | 原来的 `SampleAppNav`（左侧图标栏 72→80）覆盖换成 `ForkTopNav`：`FANavigationView` 关闭折叠按钮，`FANavigationViewItem` 给 `MinHeight=44` 与 `Padding=10 0`。**不重写** `FANavigationViewItemPresenter` 模板 |
+| `SecRandom/App.axaml.cs`（`BuildHost` 设置页注册） | 顺序改为：首页 → **抽取设置** → **名单管理** → **历史记录** →（分隔）**通用** → **个性化** → **通知** →（分隔）插件 → 底部（公告 / 更新 / 关于）。分组 id、页面 id、`[PageInfo]` 全部不变，只改注册顺序与分隔符位置 |
+
+### 为什么这样做
+
+- **顶部模式没有页脚分区**：`FooterMenuItemsSource` 里的项会被折进右侧溢出菜单。设置入口是 `SelectsOnInvoked = false` 的高频入口，因此必须作为普通顶部项追加在 `MenuItemsSource` 末尾。这也顺带绕开了 AGENTS 里记录过的 FluentAvalonia 页脚集合变更崩溃路径（顶部模式下页脚集合始终为空）。
+- **不覆盖顶部项模板**：顶部模式的横向排版与「窗口变窄时收进溢出」由 FluentAvalonia 自己的主题负责，重写 `FANavigationViewItemPresenter` 会连带丢掉溢出处理。只调高度与内边距。
+- **`PageLocation` 的语义变了**：它现在只决定顶部栏里的先后顺序，不再表示"钉在侧栏底部"。注册顺序仍是「点名 → 抽奖 → 远程抽取 → 历史 → 随机数」，所以 `TabletControlHostTests` 钉住的「远程抽取紧跟抽奖」仍然成立。
+- **设置顺序即注册顺序**：`PagesRegistryService.SettingsItems` 的注册顺序直接决定设置窗口侧栏与移动端目录的顺序，因此重排只动 `App.axaml.cs` 的注册块，不新增排序字段。
+
+### 验证
+
+`SecRandom`、`SecRandom.Desktop` 编译通过；测试集与改动前同一批失败（26 条既有）。需要真机确认：顶部栏能横向排下各入口、窗口变窄时溢出菜单可用且设置入口不被折进去、点击设置只弹设置窗口而不改主页面高亮、简洁模式仍是无导航的单页形态、设置窗口的顺序与文案对得上。

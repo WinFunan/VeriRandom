@@ -1780,6 +1780,38 @@ public partial class App : Application
                     services.AddSettingsPageSeparator();
                 }
 
+                // 设置页顺序：上课时最常改的排在前面，安装/安全/关于之类的靠后。
+                // 「抽取 → 名单 → 历史」是日常教学的三块，放在最上面；页面 id 与分组 id 都不变，
+                // 因此深链接、设置搜索与移动端目录只跟着顺序走，不受影响。
+
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsFilled));
+                services.AddSettingsPage<DefaultDrawSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.Page_Default);
+                services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources
+                    .Page_RollCall);
+                services.AddSettingsPage<QuickDrawSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
+                services.AddSettingsPage<LotteryDrawSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.Page_Lottery);
+
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement",
+                    FluentIcons.PeopleListFilled));
+                services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
+                    .Resources.Page_Title);
+                services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
+                    .Resources.Page_Title);
+
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryFilled));
+                services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources
+                    .Settings_HistoryManagement);
+                services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
+                services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
+
+                services.AddSettingsPageSeparator();
+
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsFilled));
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
@@ -1821,27 +1853,6 @@ public partial class App : Application
                 services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
                 services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
 
-                services.AddSettingsPageSeparator();
-
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement",
-                    FluentIcons.PeopleListFilled));
-                services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
-                    .Resources.Page_Title);
-                services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
-                    .Resources.Page_Title);
-
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsFilled));
-                services.AddSettingsPage<DefaultDrawSettingsPage>(
-                    Langs.SettingsPages.Picking.Resources.Page_Default);
-                services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources
-                    .Page_RollCall);
-                services.AddSettingsPage<QuickDrawSettingsPage>(
-                    Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
-                services.AddSettingsPage<LotteryDrawSettingsPage>(
-                    Langs.SettingsPages.Picking.Resources.Page_Lottery);
-
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Notification, "settings.notification",
                     FluentIcons.CommentNoteFilled));
@@ -1868,13 +1879,6 @@ public partial class App : Application
                     services.AddSettingsPage<TextLibrarySettingsPage>(
                         Langs.SettingsPages.Notification.Texts.Resources.Page_Title);
                 }
-
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryFilled));
-                services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources
-                    .Settings_HistoryManagement);
-                services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
-                services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
 
                 if (!isMobile)
                 {

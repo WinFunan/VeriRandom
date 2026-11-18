@@ -195,7 +195,9 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
     private void BuildNavigationMenuItems()
     {
         var isSimpleMode = IsSimpleMode;
-        var applySampleNav = !isSimpleMode && (App.IsDesktop || OperatingSystem.IsBrowser() || UseDesktopUI);
+        // 桌面形态统一用顶部导航（本分支与上游的形态差异之一）：所有主页面和设置入口在同一行，
+        // 不再有常驻左侧栏。手机/平板走 DesktopUI 的宿主同样适用。
+        var useTopNav = !isSimpleMode && (App.IsDesktop || OperatingSystem.IsBrowser() || UseDesktopUI);
 
         var mainPages = isSimpleMode
             ? PagesRegistryService.MainItems.Where(info => SimpleModePolicy.IsMainPageAllowed(info.Id)).ToList()
@@ -209,43 +211,46 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         // 内部选择源，从而丢弃页脚选中项并以 null 触发 ItemInvoked，最终在 RaiseItemInvoked 抛
         // NullReferenceException。因此抽奖入口始终存在，只由 ApplyFeatureAvailability 控制显隐。
         // 简洁模式是需要重启才生效的固定形态，重建导航本身是安全的，因此在那里直接过滤成单页面。
-        ViewModel.NavigationViewItems
-            .AddRange(mainPages
-                .Where(info => info.Location == PageLocation.Top)
-                .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
-                .Select(x =>
-                {
-                    if (applySampleNav)
+        if (useTopNav)
+        {
+            // 顶部导航没有页脚分区：所有主页面平铺成一行，Top 组在前、Bottom 组在后，组内保持注册顺序
+            // （所以「远程抽取」仍紧跟「抽奖」）。设置入口追加到同一行末尾——它若留在页脚集合里，
+            // 顶部模式会把它折进溢出菜单，等于把高频入口藏起来。
+            ViewModel.NavigationViewItems
+                .AddRange(mainPages
+                    .OrderBy(info => info.Location == PageLocation.Top ? 0 : 1)
+                    .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
+                    .Select(x =>
                     {
-                        x.Classes.Add(@"SampleAppNav");
-                    }
+                        x.Classes.Add(@"ForkTopNav");
+                        return x;
+                    }));
+        }
+        else
+        {
+            ViewModel.NavigationViewItems
+                .AddRange(mainPages
+                    .Where(info => info.Location == PageLocation.Top)
+                    .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
 
-                    return x;
-                }));
-
-        ViewModel.NavigationViewFooterItems
-            .AddRange(mainPages
-                .Where(info => info.Location == PageLocation.Bottom)
-                .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
-                .Select(x =>
-                {
-                    if (applySampleNav)
-                    {
-                        x.Classes.Add(@"SampleAppNav");
-                    }
-
-                    return x;
-                }));
+            ViewModel.NavigationViewFooterItems
+                .AddRange(mainPages
+                    .Where(info => info.Location == PageLocation.Bottom)
+                    .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
+        }
 
         if (!isSimpleMode)
         {
             var settingsItem = CreateSettingsNavigationItem();
-            if (applySampleNav)
+            if (useTopNav)
             {
-                settingsItem.Classes.Add(@"SampleAppNav");
+                settingsItem.Classes.Add(@"ForkTopNav");
+                ViewModel.NavigationViewItems.Add(settingsItem);
             }
-
-            ViewModel.NavigationViewFooterItems.Add(settingsItem);
+            else
+            {
+                ViewModel.NavigationViewFooterItems.Add(settingsItem);
+            }
         }
 
         ApplyFeatureAvailability();
@@ -255,7 +260,6 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
             // 简洁模式：主窗口就是点名单页面，既没有侧栏也没有折叠按钮。
             if (_navigationView is not null)
             {
-                _navigationView.Classes.Remove(@"SampleAppNav");
                 _navigationView.PaneDisplayMode = FANavigationViewPaneDisplayMode.LeftMinimal;
                 _navigationView.IsPaneOpen = false;
                 _navigationView.IsPaneToggleButtonVisible = false;
@@ -263,9 +267,17 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
             ViewModel.IsNavPaneToggleButtonVisible = false;
         }
-        else if (applySampleNav)
+        else if (useTopNav)
         {
-            _navigationView?.Classes.Add(@"SampleAppNav");
+            if (_navigationView is not null)
+            {
+                _navigationView.Classes.Add(@"ForkTopNav");
+                _navigationView.PaneDisplayMode = FANavigationViewPaneDisplayMode.Top;
+                _navigationView.IsPaneOpen = false;
+            }
+
+            // 顶部导航没有可开合的侧栏，标题栏不需要折叠按钮
+            ViewModel.IsNavPaneToggleButtonVisible = false;
         }
         else
         {

@@ -1,15 +1,14 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-        xmlns:uip="clr-namespace:FluentAvalonia.UI.Controls.Primitives;assembly=FluentAvalonia">
+        xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
     <!--
         本分支（VeriRandom）的视觉身份层。
 
-        这里是“与上游看起来不是同一个软件”的集中收口点：窗口顶部的品牌色装饰条、更宽的侧栏、
-        选中项的品牌色指示条。所有差异都写在新增文件里，样式覆盖通过 StylesBase.axaml 末尾的
+        这里是“与上游看起来不是同一个软件”的集中收口点：窗口顶部的品牌色装饰条、主窗口的顶部导航
+        （上游是常驻左侧图标栏）。所有差异都写在新增文件里，样式覆盖通过 StylesBase.axaml 末尾的
         一行 StyleInclude 生效，上游同步时冲突面只有那一行和少数几个默认值常量。
 
-        颜色不写死：装饰条与选中项都用 Fluent 的强调色资源，跟随用户在当前主题里的强调色
+        颜色不写死：装饰条与导航选中态都用 Fluent 的强调色资源，跟随用户在当前主题里的强调色
         （默认强调色由 GlobalConstants.DefaultThemeColor 决定）。
     -->
 
@@ -22,22 +21,18 @@
         <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
     </Style>
 
-    <!-- 侧栏比上游更宽、图标更大：图标栏（SampleAppNav）的 72 宽缩略侧栏改为 80 -->
-    <Style Selector="ui|FANavigationView.SampleAppNav">
-        <Setter Property="OpenPaneLength" Value="80" />
+    <!--
+        顶部导航（MainView）。横向项模板由 FluentAvalonia 的顶部导航主题提供，这里只调高度，
+        让一行项比上游的侧栏图标更宽松；颜色与选中指示条沿用主题的强调色，不做硬编码。
+        不要在这里重写 FANavigationViewItemPresenter 的模板：顶部模式的项由框架自己的模板呈现，
+        覆盖模板会连带丢掉溢出菜单（窗口变窄时把放不下的项收进「…」）的处理。
+    -->
+    <Style Selector="ui|FANavigationView.ForkTopNav">
+        <Setter Property="IsPaneToggleButtonVisible" Value="False" />
     </Style>
 
-    <Style Selector="ui|FANavigationViewItem.SampleAppNav uip|FANavigationViewItemPresenter">
-        <Setter Property="Width" Value="80" />
-        <Setter Property="MinHeight" Value="64" />
-    </Style>
-
-    <Style Selector="ui|FANavigationViewItem.SampleAppNav uip|FANavigationViewItemPresenter /template/ Viewbox#IconBox">
-        <Setter Property="Height" Value="30" />
-    </Style>
-
-    <!-- 选中项左侧的品牌色指示条：上游模板里它默认是隐藏的（Opacity=0），这里常显 -->
-    <Style Selector="ui|FANavigationViewItem.SampleAppNav uip|FANavigationViewItemPresenter:selected /template/ Border#SelectionIndicator">
-        <Setter Property="Opacity" Value="1" />
+    <Style Selector="ui|FANavigationViewItem.ForkTopNav">
+        <Setter Property="MinHeight" Value="44" />
+        <Setter Property="Padding" Value="10 0" />
     </Style>
 </Styles>
