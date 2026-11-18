@@ -112,8 +112,13 @@ public sealed class WindowsWindowFeatureService : IWindowFeatureService
         try
         {
             var insertAfter = enabled ? HwndTopmost : HwndNotopmost;
+            // 只改 z 序时绝不能带 SWP_FRAMECHANGED：它会让窗口重算非客户区，并在鼠标按下的过程中
+            // 触发 WM_CANCELMODE / 捕获变更。Avalonia 认为捕获还在，Windows 却已经把捕获收走，
+            // 之后的点击全部落在这个窗口上、别的窗口（含主窗口标题栏）完全收不到鼠标——一次点击
+            // 就能把整个程序冻住，直到切走再切回来由系统复位。样式变更才需要 FRAMECHANGED，
+            // 那在 TrySetExtendedStyle 里单独处理。
             if (SetWindowPos(window, insertAfter, 0, 0, 0, 0,
-                    SwpNoMove | SwpNoSize | SwpNoActivate | SwpFrameChanged))
+                    SwpNoMove | SwpNoSize | SwpNoActivate))
             {
                 failure = null;
                 return true;

@@ -850,14 +850,6 @@ public partial class FloatingWindow : Window
     {
         base.OnPointerPressed(e);
 
-        // 无焦点模式下窗口不会被点击激活，Windows 也就不会在点击时把它抬回置顶窗口带的最上层，
-        // 于是别的置顶窗口（任务栏、ClassIsland 主窗、其它常驻置顶工具）会一直压在它上面，
-        // 看起来就像"开了无焦点模式置顶就失效"。这里在按下后补一次，但**必须延后**：
-        // 平台层的置顶走 SetWindowPos + SWP_FRAMECHANGED，在 WM_LBUTTONDOWN 里同步执行会让
-        // Windows 丢掉这次指针捕获，配套的 WM_LBUTTONUP 也就到不了，控件会一直停在按下状态，
-        // 直到窗口失活才被系统复位——这正是"点一下之后整个窗口像冻结"的来源。
-        Dispatcher.UIThread.Post(ReassertNativeTopmost, DispatcherPriority.Background);
-
         if (EffectiveFloatingWindowSettings.Draggable
             && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
@@ -893,6 +885,16 @@ public partial class FloatingWindow : Window
 
     private void OnPointerMoved(object? sender, PointerEventArgs e)
     {
+        // 自愈：如果指针已经不再按住却仍处于拖动状态，说明松手的事件丢了（或者系统收走了捕获）。
+        // 立刻释放捕获并复位，否则接下来的点击会一直被这个窗口吃掉——主窗口和标题栏看起来就像冻住了。
+        if ((_isMovingDockHandle || _isPendingWindowDrag || _isMovingWindow)
+            && !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            e.Pointer.Capture(null);
+            ResetGestureState();
+            return;
+        }
+
         if (_isMovingDockHandle)
         {
             MoveDockHandle(e);
@@ -974,6 +976,11 @@ public partial class FloatingWindow : Window
     {
         base.OnPointerReleased(e);
 
+        // 无焦点模式下窗口不会被点击激活，点完要补一次原生置顶（否则别的置顶窗口会一直压着它）。
+        // 只在**松手之后**补：按下期间改窗口 z 序会让 Windows 在点击还没完成时更换指针捕获，
+        // 那一下点击就丢了，严重时整个程序只剩悬浮窗收得到鼠标——必须等这次手势结束。
+        Dispatcher.UIThread.Post(ReassertNativeTopmost, DispatcherPriority.Background);
+
         if (_isMovingDockHandle)
         {
             _isMovingDockHandle = false;
@@ -1020,7 +1027,13 @@ public partial class FloatingWindow : Window
     ///     弹出系统菜单）之后收走捕获，而收走捕获**不会**再补一个 PointerReleased；不复位的话窗口会一直
     ///     以为自己还在拖动，后续按下与移动都被吞掉，只有失活才由系统把输入状态清掉。
     /// </summary>
-    private void OnPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e) => ResetGestureState();
+    private void OnPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+    {
+        // 捕获丢失时 Avalonia 已经清掉自己的记录，但 Windows 侧未必同步；显式再释放一次，
+        // 避免系统级捕获留在悬浮窗上、让主窗口和标题栏都收不到鼠标。
+        e.Pointer.Capture(null);
+        ResetGestureState();
+    }
 
     private void ResetGestureState()
     {

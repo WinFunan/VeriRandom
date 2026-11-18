@@ -2158,3 +2158,31 @@ var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);   // 总是�
 ### 验证
 
 `FloatingWindowSettingsConfigTests` 7 条通过；`SecRandom`、`SecRandom.Desktop` 编译通过；全套测试与改动前同一批失败。界面回归点：手柄出现在悬浮窗顶部、能拖动窗口，点按钮手抖也不会被吞；关闭「拖拽手柄」后恢复整窗拖动。
+---
+
+## 76. 交互冻结的第二次修复：z 序断言不再取消指针捕获
+
+**症状（第二次报告）**：上一轮修复后冻结依旧存在。冻结时双击悬浮窗按钮**有时会在没有按下动画的情况下直接触发功能**；主窗口冻结时双击无任何反应，且无法拖动标题栏。此前没有在中间的构建上验证过，所以无法判断是不是那次修复引入的。
+
+### 判定
+
+三条症状指向同一个机制——**系统级鼠标捕获卡在悬浮窗上**：
+
+- 捕获在该窗口上时，所有鼠标消息都送到它，主窗口（包括原生标题栏拖动）一个都收不到 → 主窗口"双击无交互、拖不动标题栏"；
+- 悬浮窗自己收到的是"已经按下/刚松开"混合状态的输入，第一次点击被用来退出这个坏状态，第二次才落到按钮上 → "双击有时能触发，但没有按下动画"；
+- 失活（Alt+Tab、点别的程序）时 Windows 会释放捕获 → "失焦再回焦就恢复"。
+
+触发点在 `ReassertNativeTopmost` → `WindowsWindowFeatureService.TrySetTopmost`：它用 `SetWindowPos(HWND_TOPMOST, …, SWP_FRAMECHANGED)` 补置顶，而悬浮窗**每次按下**都会调用它（上一轮只是把同步调用挪到 Background，仍然发生在按下与松开之间）。`SWP_FRAMECHANGED` 会让窗口重算非客户区，并在鼠标仍按着时改变捕获归属；Avalonia 与 Windows 对"谁还持有捕获"的认知因此分叉，捕获就留在了悬浮窗上。
+
+### 改动
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom.Platforms.Windows/WindowsWindowFeatureService.cs` | `TrySetTopmost` 去掉 `SwpFrameChanged`：单纯改 z 序不需要重算非客户区。样式刷新仍保留 `FRAMECHANGED`（`TrySetExtendedStyle` 里，与 `SWP_NOZORDER` 一起），置顶补偿也走不带 `FRAMECHANGED` 的那次调用 |
+| `SecRandom/Views/FloatingWindow.axaml.cs` | 按下时**不再**做任何置顶断言；改为在 `OnPointerReleased` 里投递一次（手势结束后），既保留"点完抬到最上层"，又不碰手势期间的捕获 |
+| 同上 | `PointerCaptureLost` 里显式 `e.Pointer.Capture(null)` 再复位手势状态：即使 Avalonia 与系统再次分叉，也主动把捕获清掉 |
+| 同上 | `OnPointerMoved` 增加自愈：拖动状态还在、但指针已经不再按住时，立即释放捕获并复位；哪怕松手事件再次丢失，下一次移动就能恢复，不必重启或切窗口 |
+
+### 验证
+
+`SecRandom`、`SecRandom.Desktop` 编译通过；测试集与改动前同一批失败。此问题只能在真机复现，请重点回归：频繁点悬浮窗按钮（含斜向点按）、缩边展开后立刻点击、以及冻结发生时主窗口标题栏是否能正常拖动。
