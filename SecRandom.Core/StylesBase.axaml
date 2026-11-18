@@ -23,7 +23,7 @@
                 <MergeResourceInclude Source="/Controls/DevelopmentBuildAdorner.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <x:Double x:Key="PageContainerWidth">960</x:Double>
+            <x:Double x:Key="PageContainerWidth">1024</x:Double>
         </ResourceDictionary>
     </Styles.Resources>
 
@@ -39,6 +39,8 @@
     <StyleInclude Source="/Controls/Emptiable.axaml" />
     <StyleInclude Source="/Controls/Field.axaml" />
     <StyleInclude Source="/Styles/SampleAppNav.axaml" />
+    <!-- 本分支的视觉身份层：集中放与上游不同的样式，上游同步时只需保留这一行 include -->
+    <StyleInclude Source="/Styles/ForkIdentity.axaml" />
 
     <Style Selector=":is(Window)">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />

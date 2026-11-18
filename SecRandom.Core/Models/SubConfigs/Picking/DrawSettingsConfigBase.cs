@@ -13,7 +13,9 @@ public partial class DrawSettingsConfigBase : ObservableObject
     [ObservableProperty] private string _customFont = GlobalConstants.DefaultFontFamily;
     [ObservableProperty] private int _fontSize = 50;
     [ObservableProperty] private DisplayFormatMode _displayFormat = DisplayFormatMode.Both;
-    [ObservableProperty] private DisplayStyleMode _displayStyle = DisplayStyleMode.Default;
+    // 本分支默认用卡片式结果，而不是上游的纯文字结果：抽取页是截图里最常出现的区域，
+    // 默认形态不同，整体观感差别最明显；用户仍可在抽取设置里改回。
+    [ObservableProperty] private DisplayStyleMode _displayStyle = DisplayStyleMode.Card;
     [ObservableProperty] private bool _showTags = false;
     [ObservableProperty] private bool _showWeightTransparency = false;
     [ObservableProperty] private string _reminderText = "别紧张";

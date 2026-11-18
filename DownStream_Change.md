@@ -2186,3 +2186,33 @@ var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);   // 总是�
 ### 验证
 
 `SecRandom`、`SecRandom.Desktop` 编译通过；测试集与改动前同一批失败。此问题只能在真机复现，请重点回归：频繁点悬浮窗按钮（含斜向点按）、缩边展开后立刻点击、以及冻结发生时主窗口标题栏是否能正常拖动。
+
+---
+
+## 77. 本分支的界面外观层（降低与上游的混淆度）
+
+**背景**：本分支是 `SECTL/SecRandom` 的 GPLv3 分支，产品名与图标已经不同，但界面长期与上游一致。除「整体外观混淆」的风险外，仓库里还留着三张上游自有的宣传横幅：`SecRandom/Assets/Banners/secrandom-banner-{cn,en,ja}.png` 与 upstream **逐字节相同**，运行时没有任何引用（关于页只找 `verirandom-banner-*`），却会随 `Assets/**` 一起打进安装包和便携包。这一节把所有刻意做出的外观差异集中收口，并删掉那三张图。
+
+### 改动
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom/Assets/Banners/secrandom-banner-*.png` | **删除**。不在任何界面引用，删除不影响关于页（`AboutSettingsPage` 只按语言探测 `verirandom-banner-*`） |
+| `SecRandom.Core/GlobalConstants.cs` | `DefaultThemeColor` `#0078D4` → **`#00897B`**（品牌青）。它同时是 `AppearanceSettingsConfig.ThemeColor` 与 `DrawSettingsConfigBase.AnimationFixedColor` 的默认值，所以强调色与抽取动画的固定色一起变 |
+| `SecRandom.Core/Models/SubConfigs/Personalized/AppearanceSettingsConfig.cs` | `ThemeColorMode` 默认 `System` → **`Custom`**。跟随系统时新装用户看到的仍是 Windows 蓝，等于没有差异；旧配置文件里已持久化的 `system` 值不受影响，用户可在「设置 · 个性化 · 外观」切回 |
+| `SecRandom.Core/Models/SubConfigs/Picking/DrawSettingsConfigBase.cs` | `DisplayStyle` 默认 `Default` → **`Card`**（结果卡片）。抽取页是截图里出现最多的区域，默认形态不同对整体观感的贡献最大；旧配置仍按已保存的值渲染 |
+| `SecRandom/App.axaml`（`Application.Resources`） | 覆写 Fluent 形状键：`ControlCornerRadius` = 8、`OverlayCornerRadius` = 12。放在 `Application.Resources` 而不是样式里，是因为资源查找先看应用资源、再看样式资源，主题按变体合并的字典不会盖掉这里的值 |
+| `SecRandom.Core/StylesBase.axaml` | `PageContainerWidth` 960 → **1024**；末尾新增一条 `StyleInclude Source="/Styles/ForkIdentity.axaml"`（必须是最后一条 include，覆盖才压得过 `SampleAppNav.axaml`） |
+| `SecRandom.Core/Styles/ForkIdentity.axaml`（新增） | 全部差异样式集中在这里：`Border.fork-accent-strip`（3px、`IsHitTestVisible=False`、`AccentFillColorDefaultBrush`）、`SampleAppNav` 侧栏 `OpenPaneLength` 72 → 80、presenter 宽 80 / 最小高 64、图标 `IconBox` 高 28 → 30、选中项 `Border#SelectionIndicator` 由默认隐藏改为常显（`Opacity=1`） |
+| `SecRandom/Views/MainView.axaml` / `SecRandom/Views/SettingsView.axaml` | 各在最外层末尾放一个 `<Border Classes="fork-accent-strip" />`。主窗口放在 `Panel` 最后一个子元素（`OverlayHost` 之后），设置窗口放在根 `Grid` 的 `Grid.Row="0"` |
+
+### 约束
+
+- **所有外观差异必须留在 `ForkIdentity.axaml` 与上表的默认值里**：上游同步时的冲突面就是那一行 `StyleInclude` 加几个常量，不要把这些样式散回各页面。
+- `fork-accent-strip` 必须保持 `IsHitTestVisible="False"`：它画在标题栏之上，一旦参与命中测试就会压住 `ElementRole=TitleBar` 区域的拖动，和 §76 的冻结属于同一类故障。
+- 颜色一律用 `DynamicResource` 跟随当前强调色，不写死品牌色：用户在外观设置里改强调色后，装饰条与选中指示条要一起变。
+- 刻意**没有**改字体，也没有改侧栏形态：字体替换涉及再分发许可，侧栏改成 `PaneDisplayMode="Top"` 会把 `FooterMenuItemsSource` 里的「设置」折进溢出菜单（FluentAvalonia 的顶部模式），把一个高频入口藏起来不划算。若以后仍要顶部导航，需要先把设置项提升为顶部项并重做 `SampleAppNav` 的水平项模板。
+
+### 验证
+
+`SecRandom`、`SecRandom.Desktop` 编译通过（XAML 在编译期完成类型检查，`CornerRadius` 资源写法与选择器语法若有误会直接失败）。视觉效果只能真机确认：主窗口/设置窗口顶部有 3px 品牌色，侧栏更宽且选中项左侧有指示条，按钮与输入框圆角更明显，页面内容区更宽，点名结果默认是卡片；旧配置升级后强调色与结果样式保持原样。

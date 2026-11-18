@@ -75,7 +75,9 @@ public static class GlobalConstants
     // capability is preserved; set this back to true once this fork has its own metadata/release server.
     public const bool UpdatesEnabled = false;
 
-    public const string DefaultThemeColor = "#0078D4"; // 系统自带主题色蓝  66CCFF 天依蓝
+    // 本分支的品牌色：默认自定义主题色用它，抽取动画的固定色也从这里取。
+    // 不再沿用上游/系统的 Windows 蓝，界面第一眼就能和上游区分开。
+    public const string DefaultThemeColor = "#00897B";
     public const string DefaultFontFamily = "avares://SecRandom/Assets/Fonts/MiSans/#MiSans";
 
 #if DEBUG

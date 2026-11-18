@@ -18,6 +18,10 @@
     </Application.Styles>
 
     <Application.Resources>
+        <!-- 本分支的视觉身份：圆角比上游更大，按钮/输入框/卡片第一眼就不同 -->
+        <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
+        <CornerRadius x:Key="OverlayCornerRadius">12</CornerRadius>
+
         <FontFamily x:Key="FluentSystemIconsResizeable">avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable</FontFamily>
         <FontFamily x:Key="AppFontFamily">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
         <FontFamily x:Key="ContentControlThemeFontFamily">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
