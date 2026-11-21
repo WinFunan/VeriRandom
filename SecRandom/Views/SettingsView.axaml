@@ -381,8 +381,5 @@
                 </Grid>
             </sr:DrawerHost>
         </fa:FANavigationView>
-
-        <!-- 品牌色装饰条（样式见 Styles/ForkIdentity.axaml） -->
-        <Border Grid.Row="0" Classes="fork-accent-strip" />
     </Grid>
 </views:SettingsView>

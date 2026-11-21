@@ -216,6 +216,11 @@ public partial class FloatingWindow : Window
         if (!settings.ShowOnBothSides || !settings.SyncBothSidesAnchor)
             return;
 
+        // 还没完成首次布局时 Bounds 里没有真实尺寸，偏移量会按 1 像素算，落点必然错位。
+        // 直接忽略这一次：尺寸落定后由主窗的 OnSizeChanged 重新发布锚点。
+        if (!IsLoaded || Bounds.Width <= 1 || Bounds.Height <= 1)
+            return;
+
         var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
         var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
         var workingArea = _dockWorkingArea ?? GetScreenForWindow(Position, width, height)?.WorkingArea;
@@ -751,6 +756,49 @@ public partial class FloatingWindow : Window
         // 再等窗口真正落到目标屏、尺寸生效后补第二次。
         ReassertNativeTopmost();
         DispatcherTimer.RunOnce(ReassertNativeTopmost, TimeSpan.FromMilliseconds(TopmostReassertDelayMilliseconds));
+
+        // 副窗的最终尺寸在 Opened 之后才落定。等这一轮布局结束再请主窗把纵向锚点发布一次，
+        // 否则副窗会停在按启动早期尺寸算出的高度上——两侧高度不一致就是这样来的。
+        if (_isSecondary)
+            Dispatcher.UIThread.Post(App.AlignFloatingWindowAnchors, DispatcherPriority.Background);
+    }
+
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+
+        // SizeToContent 的最终尺寸是在布局完成后才落定的，启动阶段对齐用的还是旧尺寸。
+        // 尺寸一旦落定就重新对齐：主窗按新尺寸重新发布锚点，副窗请主窗按自己现在的尺寸再放一次。
+        AlignAfterSizeSettled();
+    }
+
+    /// <summary>
+    ///     尺寸落定后重新对齐两侧悬浮窗（"两侧高度统一"开启时）。
+    /// </summary>
+    /// <remarks>
+    ///     只由主窗发布锚点：两侧内容一样、尺寸也一样，双方同时发布只会互相追着跑。
+    ///     副窗只负责把主窗的锚点按自己现在的尺寸重新落一次——它的尺寸可能比主窗晚一步才量好，
+    ///     早先那次定位就是按旧高度算的，不重放会停在错误的高度上。
+    ///     停靠态与展开/收起过渡期间不处理，那两段时间的锚点由停靠逻辑自己维护。
+    /// </remarks>
+    private void AlignAfterSizeSettled()
+    {
+        if (!IsLoaded || _isClosed || !_edgePinned || _isDocked || _isDockTransitioning)
+            return;
+
+        var settings = EffectiveFloatingWindowSettings;
+        if (!settings.ShowOnBothSides || !settings.SyncBothSidesAnchor)
+            return;
+
+        if (_isSecondary)
+        {
+            App.AlignFloatingWindowAnchors();
+            return;
+        }
+
+        var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
+        _dockAnchorCenterY = Position.Y + height / 2;
+        NotifySiblingAnchor(_dockAnchorCenterY);
     }
 
     private async void RestoreStartupPositionAndScheduleDock()
@@ -1340,6 +1388,9 @@ public partial class FloatingWindow : Window
         {
             _isDockTransitioning = false;
         }
+
+        // 展开后的最终尺寸可能是在过渡期间落定的（那时被跳过），这里补一次对齐。
+        AlignAfterSizeSettled();
 
         if (shouldScheduleDock)
             ScheduleDock();

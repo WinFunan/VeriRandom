@@ -81,7 +81,5 @@
         <!-- 插件叠加层：插件通过 IOverlayHostService 在这里显示自己的界面 -->
         <sr:OverlayHost x:Name="OverlayLayer" />
 
-        <!-- 品牌色装饰条（样式见 Styles/ForkIdentity.axaml）：不参与命中测试，压在最上层也不会挡住标题栏拖动 -->
-        <Border Classes="fork-accent-strip" />
     </Panel>
 </ContentPage>

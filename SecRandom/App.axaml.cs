@@ -759,13 +759,19 @@ public partial class App : Application
     }
 
     /// <summary>让两侧悬浮窗落到同一纵向高度；"两侧高度统一"关闭时什么也不做。</summary>
-    private static void AlignFloatingWindowAnchors()
+    internal static void AlignFloatingWindowAnchors()
     {
         if (_floatingWindow is not { } primary)
             return;
 
         var settings = IAppHost.GetService<MainConfigHandler>().Data.EffectiveFloatingWindowSettings;
         if (!settings.ShowOnBothSides || !settings.SyncBothSidesAnchor)
+            return;
+
+        // 主窗还没完成首次布局时，Bounds 里没有真实高度，此刻算出的锚点是按"半个旧尺寸"来的，
+        // 把它写进副窗就会停在错误的高度上，之后也没有任何路径再去纠正——启动时两侧高度不一致
+        // 就是这么来的。等尺寸真正落定（主窗的 SizeChanged / 副窗的 Opened）再由主窗发布锚点。
+        if (!primary.IsLoaded || primary.Bounds.Height <= 1)
             return;
 
         foreach (var window in FloatingWindows())

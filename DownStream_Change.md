@@ -2242,3 +2242,30 @@ var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);   // 总是�
 ### 验证
 
 `SecRandom`、`SecRandom.Desktop` 编译通过；测试集与改动前同一批失败（26 条既有）。需要真机确认：顶部栏能横向排下各入口、窗口变窄时溢出菜单可用且设置入口不被折进去、点击设置只弹设置窗口而不改主页面高亮、简洁模式仍是无导航的单页形态、设置窗口的顺序与文案对得上。
+
+---
+
+## 79. 顶部导航后的三处回归修复
+
+**症状（维护者报告）**：
+1. 主界面顶部有一条蓝色间隙；
+2. 刚启动时开启「左右两侧同时显示」的浮窗左右高度不一致；
+3. 配置摘要徽标离主界面导航栏几乎没有上边距（更新后首次启动时发现）。
+
+### 判定与改动
+
+| 症状 | 原因 | 改动 |
+|---|---|---|
+| 顶部蓝色间隙 | §77 加的 3px `Border.fork-accent-strip` 压在窗口最顶端。标题栏背景是透明的，这条线与标题栏之间没有任何承接，读起来就是一条彩色缝隙（用系统强调色时正好是蓝色） | 删除 `MainView` / `SettingsView` 里的 `Border` 与 `ForkIdentity.axaml` 中的 `Border.fork-accent-strip` 样式；§77 里"必须保留"的约束同步删除 |
+| 启动时两侧浮窗高度不一致 | `FloatingWindow` 是 `SizeToContent`，`OnLoaded` 还会先把 `Width` 设成 20 触发一次布局。启动阶段 `Bounds` 里是旧尺寸（甚至 1px），`RestorePinnedStartupPosition` / `ApplyUnifiedAnchor` 按这个尺寸算锚点与落点；等真正尺寸落定后没有任何路径重新对齐，于是两窗停在不同高度 | `FloatingWindow` 新增 `AlignAfterSizeSettled()` 并由 `OnSizeChanged` 调用：主窗按**当前**尺寸重算 `_dockAnchorCenterY` 再发布给副窗，副窗则请主窗按自己现在的尺寸重放一次（`App.AlignFloatingWindowAnchors`，改为 `internal`）。`ApplyUnifiedAnchor` 在 `!IsLoaded` 或 `Bounds` 仍是 1px 时直接返回，不再把"半个旧尺寸"写进两侧；`AlignFloatingWindowAnchors` 同样跳过未完成布局的主窗；副窗 `OnOpened` 在布局结束后请求一次对齐；`RestoreFromDock` 在过渡结束后补一次对齐（过渡期间的尺寸变化会被 guard 跳过） |
+| 摘要徽标贴住导航栏 | 徽标原先 `Margin="12"`，而点名页标题行是隐藏的，页面内容直接从顶部导航栏下面开始，12px 在新形态下不足 | `RollCallPage.axaml` 徽标改为 `Margin="16 24 16 16"` |
+
+### 约束
+
+- 两侧对齐**只由主窗发布锚点**（`_isSecondary` 分支不发布），否则两扇窗会互相追着跑；副窗只负责按自己的当前尺寸重新落位。
+- 对齐必须跳过三种时刻：未完成首次布局（`Bounds` 没有真实尺寸）、停靠态（锚点由停靠逻辑维护）、展开/收起过渡（尺寸在一帧内连续变化）。`RestoreFromDock` 结束后补的那一次就是为过渡期间被跳过的尺寸变化收尾。
+- 不要再用"窗口最顶端的一条线与留白"做识别元素：标题栏是透明的，任何贴顶装饰都会被读成缝隙。识别度由顶部导航、`DefaultThemeColor`、圆角与内容宽度承担。
+
+### 验证
+
+`SecRandom`、`SecRandom.Desktop` 编译通过；测试集与改动前同一批失败（26 条既有）。真机回归点：顶部不再有彩色细线；冷启动（两侧同时显示 + 两侧高度统一）后两窗同高，展开/收起任一侧后仍同高；开启摘要徽标时它与导航栏之间有可见间距。

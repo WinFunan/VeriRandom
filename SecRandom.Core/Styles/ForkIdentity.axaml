@@ -4,22 +4,17 @@
     <!--
         本分支（VeriRandom）的视觉身份层。
 
-        这里是“与上游看起来不是同一个软件”的集中收口点：窗口顶部的品牌色装饰条、主窗口的顶部导航
-        （上游是常驻左侧图标栏）。所有差异都写在新增文件里，样式覆盖通过 StylesBase.axaml 末尾的
-        一行 StyleInclude 生效，上游同步时冲突面只有那一行和少数几个默认值常量。
+        这里是“与上游看起来不是同一个软件”的集中收口点：主窗口的顶部导航（上游是常驻左侧图标栏）
+        以及相应的项尺寸。所有差异都写在新增文件里，样式覆盖通过 StylesBase.axaml 末尾的一行
+        StyleInclude 生效，上游同步时冲突面只有那一行和少数几个默认值常量。
 
-        颜色不写死：装饰条与导航选中态都用 Fluent 的强调色资源，跟随用户在当前主题里的强调色
+        颜色不写死：导航选中态沿用 Fluent 的强调色资源，跟随用户在当前主题里的强调色
         （默认强调色由 GlobalConstants.DefaultThemeColor 决定）。
-    -->
 
-    <!-- 窗口顶部品牌色装饰条：主窗口与设置窗口共用，只在它们的最外层各放一个 Border -->
-    <Style Selector="Border.fork-accent-strip">
-        <Setter Property="Height" Value="3" />
-        <Setter Property="VerticalAlignment" Value="Top" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="IsHitTestVisible" Value="False" />
-        <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
-    </Style>
+        曾经在这里画过一条 3px 的“品牌色装饰条”压在窗口最顶端，但它在深色/浅色背景下都读起来像
+        一条彩色间隙（尤其标题栏是透明的时候），已经移除；识别度由顶部导航、默认强调色与更大的
+        圆角承担，不再额外画线。
+    -->
 
     <!--
         顶部导航（MainView）。横向项模板由 FluentAvalonia 的顶部导航主题提供，这里只调高度，
