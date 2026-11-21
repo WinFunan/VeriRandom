@@ -3,11 +3,11 @@
 Adds one artifact to an already signed release manifest and signs it again.
 
 .DESCRIPTION
-`build_publish.yml` generates and signs `SecRandom-update-manifest.json` while it creates the
+`build_publish.yml` generates and signs `VeriRandom-update-manifest.json` while it creates the
 release. iOS is built afterwards by `build_ios.yml`, so its IPA is missing from that signed manifest
 until this script folds it in. The script keeps the release identity (`channel`, `tag`, `version`,
 `publishedAt`) untouched and only refreshes the `artifacts` list, which is what an update client
-reads after it verified `SecRandom-update-manifest.sig`.
+reads after it verified `VeriRandom-update-manifest.sig`.
 
 It refuses to rewrite a manifest it cannot authenticate first:
 
@@ -22,10 +22,10 @@ It refuses to rewrite a manifest it cannot authenticate first:
    uses.
 
 .PARAMETER ManifestPath
-Existing `SecRandom-update-manifest.json`. It is rewritten in place.
+Existing `VeriRandom-update-manifest.json`. It is rewritten in place.
 
 .PARAMETER SignaturePath
-Existing `SecRandom-update-manifest.sig` for `-ManifestPath`. It is rewritten in place.
+Existing `VeriRandom-update-manifest.sig` for `-ManifestPath`. It is rewritten in place.
 
 .PARAMETER ArtifactPath
 Local copy of the artifact to describe. `byteLength` and `sha512` come from this file.
@@ -109,7 +109,7 @@ try {
 
     $manifest = Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json
     if ($manifest.schemaVersion -ne 1) { throw "Unsupported manifest schemaVersion: $($manifest.schemaVersion)" }
-    if ($manifest.product -ne 'SecRandom') { throw "Unexpected manifest product: $($manifest.product)" }
+    if ($manifest.product -ne 'VeriRandom') { throw "Unexpected manifest product: $($manifest.product)" }
     if (-not [string]::IsNullOrWhiteSpace($ExpectedTag) -and $manifest.tag -cne $ExpectedTag) {
         throw "The release manifest belongs to tag '$($manifest.tag)', but '$ExpectedTag' was expected."
     }

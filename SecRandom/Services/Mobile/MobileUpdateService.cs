@@ -27,7 +27,10 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
     private const int MaxSignatureBytes = 64;
     private const int MaxArtifactBytes = 512 * 1024 * 1024;
     private static readonly Uri MetadataUri = new("https://raw.githubusercontent.com/WinFunan/VeriRandom/master/metadata.yaml");
-    private static readonly Uri MirrorPrefix = new("https://ghproxy.sectl.cn/");
+
+    // 自建文件代理是路径式写法（/WinFunan/VeriRandom/raw/<ref>/<path>），不是前缀拼接。
+    private static readonly Uri MirrorMetadataUri =
+        new($"{GlobalConstants.GitHubFileProxyBaseUrl}/{Repository}/raw/master/metadata.yaml");
     private readonly IDeserializer _yaml = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private UpdateArtifact? _artifact;
     private string _availableVersion = string.Empty;
@@ -168,19 +171,19 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
     }
 
     private static IEnumerable<UpdateSource> GetSources() =>
-        // Same rule as the desktop update path: no SECTL-hosted mirror once the device refuses SECTL connections.
-        SecRandom.Services.Consent.SectlTrafficPolicy.IsEgressSwitchOff()
-            ? [UpdateSource.GitHub]
-            : [UpdateSource.GitHubMirror, UpdateSource.GitHub];
+        // 自建文件代理不属于 SECTL 的服务，联网总开关不再影响更新通道：仍然先走代理，再回落 GitHub。
+        [UpdateSource.GitHubMirror, UpdateSource.GitHub];
 
     private static Uri GetMetadataUri(UpdateSource source) => source == UpdateSource.GitHub
         ? MetadataUri
-        : new Uri($"{MirrorPrefix}{MetadataUri.AbsoluteUri}");
+        : MirrorMetadataUri;
 
     private Task<byte[]> DownloadAsync(UpdateSource source, string tag, string assetName, int maxBytes, CancellationToken cancellationToken)
     {
         var direct = $"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}";
-        var uri = source == UpdateSource.GitHub ? new Uri(direct) : new Uri($"{MirrorPrefix}{direct}");
+        var uri = source == UpdateSource.GitHub
+            ? new Uri(direct)
+            : new Uri($"{GlobalConstants.GitHubFileProxyBaseUrl}/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}");
         return BoundedContentReader.GetAsync(httpClient, uri, maxBytes, cancellationToken);
     }
 
@@ -202,7 +205,7 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
 
         var parsed = JsonSerializer.Deserialize(manifest, MobileUpdateJsonContext.Default.UpdateManifest)
                       ?? throw new InvalidDataException(LR.M_ManifestInvalid);
-        if (parsed.SchemaVersion != 1 || parsed.Product != "SecRandom" || parsed.Tag != tag)
+        if (parsed.SchemaVersion != 1 || parsed.Product != "VeriRandom" || parsed.Tag != tag)
             throw new InvalidDataException(LR.M_ManifestTagMismatch);
     }
 

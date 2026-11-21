@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.General.Privacy"
              xmlns:oobe="clr-namespace:SecRandom.Langs.FirstRunOobe"
+             xmlns:core="clr-namespace:SecRandom.Core;assembly=SecRandom.Core"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.General.PrivacySettingsPage"
@@ -66,19 +67,23 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <sr:IconText Text="{x:Static oobe:Resources.C_CrossBorderTitle}"
-                         Glyph="{sr:Fi GlobeFilled}"
-                         Margin="0 16 0 4" />
+            <!-- 跨境数据传输须知：暂时隐藏（GlobalConstants.ShowCrossBorderTransferNotice）。
+                 隐藏不等于同意，跨境的确认仍由 SectlTrafficPolicy 把关。 -->
+            <StackPanel IsVisible="{x:Static core:GlobalConstants.ShowCrossBorderTransferNotice}">
+                <sr:IconText Text="{x:Static oobe:Resources.C_CrossBorderTitle}"
+                             Glyph="{sr:Fi GlobeFilled}"
+                             Margin="0 16 0 4" />
 
-            <fa:FASettingsExpander Header="{x:Static oobe:Resources.C_CrossBorderTitle}"
-                                   Description="{x:Static oobe:Resources.C_CrossBorderOptionalNote}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <Button x:Name="CrossBorderTransferAcceptButton"
-                            Content="{x:Static oobe:Resources.C_CrossBorderConfirm}"
-                            Click="CrossBorderTransferAccept_OnClick" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
+                <fa:FASettingsExpander Header="{x:Static oobe:Resources.C_CrossBorderTitle}"
+                                       Description="{x:Static oobe:Resources.C_CrossBorderOptionalNote}"
+                                       IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
+                    <fa:FASettingsExpander.Footer>
+                        <Button x:Name="CrossBorderTransferAcceptButton"
+                                Content="{x:Static oobe:Resources.C_CrossBorderConfirm}"
+                                Click="CrossBorderTransferAccept_OnClick" />
+                    </fa:FASettingsExpander.Footer>
+                </fa:FASettingsExpander>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

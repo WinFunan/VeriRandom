@@ -2269,3 +2269,56 @@ var fingerprint = ConfigSignature.Fingerprint(document.PublicKey);   // 总是�
 ### 验证
 
 `SecRandom`、`SecRandom.Desktop` 编译通过；测试集与改动前同一批失败（26 条既有）。真机回归点：顶部不再有彩色细线；冷启动（两侧同时显示 + 两侧高度统一）后两窗同高，展开/收起任一侧后仍同高；开启摘要徽标时它与导航栏之间有可见间距。
+
+---
+
+## 80. 更新通道改走本分支自建文件代理并重新启用
+
+**背景**：更新长期关闭（`UpdatesEnabled = false`），原因只有一个——发现地址仍指向上游 `SECTL/SecRandom` 的 `metadata.yaml` 与 `SecRandom-update-manifest.json`，本分支不能消费上游产物。现在本分支有了自建文件代理 `https://vr-ghproxy.yeyixiao.net`（只代理 `github.com/WinFunan/VeriRandom` 的 raw / releases / archive，GET/HEAD + Range，不代理网页、API 与其它仓库），因此把更新与插件市场的取数路径整体换掉并启用。
+
+### 改动
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom.Core/GlobalConstants.cs` | 新增 `GitHubFileProxyBaseUrl = "https://vr-ghproxy.yeyixiao.net"`；`UpdatesEnabled` `false` → **`true`** |
+| `SecRandom/Services/Updates/UpdateCenterService.cs` | `Product` `SecRandom` → **`VeriRandom`**；`Repository` `SECTL/SecRandom` → **`WinFunan/VeriRandom`**；清单与签名 `VeriRandom-update-manifest.json` / `.sig`；元数据 `https://raw.githubusercontent.com/WinFunan/VeriRandom/master/metadata.yaml`；代理侧元数据 `/WinFunan/VeriRandom/raw/master/metadata.yaml`、产物 `/WinFunan/VeriRandom/releases/download/<tag>/<asset>`；便携包标记文件名改读 **`VeriRandom.package.json`** |
+| `SecRandom/Services/Mobile/MobileUpdateService.cs` | 代理侧元数据与产物改路径式；`GetSources()` 不再查询 `SectlTrafficPolicy`；清单 `product` 校验改成 `VeriRandom` |
+| `SecRandom/Services/Plugins/PluginMarketService.cs` | 删掉 `ghproxy.sectl.cn` 前缀与"联网总开关开则直连"的分支，改为**直连 GitHub**（索引在 `SECTL/SecRandom-PluginIndex`、插件包在各自仓库，代理不覆盖） |
+| `metadata.yaml` | 删掉 `sources.sectl`；`sources.github_mirror` 的 `prefix` 改为自建代理、显示名改为「VeriRandom 文件代理」 |
+| `scripts/ReleaseManifest/Update-ReleaseManifest.ps1` | 清单 `product` 断言 `SecRandom` → `VeriRandom`（iOS 回填工作流在本分支是关闭的，但脚本必须接受本分支自己的清单） |
+
+### 约束
+
+- **代理是路径式、且只服务本仓库**：`/<owner>/<repo>/raw/<ref>/<path>`、`/<owner>/<repo>/releases/download/<tag>/<asset>`、`/archive/<ref>.zip`。它不像旧的 ghproxy 那样"前缀 + 完整 URL"，不要再拼前缀；其它仓库、GitHub API 与网页一律不走它。
+- **更新与插件市场不属于 SECTL 通道**：自建代理是维护者自己的域名，插件市场是 `github.com`，都与 SECTL 无关，因此两者**不得**再查询 `SectlTrafficPolicy`。联网总开关继续只约束 SecRandom/SECTL 的在线功能。
+- **`product` 字段是承重的**：`metadata.yaml`、签名清单、便携包标记三处都必须是 `VeriRandom`，且 `UpdateCenterService.Product` 必须与它们一致；任一改回 `SecRandom` 都会让元数据校验或便携部署直接失败。
+- 便携包标记文件名由 CI 写成 `VeriRandom.package.json`，客户端原先读的是 `SecRandom.package.json`，因此便携更新根本认不到版本标记——这次一并修正。
+
+### 验证
+
+`SecRandom`、`SecRandom.Desktop` 编译通过；测试集与改动前同一批失败（26 条既有）。真机验证需要一次真实发布：`metadata.yaml` 当前 `release: v3.1.6` 必须对应一个确实带 `VeriRandom-update-manifest.json` / `.sig` 的 Release，否则检查更新的结果是「发布清单缺失」——那是数据问题，不是代码问题。建议按顺序确认：代理上 `raw/master/metadata.yaml` 可取 → 清单与签名可取且验签通过 → 产物长度/SHA-512 校验通过 → 便携包内的 `VeriRandom.package.json` 与当前 RID/运行时一致。
+
+---
+
+## 81. 暂时隐藏 SECTL 隐私政策与跨境传输须知
+
+**背景**：维护者要求隐藏 SECTL 在线服务隐私政策，并暂时隐藏跨境数据传输文本，同时**保留那个首次引导页面**（普通模式抽取证明上传的选择还在那一步）。
+
+### 改动
+
+| 位置 | 改动 |
+|---|---|
+| `SecRandom.Core/GlobalConstants.cs` | 新增 `ShowSectlServicesPolicy = false`、`ShowCrossBorderTransferNotice = false` |
+| `SecRandom/Views/FirstRunOobeWindow.axaml` | 法律页的 SECTL 披露（条款 / 免责声明 / `SecRandomPrivacyPolicy` 全文与确认框）整块套进 `StackPanel IsVisible="{x:Static core:GlobalConstants.ShowSectlServicesPolicy}"`；跨境页的标题 / 正文 / 提示 / 确认框套进 `ShowCrossBorderTransferNotice`。页面与轮播步数不变（`StepCount` 仍为 9，`OobeLayoutTests` 的子项数不变） |
+| `SecRandom/Views/SettingsPages/General/PrivacySettingsPage.axaml` | 同一个开关隐藏跨境卡片（分组标题 + 设置卡） |
+
+### 隐藏不等于同意
+
+- **不写入任何确认值**：隐藏期间 `AcceptedSecRandomServicesVersion` / `AcceptedCrossBorderTransferVersion` 保持原值（新装为 0），`SectlTrafficPolicy.IsEgressAllowed` 仍然要求两者，`SectlEgressSwitch` 仍然拦着所有 SECTL 通道，所以没有任何功能会因为"看不见的条款"而被悄悄放开。
+- **真正的签署点没有删除**：`SecRandomServicesConsent.AppendDisclosure`/`EnsureAsync`（在线服务条款）与 `EnsureTransferAcceptedAsync`（跨境须知）仍会在用户实际使用在线功能、且出网开关放行时弹出各自的一次性确认。恢复显示只需要把这两个常量改回 `true`。
+- **跨境的 OOBE 页面保留**：该步仍然要求用户主动选择抽取证明上传（`AttestationUpload != Unset`）；由于两项确认被隐藏，`IsSectlEgressConsented` 为假，「开启上传」的单选保持禁用——这与本版本固定禁用 SECTL 联网一致。
+- 隐私设置页的联网总开关（`S_SectlEgress`）仍在最上方，不受这两个开关影响。
+
+### 验证
+
+`SecRandom`、`SecRandom.Desktop` 编译通过（`x:Static` 绑定常量在 XAML 编译期校验）。真机回归点：全新安装的法律页只剩验证提示、本分支隐私政策、时间戳说明与 GPLv3；跨境的下一步只剩抽取证明上传选择且「开启」不可点；隐私设置页看不到跨境卡片；把任一常量改回 `true` 后对应文本与确认框立即恢复。

@@ -27,8 +27,9 @@ public sealed record PluginMarketInstallPlan(
 
 /// <summary>
 ///     Client for the signed SecRandom plugin market. The index is Ed25519-signed as a whole (including
-///     each entry's SHA-256), downloaded mirror-first with a GitHub fallback, then every package is
-///     SHA-256-verified before it is staged. Dependencies are resolved in topological order.
+///     each entry's SHA-256), downloaded directly from GitHub (the fork's own file proxy only covers
+///     WinFunan/VeriRandom), then every package is SHA-256-verified before it is staged.
+///     Dependencies are resolved in topological order.
 /// </summary>
 public sealed class PluginMarketService(
     ILogger<PluginMarketService> logger,
@@ -42,7 +43,6 @@ public sealed class PluginMarketService(
     private const int MaxIndexBytes = 4 * 1024 * 1024;
     private const int MaxSignatureBytes = 64;
     private const int MaxPackageBytes = 64 * 1024 * 1024;
-    private static readonly Uri GitHubMirrorPrefix = new("https://ghproxy.sectl.cn/");
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -193,33 +193,26 @@ public sealed class PluginMarketService(
 
     private async Task<(byte[] Index, byte[] Signature)> DownloadIndexAsync(CancellationToken cancellationToken)
     {
-        var indexBytes = await DownloadWithFallbackAsync(
+        var indexBytes = await DownloadAsync(
             $"{IndexRepository}/releases/download/{IndexReleaseTag}/{IndexFileName}",
             MaxIndexBytes, cancellationToken).ConfigureAwait(false);
-        var signatureBytes = await DownloadWithFallbackAsync(
+        var signatureBytes = await DownloadAsync(
             $"{IndexRepository}/releases/download/{IndexReleaseTag}/{SignatureFileName}",
             MaxSignatureBytes, cancellationToken).ConfigureAwait(false);
         return (indexBytes, signatureBytes);
     }
 
-    private async Task<byte[]> DownloadWithFallbackAsync(string resource, int maxBytes, CancellationToken cancellationToken)
+    private async Task<byte[]> DownloadAsync(string resource, int maxBytes, CancellationToken cancellationToken)
     {
-        var direct = resource.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+        var uri = resource.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || resource.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
             ? new Uri(resource)
             : new Uri($"https://github.com/{resource}");
-        var mirror = new Uri($"{GitHubMirrorPrefix}{direct.AbsoluteUri}");
-        if (SecRandom.Services.Consent.SectlTrafficPolicy.IsEgressSwitchOff())
-            return await SecRandom.Services.Updates.BoundedContentReader.GetAsync(httpClient, direct, maxBytes, cancellationToken).ConfigureAwait(false);
-        try
-        {
-            return await SecRandom.Services.Updates.BoundedContentReader.GetAsync(httpClient, mirror, maxBytes, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception mirrorException) when (mirrorException is not OperationCanceledException)
-        {
-            logger.LogDebug("Plugin market mirror failed; falling back to GitHub: {Url}", direct);
-            return await SecRandom.Services.Updates.BoundedContentReader.GetAsync(httpClient, direct, maxBytes, cancellationToken).ConfigureAwait(false);
-        }
+
+        // 插件市场索引与插件包位于各自独立的 GitHub 仓库，本分支自建的
+        // VeriRandom 文件代理只覆盖 WinFunan/VeriRandom，因此这里直连 GitHub。
+        // 它不属于 SECTL 的服务，联网总开关（SectlTrafficPolicy）不约束这条通道。
+        return await SecRandom.Services.Updates.BoundedContentReader.GetAsync(httpClient, uri, maxBytes, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<string> DownloadPackageAsync(PluginCatalogEntry entry, CancellationToken cancellationToken)
@@ -227,7 +220,7 @@ public sealed class PluginMarketService(
         if (string.IsNullOrWhiteSpace(entry.DownloadUrl))
             throw new InvalidDataException(string.Format(SR.M_DownloadUrlMissing, entry.Id));
 
-        var bytes = await DownloadWithFallbackAsync(entry.DownloadUrl, MaxPackageBytes, cancellationToken).ConfigureAwait(false);
+        var bytes = await DownloadAsync(entry.DownloadUrl, MaxPackageBytes, cancellationToken).ConfigureAwait(false);
 
         var tempDirectory = Path.Combine(Path.GetTempPath(), "SecRandomPluginMarket");
         Directory.CreateDirectory(tempDirectory);

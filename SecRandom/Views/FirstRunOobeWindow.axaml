@@ -8,6 +8,7 @@
                          xmlns:vm="clr-namespace:SecRandom.ViewModels"
                          xmlns:imports="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
                          xmlns:langs="clr-namespace:SecRandom.Langs.FirstRunOobe"
+                         xmlns:core="clr-namespace:SecRandom.Core;assembly=SecRandom.Core"
                          xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
                          xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
                          x:Class="SecRandom.Views.FirstRunOobeWindow"
@@ -124,26 +125,31 @@
                                    TextWrapping="Wrap"
                                    FontWeight="Bold" />
 
-                        <Expander Header="{x:Static langs:Resources.C_SecRandomServicesTitle}"
-                                  IsExpanded="False">
-                            <ScrollViewer MinHeight="150" MaxHeight="240">
-                                <StackPanel Spacing="8">
-                                    <SelectableTextBlock Text="{x:Static langs:Resources.C_SecRandomServicesClause}"
-                                                         TextWrapping="Wrap" />
-                                    <SelectableTextBlock Text="{x:Static langs:Resources.C_SecRandomServicesDisclaimer}"
-                                                         TextWrapping="Wrap" />
-                                    <SelectableTextBlock Text="{x:Static langs:Resources.SecRandomPrivacyPolicy}"
-                                                         TextWrapping="Wrap" />
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Expander>
-                        <TextBlock Text="{x:Static langs:Resources.C_SecRandomServicesOptionalNote}"
-                                   TextWrapping="Wrap"
-                                   FontWeight="Bold"
-                                   IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}" />
-                        <CheckBox IsChecked="{Binding ViewModel.AcceptedSecRandomServices}"
-                                  Content="{x:Static langs:Resources.C_SecRandomServicesAcceptOptional}"
-                                  IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}" />
+                        <!-- SECTL 在线服务隐私政策：暂时隐藏（GlobalConstants.ShowSectlServicesPolicy）。
+                             隐藏不等于同意：SectlTrafficPolicy 仍要求对应确认，恢复显示后由用户签署。 -->
+                        <StackPanel Spacing="16"
+                                    IsVisible="{x:Static core:GlobalConstants.ShowSectlServicesPolicy}">
+                            <Expander Header="{x:Static langs:Resources.C_SecRandomServicesTitle}"
+                                      IsExpanded="False">
+                                <ScrollViewer MinHeight="150" MaxHeight="240">
+                                    <StackPanel Spacing="8">
+                                        <SelectableTextBlock Text="{x:Static langs:Resources.C_SecRandomServicesClause}"
+                                                             TextWrapping="Wrap" />
+                                        <SelectableTextBlock Text="{x:Static langs:Resources.C_SecRandomServicesDisclaimer}"
+                                                             TextWrapping="Wrap" />
+                                        <SelectableTextBlock Text="{x:Static langs:Resources.SecRandomPrivacyPolicy}"
+                                                             TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Expander>
+                            <TextBlock Text="{x:Static langs:Resources.C_SecRandomServicesOptionalNote}"
+                                       TextWrapping="Wrap"
+                                       FontWeight="Bold"
+                                       IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}" />
+                            <CheckBox IsChecked="{Binding ViewModel.AcceptedSecRandomServices}"
+                                      Content="{x:Static langs:Resources.C_SecRandomServicesAcceptOptional}"
+                                      IsVisible="{Binding ViewModel.IsSecRandomServicesRequired}" />
+                        </StackPanel>
                         
                         <Expander Header="{x:Static langs:Resources.C_GplTitle}" IsExpanded="False">
                             <ScrollViewer MinHeight="150" MaxHeight="240">
@@ -158,18 +164,24 @@
 
                 <ScrollViewer IsVisible="{Binding ViewModel.IsFullSetup}">
                     <StackPanel Margin="32" Spacing="16">
-                        <TextBlock Text="{x:Static langs:Resources.C_CrossBorderTitle}"
-                                   Theme="{StaticResource TitleTextBlockStyle}" />
-                        <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1"
-                                CornerRadius="6" Padding="16">
-                            <SelectableTextBlock Text="{x:Static langs:Resources.C_CrossBorderBody}"
-                                                 TextWrapping="Wrap" />
-                        </Border>
-                        <TextBlock Text="{x:Static langs:Resources.C_CrossBorderOptionalNote}"
-                                   TextWrapping="Wrap"
-                                   FontWeight="Bold" />
-                        <CheckBox IsChecked="{Binding ViewModel.AcceptedCrossBorderTransfer}"
-                                  Content="{x:Static langs:Resources.C_CrossBorderAccept}" />
+                        <!-- 跨境数据传输须知：暂时隐藏（GlobalConstants.ShowCrossBorderTransferNotice）。
+                             该页仍保留，用于普通模式抽取证明上传的选择；隐藏不等于同意，跨境确认仍由
+                             SectlTrafficPolicy 把关。 -->
+                        <StackPanel Spacing="16"
+                                    IsVisible="{x:Static core:GlobalConstants.ShowCrossBorderTransferNotice}">
+                            <TextBlock Text="{x:Static langs:Resources.C_CrossBorderTitle}"
+                                       Theme="{StaticResource TitleTextBlockStyle}" />
+                            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1"
+                                    CornerRadius="6" Padding="16">
+                                <SelectableTextBlock Text="{x:Static langs:Resources.C_CrossBorderBody}"
+                                                     TextWrapping="Wrap" />
+                            </Border>
+                            <TextBlock Text="{x:Static langs:Resources.C_CrossBorderOptionalNote}"
+                                       TextWrapping="Wrap"
+                                       FontWeight="Bold" />
+                            <CheckBox IsChecked="{Binding ViewModel.AcceptedCrossBorderTransfer}"
+                                      Content="{x:Static langs:Resources.C_CrossBorderAccept}" />
+                        </StackPanel>
 
                         <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1"
                                 CornerRadius="6" Padding="16">

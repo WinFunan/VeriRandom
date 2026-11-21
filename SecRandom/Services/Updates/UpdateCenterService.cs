@@ -33,16 +33,21 @@ public sealed class UpdateCenterService(
     HttpClient httpClient)
     : INotifyPropertyChanged
 {
-    private const string Product = "SecRandom";
-    private const string Repository = "SECTL/SecRandom";
-    private const string ManifestFileName = "SecRandom-update-manifest.json";
-    private const string SignatureFileName = "SecRandom-update-manifest.sig";
+    private const string Product = "VeriRandom";
+    private const string Repository = "WinFunan/VeriRandom";
+    private const string ManifestFileName = "VeriRandom-update-manifest.json";
+    private const string SignatureFileName = "VeriRandom-update-manifest.sig";
+    private const string PackageMarkerFileName = "VeriRandom.package.json";
     private const int MaxMetadataBytes = 256 * 1024;
     private const int MaxManifestBytes = 4 * 1024 * 1024;
     private const int MaxSignatureBytes = 64;
     private const int MaxArtifactBytes = 512 * 1024 * 1024;
-    private static readonly Uri GitHubRawMetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
-    private static readonly Uri GitHubMirrorPrefix = new("https://ghproxy.sectl.cn/");
+    private static readonly Uri GitHubRawMetadataUri = new("https://raw.githubusercontent.com/WinFunan/VeriRandom/master/metadata.yaml");
+
+    // 自建文件代理是路径式写法（/WinFunan/VeriRandom/raw/<ref>/<path>），不是"前缀 + 完整 URL"，
+    // 所以元数据与发布产物各拼一次，不能像旧的 ghproxy 那样直接前缀拼接。
+    private static readonly Uri MirrorMetadataUri =
+        new($"{GlobalConstants.GitHubFileProxyBaseUrl}/{Repository}/raw/master/metadata.yaml");
     private readonly HttpClient _httpClient = httpClient;
     private readonly IDeserializer _yamlDeserializer = new DeserializerBuilder()
         .IgnoreUnmatchedProperties()
@@ -94,7 +99,7 @@ public sealed class UpdateCenterService(
     }
 
     public bool IsBusy => Phase is UpdateOperationPhase.Checking or UpdateOperationPhase.Downloading or UpdateOperationPhase.Verifying or UpdateOperationPhase.Installing;
-    /// <summary>Fork policy: the whole update channel is off (GlobalConstants.UpdatesEnabled).</summary>
+    /// <summary>Updates are enabled because this fork publishes its own metadata, manifest and artifacts.</summary>
     public bool IsSupported => GlobalConstants.UpdatesEnabled;
 
     public bool CanCheck => GlobalConstants.UpdatesEnabled && !IsBusy;
@@ -105,7 +110,6 @@ public sealed class UpdateCenterService(
 
     public async Task CheckAsync(bool force = false)
     {
-        // Fork policy: update discovery still points at the upstream release channel, so it stays off.
         if (!GlobalConstants.UpdatesEnabled)
         {
             StatusMessage = Text("M_UpdatesDisabled");
@@ -272,7 +276,7 @@ public sealed class UpdateCenterService(
     {
         var metadataUri = source == UpdateSource.GitHub
             ? GitHubRawMetadataUri
-            : new Uri($"{GitHubMirrorPrefix}{GitHubRawMetadataUri.AbsoluteUri}");
+            : MirrorMetadataUri;
         var metadataBytes = await BoundedContentReader.GetAsync(_httpClient, metadataUri, MaxMetadataBytes, cancellationToken);
         var yaml = Encoding.UTF8.GetString(metadataBytes);
         var metadata = _yamlDeserializer.Deserialize<MetadataDocument>(yaml) ?? throw new InvalidDataException(Text("M_MetadataEmpty"));
@@ -289,7 +293,7 @@ public sealed class UpdateCenterService(
         Uri uri = source switch
         {
             UpdateSource.GitHub => new Uri($"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}"),
-            UpdateSource.GitHubMirror => new Uri($"{GitHubMirrorPrefix}https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}"),
+            UpdateSource.GitHubMirror => new Uri($"{GlobalConstants.GitHubFileProxyBaseUrl}/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}"),
             _ => throw new ArgumentOutOfRangeException(nameof(source))
         };
         return await BoundedContentReader.GetAsync(_httpClient, uri, maxBytes, cancellationToken);
@@ -355,7 +359,7 @@ public sealed class UpdateCenterService(
 
     private static UpdatePackageMarker? ReadCurrentPackageMarker()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "SecRandom.package.json");
+        var path = Path.Combine(AppContext.BaseDirectory, PackageMarkerFileName);
         if (!File.Exists(path))
             return null;
         try
@@ -381,7 +385,7 @@ public sealed class UpdateCenterService(
         if (appDirectory is null)
             throw new InvalidDataException(Text("M_ZipAppDirectoryMissing"));
 
-        var marker = JsonSerializer.Deserialize<UpdatePackageMarker>(File.ReadAllText(Path.Combine(appDirectory, "SecRandom.package.json")), JsonOptions)
+        var marker = JsonSerializer.Deserialize<UpdatePackageMarker>(File.ReadAllText(Path.Combine(appDirectory, PackageMarkerFileName)), JsonOptions)
                      ?? throw new InvalidDataException(Text("M_ZipMarkerMissing"));
         if (marker.SchemaVersion != 1 || !string.Equals(marker.Product, Product, StringComparison.Ordinal)
             || !string.Equals(marker.Rid, GetCurrentRid(), StringComparison.OrdinalIgnoreCase)

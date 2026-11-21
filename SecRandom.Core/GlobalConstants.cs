@@ -70,10 +70,37 @@ public static class GlobalConstants
     public const string DrawImageAttachedSettings = "4C88E037-4F69-42D0-A32F-16D2827B7B6D";
     public const string DrawMusicAttachedSettings = "A16F1E84-77E8-4E09-B9EC-8BAF5C148057";
 
-    // Fork policy: update discovery in this repository still targets the upstream SecRandom release
-    // channel, which this fork must not consume. The whole update implementation stays intact so the
-    // capability is preserved; set this back to true once this fork has its own metadata/release server.
-    public const bool UpdatesEnabled = false;
+    // 更新已在本分支启用：元数据、签名清单与发布产物都来自本仓库自己的 GitHub Releases
+    // （WinFunan/VeriRandom），不再读取上游 SECTL/SecRandom 的任何元数据。
+    public const bool UpdatesEnabled = true;
+
+    /// <summary>
+    ///     本分支自有的 GitHub 文件代理：只代理 <c>github.com/WinFunan/VeriRandom</c> 下的
+    ///     raw / releases / archive 路径，不代理网页、API 与其它仓库。
+    /// </summary>
+    /// <remarks>
+    ///     它不属于 SECTL 的服务，因此**不经过**联网总开关（<c>SectlTrafficPolicy</c>）：
+    ///     那个开关只约束会连接 SecRandom/SECTL 服务器的通道。插件市场索引与插件包位于别的仓库，
+    ///     这个代理不覆盖，仍然直连 GitHub。
+    /// </remarks>
+    public const string GitHubFileProxyBaseUrl = "https://vr-ghproxy.yeyixiao.net";
+
+    /// <summary>
+    ///     是否在首次引导与隐私设置里展示 SECTL 在线服务隐私政策（条款、免责声明与隐私政策全文）。
+    /// </summary>
+    /// <remarks>
+    ///     暂时隐藏：法律页只保留本分支自己的隐私政策、GPLv3 与时间戳说明。隐藏**不等于同意**——
+    ///     <c>SectlTrafficPolicy</c> 仍然要求对应确认，联网总开关也仍然拦着 SECTL 通道；恢复显示后
+    ///     再由用户亲自签署。运行时的同意弹窗（<c>SecRandomServicesConsent</c>）才是真正的签署点，
+    ///     这个开关只控制首次引导与隐私设置里的常驻文本。
+    /// </remarks>
+    public const bool ShowSectlServicesPolicy = false;
+
+    /// <summary>
+    ///     是否在首次引导与隐私设置里展示跨境数据传输须知。
+    /// </summary>
+    /// <remarks>暂时隐藏，理由同上：隐藏不等于同意，跨境的确认仍由 <c>SectlTrafficPolicy</c> 把关。</remarks>
+    public const bool ShowCrossBorderTransferNotice = false;
 
     // 本分支的品牌色：默认自定义主题色用它，抽取动画的固定色也从这里取。
     // 不再沿用上游/系统的 Windows 蓝，界面第一眼就能和上游区分开。

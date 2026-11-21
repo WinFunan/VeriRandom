@@ -24,12 +24,11 @@ manifest:
 runtime:
   lite: net10.0-desktop
 sources:
-  sectl:
-    display_name: 思拓创联
-    release_only: true
   github_mirror:
-    display_name: GitHub 镜像
-    prefix: https://ghproxy.sectl.cn/
+    display_name: VeriRandom 文件代理
+    # 自建代理，只代理 github.com/WinFunan/VeriRandom（raw / releases / archive），
+    # 不代理网页、API 与其它仓库；不属于 SECTL 服务，联网总开关不约束它。
+    prefix: https://vr-ghproxy.yeyixiao.net/
   github:
     display_name: GitHub
 channels:
